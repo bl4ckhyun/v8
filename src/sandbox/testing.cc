@@ -818,7 +818,8 @@ bool IsCrashInSafeMemoryRegion(Address faultaddr,
   return false;
 }
 
-[[noreturn]] void FilterCrash(const char* reason) {
+[[noreturn]]
+void FilterCrash(const char* reason) {
   // NOTE: This code MUST be async-signal safe.
   // NO malloc or stdio is allowed here.
   PrintToStderr(reason);

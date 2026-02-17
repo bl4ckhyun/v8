@@ -71,6 +71,7 @@
 #include "src/parsing/parsing.h"
 #include "src/parsing/scanner-character-streams.h"
 #include "src/profiler/profile-generator.h"
+#include "src/sandbox/trap-fuzzer.h"
 #include "src/snapshot/snapshot.h"
 #include "src/strings/owning-external-string-resource.h"
 #include "src/tasks/cancelable-task.h"
@@ -7602,6 +7603,14 @@ int Shell::Main(int argc, char* argv[]) {
     D8Console console(isolate);
     Initialize(isolate, &console);
     PerIsolateData data(isolate);
+
+    if (i::v8_flags.sandbox_trap_fuzzing) {
+#ifdef V8_SANDBOX_TRAP_FUZZER_AVAILABLE
+      i::SandboxTrapFuzzer::Enable();
+#else
+      FATAL("Trap-based sandbox fuzzing is not available on this platform.");
+#endif
+    }
 
     // Fuzzilli REPRL = read-eval-print-loop
     do {
