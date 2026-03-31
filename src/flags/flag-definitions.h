@@ -888,6 +888,12 @@ DEFINE_BOOL(empty_context_extension_dep, true,
             "non-empty context extensions")
 
 DEFINE_BOOL(json_stringify_fast_path, true, "Enable JSON.stringify fast-path")
+DEFINE_UINT(json_parse_max_heuristically_internalized_strings, 100'000,
+            "Maximum number of strings that are eagerly internalized during "
+            "JSON.parse() based on heuristics. 0 means only strings that "
+            "must be internalized e.g. property keys will be internalized.")
+DEFINE_BOOL(trace_json_parse_internalization, false,
+            "Print heuristic internalization stats after each JSON.parse()")
 
 // TODO(jgruber): Remove this flag.
 DEFINE_BOOL(cache_property_key_string_adds, true,
