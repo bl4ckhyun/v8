@@ -3892,7 +3892,7 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
                            TNode<HeapObject> maybe_feedback_vector,
                            TNode<UintPtrT> slot_id);
 
-  void UpdateEmbeddedFeedback(TNode<Int32T> feedback,
+  void UpdateEmbeddedFeedback(TNode<Smi> feedback,
                               TNode<BytecodeArray> bytecode_array,
                               TNode<IntPtrT> feedback_offset);
 
@@ -3909,6 +3909,13 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
   // Overwrite the existing feedback with new_feedback. Do nothing if
   // existing_feedback is nullptr.
   void OverwriteFeedback(TVariable<Smi>* existing_feedback, int new_feedback);
+
+  // Convert comparison feedback to corresponding feedback index.
+  TNode<Int32T> EncodeCompareOperationFeedback(TNode<Smi> feedback_value);
+
+  // Combine comparison feedback index using transition map.
+  TNode<Uint8T> CombineCompareOperationFeedback(
+      TNode<Int32T> old_feedback_index, TNode<Int32T> current_feedback_index);
 
   // Check if a property name might require protector invalidation when it is
   // used for a property store or deletion.

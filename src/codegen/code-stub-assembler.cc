@@ -13520,24 +13520,25 @@ void CodeStubAssembler::ReportFeedbackUpdate(
 }
 
 void CodeStubAssembler::UpdateEmbeddedFeedback(
-    TNode<Int32T> feedback, TNode<BytecodeArray> bytecode_array,
+    TNode<Smi> feedback, TNode<BytecodeArray> bytecode_array,
     TNode<IntPtrT> feedback_offset) {
   Label end(this);
 
-  TNode<Int32T> previous_feedback =
-      UnalignedLoad<Uint16T>(bytecode_array, feedback_offset);
+  TNode<Uint8T> previous_feedback =
+      Load<Uint8T>(bytecode_array, feedback_offset);
+  TNode<Int32T> feedback_index = EncodeCompareOperationFeedback(feedback);
+  TNode<Uint8T> new_feedback =
+      CombineCompareOperationFeedback(previous_feedback, feedback_index);
 
-  TNode<Int32T> combined_feedback = Word32Or(previous_feedback, feedback);
-
-  GotoIf(Word32Equal(previous_feedback, combined_feedback), &end);
+  GotoIf(Word32Equal(previous_feedback, new_feedback), &end);
   {
 #ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
     // manually ExitSandbox() to modify BytecodeArray
     ExitSandbox();
 #endif
 
-    UnalignedStoreNoWriteBarrier(MachineRepresentation::kWord16, bytecode_array,
-                                 feedback_offset, combined_feedback);
+    StoreNoWriteBarrier(MachineRepresentation::kWord8, bytecode_array,
+                        feedback_offset, new_feedback);
 
 #ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
     EnterSandbox();
@@ -13564,6 +13565,29 @@ void CodeStubAssembler::CombineFeedback(TVariable<Smi>* existing_feedback,
                                         TNode<Smi> feedback) {
   if (existing_feedback == nullptr) return;
   *existing_feedback = SmiOr(existing_feedback->value(), feedback);
+}
+
+TNode<Int32T> CodeStubAssembler::EncodeCompareOperationFeedback(
+    TNode<Smi> feedback_value) {
+  TVARIABLE(Int32T, result);
+  TNode<RawPtrT> feedback_encode_table =
+      UncheckedCast<RawPtrT>(ExternalConstant(
+          ExternalReference::compare_operation_feedback_encode_table()));
+  result = Load<Uint8T>(feedback_encode_table,
+                        ChangeUint32ToWord(SmiToInt32(feedback_value)));
+  return result.value();
+}
+
+TNode<Uint8T> CodeStubAssembler::CombineCompareOperationFeedback(
+    TNode<Int32T> old_feedback_index, TNode<Int32T> current_feedback_index) {
+  TVARIABLE(Uint8T, new_feedback);
+  TNode<RawPtrT> feedback_transition_table =
+      UncheckedCast<RawPtrT>(ExternalConstant(
+          ExternalReference::compare_operation_feedback_transition_table()));
+  TNode<UintPtrT> offset = ChangeUint32ToWord(Word32Or(
+      Word32Shl(old_feedback_index, Int32Constant(5)), current_feedback_index));
+  new_feedback = Load<Uint8T>(feedback_transition_table, offset);
+  return new_feedback.value();
 }
 
 void CodeStubAssembler::CheckForAssociatedProtector(TNode<Name> name,
@@ -15862,14 +15886,16 @@ void CodeStubAssembler::GenerateStrictEqualAndTryPatchCode(
   TVARIABLE(Smi, var_type_feedback);
 
   TNode<Boolean> result = StrictEqual(lhs, rhs, &var_type_feedback);
-  TNode<Int32T> combined_type_feedback =
-      Word32Or(SmiToInt32(var_type_feedback.value()), current_type_feedback);
+  TNode<Int32T> feedback_index =
+      EncodeCompareOperationFeedback(var_type_feedback.value());
+  TNode<Uint8T> new_feedback =
+      CombineCompareOperationFeedback(current_type_feedback, feedback_index);
 
   // Update embedded feedback in the runtime function to avoid
   // repeatedly entering/exiting hardware sandbox.
   auto bytecode_array = LoadBytecodeArrayFromBaseline();
   TailCallRuntime(Runtime::kPatchBaselineCode, NoContextConstant(),
-                  SmiFromInt32(combined_type_feedback), result, bytecode_array,
+                  SmiFromInt32(new_feedback), result, bytecode_array,
                   ChangeUintPtrToTagged(feedback_offset));
 }
 
@@ -15878,9 +15904,11 @@ void CodeStubAssembler::GenerateEqualAndTryPatchCode(
     TNode<UintPtrT> feedback_offset) {
   TVARIABLE(Smi, var_type_feedback);
   TVARIABLE(Object, var_exception);
-  TVARIABLE(Int32T, combined_type_feedback);
-  auto bytecode_array = LoadBytecodeArrayFromBaseline();
+  TVARIABLE(Uint8T, new_feedback);
+  TVARIABLE(Int32T, feedback_index);
+  TVARIABLE(UintPtrT, offset);
 
+  auto bytecode_array = LoadBytecodeArrayFromBaseline();
   Label if_exception(this, Label::kDeferred);
   TNode<Boolean> result;
   {
@@ -15889,20 +15917,21 @@ void CodeStubAssembler::GenerateEqualAndTryPatchCode(
         lhs, rhs, [&]() { return LoadContextFromBaseline(); },
         &var_type_feedback);
   }
-  combined_type_feedback =
-      Word32Or(SmiToInt32(var_type_feedback.value()), current_type_feedback);
+  feedback_index = EncodeCompareOperationFeedback(var_type_feedback.value());
+  new_feedback = CombineCompareOperationFeedback(current_type_feedback,
+                                                 feedback_index.value());
   TailCallRuntime(Runtime::kPatchBaselineCode, NoContextConstant(),
-                  SmiFromInt32(combined_type_feedback.value()), result,
-                  bytecode_array, ChangeUintPtrToTagged(feedback_offset));
+                  SmiFromInt32(new_feedback.value()), result, bytecode_array,
+                  ChangeUintPtrToTagged(feedback_offset));
 
   BIND(&if_exception);
   {
-    combined_type_feedback =
-        Word32Or(SmiToInt32(var_type_feedback.value()), current_type_feedback);
+    feedback_index = EncodeCompareOperationFeedback(var_type_feedback.value());
+    new_feedback = CombineCompareOperationFeedback(current_type_feedback,
+                                                   feedback_index.value());
     TailCallRuntime(Runtime::kPatchBaselineCodeAndThrow, NoContextConstant(),
-                    SmiFromInt32(combined_type_feedback.value()),
-                    var_exception.value(), bytecode_array,
-                    ChangeUintPtrToTagged(feedback_offset));
+                    SmiFromInt32(new_feedback.value()), var_exception.value(),
+                    bytecode_array, ChangeUintPtrToTagged(feedback_offset));
   }
 }
 
@@ -15932,7 +15961,7 @@ void CodeStubAssembler::GenerateSmiEqual(TNode<Object> lhs, TNode<Object> rhs,
   {
     TailCallBuiltin(fallback_builtin, LoadContextFromBaseline(), lhs, rhs,
                     Int32Constant(static_cast<int32_t>(
-                        CompareOperationFeedback::Type::kSignedSmall)),
+                        CompareOperationFeedback::TypeIndex::kSignedSmall)),
                     feedback_offset);
   }
 }
@@ -15971,7 +16000,7 @@ void CodeStubAssembler::GenerateStringEqual(TNode<Object> lhs,
   {
     TailCallBuiltin(fallback_builtin, LoadContextFromBaseline(), lhs, rhs,
                     Int32Constant(static_cast<int32_t>(
-                        CompareOperationFeedback::Type::kString)),
+                        CompareOperationFeedback::TypeIndex::kString)),
                     feedback_offset);
   }
 }
@@ -16082,7 +16111,7 @@ void CodeStubAssembler::GenerateNumberEqual(TNode<Object> lhs,
   {
     TailCallBuiltin(fallback_builtin, LoadContextFromBaseline(), lhs, rhs,
                     Int32Constant(static_cast<int32_t>(
-                        CompareOperationFeedback::Type::kNumber)),
+                        CompareOperationFeedback::TypeIndex::kNumber)),
                     feedback_offset);
   }
 }
@@ -16093,9 +16122,11 @@ void CodeStubAssembler::GenerateNumberEqual(TNode<Object> lhs,
       TNode<Int32T> current_type_feedback, TNode<UintPtrT> feedback_offset) {  \
     TVARIABLE(Smi, var_type_feedback);                                         \
     TVARIABLE(Object, var_exception);                                          \
-    TVARIABLE(Int32T, combined_type_feedback);                                 \
-    auto bytecode_array = LoadBytecodeArrayFromBaseline();                     \
+    TVARIABLE(Uint8T, new_feedback);                                           \
+    TVARIABLE(Int32T, feedback_index);                                         \
+    TVARIABLE(UintPtrT, offset);                                               \
                                                                                \
+    auto bytecode_array = LoadBytecodeArrayFromBaseline();                     \
     Label if_exception(this, Label::kDeferred);                                \
     TNode<Boolean> result;                                                     \
     {                                                                          \
@@ -16104,20 +16135,24 @@ void CodeStubAssembler::GenerateNumberEqual(TNode<Object> lhs,
           Operation::k##Name, lhs, rhs,                                        \
           [&]() { return LoadContextFromBaseline(); }, &var_type_feedback);    \
     }                                                                          \
-    combined_type_feedback = Word32Or(SmiToInt32(var_type_feedback.value()),   \
-                                      current_type_feedback);                  \
+    feedback_index =                                                           \
+        EncodeCompareOperationFeedback(var_type_feedback.value());             \
+    new_feedback = CombineCompareOperationFeedback(current_type_feedback,      \
+                                                   feedback_index.value());    \
     TailCallRuntime(Runtime::kPatchBaselineCode, NoContextConstant(),          \
-                    SmiFromInt32(combined_type_feedback.value()), result,      \
+                    SmiFromInt32(new_feedback.value()), result,                \
                     bytecode_array, ChangeUintPtrToTagged(feedback_offset));   \
                                                                                \
     BIND(&if_exception);                                                       \
     {                                                                          \
-      combined_type_feedback = Word32Or(SmiToInt32(var_type_feedback.value()), \
-                                        current_type_feedback);                \
-      TailCallRuntime(                                                         \
-          Runtime::kPatchBaselineCodeAndThrow, NoContextConstant(),            \
-          SmiFromInt32(combined_type_feedback.value()), var_exception.value(), \
-          bytecode_array, ChangeUintPtrToTagged(feedback_offset));             \
+      feedback_index =                                                         \
+          EncodeCompareOperationFeedback(var_type_feedback.value());           \
+      new_feedback = CombineCompareOperationFeedback(current_type_feedback,    \
+                                                     feedback_index.value());  \
+      TailCallRuntime(Runtime::kPatchBaselineCodeAndThrow,                     \
+                      NoContextConstant(), SmiFromInt32(new_feedback.value()), \
+                      var_exception.value(), bytecode_array,                   \
+                      ChangeUintPtrToTagged(feedback_offset));                 \
     }                                                                          \
   }
 
@@ -16173,7 +16208,7 @@ void CodeStubAssembler::GenerateSmiRelationalCompare(
   {
     TailCallBuiltin(fallback_builtin, LoadContextFromBaseline(), lhs, rhs,
                     Int32Constant(static_cast<int32_t>(
-                        CompareOperationFeedback::Type::kSignedSmall)),
+                        CompareOperationFeedback::TypeIndex::kSignedSmall)),
                     feedback_offset);
   }
 }
@@ -16287,7 +16322,7 @@ void CodeStubAssembler::GenerateNumberRelationalCompare(
   {
     TailCallBuiltin(fallback_builtin, LoadContextFromBaseline(), lhs, rhs,
                     Int32Constant(static_cast<int32_t>(
-                        CompareOperationFeedback::Type::kNumber)),
+                        CompareOperationFeedback::TypeIndex::kNumber)),
                     feedback_offset);
   }
 }
@@ -16611,6 +16646,8 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
         BIND(&if_right_heapnumber);
         {
           CombineFeedback(var_type_feedback, CompareOperationFeedback::kNumber);
+          // OverwriteFeedback(var_type_feedback,
+          // CompareOperationFeedback::kAny);
           result = CAST(CallRuntime(Runtime::kBigIntEqualToNumber,
                                     NoContextConstant(), left, right));
           Goto(&end);
@@ -16638,6 +16675,8 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
 
         BIND(&if_right_string);
         {
+          // OverwriteFeedback(var_type_feedback,
+          // CompareOperationFeedback::kAny);
           CombineFeedback(var_type_feedback, CompareOperationFeedback::kString);
           result = CAST(CallRuntime(Runtime::kBigIntEqualToString,
                                     NoContextConstant(), left, right));
@@ -16646,6 +16685,8 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
 
         BIND(&if_right_boolean);
         {
+          // OverwriteFeedback(var_type_feedback,
+          // CompareOperationFeedback::kAny);
           CombineFeedback(var_type_feedback,
                           CompareOperationFeedback::kBoolean);
           var_right =
@@ -16709,8 +16750,8 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
                   var_type_feedback,
                   CompareOperationFeedback::kReceiverOrNullOrUndefined);
               GotoIf(IsJSReceiverInstanceType(right_type), &if_notequal);
-              CombineFeedback(var_type_feedback,
-                              CompareOperationFeedback::kAny);
+              OverwriteFeedback(var_type_feedback,
+                                CompareOperationFeedback::kAny);
             }
             Goto(&if_notequal);
           }
@@ -16756,9 +16797,7 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
         {
           // {left} is a Primitive and {right} is a JSReceiver, so swapping
           // the order is not observable.
-          if (var_type_feedback != nullptr) {
-            *var_type_feedback = SmiConstant(CompareOperationFeedback::kAny);
-          }
+          OverwriteFeedback(var_type_feedback, CompareOperationFeedback::kAny);
           Goto(&use_symmetry);
         }
       }
@@ -16791,10 +16830,9 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
           {
             // When we get here, {right} must be either Null or Undefined.
             CSA_DCHECK(this, IsNullOrUndefined(right));
-            if (var_type_feedback != nullptr) {
-              *var_type_feedback = SmiConstant(
-                  CompareOperationFeedback::kReceiverOrNullOrUndefined);
-            }
+            OverwriteFeedback(
+                var_type_feedback,
+                CompareOperationFeedback::kReceiverOrNullOrUndefined);
             Branch(IsUndetectableMap(left_map), &if_equal, &if_notequal);
           }
 
@@ -16802,7 +16840,8 @@ TNode<Boolean> CodeStubAssembler::Equal(TNode<Object> left, TNode<Object> right,
           {
             // {right} is a Primitive, and neither Null or Undefined;
             // convert {left} to Primitive too.
-            CombineFeedback(var_type_feedback, CompareOperationFeedback::kAny);
+            OverwriteFeedback(var_type_feedback,
+                              CompareOperationFeedback::kAny);
             var_left = CallBuiltin(Builtins::NonPrimitiveToPrimitive(),
                                    context(), left);
             Goto(&loop);

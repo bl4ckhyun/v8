@@ -428,7 +428,7 @@ uint32_t BaselineCompiler::Flag8(int operand_index) {
 uint32_t BaselineCompiler::Flag16(int operand_index) {
   return iterator().GetFlag16Operand(operand_index);
 }
-uint32_t BaselineCompiler::EmbeddedFeedback(int operand_index) {
+uint8_t BaselineCompiler::EmbeddedFeedback(int operand_index) {
   return iterator().GetEmbeddedFeedback(operand_index);
 }
 uint32_t BaselineCompiler::RegisterCount(int operand_index) {
@@ -1760,7 +1760,7 @@ void BaselineCompiler::VisitConstructForwardAllArgs() {
   case CompareOperationFeedback::Type::k##type:              \
     CallBuiltin<Builtin::k##name##_##type##_Baseline>(       \
         RegisterOperand(0), kInterpreterAccumulatorRegister, \
-        feedback_value_offset);                              \
+        feedback_index_offset);                              \
     break;
 
 #define Equal_CASE(type) TYPED_COMPARE_CASE(Equal, type)
@@ -1771,30 +1771,31 @@ void BaselineCompiler::VisitConstructForwardAllArgs() {
 #define GreaterThanOrEqual_CASE(type) \
   TYPED_COMPARE_CASE(GreaterThanOrEqual, type)
 
-#define VISIT_TYPED_COMPARE_OPERATION(TypedStubList, Name)                  \
-  auto feedback_value_offset =                                              \
-      iterator().GetEmbeddedFeedbackOffset(kEmbeddedFeedbackOperandIndex);  \
-  if (allow_sparkplug_plus_) {                                              \
-    switch (                                                                \
-        static_cast<CompareOperationFeedback::Type>(EmbeddedFeedback(1))) { \
-      TypedStubList(Name##_CASE) default                                    \
-          : CallBuiltin<Builtin::k##Name##_Generic_Baseline>(               \
-                RegisterOperand(0), kInterpreterAccumulatorRegister,        \
-                feedback_value_offset);                                     \
-      break;                                                                \
-    }                                                                       \
-  } else {                                                                  \
-    CallBuiltin<Builtin::k##Name##_Generic_Baseline>(                       \
-        RegisterOperand(0), kInterpreterAccumulatorRegister,                \
-        feedback_value_offset);                                             \
+#define VISIT_TYPED_COMPARE_OPERATION(TypedStubList, Name)                 \
+  using Feedback = CompareOperationFeedback;                               \
+  auto feedback_index_offset =                                             \
+      iterator().GetEmbeddedFeedbackOffset(kEmbeddedFeedbackOperandIndex); \
+  if (allow_sparkplug_plus_) {                                             \
+    switch (Feedback::DecodeTypeIndex(                                     \
+        static_cast<Feedback::TypeIndex>(EmbeddedFeedback(1)))) {          \
+      TypedStubList(Name##_CASE) default                                   \
+          : CallBuiltin<Builtin::k##Name##_Generic_Baseline>(              \
+                RegisterOperand(0), kInterpreterAccumulatorRegister,       \
+                feedback_index_offset);                                    \
+      break;                                                               \
+    }                                                                      \
+  } else {                                                                 \
+    CallBuiltin<Builtin::k##Name##_Generic_Baseline>(                      \
+        RegisterOperand(0), kInterpreterAccumulatorRegister,               \
+        feedback_index_offset);                                            \
   }
 #else
 #define VISIT_TYPED_COMPARE_OPERATION(TypedStubList, Name)                 \
-  auto feedback_value_offset =                                             \
+  auto feedback_index_offset =                                             \
       iterator().GetEmbeddedFeedbackOffset(kEmbeddedFeedbackOperandIndex); \
   CallBuiltin<Builtin::k##Name##_Generic_Baseline>(                        \
       RegisterOperand(0), kInterpreterAccumulatorRegister,                 \
-      feedback_value_offset);
+      feedback_index_offset);
 #endif  // V8_ENABLE_SPARKPLUG_PLUS
 
 void BaselineCompiler::VisitTestEqual() {

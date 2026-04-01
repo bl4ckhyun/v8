@@ -1840,35 +1840,35 @@ class InterpreterCompareOpAssembler : public InterpreterAssembler {
   }
 };
 
-// TestEqual <src> <feedback_value>
+// TestEqual <src> <feedback_index>
 //
 // Test if the value in the <src> register equals the accumulator.
 IGNITION_HANDLER(TestEqual, InterpreterCompareOpAssembler) {
   CompareOpWithEmbeddedFeedback(Operation::kEqual);
 }
 
-// TestEqualStrict <src> <feedback_value>
+// TestEqualStrict <src> <feedback_index>
 //
 // Test if the value in the <src> register is strictly equal to the accumulator.
 IGNITION_HANDLER(TestEqualStrict, InterpreterCompareOpAssembler) {
   CompareOpWithEmbeddedFeedback(Operation::kStrictEqual);
 }
 
-// TestLessThan <src> <feedback_value>
+// TestLessThan <src> <feedback_index>
 //
 // Test if the value in the <src> register is less than the accumulator.
 IGNITION_HANDLER(TestLessThan, InterpreterCompareOpAssembler) {
   CompareOpWithEmbeddedFeedback(Operation::kLessThan);
 }
 
-// TestGreaterThan <src> <feedback_value>
+// TestGreaterThan <src> <feedback_index>
 //
 // Test if the value in the <src> register is greater than the accumulator.
 IGNITION_HANDLER(TestGreaterThan, InterpreterCompareOpAssembler) {
   CompareOpWithEmbeddedFeedback(Operation::kGreaterThan);
 }
 
-// TestLessThanOrEqual <src> <feedback_value>
+// TestLessThanOrEqual <src> <feedback_index>
 //
 // Test if the value in the <src> register is less than or equal to the
 // accumulator.
@@ -1876,7 +1876,7 @@ IGNITION_HANDLER(TestLessThanOrEqual, InterpreterCompareOpAssembler) {
   CompareOpWithEmbeddedFeedback(Operation::kLessThanOrEqual);
 }
 
-// TestGreaterThanOrEqual <src> <feedback_value>
+// TestGreaterThanOrEqual <src> <feedback_index>
 //
 // Test if the value in the <src> register is greater than or equal to the
 // accumulator.

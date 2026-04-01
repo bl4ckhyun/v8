@@ -2138,6 +2138,7 @@ filegroup(
         "src/objects/embedder-data-slot-inl.h",
         "src/objects/feedback-cell.h",
         "src/objects/feedback-cell-inl.h",
+        "src/objects/feedback-transition-table.cc",
         "src/objects/feedback-vector.cc",
         "src/objects/feedback-vector.h",
         "src/objects/feedback-vector-inl.h",

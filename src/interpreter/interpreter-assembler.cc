@@ -148,11 +148,10 @@ TNode<BytecodeArray> InterpreterAssembler::BytecodeArrayTaggedPointer() {
 void InterpreterAssembler::UpdateEmbeddedFeedback(TNode<Smi> feedback,
                                                   int feedback_operand_index) {
 #ifndef V8_JITLESS
-  TNode<IntPtrT> feedback_value_offset =
+  TNode<IntPtrT> feedback_index_offset =
       BytecodeOperandOffset(feedback_operand_index);
-  CodeStubAssembler::UpdateEmbeddedFeedback(SmiToInt32(feedback),
-                                            BytecodeArrayTaggedPointer(),
-                                            feedback_value_offset);
+  CodeStubAssembler::UpdateEmbeddedFeedback(
+      feedback, BytecodeArrayTaggedPointer(), feedback_index_offset);
 #endif  // V8_JITLESS
 }
 
@@ -721,7 +720,7 @@ TNode<Uint32T> InterpreterAssembler::BytecodeOperandEmbeddedFeedback(
             Bytecodes::GetOperandType(bytecode_, operand_index));
   OperandSize operand_size =
       Bytecodes::GetOperandSize(bytecode_, operand_index, operand_scale());
-  DCHECK_EQ(operand_size, OperandSize::kShort);
+  DCHECK_EQ(operand_size, OperandSize::kByte);
   return BytecodeUnsignedOperand(operand_index, operand_size);
 }
 
