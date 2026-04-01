@@ -1008,6 +1008,7 @@ Instruction* InstructionSelector::EmitWithContinuation(
     continuation_inputs_.push_back(g.Label(cont->false_block()));
   } else if (cont->IsDeoptimize()) {
     int immediate_args_count = 0;
+    DCHECK_LE(input_count, DeoptFrameStateOffsetField::kMax);
     opcode |= DeoptImmedArgsCountField::encode(immediate_args_count) |
               DeoptFrameStateOffsetField::encode(static_cast<int>(input_count));
     AppendDeoptimizeArguments(&continuation_inputs_, cont->reason(),
