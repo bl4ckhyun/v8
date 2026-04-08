@@ -8,6 +8,7 @@
 #include <optional>
 #include <type_traits>
 
+#include "include/v8config.h"
 #include "src/ic/call-optimization.h"
 #include "src/objects/elements-kind.h"
 #include "src/objects/feedback-vector.h"
@@ -335,7 +336,7 @@ class OptionalRef {
   // the full statement.
   class ArrowOperatorHelper {
    public:
-    TRef* operator->() { return &object_; }
+    TRef* operator->() V8_LIFETIME_BOUND { return &object_; }
 
    private:
     friend class OptionalRef<TRef>;
@@ -381,7 +382,7 @@ class OptionalRef {
   }
 
  private:
-  explicit OptionalRef(ObjectData* data) : data_(data) {
+  explicit OptionalRef(ObjectData* data V8_LIFETIME_BOUND) : data_(data) {
     CHECK_NOT_NULL(data_);
   }
   ObjectData* data_ = nullptr;
@@ -408,7 +409,8 @@ HEAP_BROKER_OBJECT_LIST(V)
 
 class V8_EXPORT_PRIVATE ObjectRef {
  public:
-  explicit ObjectRef(ObjectData* data, bool check_type = true) : data_(data) {
+  explicit ObjectRef(ObjectData* data V8_LIFETIME_BOUND, bool check_type = true)
+      : data_(data) {
     CHECK_NOT_NULL(data_);
   }
 
@@ -542,12 +544,13 @@ class HeapObjectType {
 
 // Constructors are carefully defined such that we do a type check on
 // the outermost Ref class in the inheritance chain only.
-#define DEFINE_REF_CONSTRUCTOR(Name, Base)                     \
-  explicit Name##Ref(ObjectData* data, bool check_type = true) \
-      : Base(data, false) {                                    \
-    if (check_type) {                                          \
-      CHECK(Is##Name());                                       \
-    }                                                          \
+#define DEFINE_REF_CONSTRUCTOR(Name, Base)               \
+  explicit Name##Ref(ObjectData* data V8_LIFETIME_BOUND, \
+                     bool check_type = true)             \
+      : Base(data, false) {                              \
+    if (check_type) {                                    \
+      CHECK(Is##Name());                                 \
+    }                                                    \
   }
 
 class HeapObjectRef : public ObjectRef {
