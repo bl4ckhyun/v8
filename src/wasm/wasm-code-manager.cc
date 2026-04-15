@@ -2875,10 +2875,6 @@ void NativeModule::FreeCode(base::Vector<WasmCode* const> codes) {
   // Free the {WasmCode} objects. This will also unregister trap handler data.
   for (WasmCode* code : codes) {
     DCHECK_EQ(1, owned_code_.count(code->instruction_start()));
-    // TODO(407003348): Drop this check if it doesn't trigger in the wild.
-    CHECK_EQ(WasmCode::refcount(
-                 code->ref_count_bitfield_.load(std::memory_order_acquire)),
-             0);
     owned_code_.erase(code->instruction_start());
   }
   // Remove debug side tables for all removed code objects, after releasing our
