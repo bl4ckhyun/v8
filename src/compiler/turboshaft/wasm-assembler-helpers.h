@@ -9,6 +9,16 @@
 #error This header should only be included if WebAssembly is enabled.
 #endif  // !V8_ENABLE_WEBASSEMBLY
 
+#include "src/compiler/write-barrier-kind.h"
+
+namespace v8::internal::wasm {
+struct ArrayIndexImmediate;
+
+// Shared between the Wasm pipeline and the Wasm-in-JS body inlining.
+compiler::WriteBarrierKind ArrayIndexImmediateToWriteBarrier(
+    const wasm::ArrayIndexImmediate& array);
+}  // namespace v8::internal::wasm
+
 namespace v8::internal::compiler::turboshaft {
 
 #define LOAD_INSTANCE_FIELD(instance, name, representation)           \

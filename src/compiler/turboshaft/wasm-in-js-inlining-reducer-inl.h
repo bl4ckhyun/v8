@@ -184,18 +184,17 @@ class WasmInJSInliningReducer : public Next {
   }
 
  private:
-  // Caller frame state set by REDUCE_INPUT_GRAPH(Call), consumed by the
-  // immediately following REDUCE(Call) within the same ReduceInputGraphCall
-  // invocation (crbug.com/493307329).
-  OptionalV<turboshaft::FrameState> pending_caller_frame_state_;
-
-
   V<turboshaft::FrameState> CreateWasmInlinedIntoJSFrameState(
       V<Context> js_context, V<turboshaft::FrameState> outer_frame_state,
       SharedFunctionInfoRef shared_function_info);
   V<turboshaft::FrameState> CreateJSWasmCallBuiltinContinuationFrameState(
       V<Context> js_context, V<turboshaft::FrameState> outer_frame_state,
       const wasm::CanonicalSig* signature);
+
+  // Caller frame state set by REDUCE_INPUT_GRAPH(Call), consumed by the
+  // immediately following REDUCE(Call) within the same ReduceInputGraphCall
+  // invocation (crbug.com/493307329).
+  OptionalV<turboshaft::FrameState> pending_caller_frame_state_;
 
   SourcePosition current_wasm_source_position_ = SourcePosition::Unknown();
 };
@@ -298,7 +297,7 @@ class WasmInJsInliningInterface {
         DCHECK(type.is_ref());
         op = __ RootConstant(RootIndex::kOptimizedOut);
       } else {
-        op = DefaultValue(type);
+        op = __ WasmDefaultValue(type);
       }
       while (index < decoder->num_locals() &&
              decoder->local_type(index) == type) {
@@ -1029,20 +1028,32 @@ class WasmInJsInliningInterface {
     // different Assemblers (reducer stacks), so I will have to templatize that.
     Bailout(decoder);
   }
+
   void ArrayGet(FullDecoder* decoder, const Value& array_obj,
                 const ArrayIndexImmediate& imm, const Value& index,
                 bool is_signed, Value* result) {
-    Bailout(decoder);
+    auto array_value = array_obj.get<WasmArrayNullable>();
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type,
+                            frame_state_);
+    result->op = __ ArrayGet(array_value, index.get<Word32>(), imm.array_type,
+                             is_signed, {});
   }
+
+  void ArraySet(FullDecoder* decoder, const Value& array_obj,
+                const ArrayIndexImmediate& imm, const Value& index,
+                const Value& value) {
+    auto array_value = array_obj.get<WasmArrayNullable>();
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type,
+                            frame_state_);
+    __ ArraySet(array_value, index.get<Word32>(), value.op,
+                imm.array_type->element_type(), {},
+                wasm::ArrayIndexImmediateToWriteBarrier(imm));
+  }
+
   void ArrayAtomicGet(FullDecoder* decoder, const Value& array_obj,
                       const ArrayIndexImmediate& imm, const Value& index,
                       bool is_signed, AtomicMemoryOrder memory_order,
                       Value* result) {
-    Bailout(decoder);
-  }
-  void ArraySet(FullDecoder* decoder, const Value& array_obj,
-                const ArrayIndexImmediate& imm, const Value& index,
-                const Value& value) {
     Bailout(decoder);
   }
   void ArrayAtomicSet(FullDecoder* decoder, const Value& array_obj,
@@ -1438,35 +1449,6 @@ class WasmInJsInliningInterface {
   void set_current_wasm_source_position(FullDecoder* decoder) {
     __ set_current_wasm_source_position(
         SourcePosition(decoder->position(), inlining_id_));
-  }
-
-  // TODO(dlehmann): copied from `TurboshaftGraphBuildingInterface`, DRY.
-  V<Any> DefaultValue(ValueType type) {
-    switch (type.kind()) {
-      case wasm::kI8:
-      case wasm::kI16:
-      case wasm::kI32:
-      case wasm::kWaitQueue:
-        return __ Word32Constant(int32_t{0});
-      case wasm::kI64:
-        return __ Word64Constant(int64_t{0});
-      case wasm::kF16:
-      case wasm::kF32:
-        return __ Float32Constant(0.0f);
-      case wasm::kF64:
-        return __ Float64Constant(0.0);
-      case wasm::kRefNull:
-        return __ Null(type);
-      case wasm::kS128: {
-        uint8_t value[kSimd128Size] = {};
-        return __ Simd128Constant(value);
-      }
-      case wasm::kVoid:
-      case wasm::kRef:
-      case wasm::kBottom:
-      case wasm::kTop:
-        UNREACHABLE();
-    }
   }
 
   Assembler& Asm() { return asm_; }

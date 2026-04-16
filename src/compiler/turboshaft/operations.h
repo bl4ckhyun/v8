@@ -7357,7 +7357,7 @@ struct IsNullOp : FixedArityOperationT<1, IsNullOp> {
 
 // Traps on a null input, otherwise returns the input, type-cast to the
 // respective non-nullable type.
-struct AssertNotNullOp : FixedArityOperationT<1, AssertNotNullOp> {
+struct AssertNotNullOp : OperationT<AssertNotNullOp> {
   wasm::ValueType type;
   TrapId trap_id;
 
@@ -7366,9 +7366,26 @@ struct AssertNotNullOp : FixedArityOperationT<1, AssertNotNullOp> {
       OpEffects().CanDependOnChecks().CanLeaveCurrentFunction();
 
   V<Object> object() const { return input<Object>(0); }
+  OptionalV<FrameState> frame_state() const {
+    return input_count > 1 ? input<FrameState>(1)
+                           : OptionalV<FrameState>::Nullopt();
+  }
 
-  AssertNotNullOp(V<Object> object, wasm::ValueType type, TrapId trap_id)
-      : Base(object), type(type), trap_id(trap_id) {}
+  AssertNotNullOp(V<Object> object, OptionalV<FrameState> frame_state,
+                  wasm::ValueType type, TrapId trap_id)
+      : Base(1 + frame_state.valid()), type(type), trap_id(trap_id) {
+    input(0) = object;
+    if (frame_state.valid()) {
+      input(1) = frame_state.value();
+    }
+  }
+
+  static AssertNotNullOp& New(Graph* graph, V<Object> object,
+                              OptionalV<FrameState> frame_state,
+                              wasm::ValueType type, TrapId trap_id) {
+    return Base::New(graph, 1 + frame_state.valid(), object, frame_state, type,
+                     trap_id);
+  }
 
   base::Vector<const RegisterRepresentation> outputs_rep() const {
     return RepVector<RegisterRepresentation::Tagged()>();
@@ -7384,6 +7401,11 @@ struct AssertNotNullOp : FixedArityOperationT<1, AssertNotNullOp> {
   }
 
   auto options() const { return std::tuple{type, trap_id}; }
+
+  template <typename Fn, typename Mapper>
+  V8_INLINE auto Explode(Fn fn, Mapper& mapper) const {
+    return fn(mapper.Map(object()), mapper.Map(frame_state()), type, trap_id);
+  }
 };
 
 // The runtime type (RTT) is a value representing a concrete type (in this case

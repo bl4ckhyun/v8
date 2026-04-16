@@ -19,6 +19,7 @@ d8.file.execute("test/mjsunit/mjsunit.js");
 const builder = new WasmModuleBuilder();
 const array = builder.addArray(kWasmI32);
 const struct = builder.addStruct([makeField(kWasmI32, true)]);
+const array8 = builder.addArray(kWasmI8);
 const globalI32 = builder.addGlobal(kWasmI32, true, false);
 const globalEqRef = builder.addGlobal(kWasmEqRef, true, false);
 
@@ -402,6 +403,7 @@ addTestcase('arrayLenParam', makeSig([kWasmExternRef], [kWasmI32]), [null], [
 });
 
 const globalArray = builder.addGlobal(wasmRefNullType(array), true, false);
+const globalArray8 = builder.addGlobal(wasmRefNullType(array8), true, false);
 
 builder.addFunction('initGlobalArray', makeSig([], [])).addBody([
   ...wasmI32Const(42),
@@ -535,6 +537,95 @@ addTestcase('sameModuleMultipleFunctions', kSig_v_v, [], [], (wasmExports) => {
     wasmExports.sameModuleMultipleFunctions();
   };
 });
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arraySet of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arraySet', kSig_v_v, [], [
+  kExprGlobalGet, globalArray.index,
+  ...wasmI32Const(0),
+  ...wasmI32Const(23),
+  kGCPrefix, kExprArraySet, array,
+], (wasmExports) => {
+  wasmExports.initGlobalArray();
+  return function js_arraySet() {
+    wasmExports.arraySet();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGet of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGet', kSig_i_v, [], [
+  kExprGlobalGet, globalArray.index,
+  ...wasmI32Const(0),
+  kGCPrefix, kExprArrayGet, array,
+], (wasmExports) => {
+  wasmExports.arraySet();
+  return function js_arrayGet() {
+    return wasmExports.arrayGet();
+  };
+});
+
+builder.addFunction('initGlobalArray8', makeSig([], [])).addBody([
+  ...wasmI32Const(42),
+  kGCPrefix, kExprArrayNewDefault, array8,
+  kExprGlobalSet, globalArray8.index,
+]).exportFunc();
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGetS of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGetS', kSig_i_v, [], [
+  kExprGlobalGet, globalArray8.index,
+  ...wasmI32Const(0),
+  kGCPrefix, kExprArrayGetS, array8,
+], (wasmExports) => {
+  wasmExports.initGlobalArray8();
+  return function js_arrayGetS() {
+    return wasmExports.arrayGetS();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGetU of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGetU', kSig_i_v, [], [
+  kExprGlobalGet, globalArray8.index,
+  ...wasmI32Const(0),
+  kGCPrefix, kExprArrayGetU, array8,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGetOutOfBounds of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGetOutOfBounds', kSig_i_v, [], [
+  kExprGlobalGet, globalArray.index,
+  ...wasmI32Const(100),
+  kGCPrefix, kExprArrayGet, array,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGetNull of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGetNull', kSig_i_v, [], [
+  kExprGlobalGet, globalNullArray.index,
+  ...wasmI32Const(0),
+  kGCPrefix, kExprArrayGet, array,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arraySetOutOfBounds of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arraySetOutOfBounds', kSig_v_v, [], [
+  kExprGlobalGet, globalArray.index,
+  ...wasmI32Const(100),
+  ...wasmI32Const(23),
+  kGCPrefix, kExprArraySet, array,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arraySetNull of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arraySetNull', kSig_v_v, [], [
+  kExprGlobalGet, globalNullArray.index,
+  ...wasmI32Const(0),
+  ...wasmI32Const(23),
+  kGCPrefix, kExprArraySet, array,
+]);
+
 
 
 // =============================================================================

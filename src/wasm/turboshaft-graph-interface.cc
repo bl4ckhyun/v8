@@ -327,7 +327,7 @@ class TurboshaftGraphBuildingInterface
         DCHECK(type.is_ref());
         op = __ RootConstant(RootIndex::kOptimizedOut);
       } else {
-        op = DefaultValue(type);
+        op = __ WasmDefaultValue(type);
       }
       while (index < decoder->num_locals() &&
              decoder->local_type(index) == type) {
@@ -5124,7 +5124,7 @@ class TurboshaftGraphBuildingInterface
     SmallZoneVector<OpIndex, 16> args(field_count, decoder->zone_);
     for (uint32_t i = 0; i < field_count; i++) {
       ValueType field_type = imm.struct_type->field(i);
-      args[i] = DefaultValue(field_type);
+      args[i] = __ WasmDefaultValue(field_type);
     }
     result->op = StructNewImpl(decoder, imm, descriptor, args.data(), false);
   }
@@ -5345,7 +5345,7 @@ class TurboshaftGraphBuildingInterface
 
   void ArrayNewDefault(FullDecoder* decoder, const ArrayIndexImmediate& imm,
                        const Value& length, Value* result) {
-    V<Any> initial_value = DefaultValue(imm.array_type->element_type());
+    V<Any> initial_value = __ WasmDefaultValue(imm.array_type->element_type());
     // No need for a write barrier, since DefaultValue can only be a RO-space
     // object.
     result->op =
@@ -5357,7 +5357,7 @@ class TurboshaftGraphBuildingInterface
                 const ArrayIndexImmediate& imm, const Value& index,
                 bool is_signed, Value* result) {
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
     result->op = __ ArrayGet(array_value, index.get<Word32>(), imm.array_type,
                              is_signed, {});
   }
@@ -5367,7 +5367,7 @@ class TurboshaftGraphBuildingInterface
                       bool is_signed, AtomicMemoryOrder memory_order,
                       Value* result) {
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
     result->op = __ ArrayGet(array_value, index.get<Word32>(), imm.array_type,
                              is_signed, memory_order);
   }
@@ -5376,7 +5376,7 @@ class TurboshaftGraphBuildingInterface
                 const ArrayIndexImmediate& imm, const Value& index,
                 const Value& value) {
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
     __ ArraySet(array_value, index.get<Word32>(), value.op,
                 imm.array_type->element_type(), {},
                 ArrayIndexImmediateToWriteBarrier(imm));
@@ -5386,7 +5386,7 @@ class TurboshaftGraphBuildingInterface
                       const ArrayIndexImmediate& imm, const Value& index,
                       const Value& value, AtomicMemoryOrder memory_order) {
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
     __ ArraySet(array_value, index.get<Word32>(), value.op,
                 imm.array_type->element_type(), memory_order,
                 ArrayIndexImmediateToWriteBarrier(imm));
@@ -5402,7 +5402,7 @@ class TurboshaftGraphBuildingInterface
       // On some architectures atomic operations require aligned accesses while
       // unshared objects don't have the required alignment for 64 bit accesses.
       auto array_value = array_obj.get<WasmArrayNullable>();
-      BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+      __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
       V<Any> old_value = __ ArrayGet(array_value, index.get<Word32>(),
                                      imm.array_type, true, {});
       result->op = old_value;
@@ -5457,7 +5457,7 @@ class TurboshaftGraphBuildingInterface
       }
     })(opcode);
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
     result->op = __ ArrayAtomicRMW(array_value, index.get<Word32>(),
                                    value.get<Word32>(), OpIndex::Invalid(), op,
                                    imm.array_type->element_type(), order);
@@ -5471,7 +5471,7 @@ class TurboshaftGraphBuildingInterface
                                   const Value& new_value,
                                   AtomicMemoryOrder order, Value* result) {
     auto array_value = array_obj.get<WasmArrayNullable>();
-    BoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
+    __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type);
 
     if (array_obj.type.is_shared() == SharedFlag::kNo &&
         imm.array_type->element_type() == kWasmI64) {
@@ -6894,34 +6894,6 @@ class TurboshaftGraphBuildingInterface
       *exception = MaybePhi(block_phis.incoming_exceptions(), kWasmExternRef);
     }
     block_phis_.erase(block_phis_it);
-  }
-
-  V<Any> DefaultValue(ValueType type) {
-    switch (type.kind()) {
-      case kI8:
-      case kI16:
-      case kI32:
-      case kWaitQueue:
-        return __ Word32Constant(int32_t{0});
-      case kI64:
-        return __ Word64Constant(int64_t{0});
-      case kF16:
-      case kF32:
-        return __ Float32Constant(0.0f);
-      case kF64:
-        return __ Float64Constant(0.0);
-      case kRefNull:
-        return __ Null(type);
-      case kS128: {
-        uint8_t value[kSimd128Size] = {};
-        return __ Simd128Constant(value);
-      }
-      case kVoid:
-      case kRef:
-      case kTop:
-      case kBottom:
-        UNREACHABLE();
-    }
   }
 
  private:
@@ -9042,21 +9014,6 @@ class TurboshaftGraphBuildingInterface
     return result_op;
   }
 
-  void BoundsCheckArray(V<WasmArrayNullable> array, V<Word32> index,
-                        ValueType array_type) {
-    if (V8_UNLIKELY(v8_flags.experimental_wasm_skip_bounds_checks)) {
-      if (array_type.is_nullable()) {
-        __ AssertNotNull(array, array_type, TrapId::kTrapNullDereference);
-      }
-    } else {
-      OpIndex length = __ ArrayLength(array, array_type.is_nullable()
-                                                 ? compiler::kWithNullCheck
-                                                 : compiler::kWithoutNullCheck);
-      __ TrapIfNot(__ Uint32LessThan(index, length),
-                   TrapId::kTrapArrayOutOfBounds);
-    }
-  }
-
   V<WasmArray> BoundsCheckArrayWithLength(V<WasmArrayNullable> array,
                                           V<Word32> index, V<Word32> length,
                                           compiler::CheckForNull null_check) {
@@ -9538,12 +9495,6 @@ class TurboshaftGraphBuildingInterface
                : kNoWriteBarrier;
   }
 
-  WriteBarrierKind ArrayIndexImmediateToWriteBarrier(
-      const ArrayIndexImmediate& array) {
-    return array.array_type->element_type().is_ref() ? kFullWriteBarrier
-                                                     : kNoWriteBarrier;
-  }
-
   // We need this shift so that resulting OpIndex offsets are multiples of
   // `sizeof(OperationStorageSlot)`.
   static constexpr int kPositionFieldShift = 3;
@@ -9787,6 +9738,12 @@ class TurboshaftGraphBuildingInterface
   std::unique_ptr<WasmCoverageInstrumentation<FullDecoder>>
       coverage_instrumentation_;
 };
+
+compiler::WriteBarrierKind ArrayIndexImmediateToWriteBarrier(
+    const ArrayIndexImmediate& array) {
+  return array.array_type->element_type().is_ref() ? compiler::kFullWriteBarrier
+                                                   : compiler::kNoWriteBarrier;
+}
 
 V8_EXPORT_PRIVATE void BuildTSGraph(
     compiler::turboshaft::PipelineData* data, CompilationEnv* env,

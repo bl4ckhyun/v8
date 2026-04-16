@@ -5084,7 +5084,14 @@ class AssemblerOpInterface : public Next {
 
   V<Object> AssertNotNull(V<Object> object, wasm::ValueType type,
                           TrapId trap_id) {
-    return ReduceIfReachableAssertNotNull(object, type, trap_id);
+    return ReduceIfReachableAssertNotNull(
+        object, OptionalV<turboshaft::FrameState>{}, type, trap_id);
+  }
+
+  V<Object> AssertNotNull(V<Object> object,
+                          OptionalV<turboshaft::FrameState> frame_state,
+                          wasm::ValueType type, TrapId trap_id) {
+    return ReduceIfReachableAssertNotNull(object, frame_state, type, trap_id);
   }
 
   V<Map> RttCanon(V<FixedArray> rtts, wasm::ModuleTypeIndex type_index) {
@@ -5190,6 +5197,54 @@ class AssemblerOpInterface : public Next {
                         OptionalV<turboshaft::FrameState> frame_state,
                         CheckForNull null_check) {
     return ReduceIfReachableArrayLength(array, frame_state, null_check);
+  }
+
+  // Shared between the Wasm pipeline and the Wasm-in-JS body inlining.
+  void WasmBoundsCheckArray(
+      V<WasmArrayNullable> array, V<Word32> index, wasm::ValueType array_type,
+      OptionalV<turboshaft::FrameState> frame_state = {}) {
+    if (V8_UNLIKELY(v8_flags.experimental_wasm_skip_bounds_checks)) {
+      if (array_type.is_nullable()) {
+        __ AssertNotNull(array, frame_state, array_type,
+                         TrapId::kTrapNullDereference);
+      }
+    } else {
+      V<Word32> length = __ ArrayLength(array, frame_state,
+                                        array_type.is_nullable()
+                                            ? compiler::kWithNullCheck
+                                            : compiler::kWithoutNullCheck);
+      __ TrapIfNot(__ Uint32LessThan(index, length), frame_state,
+                   TrapId::kTrapArrayOutOfBounds);
+    }
+  }
+
+  // Shared between the Wasm pipeline and the Wasm-in-JS body inlining.
+  V<Any> WasmDefaultValue(wasm::ValueType type) {
+    switch (type.kind()) {
+      case wasm::kI8:
+      case wasm::kI16:
+      case wasm::kI32:
+      case wasm::kWaitQueue:
+        return __ Word32Constant(int32_t{0});
+      case wasm::kI64:
+        return __ Word64Constant(int64_t{0});
+      case wasm::kF16:
+      case wasm::kF32:
+        return __ Float32Constant(0.0f);
+      case wasm::kF64:
+        return __ Float64Constant(0.0);
+      case wasm::kRefNull:
+        return __ Null(type);
+      case wasm::kS128: {
+        uint8_t value[kSimd128Size] = {};
+        return __ Simd128Constant(value);
+      }
+      case wasm::kVoid:
+      case wasm::kRef:
+      case wasm::kBottom:
+      case wasm::kTop:
+        UNREACHABLE();
+    }
   }
 
   V<WasmArray> WasmAllocateArray(V<Map> rtt, ConstOrV<Word32> length,

@@ -69,8 +69,9 @@ class WasmLoweringReducer : public Next {
     return ReduceIsRootConstant(object, index);
   }
 
-  V<Object> REDUCE(AssertNotNull)(V<Object> object, wasm::ValueType type,
-                                  TrapId trap_id) {
+  V<Object> REDUCE(AssertNotNull)(V<Object> object,
+                                  OptionalV<FrameState> frame_state,
+                                  wasm::ValueType type, TrapId trap_id) {
     if (trap_id == TrapId::kTrapNullDereference) {
       // Skip the check altogether if null checks are turned off.
       if (!v8_flags.experimental_wasm_skip_null_checks) {
@@ -82,7 +83,7 @@ class WasmLoweringReducer : public Next {
             wasm::IsSubtypeOf(wasm::kWasmI31Ref.AsNonNull(), type.AsNonShared(),
                               module_) ||
             !type.use_wasm_null()) {
-          __ TrapIf(__ IsNull(object, type), trap_id);
+          __ TrapIf(__ IsNull(object, type), frame_state, trap_id);
         } else {
           // Otherwise, load the word after the map word.
           static_assert(WasmStruct::kHeaderSize > kTaggedSize);
@@ -93,7 +94,7 @@ class WasmLoweringReducer : public Next {
         }
       }
     } else {
-      __ TrapIf(__ IsNull(object, type), trap_id);
+      __ TrapIf(__ IsNull(object, type), frame_state, trap_id);
     }
     return object;
   }
