@@ -30,6 +30,14 @@ tools/run-tests.py --progress dots --exit-after-n-failures=5 --outdir=out/x64.op
 
 *Note: Always pass `--progress dots` so that there is minimal progress reporting, to avoid cluttering the output.*
 
+## Testing Strategy
+
+To maximize efficiency, use different build configurations based on the task:
+
+-   **`x64.debug`**: Use this for deep debugging of a single test case (e.g., with GDB). It is slow but provides full debug information and assertions.
+-   **`x64.optdebug`**: Use this for running the entire test suite. It strikes a balance between performance and debuggability, allowing for faster full-suite checks while still preserving assertions.
+-   **`x64.release`**: Use this for quick checks to verify that a fix works in a release build or to run benchmarks. It is the fastest but provides the least debug information.
+
 ## Interpreting Failures
 
 If there are any failing tests, they will be reported along their stderr and a command to reproduce them e.g.
