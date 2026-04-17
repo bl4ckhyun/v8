@@ -534,15 +534,6 @@ size_t Heap::CommittedMemoryExecutable() {
   return static_cast<size_t>(memory_allocator()->SizeExecutable());
 }
 
-void Heap::UpdateMaximumCommitted() {
-  if (!HasBeenSetUp()) return;
-
-  const size_t current_committed_memory = CommittedMemory();
-  if (current_committed_memory > maximum_committed_) {
-    maximum_committed_ = current_committed_memory;
-  }
-}
-
 size_t Heap::Available() {
   if (!HasBeenSetUp()) return 0;
 
@@ -1024,7 +1015,6 @@ void Heap::GarbageCollectionPrologue(
   nodes_copied_in_new_space_ = 0;
   nodes_promoted_ = 0;
 
-  UpdateMaximumCommitted();
 
   DCHECK(!AllowGarbageCollection::IsAllowed());
   DCHECK_EQ(gc_state(), NOT_IN_GC);
@@ -1222,7 +1212,6 @@ void Heap::GarbageCollectionEpilogue(GarbageCollector collector) {
   TRACE_GC(tracer(), GCTracer::Scope::HEAP_EPILOGUE);
   AllowGarbageCollection for_the_rest_of_the_epilogue;
 
-  UpdateMaximumCommitted();
 
   isolate_->counters()->alive_after_last_gc()->Set(
       static_cast<int>(SizeOfObjects()));
@@ -1235,11 +1224,6 @@ void Heap::GarbageCollectionEpilogue(GarbageCollector collector) {
         static_cast<int>(CommittedMemory() / KB));
     isolate_->counters()->heap_sample_total_used()->AddSample(
         static_cast<int>(SizeOfObjects() / KB));
-    isolate_->counters()->heap_sample_code_space_committed()->AddSample(
-        static_cast<int>(code_space()->CommittedMemory() / KB));
-
-    isolate_->counters()->heap_sample_maximum_committed()->AddSample(
-        static_cast<int>(MaximumCommittedMemory() / KB));
   }
 
 #ifdef DEBUG
@@ -6416,7 +6400,6 @@ void Heap::TearDown() {
   // It's too late for Heap::Verify() here, as parts of the Isolate are
   // already gone by the time this is called.
 
-  UpdateMaximumCommitted();
 
   if (v8_flags.fuzzer_gc_analysis) {
     if (v8_flags.stress_marking > 0) {
