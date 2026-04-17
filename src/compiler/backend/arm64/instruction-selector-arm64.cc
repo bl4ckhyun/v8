@@ -2181,49 +2181,79 @@ bool TryEmitUbfiz(InstructionSelector* selector, Arm64OperandGenerator& g,
   return false;
 }
 
+// Try to fold a right shift and a mask into a single bitfield-extract
+// instruction (Ubfx).
+template <int bit_length>
+  requires(bit_length == 32 || bit_length == 64)
+bool TryEmitUbfx(InstructionSelector* selector, Arm64OperandGenerator& g,
+                 OpIndex node, const WordBinopOp& bitwise_and,
+                 ArchOpcode ubfx_opcode) {
+  using Int = std::conditional_t<bit_length == 32, uint32_t, uint64_t>;
+
+  constexpr auto kRep = bit_length == 32
+                            ? turboshaft::RegisterRepresentation::Word32()
+                            : turboshaft::RegisterRepresentation::Word64();
+  constexpr Int kBitLengthMask = bit_length - 1;
+
+  DCHECK_EQ(node, selector->Index(bitwise_and));
+  const Operation& lhs = selector->Get(bitwise_and.left());
+
+  Int mask;
+  if (lhs.Is<ShiftOp>() && lhs.Cast<ShiftOp>().rep == kRep &&
+      selector->CanCover(node, bitwise_and.left()) &&
+      selector->MatchUnsignedIntegralConstant(bitwise_and.right(), &mask)) {
+    const auto& shift = lhs.Cast<ShiftOp>();
+    bool is_shr = (shift.kind == ShiftOp::Kind::kShiftRightLogical ||
+                   shift.kind == ShiftOp::Kind::kShiftRightArithmetic);
+    if (!is_shr) {
+      return false;
+    }
+
+    Int mask_width = base::bits::CountPopulation(mask);
+    Int mask_msb = base::bits::CountLeadingZeros(mask);
+    if (mask_width != 0 && mask_width != bit_length &&
+        (mask_msb + mask_width == bit_length)) {
+      // The mask must be contiguous, and occupy the least-significant bits.
+      DCHECK_EQ(0u, base::bits::CountTrailingZeros(mask));
+
+      int64_t shift_by;
+      if (selector->MatchSignedIntegralConstant(shift.right(), &shift_by)) {
+        // For arithmetic right shifts, we can only use ubfx if the mask does
+        // not include any of the sign bits introduced by the shift.
+        bool is_arithmetic =
+            (shift.kind == ShiftOp::Kind::kShiftRightArithmetic);
+        uint32_t lsb = static_cast<uint32_t>(shift_by & kBitLengthMask);
+        if (is_arithmetic && lsb + mask_width > bit_length) {
+          return false;
+        }
+
+        // Ubfx cannot extract bits past the register size, however since
+        // shifting the original value would have introduced some zeros we can
+        // still use ubfx with a smaller mask and the remaining bits will be
+        // zeros.
+        if (lsb + mask_width > bit_length) {
+          mask_width = bit_length - lsb;
+        }
+
+        selector->Emit(ubfx_opcode, g.DefineAsRegister(node),
+                       g.UseRegister(shift.left()),
+                       g.UseImmediateOrTemp(shift.right(), lsb),
+                       g.TempImmediate(static_cast<int32_t>(mask_width)));
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 void InstructionSelector::VisitWord32And(OpIndex node) {
   Arm64OperandGenerator g(this);
   const WordBinopOp& bitwise_and =
       this->Get(node).Cast<Opmask::kWord32BitwiseAnd>();
-  const Operation& lhs = this->Get(bitwise_and.left());
-  if (int64_t constant_rhs;
-      lhs.Is<Opmask::kWord32ShiftRightLogical>() &&
-      CanCover(node, bitwise_and.left()) &&
-      MatchSignedIntegralConstant(bitwise_and.right(), &constant_rhs)) {
-    DCHECK(base::IsInRange(constant_rhs, std::numeric_limits<int32_t>::min(),
-                           std::numeric_limits<int32_t>::max()));
-    uint32_t mask = static_cast<uint32_t>(constant_rhs);
-    uint32_t mask_width = base::bits::CountPopulation(mask);
-    uint32_t mask_msb = base::bits::CountLeadingZeros32(mask);
-    if ((mask_width != 0) && (mask_width != 32) &&
-        (mask_msb + mask_width == 32)) {
-      // The mask must be contiguous, and occupy the least-significant bits.
-      DCHECK_EQ(0u, base::bits::CountTrailingZeros32(mask));
-
-      // Select Ubfx for And(Shr(x, imm), mask) where the mask is in the least
-      // significant bits.
-      const ShiftOp& lhs_shift = lhs.Cast<Opmask::kWord32ShiftRightLogical>();
-      if (int64_t constant;
-          MatchSignedIntegralConstant(lhs_shift.right(), &constant)) {
-        // Any shift value can match; int32 shifts use `value % 32`.
-        uint32_t lsb = constant & 0x1F;
-
-        // Ubfx cannot extract bits past the register size, however since
-        // shifting the original value would have introduced some zeros we can
-        // still use ubfx with a smaller mask and the remaining bits will be
-        // zeros.
-        if (lsb + mask_width > 32) mask_width = 32 - lsb;
-
-        Emit(kArm64Ubfx32, g.DefineAsRegister(node),
-             g.UseRegister(lhs_shift.left()),
-             g.UseImmediateOrTemp(lhs_shift.right(), lsb),
-             g.TempImmediate(mask_width));
-        return;
-      }
-      // Other cases fall through to the normal And operation.
-    }
+  if (TryEmitUbfx<32>(this, g, node, bitwise_and, kArm64Ubfx32)) {
+    return;
   }
 
   if (TryEmitUbfiz<32>(this, g, node, bitwise_and, kArm64Lsl32,
@@ -2240,40 +2270,8 @@ void InstructionSelector::VisitWord64And(OpIndex node) {
   Arm64OperandGenerator g(this);
 
   const WordBinopOp& bitwise_and = Get(node).Cast<Opmask::kWord64BitwiseAnd>();
-  const Operation& lhs = Get(bitwise_and.left());
-
-  if (uint64_t mask;
-      lhs.Is<Opmask::kWord64ShiftRightLogical>() &&
-      CanCover(node, bitwise_and.left()) &&
-      MatchUnsignedIntegralConstant(bitwise_and.right(), &mask)) {
-    uint64_t mask_width = base::bits::CountPopulation(mask);
-    uint64_t mask_msb = base::bits::CountLeadingZeros64(mask);
-    if ((mask_width != 0) && (mask_width != 64) &&
-        (mask_msb + mask_width == 64)) {
-      // The mask must be contiguous, and occupy the least-significant bits.
-      DCHECK_EQ(0u, base::bits::CountTrailingZeros64(mask));
-
-      // Select Ubfx for And(Shr(x, imm), mask) where the mask is in the least
-      // significant bits.
-      const ShiftOp& shift = lhs.Cast<ShiftOp>();
-      if (int64_t shift_by;
-          MatchSignedIntegralConstant(shift.right(), &shift_by)) {
-        // Any shift value can match; int64 shifts use `value % 64`.
-        uint32_t lsb = static_cast<uint32_t>(shift_by & 0x3F);
-
-        // Ubfx cannot extract bits past the register size, however since
-        // shifting the original value would have introduced some zeros we can
-        // still use ubfx with a smaller mask and the remaining bits will be
-        // zeros.
-        if (lsb + mask_width > 64) mask_width = 64 - lsb;
-
-        Emit(kArm64Ubfx, g.DefineAsRegister(node), g.UseRegister(shift.left()),
-             g.UseImmediateOrTemp(shift.right(), lsb),
-             g.TempImmediate(static_cast<int32_t>(mask_width)));
-        return;
-      }
-      // Other cases fall through to the normal And operation.
-    }
+  if (TryEmitUbfx<64>(this, g, node, bitwise_and, kArm64Ubfx)) {
+    return;
   }
 
   if (TryEmitUbfiz<64>(this, g, node, bitwise_and, kArm64Lsl, kArm64Ubfiz)) {
