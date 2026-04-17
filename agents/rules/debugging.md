@@ -25,7 +25,7 @@ Upon receiving a debugging task, you MUST immediately initialize the following t
 
 ### Track B: Conceptual Triage
 - **JS Source Reading**: Analyze the reproducing JS script to identify language features (e.g., closures, `eval`, TDZ) and runtime flags/hints.
-- **Environment Preservation**: The original reproducing script **MUST NOT** be modified. Create scratch copies for minimization or testing.
+- **Environment Preservation**: The original reproducing script **MUST NOT** be modified. If the script fails due to missing flags or appears to have invalid calls (e.g., missing `%PrepareFunctionForOptimization`), do NOT modify the script to "fix" it. This usually indicates missing flags or a specific environment. You MUST ask the user to provide the correct flags or environment. Create scratch copies for minimization or testing if needed.
 - **Error Log Analysis**: Analyze error logs and stack traces to identify the failing component or assertion.
 
 ### Track C: Static Research & Eager Delegation
