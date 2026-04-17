@@ -255,7 +255,7 @@ void AsyncFunctionBuiltinsAssembler::AsyncFunctionAwait() {
 
     // Promise must be fulfilled.
     TNode<Smi> promise_flags =
-        LoadObjectField<Smi>(js_promise, JSPromise::kFlagsOffset);
+        LoadObjectField<Smi>(js_promise, offsetof(JSPromise, flags_));
     GotoIfNot(IsSetSmi(promise_flags, v8::Promise::kFulfilled), &slow_path);
 
     // Species protector must be intact.  Together with the initial map check
@@ -265,12 +265,12 @@ void AsyncFunctionBuiltinsAssembler::AsyncFunctionAwait() {
 
     // Mark the promise as handled.
     StoreObjectFieldNoWriteBarrier(
-        js_promise, JSPromise::kFlagsOffset,
+        js_promise, offsetof(JSPromise, flags_),
         SmiOr(promise_flags, SmiConstant(JSPromise::HasHandlerBit::kMask)));
 
     // Extract the fulfilled value.
     TNode<Object> fulfilled_value =
-        LoadObjectField(js_promise, JSPromise::kReactionsOrResultOffset);
+        LoadObjectField(js_promise, offsetof(JSPromise, reactions_or_result_));
 
     EnqueueAsyncResumeTask(native_context, async_function_object,
                            fulfilled_value,

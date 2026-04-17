@@ -2623,7 +2623,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_WEAK_SET_TYPE:
       return JSWeakSet::kHeaderSize;
     case JS_PROMISE_TYPE:
-      return JSPromise::kHeaderSize;
+      return sizeof(JSPromise);
     case JS_REG_EXP_TYPE:
       return JSRegExp::kHeaderSize;
     case JS_REG_EXP_STRING_ITERATOR_TYPE:
@@ -2631,11 +2631,11 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_MESSAGE_OBJECT_TYPE:
       return JSMessageObject::kHeaderSize;
     case JS_EXTERNAL_OBJECT_TYPE:
-      return JSExternalObject::kHeaderSize;
+      return sizeof(JSExternalObject);
     case JS_SHADOW_REALM_TYPE:
-      return JSShadowRealm::kHeaderSize;
+      return sizeof(JSShadowRealm);
     case JS_STRING_ITERATOR_TYPE:
-      return JSStringIterator::kHeaderSize;
+      return sizeof(JSStringIterator);
     case JS_ITERATOR_MAP_HELPER_TYPE:
       return JSIteratorMapHelper::kHeaderSize;
     case JS_ITERATOR_FILTER_HELPER_TYPE:

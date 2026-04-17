@@ -14890,12 +14890,14 @@ VirtualObject* MaglevGraphBuilder::CreateJSPromiseObject() {
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSPromise::kElementsOffset,
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSPromise::kReactionsOrResultOffset, GetSmiConstant(0));
+  vobj->set(offsetof(JSPromise, reactions_or_result_), GetSmiConstant(0));
   static_assert(v8::Promise::kPending == 0);
-  vobj->set(JSPromise::kFlagsOffset, GetSmiConstant(0));
-  static_assert(JSPromise::kHeaderSize == 5 * kTaggedSize);
-  for (int offset = JSPromise::kHeaderSize;
-       offset < JSPromise::kSizeWithEmbedderFields; offset += kTaggedSize) {
+  vobj->set(offsetof(JSPromise, flags_), GetSmiConstant(0));
+  static_assert(sizeof(JSPromise) == 5 * kTaggedSize);
+  for (int offset = sizeof(JSPromise);
+       offset < static_cast<int>(sizeof(JSPromise)) +
+                    v8::Promise::kEmbedderFieldCount * kEmbedderDataSlotSize;
+       offset += kTaggedSize) {
     vobj->set(offset, GetSmiConstant(0));
   }
   return vobj;
@@ -14922,17 +14924,17 @@ VirtualObject* MaglevGraphBuilder::CreateJSIteratorResult(compiler::MapRef map,
 VirtualObject* MaglevGraphBuilder::CreateJSStringIterator(compiler::MapRef map,
                                                           ValueNode* string) {
   using Shape = VirtualJSStringIteratorShape;
-  static_assert(JSStringIterator::kHeaderSize == 5 * kTaggedSize);
+  static_assert(sizeof(JSStringIterator) == 5 * kTaggedSize);
   int slot_count = Shape::header_slot_count;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  vobj->set(JSStringIterator::kPropertiesOrHashOffset,
+  vobj->set(offsetof(JSStringIterator, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSStringIterator::kElementsOffset,
+  vobj->set(offsetof(JSStringIterator, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSStringIterator::kStringOffset, string);
-  vobj->set(JSStringIterator::kIndexOffset, GetInt32Constant(0));
+  vobj->set(offsetof(JSStringIterator, string_), string);
+  vobj->set(offsetof(JSStringIterator, index_), GetInt32Constant(0));
   return vobj;
 }
 

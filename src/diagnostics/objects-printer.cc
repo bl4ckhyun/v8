@@ -896,6 +896,21 @@ void JSObjectPrintBody(std::ostream& os, Tagged<JSObject> obj,
   }
 }
 
+// Pointer-to-JSObjectLayout overloads. Let layout-based subclass printers
+// pass their `this` directly. Can't use `Tagged<JSObjectLayout>` here:
+// normalize_type maps that back to Tagged<JSObject>, which makes the
+// overload match legacy callers too and creates ambiguity. A pointer
+// parameter is unambiguous because legacy JSObject doesn't inherit from
+// JSObjectLayout.
+void JSObjectPrintHeader(std::ostream& os, const JSObjectLayout* obj,
+                         const char* id) {
+  JSObjectPrintHeader(os, Cast<JSObject>(obj), id);
+}
+void JSObjectPrintBody(std::ostream& os, const JSObjectLayout* obj,
+                       bool print_elements = true) {
+  JSObjectPrintBody(os, Cast<JSObject>(obj), print_elements);
+}
+
 }  // namespace
 
 void JSObject::JSObjectPrint(std::ostream& os) {
@@ -904,10 +919,9 @@ void JSObject::JSObjectPrint(std::ostream& os) {
 }
 
 void JSExternalObject::JSExternalObjectPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, nullptr);
-  os << "\n - external value: "
-     << value({kFirstExternalTypeTag, kLastExternalTypeTag});
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, nullptr);
+  os << "\n - external value: " << value(kExternalObjectValueTagRange);
+  JSObjectPrintBody(os, this);
 }
 
 void CppHeapExternalObject::CppHeapExternalObjectPrint(std::ostream& os) {
@@ -987,7 +1001,7 @@ void JSArray::JSArrayPrint(std::ostream& os) {
 }
 
 void JSPromise::JSPromisePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSPromise");
+  JSObjectPrintHeader(os, this, "JSPromise");
   os << "\n - status: " << JSPromise::Status(status());
   if (status() == Promise::kPending) {
     os << "\n - reactions: " << Brief(reactions());
@@ -996,7 +1010,7 @@ void JSPromise::JSPromisePrint(std::ostream& os) {
   }
   os << "\n - has_handler: " << has_handler();
   os << "\n - is_silent: " << is_silent();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSRegExp::JSRegExpPrint(std::ostream& os) {
@@ -2164,10 +2178,10 @@ void JSArgumentsObject::JSArgumentsObjectPrint(std::ostream& os) {
 }
 
 void JSStringIterator::JSStringIteratorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSStringIterator");
+  JSObjectPrintHeader(os, this, "JSStringIterator");
   os << "\n - string: " << Brief(string());
   os << "\n - index: " << index();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSAsyncFromSyncIterator::JSAsyncFromSyncIteratorPrint(std::ostream& os) {
@@ -2287,9 +2301,9 @@ void JSWeakRef::JSWeakRefPrint(std::ostream& os) {
 }
 
 void JSShadowRealm::JSShadowRealmPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSShadowRealm");
+  JSObjectPrintHeader(os, this, "JSShadowRealm");
   os << "\n - native_context: " << Brief(native_context());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSWrappedFunction::JSWrappedFunctionPrint(std::ostream& os) {
@@ -3855,8 +3869,8 @@ void JSTemporalPlainMonthDay::JSTemporalPlainMonthDayPrint(std::ostream& os) {
 #endif  // V8_TEMPORAL_SUPPORT
 
 void JSRawJson::JSRawJsonPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSRawJson");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSRawJson");
+  JSObjectPrintBody(os, this);
 }
 
 #ifdef V8_INTL_SUPPORT

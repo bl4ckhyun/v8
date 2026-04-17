@@ -15,6 +15,7 @@
 #include "src/objects/internal-index.h"
 #include "src/objects/objects.h"
 #include "src/objects/property-array.h"
+#include "src/sandbox/external-pointer.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
@@ -40,6 +41,34 @@ class Undefined;
 class Null;
 
 #include "torque-generated/src/objects/js-objects-tq.inc"
+
+// Temporary mirror of JSReceiver for subclasses with the new layout. Holds
+// the single `properties_or_hash` field. Byte-compatible with the legacy
+// JSReceiver so existing subclasses and GC machinery continue to work while
+// the tree migrates. Will be renamed to JSReceiver at the final collapse.
+V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
+ public:
+  // Back-compat offset constants, mirrored from the legacy JSReceiver class.
+  // Defined out-of-line below the class so `offsetof` / `sizeof` on the
+  // still-incomplete type can appear in an initializer.
+  static const int kPropertiesOrHashOffset;
+  static const int kHeaderSize;
+
+  // Delegate trampolines into the legacy JSReceiver class. These let ported
+  // subclasses and their callers keep using method-call syntax without
+  // threading Cast<JSReceiver>(...) through every callsite during migration.
+  inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
+  inline MaybeDirectHandle<NativeContext> GetCreationContext(
+      Isolate* isolate) const;
+
+ public:
+  TaggedMember<UnionOf<SwissNameDictionary, FixedArrayBase, PropertyArray, Smi>>
+      properties_or_hash_;
+} V8_OBJECT_END;
+
+inline constexpr int JSReceiverLayout::kPropertiesOrHashOffset =
+    offsetof(JSReceiverLayout, properties_or_hash_);
+inline constexpr int JSReceiverLayout::kHeaderSize = sizeof(JSReceiverLayout);
 
 // JSReceiver includes types on which properties can be defined, i.e.,
 // JSObject and JSProxy.
@@ -363,6 +392,44 @@ class JSReceiver : public TorqueGeneratedJSReceiver<JSReceiver, HeapObject> {
 
   TQ_OBJECT_CONSTRUCTORS(JSReceiver)
 };
+
+// Temporary mirror of JSObject for subclasses with the new layout. Adds the
+// single `elements` field on top of JSReceiverLayout. Byte-compatible with
+// the legacy JSObject. Will be renamed to JSObject at the final collapse.
+V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
+ public:
+  static const int kElementsOffset;
+  static const int kHeaderSize;
+
+  // Delegate trampolines into the legacy JSObject class. These let ported
+  // subclasses (and their callers) keep using method-call syntax --
+  // `foo_layout->InObjectPropertyAtOffset(...)` etc. -- without threading
+  // `Cast<JSObject>(...)` through every callsite during the migration.
+  // StructLayout::StructVerify is the precedent for the verifier form.
+  DECL_VERIFIER(JSObject)
+  inline Tagged<Object> InObjectPropertyAtOffset(int offset);
+  inline int GetEmbedderFieldCount() const;
+
+ public:
+  TaggedMember<FixedArrayBase> elements_;
+} V8_OBJECT_END;
+
+inline constexpr int JSObjectLayout::kElementsOffset =
+    offsetof(JSObjectLayout, elements_);
+inline constexpr int JSObjectLayout::kHeaderSize = sizeof(JSObjectLayout);
+
+// Temporary mirror of JSObjectWithEmbedderSlots for subclasses with the new
+// layout. Carries no fields itself; the in-instance tail ([embedder fields]
+// followed by [in-object properties]) is managed by the Map + BodyDescriptor
+// and never shows up as a C++ member. Will be renamed to
+// JSObjectWithEmbedderSlots at the final collapse.
+V8_OBJECT class JSObjectWithEmbedderSlotsLayout : public JSObjectLayout {
+ public:
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSObjectWithEmbedderSlotsLayout::kHeaderSize =
+    sizeof(JSObjectWithEmbedderSlotsLayout);
 
 // The JSObject describes real heap allocated JavaScript objects with
 // properties.
@@ -1033,10 +1100,25 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
   TQ_OBJECT_CONSTRUCTORS(JSObject)
 };
 
+// Byte-for-byte layout compatibility between the legacy JSReceiver/JSObject
+// classes and their *Layout mirrors. The migration relies on subclasses
+// extending either hierarchy landing at the same physical offsets.
+static_assert(JSReceiverLayout::kPropertiesOrHashOffset ==
+              JSReceiver::kPropertiesOrHashOffset);
+static_assert(JSReceiverLayout::kHeaderSize == JSReceiver::kHeaderSize);
+static_assert(JSObjectLayout::kElementsOffset == JSObject::kElementsOffset);
+static_assert(JSObjectLayout::kHeaderSize == JSObject::kHeaderSize);
+
+// The set of tags that a JSExternalObject's value may carry. Any user-
+// facing v8::External pointer maps to a tag in [kFirstExternalTypeTag,
+// kLastExternalTypeTag]. Defined here so the ExternalPointerMember field
+// below can reference it at template-argument position.
+inline constexpr ExternalPointerTagRange kExternalObjectValueTagRange{
+    kFirstExternalTypeTag, kLastExternalTypeTag};
+
 // A JSObject created through the public api which wraps an external pointer.
 // See v8::External.
-class JSExternalObject
-    : public TorqueGeneratedJSExternalObject<JSExternalObject, JSObject> {
+V8_OBJECT class JSExternalObject : public JSObjectLayout {
  public:
   // [value]: field containing the pointer value.
   inline void* value(ExternalPointerTagRange tag_range) const;
@@ -1047,15 +1129,14 @@ class JSExternalObject
   inline void set_value(IsolateForSandbox isolate, ExternalPointerTag tag,
                         void* value);
 
-  static constexpr int kEndOfTaggedFieldsOffset = JSObject::kHeaderSize;
-
   DECL_PRINTER(JSExternalObject)
+  DECL_VERIFIER(JSExternalObject)
 
   class BodyDescriptor;
 
- private:
-  TQ_OBJECT_CONSTRUCTORS(JSExternalObject)
-};
+ public:
+  ExternalPointerMember<kExternalObjectValueTagRange> value_;
+} V8_OBJECT_END;
 
 // An abstract superclass for JSObjects that may contain EmbedderDataSlots.
 class JSObjectWithEmbedderSlots
@@ -1065,6 +1146,11 @@ class JSObjectWithEmbedderSlots
   static_assert(kHeaderSize == JSObject::kHeaderSize);
   TQ_OBJECT_CONSTRUCTORS(JSObjectWithEmbedderSlots)
 };
+
+// Byte-compat static_asserts live here to postpone until both legacy and
+// *Layout classes are complete.
+static_assert(JSObjectWithEmbedderSlotsLayout::kHeaderSize ==
+              JSObjectWithEmbedderSlots::kHeaderSize);
 
 // An abstract superclass for JSObjects that may contain EmbedderDataSlots and
 // are used as API wrapper objects.
@@ -1400,15 +1486,23 @@ class JSAsyncFromSyncIterator
   TQ_OBJECT_CONSTRUCTORS(JSAsyncFromSyncIterator)
 };
 
-class JSStringIterator
-    : public TorqueGeneratedJSStringIterator<JSStringIterator, JSObject> {
+V8_OBJECT class JSStringIterator : public JSObjectLayout {
  public:
+  inline Tagged<String> string() const;
+  inline void set_string(Tagged<String> value,
+                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline int index() const;
+  inline void set_index(int value);
+
   // Dispatched behavior.
   DECL_PRINTER(JSStringIterator)
   DECL_VERIFIER(JSStringIterator)
 
-  TQ_OBJECT_CONSTRUCTORS(JSStringIterator)
-};
+ public:
+  TaggedMember<String> string_;
+  TaggedMember<Smi> index_;
+} V8_OBJECT_END;
 
 // The valid iterator wrapper is the wrapper object created by
 // Iterator.from(obj), which attempts to wrap iterator-like objects into an

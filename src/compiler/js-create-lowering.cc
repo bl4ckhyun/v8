@@ -1062,7 +1062,7 @@ Reduction JSCreateLowering::ReduceJSCreateStringIterator(Node* node) {
       native_context().initial_string_iterator_map(broker()), broker());
   // Allocate new iterator and attach the iterator to this string.
   AllocationBuilder a(jsgraph(), broker(), effect, graph()->start());
-  a.Allocate(JSStringIterator::kHeaderSize, AllocationType::kYoung,
+  a.Allocate(sizeof(JSStringIterator), AllocationType::kYoung,
              Type::OtherObject());
   a.Store(AccessBuilder::ForMap(), map);
   a.Store(AccessBuilder::ForJSObjectPropertiesOrHashKnownPointer(),
@@ -1120,14 +1120,17 @@ Reduction JSCreateLowering::ReduceJSCreatePromise(Node* node) {
           jsgraph()->EmptyFixedArrayConstant());
   a.Store(AccessBuilder::ForJSObjectElements(),
           jsgraph()->EmptyFixedArrayConstant());
-  a.Store(AccessBuilder::ForJSObjectOffset(JSPromise::kReactionsOrResultOffset),
+  a.Store(AccessBuilder::ForJSObjectOffset(
+              offsetof(JSPromise, reactions_or_result_)),
           jsgraph()->ZeroConstant());
   static_assert(v8::Promise::kPending == 0);
-  a.Store(AccessBuilder::ForJSObjectOffset(JSPromise::kFlagsOffset),
+  a.Store(AccessBuilder::ForJSObjectOffset(offsetof(JSPromise, flags_)),
           jsgraph()->ZeroConstant());
-  static_assert(JSPromise::kHeaderSize == 5 * kTaggedSize);
-  for (int offset = JSPromise::kHeaderSize;
-       offset < JSPromise::kSizeWithEmbedderFields; offset += kTaggedSize) {
+  static_assert(sizeof(JSPromise) == 5 * kTaggedSize);
+  for (int offset = static_cast<int>(sizeof(JSPromise));
+       offset < static_cast<int>(sizeof(JSPromise)) +
+                    v8::Promise::kEmbedderFieldCount * kEmbedderDataSlotSize;
+       offset += kTaggedSize) {
     a.Store(AccessBuilder::ForJSObjectOffset(offset),
             jsgraph()->ZeroConstant());
   }

@@ -40,6 +40,7 @@ macro NewJSObject(implicit context: Context)(): JSObject {
   return AllocateJSObjectFromMap(map);
 }
 
+@cppObjectLayoutDefinition
 extern class JSExternalObject extends JSObject {
   value: ExternalPointer;
 }
@@ -192,6 +193,7 @@ extern class JSAsyncFromSyncIterator extends JSObject {
   next: Object;
 }
 
+@cppObjectLayoutDefinition
 extern class JSStringIterator extends JSObject {
   // The [[IteratedString]] slot.
   string: String;

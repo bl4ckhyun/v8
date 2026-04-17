@@ -2900,7 +2900,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
     DirectHandle<JSFunction> string_iterator_function = CreateFunction(
         isolate_, factory->InternalizeUtf8String("StringIterator"),
-        JS_STRING_ITERATOR_TYPE, JSStringIterator::kHeaderSize, 0,
+        JS_STRING_ITERATOR_TYPE, sizeof(JSStringIterator), 0,
         string_iterator_prototype, Builtin::kIllegal, 0, kDontAdapt);
     string_iterator_function->shared()->set_native(false);
     native_context()->set_initial_string_iterator_map(
@@ -3111,8 +3111,9 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   {  // -- P r o m i s e
     DirectHandle<JSFunction> promise_fun = InstallFunction(
         isolate_, global, "Promise", JS_PROMISE_TYPE,
-        JSPromise::kSizeWithEmbedderFields, 0, factory->the_hole_value(),
-        Builtin::kPromiseConstructor, 1, kAdapt);
+        sizeof(JSPromise) +
+            v8::Promise::kEmbedderFieldCount * kEmbedderDataSlotSize,
+        0, factory->the_hole_value(), Builtin::kPromiseConstructor, 1, kAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, promise_fun,
                                      Context::PROMISE_FUNCTION_INDEX);
 
@@ -3454,14 +3455,13 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
   {  // -- J S O N
     DirectHandle<Map> raw_json_map = factory->NewContextfulMapForCurrentContext(
-        JS_RAW_JSON_TYPE, JSRawJson::kInitialSize, TERMINAL_FAST_ELEMENTS_KIND,
-        1);
+        JS_RAW_JSON_TYPE, sizeof(JSRawJson) + kTaggedSize,
+        TERMINAL_FAST_ELEMENTS_KIND, 1);
     Map::EnsureDescriptorSlack(isolate_, raw_json_map, 1);
     {
-      Descriptor d =
-          Descriptor::DataField(isolate(), factory->raw_json_string(),
-                                JSRawJson::kRawJsonInitialOffset, NONE,
-                                Representation::Tagged(), true);
+      Descriptor d = Descriptor::DataField(
+          isolate(), factory->raw_json_string(), sizeof(JSRawJson), NONE,
+          Representation::Tagged(), true);
       raw_json_map->AppendDescriptor(isolate(), &d);
     }
     raw_json_map->SetPrototype(isolate(), raw_json_map, factory->null_value());
@@ -5685,7 +5685,7 @@ void Genesis::InitializeGlobal_harmony_shadow_realm() {
                                       isolate());
   DirectHandle<JSFunction> shadow_realm_fun =
       InstallFunction(isolate_, global, "ShadowRealm", JS_SHADOW_REALM_TYPE,
-                      JSShadowRealm::kHeaderSize, 0, factory->the_hole_value(),
+                      sizeof(JSShadowRealm), 0, factory->the_hole_value(),
                       Builtin::kShadowRealmConstructor, 0, kDontAdapt);
 
   // Setup %ShadowRealmPrototype%.

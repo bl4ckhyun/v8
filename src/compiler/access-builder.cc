@@ -227,7 +227,7 @@ FieldAccess AccessBuilder::ForJSCollectionIteratorIndex() {
 FieldAccess AccessBuilder::ForJSExternalObjectValue() {
   FieldAccess access = {
       kTaggedBase,
-      JSExternalObject::kValueOffset,
+      offsetof(JSExternalObject, value_),
       MaybeHandle<Name>(),
       OptionalMapRef(),
       Type::ExternalPointer(),
@@ -244,10 +244,14 @@ FieldAccess AccessBuilder::ForJSExternalObjectValue() {
 #ifdef V8_ENABLE_SANDBOX
 // static
 FieldAccess AccessBuilder::ForJSExternalObjectPointerHandle() {
-  FieldAccess access = {
-      kTaggedBase,      JSExternalObject::kValueOffset, MaybeHandle<Name>(),
-      OptionalMapRef(), TypeCache::Get()->kUint32,      MachineType::Uint32(),
-      kNoWriteBarrier,  "JSExternalObjectPointerHandle"};
+  FieldAccess access = {kTaggedBase,
+                        offsetof(JSExternalObject, value_),
+                        MaybeHandle<Name>(),
+                        OptionalMapRef(),
+                        TypeCache::Get()->kUint32,
+                        MachineType::Uint32(),
+                        kNoWriteBarrier,
+                        "JSExternalObjectPointerHandle"};
   return access;
 }
 #endif
@@ -1033,17 +1037,18 @@ FieldAccess AccessBuilder::ForJSArrayIteratorKind() {
 
 // static
 FieldAccess AccessBuilder::ForJSStringIteratorString() {
-  FieldAccess access = {kTaggedBase,          JSStringIterator::kStringOffset,
-                        Handle<Name>(),       OptionalMapRef(),
-                        Type::String(),       MachineType::TaggedPointer(),
-                        kPointerWriteBarrier, "JSStringIteratorString"};
+  FieldAccess access = {
+      kTaggedBase,          offsetof(JSStringIterator, string_),
+      Handle<Name>(),       OptionalMapRef(),
+      Type::String(),       MachineType::TaggedPointer(),
+      kPointerWriteBarrier, "JSStringIteratorString"};
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForJSStringIteratorIndex() {
   FieldAccess access = {kTaggedBase,
-                        JSStringIterator::kIndexOffset,
+                        offsetof(JSStringIterator, index_),
                         Handle<Name>(),
                         OptionalMapRef(),
                         TypeCache::Get()->kStringLengthType,

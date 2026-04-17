@@ -244,8 +244,8 @@ TNode<Object> AsyncBuiltinsAssembler::Await(TNode<Context> context,
   GotoIfNot(IsUndefined(var_throwaway.value()), &if_perform_promise_then);
   {
     TNode<JSPromise> js_promise = CAST(value);
-    TNode<Int32T> promise_flags =
-        SmiToInt32(LoadObjectField<Smi>(js_promise, JSPromise::kFlagsOffset));
+    TNode<Int32T> promise_flags = SmiToInt32(
+        LoadObjectField<Smi>(js_promise, offsetof(JSPromise, flags_)));
 
     TNode<Int32T> status =
         Word32And(promise_flags, Int32Constant(JSPromise::StatusBits::kMask));
@@ -255,12 +255,12 @@ TNode<Object> AsyncBuiltinsAssembler::Await(TNode<Context> context,
     // Mark the promise as handled.
     TNode<Int32T> new_flags =
         Word32Or(promise_flags, Int32Constant(JSPromise::HasHandlerBit::kMask));
-    StoreObjectFieldNoWriteBarrier(js_promise, JSPromise::kFlagsOffset,
+    StoreObjectFieldNoWriteBarrier(js_promise, offsetof(JSPromise, flags_),
                                    SmiFromInt32(new_flags));
 
     // Extract the fulfilled value.
     TNode<Object> fulfilled_value =
-        LoadObjectField(js_promise, JSPromise::kReactionsOrResultOffset);
+        LoadObjectField(js_promise, offsetof(JSPromise, reactions_or_result_));
 
     // Enqueue the reaction job natively.
     CallBuiltin(Builtin::kAsyncAwaitNonThenableFastPath, native_context,

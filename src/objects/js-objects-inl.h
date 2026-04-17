@@ -590,6 +590,24 @@ Tagged<Object> JSObject::InObjectPropertyAtOffset(int offset) {
   return TaggedField<Object>::load(*this, offset);
 }
 
+Tagged<Object> JSObjectLayout::InObjectPropertyAtOffset(int offset) {
+  return Cast<JSObject>(this)->InObjectPropertyAtOffset(offset);
+}
+
+int JSObjectLayout::GetEmbedderFieldCount() const {
+  return Cast<JSObject>(this)->GetEmbedderFieldCount();
+}
+
+std::optional<Tagged<NativeContext>> JSReceiverLayout::GetCreationContext()
+    const {
+  return Cast<JSReceiver>(this)->GetCreationContext();
+}
+
+MaybeDirectHandle<NativeContext> JSReceiverLayout::GetCreationContext(
+    Isolate* isolate) const {
+  return Cast<JSReceiver>(this)->GetCreationContext(isolate);
+}
+
 Tagged<Object> JSObject::InObjectPropertyPutAtIndex(int index,
                                                     Tagged<Object> value,
                                                     WriteBarrierMode mode) {
@@ -698,21 +716,38 @@ void* JSExternalObject::value(ExternalPointerTagRange tag_range) const {
 
 void* JSExternalObject::value(i::IsolateForSandbox isolate,
                               ExternalPointerTagRange tag_range) const {
+  // Accessors take a runtime tag / tag_range (callers pick it dynamically
+  // based on v8::External tag values); ExternalPointerMember's template
+  // member variants require compile-time tags, so route through the
+  // field_address-based free functions instead.
   Address result =
-      HeapObject::ReadExternalPointerField(kValueOffset, isolate, tag_range);
+      ReadExternalPointerField(value_.storage_address(), isolate, tag_range);
   return reinterpret_cast<void*>(result);
 }
 
 void JSExternalObject::init_value(i::IsolateForSandbox isolate,
                                   ExternalPointerTag tag, void* initial_value) {
-  Address the_value = reinterpret_cast<Address>(initial_value);
-  HeapObject::InitExternalPointerField(kValueOffset, isolate, tag, the_value);
+  InitExternalPointerField(reinterpret_cast<Address>(this),
+                           value_.storage_address(), isolate, tag,
+                           reinterpret_cast<Address>(initial_value));
 }
 
 void JSExternalObject::set_value(i::IsolateForSandbox isolate,
                                  ExternalPointerTag tag, void* value) {
-  Address the_value = reinterpret_cast<Address>(value);
-  HeapObject::WriteExternalPointerField(kValueOffset, isolate, tag, the_value);
+  WriteExternalPointerField(value_.storage_address(), isolate, tag,
+                            reinterpret_cast<Address>(value));
+}
+
+Tagged<String> JSStringIterator::string() const { return string_.load(); }
+
+void JSStringIterator::set_string(Tagged<String> value, WriteBarrierMode mode) {
+  string_.store(this, value, mode);
+}
+
+int JSStringIterator::index() const { return index_.load().value(); }
+
+void JSStringIterator::set_index(int value) {
+  index_.store(this, Smi::FromInt(value));
 }
 
 bool JSMessageObject::DidEnsureSourcePositionsAvailable() const {

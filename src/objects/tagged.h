@@ -189,10 +189,19 @@ using WeakTaggedBase = TaggedImpl<HeapObjectReferenceType::WEAK, Address>;
 #define LAYOUT_TYPES(V)   \
   V(HeapObject)           \
   V(ExposedTrustedObject) \
-  V(TrustedObject)
+  V(TrustedObject)        \
+  V(JSReceiver)           \
+  V(JSObject)             \
+  V(JSObjectWithEmbedderSlots)
 
 // Forward declarations for is_subtype.
 class Struct;
+class JSReceiverLayout;
+class JSReceiver;
+class JSObjectLayout;
+class JSObject;
+class JSObjectWithEmbedderSlotsLayout;
+class JSObjectWithEmbedderSlots;
 class FixedArrayBase;
 class FixedArray;
 class FixedDoubleArray;
@@ -475,6 +484,31 @@ struct is_complex_subtype<
     std::enable_if_t<std::disjunction_v<
         std::is_base_of<ExposedTrustedObject, Derived>,
         std::is_base_of<ExposedTrustedObjectLayout, Derived>>>>
+    : public std::true_type {};
+
+class JSReceiverLayout;
+template <typename Derived>
+struct is_complex_subtype<Derived, JSReceiver,
+                          std::enable_if_t<std::disjunction_v<
+                              std::is_base_of<JSReceiver, Derived>,
+                              std::is_base_of<JSReceiverLayout, Derived>>>>
+    : public std::true_type {};
+
+class JSObjectLayout;
+template <typename Derived>
+struct is_complex_subtype<Derived, JSObject,
+                          std::enable_if_t<std::disjunction_v<
+                              std::is_base_of<JSObject, Derived>,
+                              std::is_base_of<JSObjectLayout, Derived>>>>
+    : public std::true_type {};
+
+class JSObjectWithEmbedderSlotsLayout;
+template <typename Derived>
+struct is_complex_subtype<
+    Derived, JSObjectWithEmbedderSlots,
+    std::enable_if_t<std::disjunction_v<
+        std::is_base_of<JSObjectWithEmbedderSlots, Derived>,
+        std::is_base_of<JSObjectWithEmbedderSlotsLayout, Derived>>>>
     : public std::true_type {};
 
 template <typename Derived, typename... BaseTs>

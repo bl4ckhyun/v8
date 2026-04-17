@@ -1043,9 +1043,9 @@ JsonStringifier::Result JsonStringifier::Serialize_(Handle<JSAny> object,
         if (raw_json_obj->HasInitialLayout(isolate_)) {
           // Fast path: the object returned by JSON.rawJSON has its initial map
           // intact.
-          raw_json = Cast<String>(handle(raw_json_obj->InObjectPropertyAtOffset(
-                                             JSRawJson::kRawJsonInitialOffset),
-                                         isolate_));
+          raw_json = Cast<String>(
+              handle(raw_json_obj->InObjectPropertyAtOffset(sizeof(JSRawJson)),
+                     isolate_));
         } else {
           // Slow path: perform a property get for "rawJSON". Because raw JSON
           // objects are created frozen, it is still guaranteed that there will

@@ -860,8 +860,7 @@ bool Heap::CreateLateReadOnlyJSReceiverMaps() {
     roots.message_object_map()->SetEnumLength(0);
     roots.message_object_map()->set_is_extensible(false);
 
-    ALLOCATE_MAP(JS_EXTERNAL_OBJECT_TYPE, JSExternalObject::kHeaderSize,
-                 external)
+    ALLOCATE_MAP(JS_EXTERNAL_OBJECT_TYPE, sizeof(JSExternalObject), external)
     roots.external_map()->SetEnumLength(0);
     roots.external_map()->set_is_extensible(false);
 

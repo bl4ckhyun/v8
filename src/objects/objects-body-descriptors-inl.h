@@ -805,10 +805,12 @@ class JSExternalObject::BodyDescriptor final : public BodyDescriptorBase {
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
     DCHECK_EQ(0, map->GetInObjectProperties());
-    IteratePointers(obj, kPropertiesOrHashOffset, kEndOfTaggedFieldsOffset, v);
+    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+                    JSObject::kHeaderSize, v);
+    Tagged<JSExternalObject> external = UncheckedCast<JSExternalObject>(obj);
     v->VisitExternalPointer(
-        obj, obj->RawExternalPointerField(
-                 kValueOffset, {kFirstExternalTypeTag, kLastExternalTypeTag}));
+        obj,
+        ExternalPointerSlot(&external->value_, kExternalObjectValueTagRange));
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {

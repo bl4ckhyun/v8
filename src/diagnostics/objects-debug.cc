@@ -521,6 +521,19 @@ void VerifyJSObjectElements(Isolate* isolate, Tagged<JSObject> object) {
 }
 }  // namespace
 
+// Layout-side trampoline: subclasses that extend JSObjectLayout inherit a
+// JSObjectVerify method that delegates to the legacy JSObject verifier via
+// a Cast once. Mirrors StructLayout::StructVerify (objects-debug.cc).
+void JSObjectLayout::JSObjectVerify(Isolate* isolate) {
+  Cast<JSObject>(this)->JSObjectVerify(isolate);
+}
+
+void JSRawJson::JSRawJsonVerify(Isolate* isolate) { JSObjectVerify(isolate); }
+
+void JSExternalObject::JSExternalObjectVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+}
+
 void JSObject::JSObjectVerify(Isolate* isolate) {
   TorqueGeneratedClassVerifiers::JSObjectVerify(*this, isolate);
   VerifyHeapPointer(isolate, elements());
@@ -2009,7 +2022,10 @@ void JSMapIterator::JSMapIteratorVerify(Isolate* isolate) {
   CHECK(IsSmi(index()));
 }
 
-USE_TORQUE_VERIFIER(JSShadowRealm)
+void JSShadowRealm::JSShadowRealmVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsNativeContext(native_context()));
+}
 
 namespace {
 
@@ -2221,7 +2237,9 @@ void JSArrayIterator::JSArrayIteratorVerify(Isolate* isolate) {
 }
 
 void JSStringIterator::JSStringIteratorVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSStringIteratorVerify(*this, isolate);
+  JSObjectVerify(isolate);
+  CHECK(IsString(string()));
+  CHECK(index_.load().IsSmi());
   CHECK_GE(index(), 0);
   CHECK_LE(index(), String::kMaxLength);
 }
@@ -2301,7 +2319,8 @@ void PromiseReaction::PromiseReactionVerify(Isolate* isolate) {
 }
 
 void JSPromise::JSPromiseVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSPromiseVerify(*this, isolate);
+  JSObjectVerify(isolate);
+  CHECK(flags_.load().IsSmi());
   if (status() == Promise::kPending) {
     CHECK(IsSmi(reactions()) || IsPromiseReaction(reactions()));
   }
