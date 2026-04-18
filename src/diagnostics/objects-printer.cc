@@ -2370,7 +2370,7 @@ std::ostream& operator<<(std::ostream& os, DisposableStackState state) {
 }
 
 void JSDisposableStackBase::JSDisposableStackBasePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSDisposableStack");
+  JSObjectPrintHeader(os, this, "JSDisposableStack");
   os << "\n - stack: " << Brief(stack());
   os << "\n - length: " << length();
   os << "\n - state: " << state();
@@ -2379,11 +2379,15 @@ void JSDisposableStackBase::JSDisposableStackBasePrint(std::ostream& os) {
   os << "\n - suppressed_error_created: " << suppressed_error_created();
   os << "\n - error: " << error();
   os << "\n - error_message: " << error_message();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
+}
+
+void JSSyncDisposableStack::JSSyncDisposableStackPrint(std::ostream& os) {
+  JSDisposableStackBasePrint(os);
 }
 
 void JSAsyncDisposableStack::JSAsyncDisposableStackPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSAsyncDisposableStack");
+  JSObjectPrintHeader(os, this, "JSAsyncDisposableStack");
   os << "\n - stack: " << Brief(stack());
   os << "\n - length: " << length();
   os << "\n - state: " << state();
@@ -2392,12 +2396,12 @@ void JSAsyncDisposableStack::JSAsyncDisposableStackPrint(std::ostream& os) {
   os << "\n - suppressed_error_created: " << suppressed_error_created();
   os << "\n - error: " << error();
   os << "\n - error_message: " << error_message();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorHelper::JSIteratorHelperPrintHeader(std::ostream& os,
                                                    const char* helper_name) {
-  JSObjectPrintHeader(os, *this, helper_name);
+  JSObjectPrintHeader(os, this, helper_name);
   os << "\n - state: " << state();
 }
 
@@ -2412,26 +2416,26 @@ void JSIteratorMapHelper::JSIteratorMapHelperPrint(std::ostream& os) {
   JSIteratorHelperSimplePrintHeader(os, "JSIteratorMapHelper");
   os << "\n - mapper: " << Brief(mapper());
   os << "\n - counter: " << counter();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorFilterHelper::JSIteratorFilterHelperPrint(std::ostream& os) {
   JSIteratorHelperSimplePrintHeader(os, "JSIteratorFilterHelper");
   os << "\n - predicate: " << Brief(predicate());
   os << "\n - counter: " << counter();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorTakeHelper::JSIteratorTakeHelperPrint(std::ostream& os) {
   JSIteratorHelperSimplePrintHeader(os, "JSIteratorTakeHelper");
   os << "\n - remaining: " << remaining();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorDropHelper::JSIteratorDropHelperPrint(std::ostream& os) {
   JSIteratorHelperSimplePrintHeader(os, "JSIteratorDropHelper");
   os << "\n - remaining: " << remaining();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorFlatMapHelper::JSIteratorFlatMapHelperPrint(std::ostream& os) {
@@ -2440,7 +2444,7 @@ void JSIteratorFlatMapHelper::JSIteratorFlatMapHelperPrint(std::ostream& os) {
   os << "\n - counter: " << counter();
   os << "\n - inner_iterator.object" << Brief(inner_iterator_object());
   os << "\n - inner_iterator.next" << Brief(inner_iterator_next());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorConcatHelper::JSIteratorConcatHelperPrint(std::ostream& os) {
@@ -2448,7 +2452,7 @@ void JSIteratorConcatHelper::JSIteratorConcatHelperPrint(std::ostream& os) {
   os << "\n - iterables: " << Brief(iterables()) << " {";
   PrintFixedArrayElements(os, iterables(), iterables()->ulength().value());
   os << "\n - current: " << current();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSIteratorZipHelper::JSIteratorZipHelperPrint(std::ostream& os) {
@@ -2457,7 +2461,7 @@ void JSIteratorZipHelper::JSIteratorZipHelperPrint(std::ostream& os) {
   os << "\n - mode: " << mode();
   os << "\n - active_count: " << active_count();
   os << "\n - padding: " << Brief(padding());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSWeakMap::JSWeakMapPrint(std::ostream& os) {

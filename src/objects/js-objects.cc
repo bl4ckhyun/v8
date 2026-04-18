@@ -2584,11 +2584,11 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_DATE_TYPE:
       return JSDate::kHeaderSize;
     case JS_DISPOSABLE_STACK_BASE_TYPE:
-      return JSDisposableStackBase::kHeaderSize;
+      return sizeof(JSDisposableStackBase);
     case JS_ASYNC_DISPOSABLE_STACK_TYPE:
-      return JSAsyncDisposableStack::kHeaderSize;
+      return sizeof(JSAsyncDisposableStack);
     case JS_SYNC_DISPOSABLE_STACK_TYPE:
-      return JSSyncDisposableStack::kHeaderSize;
+      return sizeof(JSSyncDisposableStack);
     case JS_ARRAY_TYPE:
       return JSArray::kHeaderSize;
     case JS_ARRAY_BUFFER_TYPE:
@@ -2637,19 +2637,19 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_STRING_ITERATOR_TYPE:
       return sizeof(JSStringIterator);
     case JS_ITERATOR_MAP_HELPER_TYPE:
-      return JSIteratorMapHelper::kHeaderSize;
+      return sizeof(JSIteratorMapHelper);
     case JS_ITERATOR_FILTER_HELPER_TYPE:
-      return JSIteratorFilterHelper::kHeaderSize;
+      return sizeof(JSIteratorFilterHelper);
     case JS_ITERATOR_TAKE_HELPER_TYPE:
-      return JSIteratorTakeHelper::kHeaderSize;
+      return sizeof(JSIteratorTakeHelper);
     case JS_ITERATOR_DROP_HELPER_TYPE:
-      return JSIteratorDropHelper::kHeaderSize;
+      return sizeof(JSIteratorDropHelper);
     case JS_ITERATOR_FLAT_MAP_HELPER_TYPE:
-      return JSIteratorFlatMapHelper::kHeaderSize;
+      return sizeof(JSIteratorFlatMapHelper);
     case JS_ITERATOR_CONCAT_HELPER_TYPE:
-      return JSIteratorConcatHelper::kHeaderSize;
+      return sizeof(JSIteratorConcatHelper);
     case JS_ITERATOR_ZIP_HELPER_TYPE:
-      return JSIteratorZipHelper::kHeaderSize;
+      return sizeof(JSIteratorZipHelper);
     case JS_MODULE_NAMESPACE_TYPE:
       return JSModuleNamespace::kHeaderSize;
     case JS_DEFERRED_MODULE_NAMESPACE_TYPE:

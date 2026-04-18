@@ -4683,7 +4683,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   {                                                                           \
     DirectHandle<Map> map = factory->NewContextfulMapForCurrentContext(       \
         JS_ITERATOR_##ALL_CAPS_NAME##_HELPER_TYPE,                            \
-        JSIterator##Capitalized_name##Helper::kHeaderSize,                    \
+        sizeof(JSIterator##Capitalized_name##Helper),                         \
         TERMINAL_FAST_ELEMENTS_KIND, 0);                                      \
     Map::SetPrototype(isolate(), map, iterator_helper_prototype);             \
     map->SetConstructor(*iterator_function);                                  \
@@ -5611,7 +5611,7 @@ void Genesis::InitializeGlobal_js_iterator_sequencing() {
       direct_handle(native_context()->initial_iterator_function(), isolate_);
   DirectHandle<Map> map =
       isolate_->factory()->NewContextfulMapForCurrentContext(
-          JS_ITERATOR_CONCAT_HELPER_TYPE, JSIteratorConcatHelper::kHeaderSize,
+          JS_ITERATOR_CONCAT_HELPER_TYPE, sizeof(JSIteratorConcatHelper),
           TERMINAL_FAST_ELEMENTS_KIND, 0);
   Map::SetPrototype(isolate(), map, iterator_helper_prototype);
   map->SetConstructor(*iterator_function);
@@ -5629,7 +5629,7 @@ void Genesis::InitializeGlobal_js_joint_iteration() {
       direct_handle(native_context()->initial_iterator_function(), isolate_);
   DirectHandle<Map> map =
       isolate_->factory()->NewContextfulMapForCurrentContext(
-          JS_ITERATOR_ZIP_HELPER_TYPE, JSIteratorZipHelper::kHeaderSize,
+          JS_ITERATOR_ZIP_HELPER_TYPE, sizeof(JSIteratorZipHelper),
           TERMINAL_FAST_ELEMENTS_KIND, 0);
   Map::SetPrototype(isolate(), map, iterator_helper_prototype);
   map->SetConstructor(*iterator_function);
@@ -5857,8 +5857,8 @@ void Genesis::InitializeGlobal_js_explicit_resource_management() {
 
   // -- D i s p o s a b l e S t a c k
   DirectHandle<Map> js_disposable_stack_map =
-      factory->NewContextfulMapForCurrentContext(
-          JS_DISPOSABLE_STACK_BASE_TYPE, JSDisposableStackBase::kHeaderSize);
+      factory->NewContextfulMapForCurrentContext(JS_DISPOSABLE_STACK_BASE_TYPE,
+                                                 sizeof(JSDisposableStackBase));
   js_disposable_stack_map->SetConstructor(native_context()->object_function());
   native_context()->set_js_disposable_stack_map(*js_disposable_stack_map);
   LOG(isolate(), MapDetails(*js_disposable_stack_map));
@@ -5866,7 +5866,7 @@ void Genesis::InitializeGlobal_js_explicit_resource_management() {
   // SyncDisposableStack
   DirectHandle<JSFunction> disposable_stack_function = InstallFunction(
       isolate(), global, "DisposableStack", JS_SYNC_DISPOSABLE_STACK_TYPE,
-      JSSyncDisposableStack::kHeaderSize, 0, factory->the_hole_value(),
+      sizeof(JSSyncDisposableStack), 0, factory->the_hole_value(),
       Builtin::kDisposableStackConstructor, 0, kDontAdapt);
   DirectHandle<JSObject> sync_disposable_stack_prototype(
       Cast<JSObject>(disposable_stack_function->instance_prototype()),
@@ -5897,7 +5897,7 @@ void Genesis::InitializeGlobal_js_explicit_resource_management() {
   // AsyncDisposableStack
   DirectHandle<JSFunction> async_disposable_stack_function = InstallFunction(
       isolate(), global, "AsyncDisposableStack", JS_ASYNC_DISPOSABLE_STACK_TYPE,
-      JSAsyncDisposableStack::kHeaderSize, 0, factory->the_hole_value(),
+      sizeof(JSAsyncDisposableStack), 0, factory->the_hole_value(),
       Builtin::kAsyncDisposableStackConstructor, 0, kDontAdapt);
   DirectHandle<JSObject> async_disposable_stack_prototype(
       Cast<JSObject>(async_disposable_stack_function->instance_prototype()),

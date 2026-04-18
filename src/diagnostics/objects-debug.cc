@@ -2092,7 +2092,6 @@ void JSAtomicsCondition::JSAtomicsConditionVerify(Isolate* isolate) {
 }
 
 void JSDisposableStackBase::JSDisposableStackBaseVerify(Isolate* isolate) {
-  CHECK(IsJSDisposableStackBase(*this));
   JSObjectVerify(isolate);
   const int len = length();
   const uint32_t cap = stack()->capacity().value();
@@ -2101,13 +2100,11 @@ void JSDisposableStackBase::JSDisposableStackBaseVerify(Isolate* isolate) {
 }
 
 void JSSyncDisposableStack::JSSyncDisposableStackVerify(Isolate* isolate) {
-  CHECK(IsJSSyncDisposableStack(*this));
-  JSDisposableStackBase::JSDisposableStackBaseVerify(isolate);
+  JSDisposableStackBaseVerify(isolate);
 }
 
 void JSAsyncDisposableStack::JSAsyncDisposableStackVerify(Isolate* isolate) {
-  CHECK(IsJSAsyncDisposableStack(*this));
-  JSDisposableStackBase::JSDisposableStackBaseVerify(isolate);
+  JSDisposableStackBaseVerify(isolate);
 }
 
 void JSSharedArray::JSSharedArrayVerify(Isolate* isolate) {
@@ -2125,39 +2122,39 @@ void JSSharedArray::JSSharedArrayVerify(Isolate* isolate) {
 }
 
 void JSIteratorMapHelper::JSIteratorMapHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorMapHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsCallable(mapper()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorFilterHelper::JSIteratorFilterHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorFilterHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsCallable(predicate()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorTakeHelper::JSIteratorTakeHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorTakeHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK_GE(Object::NumberValue(remaining()), 0);
 }
 
 void JSIteratorDropHelper::JSIteratorDropHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorDropHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK_GE(Object::NumberValue(remaining()), 0);
 }
 
 void JSIteratorFlatMapHelper::JSIteratorFlatMapHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorFlatMapHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsCallable(mapper()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorConcatHelper::JSIteratorConcatHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorConcatHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
 }
 
 void JSIteratorZipHelper::JSIteratorZipHelperVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSIteratorZipHelperVerify(*this, isolate);
+  JSObjectVerify(isolate);
 }
 
 void WeakCell::WeakCellVerify(Isolate* isolate) {

@@ -1803,12 +1803,12 @@ void V8HeapExplorer::ExtractEphemeronHashTableReferences(
 void V8HeapExplorer::ExtractJSDisposableStackReferences(
     HeapEntry* entry, Tagged<JSDisposableStackBase> disposable_stack) {
   SetInternalReference(entry, "stack", disposable_stack->stack(),
-                       JSDisposableStackBase::kStackOffset);
+                       offsetof(JSDisposableStackBase, stack_));
   SetInternalReference(entry, "error", disposable_stack->error(),
-                       JSDisposableStackBase::kErrorOffset);
+                       offsetof(JSDisposableStackBase, error_));
   SetInternalReference(entry, "error_message",
                        disposable_stack->error_message(),
-                       JSDisposableStackBase::kErrorMessageOffset);
+                       offsetof(JSDisposableStackBase, error_message_));
 }
 
 // These static arrays are used to prevent excessive code-size in
