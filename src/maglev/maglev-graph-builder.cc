@@ -10046,9 +10046,16 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeIndexOfIncludes(
   GET_VALUE_OR_ABORT(max_value, BuildInt32Max(start, GetInt32Constant(0)));
   ValueNode* clamped_start;
   GET_VALUE_OR_ABORT(clamped_start, BuildInt32Min(max_value, receiver_length));
+
+  // TODO(496266449): Change StringIndexOf value representation type to
+  // kSmi and remove this GetSmiValue call.
+  ValueNode* clamped_start_smi;
+  GET_VALUE_OR_ABORT(clamped_start_smi, GetSmiValue(clamped_start));
+
   ValueNode* result;
-  GET_VALUE_OR_ABORT(result, AddNewNode<StringIndexOf>(
-                                 {receiver, search_element, clamped_start}));
+  GET_VALUE_OR_ABORT(
+      result,
+      AddNewNode<StringIndexOf>({receiver, search_element, clamped_start_smi}));
 
   if (is_includes) {
     return AddNewNode<Int32Compare>({result, GetInt32Constant(0)},
