@@ -610,10 +610,11 @@ class JSWeakRef::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset, kTargetOffset, v);
-    IterateCustomWeakPointer(obj, kTargetOffset, v);
-    IterateJSObjectBodyImpl(map, obj, kTargetOffset + kTaggedSize, object_size,
-                            v);
+    IteratePointers(obj, offsetof(JSWeakRef, properties_or_hash_),
+                    offsetof(JSWeakRef, target_), v);
+    IterateCustomWeakPointer(obj, offsetof(JSWeakRef, target_), v);
+    IterateJSObjectBodyImpl(
+        map, obj, offsetof(JSWeakRef, target_) + kTaggedSize, object_size, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {

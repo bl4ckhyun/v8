@@ -4938,10 +4938,9 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // -- W e a k R e f
-    DirectHandle<JSFunction> weak_ref_fun =
-        InstallFunction(isolate_, global, "WeakRef", JS_WEAK_REF_TYPE,
-                        JSWeakRef::kHeaderSize, 0, factory->the_hole_value(),
-                        Builtin::kWeakRefConstructor, 1, kDontAdapt);
+    DirectHandle<JSFunction> weak_ref_fun = InstallFunction(
+        isolate_, global, "WeakRef", JS_WEAK_REF_TYPE, sizeof(JSWeakRef), 0,
+        factory->the_hole_value(), Builtin::kWeakRefConstructor, 1, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, weak_ref_fun,
                                      Context::JS_WEAK_REF_FUNCTION_INDEX);
 

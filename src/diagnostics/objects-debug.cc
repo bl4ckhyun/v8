@@ -2186,7 +2186,7 @@ void WeakCell::WeakCellVerify(Isolate* isolate) {
 }
 
 void JSWeakRef::JSWeakRefVerify(Isolate* isolate) {
-  CHECK(IsJSWeakRef(*this));
+  CHECK(IsJSWeakRef(this));
   JSObjectVerify(isolate);
   CHECK(IsUndefined(target(), isolate) || Object::CanBeHeldWeakly(target()));
 }

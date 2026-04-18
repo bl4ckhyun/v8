@@ -767,7 +767,7 @@ size_t MarkingVisitorBase<ConcreteVisitor>::VisitJSWeakRef(
             heap_, concrete_visitor()->marking_state(), target)) {
       // Record the slot inside the JSWeakRef, since the VisitJSWeakRef above
       // didn't visit it.
-      ObjectSlot slot = weak_ref->RawField(JSWeakRef::kTargetOffset);
+      ObjectSlot slot(&weak_ref->target_);
       concrete_visitor()->RecordSlot(weak_ref, slot, target);
     } else {
       // JSWeakRef points to a potentially dead object. We have to process them

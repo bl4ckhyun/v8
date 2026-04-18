@@ -2085,7 +2085,7 @@ void V8HeapExplorer::ExtractAccessorPairReferences(
 void V8HeapExplorer::ExtractJSWeakRefReferences(HeapEntry* entry,
                                                 Tagged<JSWeakRef> js_weak_ref) {
   SetWeakReference(entry, "target", js_weak_ref->target(),
-                   JSWeakRef::kTargetOffset);
+                   offsetof(JSWeakRef, target_));
 }
 
 void V8HeapExplorer::ExtractWeakCellReferences(HeapEntry* entry,

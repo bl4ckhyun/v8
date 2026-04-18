@@ -167,15 +167,20 @@ V8_OBJECT class WeakCell : public HeapObjectLayout {
   friend class V8HeapExplorer;
 } V8_OBJECT_END;
 
-class JSWeakRef : public TorqueGeneratedJSWeakRef<JSWeakRef, JSObject> {
+V8_OBJECT class JSWeakRef : public JSObjectLayout {
  public:
+  inline Tagged<UnionOf<Symbol, JSReceiver, Undefined>> target() const;
+  inline void set_target(Tagged<UnionOf<Symbol, JSReceiver, Undefined>> value,
+                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
   DECL_PRINTER(JSWeakRef)
   EXPORT_DECL_VERIFIER(JSWeakRef)
 
   class BodyDescriptor;
 
-  TQ_OBJECT_CONSTRUCTORS(JSWeakRef)
-};
+ public:
+  TaggedMember<UnionOf<Symbol, JSReceiver, Undefined>> target_;
+} V8_OBJECT_END;
 
 }  // namespace internal
 }  // namespace v8

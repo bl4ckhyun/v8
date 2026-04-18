@@ -2615,7 +2615,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_MAP_VALUE_ITERATOR_TYPE:
       return JSMapIterator::kHeaderSize;
     case JS_WEAK_REF_TYPE:
-      return JSWeakRef::kHeaderSize;
+      return sizeof(JSWeakRef);
     case JS_FINALIZATION_REGISTRY_TYPE:
       return JSFinalizationRegistry::kHeaderSize;
     case JS_WEAK_MAP_TYPE:

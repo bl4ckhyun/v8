@@ -24,6 +24,15 @@ namespace internal {
 BIT_FIELD_ACCESSORS(JSFinalizationRegistry, flags, scheduled_for_cleanup,
                     JSFinalizationRegistry::ScheduledForCleanupBit)
 
+Tagged<UnionOf<Symbol, JSReceiver, Undefined>> JSWeakRef::target() const {
+  return target_.load();
+}
+
+void JSWeakRef::set_target(Tagged<UnionOf<Symbol, JSReceiver, Undefined>> value,
+                           WriteBarrierMode mode) {
+  target_.store(this, value, mode);
+}
+
 void JSFinalizationRegistry::RegisterWeakCellWithUnregisterToken(
     DirectHandle<JSFinalizationRegistry> finalization_registry,
     DirectHandle<WeakCell> weak_cell, Isolate* isolate) {

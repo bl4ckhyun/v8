@@ -2295,9 +2295,9 @@ void JSMapIterator::JSMapIteratorPrint(std::ostream& os) {
 }
 
 void JSWeakRef::JSWeakRefPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSWeakRef");
+  JSObjectPrintHeader(os, this, "JSWeakRef");
   os << "\n - target: " << Brief(target());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSShadowRealm::JSShadowRealmPrint(std::ostream& os) {

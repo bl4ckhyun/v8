@@ -4283,7 +4283,7 @@ void MarkCompactCollector::ProcessJSWeakRefs(JobDelegate* delegate) {
                            SKIP_WRITE_BARRIER);
     } else {
       // The value of the JSWeakRef is alive.
-      ObjectSlot slot = weak_ref->RawField(JSWeakRef::kTargetOffset);
+      ObjectSlot slot(&weak_ref->target_);
       RecordSlot(weak_ref, slot, target);
     }
   }
