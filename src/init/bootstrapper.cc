@@ -4395,7 +4395,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
   {  // -- M a p
     DirectHandle<JSFunction> js_map_fun = InstallFunction(
-        isolate_, global, "Map", JS_MAP_TYPE, JSMap::kHeaderSize, 0,
+        isolate_, global, "Map", JS_MAP_TYPE, sizeof(JSMap), 0,
         factory->the_hole_value(), Builtin::kMapConstructor, 0, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, js_map_fun,
                                      Context::JS_MAP_FUN_INDEX);
@@ -4497,7 +4497,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
   {  // -- S e t
     DirectHandle<JSFunction> js_set_fun = InstallFunction(
-        isolate_, global, "Set", JS_SET_TYPE, JSSet::kHeaderSize, 0,
+        isolate_, global, "Set", JS_SET_TYPE, sizeof(JSSet), 0,
         factory->the_hole_value(), Builtin::kSetConstructor, 0, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, js_set_fun,
                                      Context::JS_SET_FUN_INDEX);
@@ -4738,10 +4738,9 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // -- W e a k M a p
-    DirectHandle<JSFunction> cons =
-        InstallFunction(isolate_, global, "WeakMap", JS_WEAK_MAP_TYPE,
-                        JSWeakMap::kHeaderSize, 0, factory->the_hole_value(),
-                        Builtin::kWeakMapConstructor, 0, kDontAdapt);
+    DirectHandle<JSFunction> cons = InstallFunction(
+        isolate_, global, "WeakMap", JS_WEAK_MAP_TYPE, sizeof(JSWeakMap), 0,
+        factory->the_hole_value(), Builtin::kWeakMapConstructor, 0, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, cons,
                                      Context::JS_WEAK_MAP_FUN_INDEX);
 
@@ -4778,10 +4777,9 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // -- W e a k S e t
-    DirectHandle<JSFunction> cons =
-        InstallFunction(isolate_, global, "WeakSet", JS_WEAK_SET_TYPE,
-                        JSWeakSet::kHeaderSize, 0, factory->the_hole_value(),
-                        Builtin::kWeakSetConstructor, 0, kDontAdapt);
+    DirectHandle<JSFunction> cons = InstallFunction(
+        isolate_, global, "WeakSet", JS_WEAK_SET_TYPE, sizeof(JSWeakSet), 0,
+        factory->the_hole_value(), Builtin::kWeakSetConstructor, 0, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, cons,
                                      Context::JS_WEAK_SET_FUN_INDEX);
 

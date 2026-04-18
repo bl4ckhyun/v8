@@ -2604,9 +2604,9 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_RAB_GSAB_DATA_VIEW_TYPE:
       return JSRabGsabDataView::kHeaderSize;
     case JS_SET_TYPE:
-      return JSSet::kHeaderSize;
+      return sizeof(JSSet);
     case JS_MAP_TYPE:
-      return JSMap::kHeaderSize;
+      return sizeof(JSMap);
     case JS_SET_KEY_VALUE_ITERATOR_TYPE:
     case JS_SET_VALUE_ITERATOR_TYPE:
       return JSSetIterator::kHeaderSize;
@@ -2619,9 +2619,9 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_FINALIZATION_REGISTRY_TYPE:
       return JSFinalizationRegistry::kHeaderSize;
     case JS_WEAK_MAP_TYPE:
-      return JSWeakMap::kHeaderSize;
+      return sizeof(JSWeakMap);
     case JS_WEAK_SET_TYPE:
-      return JSWeakSet::kHeaderSize;
+      return sizeof(JSWeakSet);
     case JS_PROMISE_TYPE:
       return sizeof(JSPromise);
     case JS_REG_EXP_TYPE:

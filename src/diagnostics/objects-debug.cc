@@ -1997,13 +1997,13 @@ void JSArray::JSArrayVerify(Isolate* isolate) {
 }
 
 void JSSet::JSSetVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSSetVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsOrderedHashSet(table()) || IsUndefined(table(), isolate));
   // TODO(arv): Verify OrderedHashTable too.
 }
 
 void JSMap::JSMapVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSMapVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsOrderedHashMap(table()) || IsUndefined(table(), isolate));
   // TODO(arv): Verify OrderedHashTable too.
 }
@@ -2209,7 +2209,7 @@ void AccessCheckInfo::AccessCheckInfoVerify(Isolate* isolate) {
 }
 
 void JSWeakMap::JSWeakMapVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSWeakMapVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsEphemeronHashTable(table()) || IsUndefined(table(), isolate));
 }
 
@@ -2263,7 +2263,7 @@ void JSPrimitiveWrapper::JSPrimitiveWrapperVerify(Isolate* isolate) {
 }
 
 void JSWeakSet::JSWeakSetVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSWeakSetVerify(*this, isolate);
+  JSObjectVerify(isolate);
   CHECK(IsEphemeronHashTable(table()) || IsUndefined(table(), isolate));
 }
 

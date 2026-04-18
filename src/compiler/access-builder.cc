@@ -193,7 +193,7 @@ FieldAccess AccessBuilder::ForJSObjectOffset(
 
 // static
 FieldAccess AccessBuilder::ForJSCollectionTable() {
-  FieldAccess access = {kTaggedBase,           JSCollection::kTableOffset,
+  FieldAccess access = {kTaggedBase,           offsetof(JSCollection, table_),
                         MaybeHandle<Name>(),   OptionalMapRef(),
                         Type::OtherInternal(), MachineType::TaggedPointer(),
                         kPointerWriteBarrier,  "JSCollectionTable"};

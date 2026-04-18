@@ -10732,7 +10732,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceMapPrototypeGet(
   ValueNode* key = args[0];
   ValueNode* table;
   GET_VALUE_OR_ABORT(
-      table, BuildLoadTaggedField(receiver, JSCollection::kTableOffset));
+      table, BuildLoadTaggedField(receiver, offsetof(JSCollection, table_)));
 
   ValueNode* entry;
   auto key_info = known_node_aspects().TryGetInfoFor(key);
@@ -10786,7 +10786,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceSetPrototypeHas(
   ValueNode* key = args[0];
   ValueNode* table;
   GET_VALUE_OR_ABORT(
-      table, BuildLoadTaggedField(receiver, JSCollection::kTableOffset));
+      table, BuildLoadTaggedField(receiver, offsetof(JSCollection, table_)));
 
   return AddNewNode<SetPrototypeHas>({table, key});
 }

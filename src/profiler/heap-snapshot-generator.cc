@@ -1761,13 +1761,13 @@ void V8HeapExplorer::ExtractSymbolReferences(HeapEntry* entry,
 void V8HeapExplorer::ExtractJSCollectionReferences(
     HeapEntry* entry, Tagged<JSCollection> collection) {
   SetInternalReference(entry, "table", collection->table(),
-                       JSCollection::kTableOffset);
+                       offsetof(JSCollection, table_));
 }
 
 void V8HeapExplorer::ExtractJSWeakCollectionReferences(
     HeapEntry* entry, Tagged<JSWeakCollection> obj) {
   SetInternalReference(entry, "table", obj->table(),
-                       JSWeakCollection::kTableOffset);
+                       offsetof(JSWeakCollection, table_));
 }
 
 void V8HeapExplorer::ExtractEphemeronHashTableReferences(

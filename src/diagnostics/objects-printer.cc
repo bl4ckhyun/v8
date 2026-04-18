@@ -2267,15 +2267,15 @@ void JSDate::JSDatePrint(std::ostream& os) {
 }
 
 void JSSet::JSSetPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSet");
+  JSObjectPrintHeader(os, this, "JSSet");
   os << "\n - table: " << Brief(table());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSMap::JSMapPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSMap");
+  JSObjectPrintHeader(os, this, "JSMap");
   os << "\n - table: " << Brief(table());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSCollectionIterator::JSCollectionIteratorPrint(std::ostream& os,
@@ -2465,15 +2465,15 @@ void JSIteratorZipHelper::JSIteratorZipHelperPrint(std::ostream& os) {
 }
 
 void JSWeakMap::JSWeakMapPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSWeakMap");
+  JSObjectPrintHeader(os, this, "JSWeakMap");
   os << "\n - table: " << Brief(table());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSWeakSet::JSWeakSetPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSWeakSet");
+  JSObjectPrintHeader(os, this, "JSWeakSet");
   os << "\n - table: " << Brief(table());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSArrayBuffer::JSArrayBufferPrint(std::ostream& os) {

@@ -1110,12 +1110,15 @@ class PrototypeInfo::BodyDescriptor final : public BodyDescriptorBase {
 
 class JSWeakCollection::BodyDescriptorImpl final : public BodyDescriptorBase {
  public:
-  static_assert(kTableOffset + kTaggedSize == kHeaderSizeOfAllWeakCollections);
+  static_assert(offsetof(JSWeakCollection, table_) + kTaggedSize ==
+                sizeof(JSWeakCollection));
 
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IterateJSObjectBodyImpl(map, obj, kPropertiesOrHashOffset, object_size, v);
+    IterateJSObjectBodyImpl(map, obj,
+                            offsetof(JSWeakCollection, properties_or_hash_),
+                            object_size, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
