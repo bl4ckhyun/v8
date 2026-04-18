@@ -2524,6 +2524,24 @@ void RegExpData::RegExpDataVerify(Isolate* isolate) {
   Object::VerifyPointer(isolate, wrapper());
 }
 
+#ifdef V8_TEMPORAL_SUPPORT
+#define DEFINE_TEMPORAL_VERIFIER(JSType, field)   \
+  void JSType::JSType##Verify(Isolate* isolate) { \
+    JSObjectVerify(isolate);                      \
+    CHECK(IsForeign(field##_.load()));            \
+  }
+
+DEFINE_TEMPORAL_VERIFIER(JSTemporalDuration, duration)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalInstant, instant)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalPlainDate, date)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalPlainDateTime, date_time)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalPlainMonthDay, month_day)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalPlainTime, time)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalPlainYearMonth, year_month)
+DEFINE_TEMPORAL_VERIFIER(JSTemporalZonedDateTime, zoned_date_time)
+#undef DEFINE_TEMPORAL_VERIFIER
+#endif  // V8_TEMPORAL_SUPPORT
+
 void AtomRegExpData::AtomRegExpDataVerify(Isolate* isolate) {
   CHECK(IsAtomRegExpData(this));
   RegExpDataVerify(isolate);

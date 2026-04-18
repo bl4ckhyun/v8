@@ -2664,21 +2664,21 @@ int JSObject::GetHeaderSize(InstanceType type) {
       return JSAtomicsCondition::kHeaderSize;
 #ifdef V8_TEMPORAL_SUPPORT
     case JS_TEMPORAL_DURATION_TYPE:
-      return JSTemporalDuration::kHeaderSize;
+      return sizeof(JSTemporalDuration);
     case JS_TEMPORAL_INSTANT_TYPE:
-      return JSTemporalInstant::kHeaderSize;
+      return sizeof(JSTemporalInstant);
     case JS_TEMPORAL_PLAIN_DATE_TYPE:
-      return JSTemporalPlainDate::kHeaderSize;
+      return sizeof(JSTemporalPlainDate);
     case JS_TEMPORAL_PLAIN_DATE_TIME_TYPE:
-      return JSTemporalPlainDateTime::kHeaderSize;
+      return sizeof(JSTemporalPlainDateTime);
     case JS_TEMPORAL_PLAIN_MONTH_DAY_TYPE:
-      return JSTemporalPlainMonthDay::kHeaderSize;
+      return sizeof(JSTemporalPlainMonthDay);
     case JS_TEMPORAL_PLAIN_TIME_TYPE:
-      return JSTemporalPlainTime::kHeaderSize;
+      return sizeof(JSTemporalPlainTime);
     case JS_TEMPORAL_PLAIN_YEAR_MONTH_TYPE:
-      return JSTemporalPlainYearMonth::kHeaderSize;
+      return sizeof(JSTemporalPlainYearMonth);
     case JS_TEMPORAL_ZONED_DATE_TIME_TYPE:
-      return JSTemporalZonedDateTime::kHeaderSize;
+      return sizeof(JSTemporalZonedDateTime);
 #endif  // V8_TEMPORAL_SUPPORT
     case JS_VALID_ITERATOR_WRAPPER_TYPE:
       return sizeof(JSValidIteratorWrapper);

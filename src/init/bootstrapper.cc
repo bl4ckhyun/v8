@@ -1639,8 +1639,8 @@ Handle<JSObject> InitializeTemporal(Isolate* isolate) {
   }
 #define INSTALL_TEMPORAL_CTOR_AND_PROTOTYPE(N, U, NUM_ARGS)                    \
   DirectHandle<JSFunction> obj_func = InstallFunction(                         \
-      isolate, temporal, #N, JS_TEMPORAL_##U##_TYPE,                           \
-      JSTemporal##N::kHeaderSize, 0, isolate->factory()->the_hole_value(),     \
+      isolate, temporal, #N, JS_TEMPORAL_##U##_TYPE, sizeof(JSTemporal##N), 0, \
+      isolate->factory()->the_hole_value(),                                    \
       Builtin::kTemporal##N##Constructor, NUM_ARGS, kDontAdapt);               \
   InstallWithIntrinsicDefaultProto(isolate, obj_func,                          \
                                    Context::JS_TEMPORAL_##U##_FUNCTION_INDEX); \

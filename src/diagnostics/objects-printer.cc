@@ -3831,43 +3831,43 @@ void Script::ScriptPrint(std::ostream& os) {
 
 #ifdef V8_TEMPORAL_SUPPORT
 void JSTemporalPlainDate::JSTemporalPlainDatePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalPlainDate");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalPlainDate");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalPlainTime::JSTemporalPlainTimePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalPlainTime");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalPlainTime");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalPlainDateTime::JSTemporalPlainDateTimePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalPlainDateTime");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalPlainDateTime");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalZonedDateTime::JSTemporalZonedDateTimePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalZonedDateTime");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalZonedDateTime");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalDuration::JSTemporalDurationPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalDuration");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalDuration");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalInstant::JSTemporalInstantPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalInstant");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalInstant");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalPlainYearMonth::JSTemporalPlainYearMonthPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalPlainYearMonth");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalPlainYearMonth");
+  JSObjectPrintBody(os, this);
 }
 
 void JSTemporalPlainMonthDay::JSTemporalPlainMonthDayPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSTemporalPlainMonthDay");
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSTemporalPlainMonthDay");
+  JSObjectPrintBody(os, this);
 }
 
 #endif  // V8_TEMPORAL_SUPPORT
