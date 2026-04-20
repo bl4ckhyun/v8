@@ -1281,15 +1281,14 @@ void ArrayList::ArrayListPrint(std::ostream& os) {
 
 void ScriptContextTable::ScriptContextTablePrint(std::ostream& os) {
   PrintHeader(os, "ScriptContextTable");
-  const int len = length(kAcquireLoad);
+  const uint32_t len = length(kAcquireLoad).value();
   const uint32_t cap = capacity().value();
   os << "\n - capacity: " << cap;
   os << "\n - length: " << len;
   os << "\n - names_to_context_index: " << names_to_context_index();
   os << "\n - elements:";
   PrintFixedArrayElements<ScriptContextTable>(
-      os, this, static_cast<uint32_t>(len),
-      [](Tagged<ScriptContextTable> xs, uint32_t i) {
+      os, this, len, [](Tagged<ScriptContextTable> xs, uint32_t i) {
         return Cast<Object>(xs->get(i));
       });
   os << "\n";

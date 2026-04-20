@@ -1022,8 +1022,8 @@ class V8_EXPORT_PRIVATE FeedbackNexus final {
   // For Global Load and Store ICs.
   void ConfigurePropertyCellMode(DirectHandle<PropertyCell> cell);
   // Returns false if given combination of indices is not allowed.
-  bool ConfigureLexicalVarMode(int script_context_index, int context_slot_index,
-                               bool immutable);
+  bool ConfigureLexicalVarMode(uint32_t script_context_index,
+                               int context_slot_index, bool immutable);
   void ConfigureHandlerMode(const MaybeObjectDirectHandle& handler);
 
   // For CloneObject ICs

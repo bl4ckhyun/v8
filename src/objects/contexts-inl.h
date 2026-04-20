@@ -30,14 +30,11 @@ namespace internal {
 
 #include "torque-generated/src/objects/contexts-tq-inl.inc"
 
-// TODO(375937549): Convert to uint32_t.
-int ScriptContextTable::length(AcquireLoadTag) const {
-  int len = length_.Acquire_Load().value();
-  DCHECK_GE(len, 0);
-  return len;
+SafeHeapObjectSize ScriptContextTable::length(AcquireLoadTag) const {
+  return SafeHeapObjectSize(Smi::ToUInt(length_.Acquire_Load()));
 }
-void ScriptContextTable::set_length(int value, ReleaseStoreTag) {
-  length_.Release_Store(this, Smi::FromInt(value));
+void ScriptContextTable::set_length(uint32_t value, ReleaseStoreTag) {
+  length_.Release_Store(this, Smi::FromUInt(value));
 }
 
 Tagged<NameToIndexHashTable> ScriptContextTable::names_to_context_index()
@@ -49,13 +46,13 @@ void ScriptContextTable::set_names_to_context_index(
   names_to_context_index_.store(this, value, mode);
 }
 
-Tagged<Context> ScriptContextTable::get(int i) const {
-  DCHECK_LT(i, length(kAcquireLoad));
+Tagged<Context> ScriptContextTable::get(uint32_t i) const {
+  DCHECK_LT(i, length(kAcquireLoad).value());
   return Super::get(i);
 }
 
-Tagged<Context> ScriptContextTable::get(int i, AcquireLoadTag tag) const {
-  DCHECK_LT(i, length(tag));
+Tagged<Context> ScriptContextTable::get(uint32_t i, AcquireLoadTag tag) const {
+  DCHECK_LT(i, length(tag).value());
   return Super::get(i, tag);
 }
 

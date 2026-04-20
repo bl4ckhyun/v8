@@ -873,16 +873,16 @@ class ScriptContextTable
       Isolate* isolate, uint32_t capacity,
       AllocationType allocation = AllocationType::kYoung);
 
-  inline int length(AcquireLoadTag) const;
-  inline void set_length(int value, ReleaseStoreTag);
+  inline SafeHeapObjectSize length(AcquireLoadTag) const;
+  inline void set_length(uint32_t value, ReleaseStoreTag);
 
   inline Tagged<NameToIndexHashTable> names_to_context_index() const;
   inline void set_names_to_context_index(
       Tagged<NameToIndexHashTable> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
-  inline Tagged<Context> get(int index) const;
-  inline Tagged<Context> get(int index, AcquireLoadTag) const;
+  inline Tagged<Context> get(uint32_t index) const;
+  inline Tagged<Context> get(uint32_t index, AcquireLoadTag) const;
 
   // Lookup a variable `name` in a ScriptContextTable.
   // If it returns true, the variable is found and `result` contains

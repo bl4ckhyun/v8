@@ -1027,11 +1027,10 @@ void ProtectedWeakFixedArray::ProtectedWeakFixedArrayVerify(Isolate* isolate) {
 void ScriptContextTable::ScriptContextTableVerify(Isolate* isolate) {
   CHECK(IsSmi(capacity_.load()));
   CHECK(IsSmi(length_.load()));
-  const int len = length(kAcquireLoad);
-  CHECK_LE(0, len);
-  CHECK_LE(static_cast<uint32_t>(len), capacity().value());
+  const uint32_t len = length(kAcquireLoad).value();
+  CHECK_LE(len, capacity().value());
   CHECK(IsNameToIndexHashTable(names_to_context_index()));
-  for (int i = 0; i < len; ++i) {
+  for (uint32_t i = 0; i < len; ++i) {
     Tagged<Context> o = get(i);
     Object::VerifyPointer(isolate, o);
     CHECK(IsContext(o));

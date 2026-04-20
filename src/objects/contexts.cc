@@ -79,9 +79,7 @@ Handle<ScriptContextTable> ScriptContextTable::Add(
     DirectHandle<Context> script_context, bool ignore_duplicates) {
   DCHECK(script_context->IsScriptContext());
 
-  const int int_old_length = table->length(kAcquireLoad);
-  DCHECK_LE(0, int_old_length);
-  const uint32_t old_length = static_cast<uint32_t>(int_old_length);
+  const uint32_t old_length = table->length(kAcquireLoad).value();
   const uint32_t new_length = old_length + 1;
 
   Handle<ScriptContextTable> result = table;
@@ -120,10 +118,11 @@ void Context::Initialize(Isolate* isolate) {
 bool ScriptContextTable::Lookup(DirectHandle<String> name,
                                 VariableLookupResult* result) {
   DisallowGarbageCollection no_gc;
-  int index = names_to_context_index()->Lookup(*name);
-  if (index == -1) return false;
-  DCHECK_LE(0, index);
-  DCHECK_LT(index, length(kAcquireLoad));
+  int int_index = names_to_context_index()->Lookup(*name);
+  if (int_index == -1) return false;
+  DCHECK_LE(0, int_index);
+  uint32_t index = static_cast<uint32_t>(int_index);
+  DCHECK_LT(index, length(kAcquireLoad).value());
   Tagged<Context> context = get(index);
   DCHECK(context->IsScriptContext());
   int slot_index = context->scope_info()->ContextSlotIndex(*name, result);

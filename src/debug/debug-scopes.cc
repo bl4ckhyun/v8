@@ -821,7 +821,8 @@ void ScopeIterator::VisitScriptScope(const Visitor& visitor) const {
       context_->native_context()->script_context_table(), isolate_);
 
   // Skip the first script since that just declares 'this'.
-  for (int i = 1; i < script_contexts->length(kAcquireLoad); i++) {
+  const uint32_t len = script_contexts->length(kAcquireLoad).value();
+  for (uint32_t i = 1; i < len; i++) {
     DirectHandle<Context> context(script_contexts->get(i), isolate_);
     DirectHandle<ScopeInfo> scope_info(context->scope_info(), isolate_);
     if (VisitContextLocals(visitor, scope_info, context, ScopeTypeScript)) {
