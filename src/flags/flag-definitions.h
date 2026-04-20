@@ -283,13 +283,6 @@ DEFINE_STRING(flag_processing_mode, nullptr,
               "Control behavior for flag errors. Possible values: "
               "abort-on-error, exit-on-error, ignore-contradictions.")
 
-// This is not really a flag, it affects the interpretation of the next flag but
-// doesn't become permanently true when specified. This only works for flags
-// defined in this file, but not for d8 flags defined in src/d8/d8.cc.
-DEFINE_BOOL(allow_overwriting_for_next_flag, false,
-            "temporary disable flag contradiction to allow overwriting just "
-            "the next flag")
-
 // Flags for language modes and experimental language features.
 DEFINE_BOOL(use_strict, false, "enforce strict mode")
 

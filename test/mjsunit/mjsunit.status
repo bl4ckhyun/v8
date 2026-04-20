@@ -975,6 +975,7 @@
   'regress/regress-996234': [SKIP],
 
   # These tests rely on TurboFan being enabled.
+  'ensure-growing-store-learns': [SKIP],
   'compiler/call-with-arraylike-or-spread*': [SKIP],
   'compiler/fast-api-calls': [SKIP],
   'compiler/fast-api-attributes': [SKIP],
@@ -2137,6 +2138,7 @@
   'asm/*': [SKIP],
 
   # Tests that depend on optimization (beyond doing assertOptimized).
+  'ensure-growing-store-learns': [SKIP],
   'regress/regress-1049982-1': [SKIP],
   'regress/regress-1049982-2': [SKIP],
 

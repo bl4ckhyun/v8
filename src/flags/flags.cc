@@ -128,13 +128,6 @@ FlagProcessingMode FlagList::GetFlagProcessingMode() {
 }
 
 bool Flag::ShouldCheckFlagContradictions() {
-  if (v8_flags.allow_overwriting_for_next_flag) {
-    // Setting the flag manually to false before calling Reset() avoids this
-    // becoming re-entrant.
-    v8_flags.allow_overwriting_for_next_flag = false;
-    FindFlagByPointer(&v8_flags.allow_overwriting_for_next_flag)->Reset();
-    return false;
-  }
   return FlagList::GetFlagProcessingMode() !=
          FlagProcessingMode::kIgnoreContradictions;
 }
