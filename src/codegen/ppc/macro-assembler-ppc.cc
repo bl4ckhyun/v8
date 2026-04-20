@@ -130,10 +130,6 @@ void MacroAssembler::GetLabelAddress(Register dest, Label* target) {
       pc_offset() + kPcLoadDelta +
       (InstructionStream::kHeaderSize - kHeapObjectTag);
   LoadPC(r0);
-  // LoadPC emits 2 instructions, pc_offset() is pointing to it's first
-  // instruction but real pc will be pointing to it's second instruction, make
-  // an adjustment so they both point to the same offset.
-  current_instr_code_object_relative_offset -= kInstrSize;
   AddS64(dest, r0, dest);
   SubS64(dest, dest, Operand(current_instr_code_object_relative_offset));
 }
@@ -1186,14 +1182,11 @@ void MacroAssembler::LoadConstantPoolPointerRegisterFromCodeTargetAddress(
 
 void MacroAssembler::LoadPC(Register dst) {
   addpcis(dst, Operand(0));
-  // dst contains the Next Instruction Address, emit a nop
-  // to make it point to the current instruction.
-  nop();
 }
 
 void MacroAssembler::ComputeCodeStartAddress(Register dst) {
   LoadPC(dst);
-  subi(dst, dst, Operand(pc_offset() - kInstrSize));
+  subi(dst, dst, Operand(pc_offset()));
 }
 
 void MacroAssembler::LoadConstantPoolPointerRegister() {
@@ -1202,7 +1195,7 @@ void MacroAssembler::LoadConstantPoolPointerRegister() {
   static_assert(InstructionStream::kOnHeapBodyIsContiguous);
 
   LoadPC(kConstantPoolRegister);
-  int32_t delta = -pc_offset() + 4;
+  int32_t delta = -pc_offset();
   add_label_offset(kConstantPoolRegister, kConstantPoolRegister,
                    ConstantPoolPosition(), delta);
 }
@@ -2335,9 +2328,6 @@ int MacroAssembler::CallCFunction(Register function, int num_reg_arguments,
     int offset_since_start_call = SizeOfCodeGeneratedSince(&start_call);
     // Here we are going to patch the `addi` instruction above to use the
     // correct offset.
-    // LoadPC emits two instructions and pc is the address of its second emitted
-    // instruction. Add one more to the offset to point to after the Call.
-    offset_since_start_call += kInstrSize;
     patch_pc_address(pc_scratch, start_pc_offset, offset_since_start_call);
 
     int before_offset = pc_offset();
@@ -4867,7 +4857,7 @@ void MacroAssembler::StoreReturnAddressAndCall(Register target) {
   // currently being generated) is immovable or that the callee function cannot
   // trigger GC, since the callee function will return to it.
 
-  static constexpr int after_call_offset = 5 * kInstrSize;
+  static constexpr int after_call_offset = 4 * kInstrSize;
   Label start_call;
   Register dest = target;
 
@@ -4889,8 +4879,7 @@ void MacroAssembler::StoreReturnAddressAndCall(Register target) {
   StoreU64(r7, MemOperand(sp, kStackFrameExtraParamSlot * kSystemPointerSize));
   Call(dest);
 
-  DCHECK_EQ(after_call_offset - kInstrSize,
-            SizeOfCodeGeneratedSince(&start_call));
+  DCHECK_EQ(after_call_offset, SizeOfCodeGeneratedSince(&start_call));
 }
 
 void MacroAssembler::AssertNotDeoptimized(Register scratch) {
@@ -5267,8 +5256,8 @@ void MacroAssembler::Switch(Register scratch, Register value,
   ShiftLeftU32(value, value, Operand(entry_size_log2));
 
   Assembler::BlockTrampolinePoolScope block_trampoline_pool(this);
-  // offset = size of (nop, addi, add, mtctr, bctr)
-  constexpr int offset = 20;
+  // offset = size of (addi, add, mtctr, bctr)
+  constexpr int offset = 16;
   LoadPC(scratch);
   addi(scratch, scratch, Operand(offset));
   add(scratch, scratch, value);
