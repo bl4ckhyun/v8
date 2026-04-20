@@ -40,6 +40,7 @@ During investigation (especially via GDB or subagent reports):
 ## 4. Synthesis & Communication
 - **Proactive Updates**: Keep the user informed of key milestones (e.g., triage results, parallel task status).
 - **Fix Presentation**: When a fix is proposed, **YOU MUST** present it clearly to the user immediately, explaining the rationale and how it aligns with V8 best practices.
+- **Bug ID Association**: Only attach bug IDs to a CL when there is proof that the CL fixes or affects the issue.
 
 ## 5. Subagent Coordination & Anti-Duplication
 - **Centralized Routing**: The main agent MUST monitor subagent tasks to prevent duplicate investigations.
