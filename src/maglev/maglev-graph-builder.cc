@@ -5734,10 +5734,6 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildHomomorphicNamedAccess(
         {lookup_start_object}, CheckType::kCheckHeapObject, JS_ARRAY_TYPE,
         JS_ARRAY_TYPE));
     return BuildLoadJSArrayLength(lookup_start_object);
-  } else if (descriptor_index ==
-             LoadHandler::kStringLengthFieldDescriptorIndex) {
-    RETURN_IF_ABORT(BuildCheckString(lookup_start_object));
-    return BuildLoadStringLength(lookup_start_object);
   }
 
   RETURN_IF_ABORT(AddNewNode<CheckHomomorphicMap>(

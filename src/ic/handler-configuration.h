@@ -124,11 +124,9 @@ V8_OBJECT class LoadHandler final : public DataHandler {
   static_assert(DescriptorIndexBits::kLastUsedBit < kSmiValueSize);
 
   // Fake descriptor indices for kField access to the magic length field on
-  // primitive strings and arrays.
+  // arrays.
   // TODO(leszeks): This is a bit hacky, maybe we should just have a different
   // handler for these.
-  static constexpr unsigned kStringLengthFieldDescriptorIndex =
-      DescriptorIndexBits::kMax;
   static constexpr unsigned kArrayLengthFieldDescriptorIndex =
       DescriptorIndexBits::kMax - 1;
 

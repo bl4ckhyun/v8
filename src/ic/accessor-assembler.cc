@@ -194,9 +194,6 @@ void AccessorAssembler::TryHomomorphicCase(
   GotoIf(IsEqualInWord32<LoadHandler::DescriptorIndexBits>(
              handler_value, LoadHandler::kArrayLengthFieldDescriptorIndex),
          &if_array_len);
-  GotoIf(IsEqualInWord32<LoadHandler::DescriptorIndexBits>(
-             handler_value, LoadHandler::kStringLengthFieldDescriptorIndex),
-         &if_string_len);
 
   {
     // Fallback checks -- decode the handler, and validate against the incoming
@@ -296,12 +293,6 @@ void AccessorAssembler::TryHomomorphicCase(
   {
     GotoIfNot(IsJSArray(lookup_start_object_map), miss);
     exit_point->Return(LoadJSArrayLength(CAST(lookup_start_object)));
-  }
-
-  BIND(&if_string_len);
-  {
-    GotoIfNot(IsStringMap(lookup_start_object_map), miss);
-    exit_point->Return(LoadStringLengthAsSmi(CAST(lookup_start_object)));
   }
 }
 
