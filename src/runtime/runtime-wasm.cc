@@ -445,14 +445,17 @@ RUNTIME_FUNCTION(Runtime_WasmLiftoffDeoptFinish) {
       if (vector == Smi::zero()) {
         if (v8_flags.trace_deopt_verbose) {
           wasm::WasmCodeRefScope code_ref_scope;
+          const int module_func_index =
+              trusted_instance_data->native_module()->num_imported_functions() +
+              declared_func_index;
           const wasm::WasmCode* code =
               trusted_instance_data->native_module()->GetCode(
-                  declared_func_index);
+                  module_func_index);
           PrintF(
               "Wasm deoptimization: allocating feedback vector for function %s "
               "[%d]\n",
               code ? code->DebugName().c_str() : "<no code object>",
-              declared_func_index);
+              module_func_index);
         }
         vector = AllocateFeedbackVector(isolate, trusted_instance_data,
                                         declared_func_index);
