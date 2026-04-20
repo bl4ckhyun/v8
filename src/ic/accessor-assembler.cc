@@ -2056,8 +2056,9 @@ void AccessorAssembler::OverwriteExistingFastDataProperty(
       {
         TNode<Float64T> double_value = ChangeNumberToFloat64(CAST(value));
         if (do_transitioning_store) {
+          TNode<Float64T> silenced_value = Float64SilenceNaN(double_value);
           TNode<HeapNumber> heap_number =
-              AllocateHeapNumberWithValue(double_value);
+              AllocateHeapNumberWithValue(silenced_value);
           StoreMap(object, object_map);
           StoreObjectField(object, field_offset, heap_number);
         } else {
@@ -2102,9 +2103,8 @@ void AccessorAssembler::OverwriteExistingFastDataProperty(
                  &cont);
           {
             TNode<Float64T> double_value = ChangeNumberToFloat64(CAST(value));
-            TNode<HeapNumber> heap_number =
-                AllocateHeapNumberWithValue(double_value);
-            var_value = heap_number;
+            TNode<Float64T> silenced = Float64SilenceNaN(double_value);
+            var_value = AllocateHeapNumberWithValue(silenced);
             Goto(&cont);
           }
           BIND(&cont);
@@ -2605,6 +2605,10 @@ void AccessorAssembler::HandleStoreFieldAndReturn(
     std::optional<TNode<Float64T>> double_value, Representation representation,
     Label* miss) {
   bool store_value_as_double = representation.IsDouble();
+
+  if (store_value_as_double) {
+    double_value = Float64SilenceNaN(*double_value);
+  }
 
   TNode<BoolT> is_inobject =
       IsSetWord32<StoreHandler::IsInobjectBits>(handler_word);

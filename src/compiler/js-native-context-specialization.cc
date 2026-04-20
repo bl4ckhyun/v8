@@ -3157,6 +3157,10 @@ JSNativeContextSpecialization::BuildPropertyStore(
         value = effect =
             graph()->NewNode(simplified()->CheckNumber(FeedbackSource()), value,
                              effect, control);
+        if (access_info.IsFastDataConstant()) {
+          value = graph()->NewNode(jsgraph()->simplified()->NumberSilenceNaN(),
+                                   value);
+        }
         if (access_info.HasTransitionMap()) {
           // Allocate a HeapNumber for the new property.
           AllocationBuilder a(jsgraph(), broker(), effect, control);
