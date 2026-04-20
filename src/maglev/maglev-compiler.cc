@@ -4,6 +4,7 @@
 
 #include "src/maglev/maglev-compiler.h"
 
+#include <fstream>
 #include <optional>
 #include <ostream>
 
@@ -69,6 +70,7 @@ void VerifyGraph(Graph* graph) {
 // static
 bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
                              MaglevCompilationInfo* compilation_info) {
+  compilation_info->set_optimization_id(local_isolate->NextOptimizationId());
   std::optional<MaglevGraphLabellerScope> graph_labeller_scope;
   compiler::CurrentHeapBrokerScope current_broker(compilation_info->broker());
   Graph* graph = Graph::New(compilation_info);
@@ -201,6 +203,10 @@ bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
                                                  &regalloc_info);
       PrintGraph(graph, v8_flags.print_maglev_graph,
                  "After register allocation", /* has_regalloc_data */ true);
+      if (v8_flags.gdbjit_full && v8_flags.maglev_gdbjit) {
+        UnparkedScopeIfOnBackground unparked_scope(local_isolate->heap());
+        PrintGraphToFile(graph, true);
+      }
     }
   }
 

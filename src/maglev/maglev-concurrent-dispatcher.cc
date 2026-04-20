@@ -331,7 +331,8 @@ MaglevConcurrentDispatcher::MaglevConcurrentDispatcher(Isolate* isolate)
   bool enable = v8_flags.concurrent_recompilation && maglev::IsMaglevEnabled();
   if (enable) {
     if (FlagsMightEnableMaglevTracing()) {
-      PrintF("Concurrent maglev has been disabled for tracing.\n");
+      base::OS::PrintError(
+          "Concurrent maglev has been disabled for tracing.\n");
       enable = false;
     }
   }
