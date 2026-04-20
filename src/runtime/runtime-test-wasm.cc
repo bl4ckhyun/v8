@@ -882,9 +882,9 @@ static Tagged<Object> CreateWasmObject(Isolate* isolate,
                                               direct_handle(map, isolate));
   } else {
     DCHECK_EQ(module->array_type(type_index)->element_type(), wasm::kWasmI64);
-    return *isolate->factory()->NewWasmArray(wasm::kWasmI64, 1, value,
-                                             direct_handle(map, isolate),
-                                             SKIP_WRITE_BARRIER);
+    return *isolate->factory()->NewWasmArray(
+        wasm::kWasmI64, 1, value, direct_handle(map, isolate),
+        AllocationType::kYoung, SKIP_WRITE_BARRIER);
   }
 }
 

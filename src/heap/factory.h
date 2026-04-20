@@ -860,12 +860,13 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
                                        uint32_t length,
                                        wasm::WasmValue initial_value,
                                        DirectHandle<Map> map,
+                                       AllocationType allocation,
                                        WriteBarrierMode write_barrier);
   DirectHandle<WasmArray> NewWasmArrayFromElements(
       const wasm::ArrayType* type, base::Vector<wasm::WasmValue> elements,
-      DirectHandle<Map> map, WriteBarrierMode write_barrier);
+      DirectHandle<Map> map, AllocationType allocation);
   DirectHandle<WasmArray> NewWasmArrayFromMemory(
-      uint32_t length, DirectHandle<Map> map,
+      uint32_t length, DirectHandle<Map> map, AllocationType allocation,
       wasm::CanonicalValueType element_type,
       base::Vector<const uint8_t> source);
   // Returns a handle to a WasmArray if successful, or a Smi containing a
@@ -874,7 +875,8 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
       DirectHandle<WasmTrustedInstanceData> trusted_instance_data,
       DirectHandle<WasmTrustedInstanceData> shared_trusted_instance_data,
       uint32_t segment_index, uint32_t start_offset, uint32_t length,
-      DirectHandle<Map> map, wasm::CanonicalValueType element_type);
+      DirectHandle<Map> map, AllocationType allocation,
+      wasm::CanonicalValueType element_type);
 
   DirectHandle<SharedFunctionInfo> NewSharedFunctionInfoForWasmExportedFunction(
       DirectHandle<String> name, DirectHandle<WasmExportedFunctionData> data,
@@ -1480,7 +1482,8 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   // reference arrays until initialization. Follow this up with a
   // {DisallowGarbageCollection} scope until initialization.
   Tagged<WasmArray> NewWasmArrayUninitialized(uint32_t length,
-                                              DirectHandle<Map> map);
+                                              DirectHandle<Map> map,
+                                              AllocationType allocation);
 
 #if V8_ENABLE_DRUMBRAKE
   // WasmInterpreterRuntime needs to call NewWasmArrayUninitialized.

@@ -1158,7 +1158,11 @@ RUNTIME_FUNCTION(Runtime_WasmArrayNewSegment) {
   uint32_t length = args.positive_smi_value_at(3);
   DirectHandle<Map> rtt(Cast<Map>(args[4]), isolate);
 
-  wasm::CanonicalValueType element_type = rtt->wasm_type_info()->element_type();
+  Tagged<WasmTypeInfo> type_info = rtt->wasm_type_info();
+  wasm::CanonicalValueType element_type = type_info->element_type();
+  AllocationType allocation = type_info->type().is_shared() == SharedFlag::kYes
+                                  ? AllocationType::kSharedOld
+                                  : AllocationType::kYoung;
 
   uint32_t element_size = element_type.value_kind_size();
   // This check also implies no overflow.
@@ -1181,7 +1185,7 @@ RUNTIME_FUNCTION(Runtime_WasmArrayNewSegment) {
     base::Vector<const uint8_t> source =
         trusted_instance_data->native_module()->wire_bytes() +
         segment_source.offset() + offset;
-    return *isolate->factory()->NewWasmArrayFromMemory(length, rtt,
+    return *isolate->factory()->NewWasmArrayFromMemory(length, rtt, allocation,
                                                        element_type, source);
   } else {
     DirectHandle<Object> elem_segment_raw(
@@ -1206,7 +1210,7 @@ RUNTIME_FUNCTION(Runtime_WasmArrayNewSegment) {
     DirectHandle<Object> result =
         isolate->factory()->NewWasmArrayFromElementSegment(
             trusted_instance_data, shared_instance, segment_index, offset,
-            length, rtt, element_type);
+            length, rtt, allocation, element_type);
     if (IsSmi(*result)) {
       return ThrowWasmError(
           isolate, static_cast<MessageTemplate>(Cast<Smi>(*result).value()));
@@ -2632,8 +2636,11 @@ RUNTIME_FUNCTION(Runtime_WasmStringToUtf8Array) {
                       : wasm::TypeCanonicalizer::kPredefinedArrayI8Index.index)
               .GetHeapObjectAssumeWeak()),
       isolate);
-  DirectHandle<WasmArray> array = isolate->factory()->NewWasmArray(
-      wasm::kWasmI8, length, initial_value, map, SKIP_WRITE_BARRIER);
+  AllocationType allocation =
+      shared ? AllocationType::kSharedOld : AllocationType::kYoung;
+  DirectHandle<WasmArray> array =
+      isolate->factory()->NewWasmArray(wasm::kWasmI8, length, initial_value,
+                                       map, allocation, SKIP_WRITE_BARRIER);
   auto get_writable_bytes =
       [&](const DisallowGarbageCollection&) -> base::Vector<char> {
     return {reinterpret_cast<char*>(array->ElementAddress(0)), length};
