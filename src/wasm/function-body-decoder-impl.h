@@ -4840,16 +4840,18 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
     CALL_INTERFACE_IF_OK_AND_REACHABLE(BeginEffectHandlers);
     for (int i = 0; i < handlers.length(); ++i) {
       if (handlers[i].kind == kOnSuspend) {
+        int push_count =
+            static_cast<int>(handlers[i].tag.tag->sig->parameter_count()) + 1;
+        stack_.EnsureMoreCapacity(push_count, this->zone_);
         Value* tag_params =
             PushValueTypes(handlers[i].tag.tag->sig->parameters());
-        stack_.EnsureMoreCapacity(1, this->zone_);
         Value* suspend_cont =
             Push(ValueType::Ref(imm.index, SharedFlag::kNo, RefTypeKind::kCont)
                      .AsExactIfEnabled(this->enabled_));
         const HandlerCase& handler = handlers[i];
         CALL_INTERFACE_IF_OK_AND_REACHABLE(ResumeHandler, handler, i,
                                            suspend_cont, tag_params);
-        Drop(1 + static_cast<int>(handlers[i].tag.tag->sig->parameter_count()));
+        Drop(push_count);
         Control* target = control_at(handlers[i].maybe_depth.br.depth);
         target->br_merge()->reached = true;
       }
