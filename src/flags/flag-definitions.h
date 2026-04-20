@@ -4234,6 +4234,7 @@ DEFINE_NEG_IMPLICATION(disallow_unsafe_flags,
 DEFINE_NEG_IMPLICATION(disallow_unsafe_flags, experimental_wasm_ref_cast_nop)
 DEFINE_NEG_IMPLICATION(disallow_unsafe_flags,
                        experimental_wasm_skip_bounds_checks)
+DEFINE_NEG_IMPLICATION(disallow_unsafe_flags, wasm_unsafe_fast_api_wrapper)
 // Enabled-by-default flags that should not be disabled.
 DEFINE_IMPLICATION(disallow_unsafe_flags, wasm_bounds_checks)
 DEFINE_IMPLICATION(disallow_unsafe_flags, wasm_stack_checks)
