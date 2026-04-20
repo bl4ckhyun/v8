@@ -2560,7 +2560,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_ASYNC_GENERATOR_OBJECT_TYPE:
       return JSAsyncGeneratorObject::kHeaderSize;
     case JS_ASYNC_FROM_SYNC_ITERATOR_TYPE:
-      return JSAsyncFromSyncIterator::kHeaderSize;
+      return sizeof(JSAsyncFromSyncIterator);
     case JS_GLOBAL_PROXY_TYPE:
       return JSGlobalProxy::kHeaderSize;
     case JS_GLOBAL_OBJECT_TYPE:
@@ -2580,7 +2580,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
 #undef TYPED_ARRAY_CONSTRUCTORS_SWITCH
       return JSFunctionWithPrototype::kHeaderSize;
     case JS_PRIMITIVE_WRAPPER_TYPE:
-      return JSPrimitiveWrapper::kHeaderSize;
+      return sizeof(JSPrimitiveWrapper);
     case JS_DATE_TYPE:
       return JSDate::kHeaderSize;
     case JS_DISPOSABLE_STACK_BASE_TYPE:
@@ -2627,7 +2627,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_REG_EXP_TYPE:
       return JSRegExp::kHeaderSize;
     case JS_REG_EXP_STRING_ITERATOR_TYPE:
-      return JSRegExpStringIterator::kHeaderSize;
+      return sizeof(JSRegExpStringIterator);
     case JS_MESSAGE_OBJECT_TYPE:
       return JSMessageObject::kHeaderSize;
     case JS_EXTERNAL_OBJECT_TYPE:
@@ -2681,7 +2681,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
       return JSTemporalZonedDateTime::kHeaderSize;
 #endif  // V8_TEMPORAL_SUPPORT
     case JS_VALID_ITERATOR_WRAPPER_TYPE:
-      return JSValidIteratorWrapper::kHeaderSize;
+      return sizeof(JSValidIteratorWrapper);
     case JS_WRAPPED_FUNCTION_TYPE:
       return JSWrappedFunction::kHeaderSize;
     case JS_RAW_JSON_TYPE:

@@ -143,6 +143,7 @@ extern class JSGlobalObject extends JSSpecialObject {
   global_proxy_for_api: JSGlobalProxy;
 }
 
+@cppObjectLayoutDefinition
 extern class JSPrimitiveWrapper extends JSCustomElementsObject {
   value: JSAny;
 }
@@ -186,6 +187,7 @@ extern class JSDate extends JSObject {
   cache_stamp: Smi|NaN;
 }
 
+@cppObjectLayoutDefinition
 extern class JSAsyncFromSyncIterator extends JSObject {
   sync_iterator: JSReceiver;
   // The "next" method is loaded during GetIterator, and is not reloaded for
@@ -203,6 +205,7 @@ extern class JSStringIterator extends JSObject {
 
 // The wrapper returned by Iterator.from().
 // https://tc39.es/ecma262/#sec-wrapforvaliditeratorprototype-object
+@cppObjectLayoutDefinition
 extern class JSValidIteratorWrapper extends JSObject {
   // The [[Iterated]] slot.
   underlying: iterator::IteratorRecord;

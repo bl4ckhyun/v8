@@ -668,10 +668,11 @@ FieldAccess AccessBuilder::ForJSIteratorResultValue() {
 
 // static
 FieldAccess AccessBuilder::ForJSPrimitiveWrapperValue() {
-  FieldAccess access = {kTaggedBase,         JSPrimitiveWrapper::kValueOffset,
-                        MaybeHandle<Name>(), OptionalMapRef(),
-                        Type::NonInternal(), MachineType::AnyTagged(),
-                        kFullWriteBarrier,   "JSPrimitiveWrapperValue"};
+  FieldAccess access = {
+      kTaggedBase,         offsetof(JSPrimitiveWrapper, value_),
+      MaybeHandle<Name>(), OptionalMapRef(),
+      Type::NonInternal(), MachineType::AnyTagged(),
+      kFullWriteBarrier,   "JSPrimitiveWrapperValue"};
   return access;
 }
 

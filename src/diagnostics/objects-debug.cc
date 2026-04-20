@@ -2244,6 +2244,27 @@ void JSStringIterator::JSStringIteratorVerify(Isolate* isolate) {
   CHECK_LE(index(), String::kMaxLength);
 }
 
+void JSAsyncFromSyncIterator::JSAsyncFromSyncIteratorVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsJSReceiver(sync_iterator()));
+}
+
+void JSValidIteratorWrapper::JSValidIteratorWrapperVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsJSReceiver(underlying_object()));
+}
+
+void JSRegExpStringIterator::JSRegExpStringIteratorVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsJSReceiver(iterating_reg_exp()));
+  CHECK(IsString(iterated_string()));
+  CHECK(flags_.load().IsSmi());
+}
+
+void JSPrimitiveWrapper::JSPrimitiveWrapperVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+}
+
 void JSWeakSet::JSWeakSetVerify(Isolate* isolate) {
   TorqueGeneratedClassVerifiers::JSWeakSetVerify(*this, isolate);
   CHECK(IsEphemeronHashTable(table()) || IsUndefined(table(), isolate));

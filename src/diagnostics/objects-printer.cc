@@ -1081,13 +1081,13 @@ void RegExpDataWrapper::RegExpDataWrapperPrint(std::ostream& os) {
 }
 
 void JSRegExpStringIterator::JSRegExpStringIteratorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSRegExpStringIterator");
+  JSObjectPrintHeader(os, this, "JSRegExpStringIterator");
   os << "\n - regex: " << Brief(iterating_reg_exp());
   os << "\n - string: " << Brief(iterated_string());
   os << "\n - done: " << done();
   os << "\n - global: " << global();
   os << "\n - unicode: " << unicode();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void Symbol::SymbolPrint(std::ostream& os) {
@@ -2185,23 +2185,23 @@ void JSStringIterator::JSStringIteratorPrint(std::ostream& os) {
 }
 
 void JSAsyncFromSyncIterator::JSAsyncFromSyncIteratorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSAsyncFromSyncIterator");
+  JSObjectPrintHeader(os, this, "JSAsyncFromSyncIterator");
   os << "\n - sync_iterator: " << Brief(sync_iterator());
   os << "\n - next: " << Brief(next());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSValidIteratorWrapper::JSValidIteratorWrapperPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSValidIteratorWrapper");
+  JSObjectPrintHeader(os, this, "JSValidIteratorWrapper");
   os << "\n - underlying.object: " << Brief(underlying_object());
   os << "\n - underlying.next: " << Brief(underlying_next());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSPrimitiveWrapper::JSPrimitiveWrapperPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSPrimitiveWrapper");
+  JSObjectPrintHeader(os, this, "JSPrimitiveWrapper");
   os << "\n - value: " << Brief(value());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSMessageObject::JSMessageObjectPrint(std::ostream& os) {

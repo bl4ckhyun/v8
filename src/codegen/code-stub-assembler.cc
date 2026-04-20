@@ -2798,7 +2798,7 @@ TNode<Uint32T> CodeStubAssembler::LoadStringLengthAsWord32(
 
 TNode<Object> CodeStubAssembler::LoadJSPrimitiveWrapperValue(
     TNode<JSPrimitiveWrapper> object) {
-  return LoadObjectField(object, JSPrimitiveWrapper::kValueOffset);
+  return LoadObjectField(object, offsetof(JSPrimitiveWrapper, value_));
 }
 
 void CodeStubAssembler::DispatchMaybeObject(TNode<MaybeObject> maybe_object,
@@ -7719,7 +7719,7 @@ TNode<JSAny> CodeStubAssembler::ToThisValue(TNode<Context> context,
     {
       // Load the actual value from the {value}.
       var_value =
-          CAST(LoadObjectField(value, JSPrimitiveWrapper::kValueOffset));
+          CAST(LoadObjectField(value, offsetof(JSPrimitiveWrapper, value_)));
       Goto(&loop);
     }
 
@@ -12253,9 +12253,10 @@ TNode<JSObject> CodeStubAssembler::CreateAsyncFromSyncIterator(
   const TNode<JSObject> iterator = AllocateJSObjectFromMap(map);
 
   StoreObjectFieldNoWriteBarrier(
-      iterator, JSAsyncFromSyncIterator::kSyncIteratorOffset, sync_iterator);
-  StoreObjectFieldNoWriteBarrier(iterator, JSAsyncFromSyncIterator::kNextOffset,
-                                 next);
+      iterator, offsetof(JSAsyncFromSyncIterator, sync_iterator_),
+      sync_iterator);
+  StoreObjectFieldNoWriteBarrier(
+      iterator, offsetof(JSAsyncFromSyncIterator, next_), next);
   return iterator;
 }
 

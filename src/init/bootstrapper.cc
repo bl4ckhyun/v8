@@ -1128,8 +1128,7 @@ void Genesis::CreateAsyncIteratorMaps(DirectHandle<JSFunction> empty) {
 
   DirectHandle<Map> async_from_sync_iterator_map =
       factory()->NewContextfulMapForCurrentContext(
-          JS_ASYNC_FROM_SYNC_ITERATOR_TYPE,
-          JSAsyncFromSyncIterator::kHeaderSize);
+          JS_ASYNC_FROM_SYNC_ITERATOR_TYPE, sizeof(JSAsyncFromSyncIterator));
   Map::SetPrototype(isolate(), async_from_sync_iterator_map,
                     async_from_sync_iterator_prototype);
   native_context()->set_async_from_sync_iterator_map(
@@ -2587,11 +2586,10 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // --- N u m b e r ---
-    DirectHandle<JSFunction> number_fun =
-        InstallFunction(isolate_, global, "Number", JS_PRIMITIVE_WRAPPER_TYPE,
-                        JSPrimitiveWrapper::kHeaderSize, 0,
-                        isolate_->initial_object_prototype(),
-                        Builtin::kNumberConstructor, 1, kDontAdapt);
+    DirectHandle<JSFunction> number_fun = InstallFunction(
+        isolate_, global, "Number", JS_PRIMITIVE_WRAPPER_TYPE,
+        sizeof(JSPrimitiveWrapper), 0, isolate_->initial_object_prototype(),
+        Builtin::kNumberConstructor, 1, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, number_fun,
                                      Context::NUMBER_FUNCTION_INDEX);
 
@@ -2673,11 +2671,10 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // --- B o o l e a n ---
-    DirectHandle<JSFunction> boolean_fun =
-        InstallFunction(isolate_, global, "Boolean", JS_PRIMITIVE_WRAPPER_TYPE,
-                        JSPrimitiveWrapper::kHeaderSize, 0,
-                        isolate_->initial_object_prototype(),
-                        Builtin::kBooleanConstructor, 1, kDontAdapt);
+    DirectHandle<JSFunction> boolean_fun = InstallFunction(
+        isolate_, global, "Boolean", JS_PRIMITIVE_WRAPPER_TYPE,
+        sizeof(JSPrimitiveWrapper), 0, isolate_->initial_object_prototype(),
+        Builtin::kBooleanConstructor, 1, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, boolean_fun,
                                      Context::BOOLEAN_FUNCTION_INDEX);
 
@@ -2699,11 +2696,10 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   }
 
   {  // --- S t r i n g ---
-    DirectHandle<JSFunction> string_fun =
-        InstallFunction(isolate_, global, "String", JS_PRIMITIVE_WRAPPER_TYPE,
-                        JSPrimitiveWrapper::kHeaderSize, 0,
-                        isolate_->initial_object_prototype(),
-                        Builtin::kStringConstructor, 1, kDontAdapt);
+    DirectHandle<JSFunction> string_fun = InstallFunction(
+        isolate_, global, "String", JS_PRIMITIVE_WRAPPER_TYPE,
+        sizeof(JSPrimitiveWrapper), 0, isolate_->initial_object_prototype(),
+        Builtin::kStringConstructor, 1, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, string_fun,
                                      Context::STRING_FUNCTION_INDEX);
 
@@ -2912,7 +2908,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   {  // --- S y m b o l ---
     DirectHandle<JSFunction> symbol_fun = InstallFunction(
         isolate_, global, "Symbol", JS_PRIMITIVE_WRAPPER_TYPE,
-        JSPrimitiveWrapper::kHeaderSize, 0, factory->the_hole_value(),
+        sizeof(JSPrimitiveWrapper), 0, factory->the_hole_value(),
         Builtin::kSymbolConstructor, 0, kDontAdapt);
     native_context()->set_symbol_function(*symbol_fun);
 
@@ -3399,8 +3395,8 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
     DirectHandle<JSFunction> regexp_string_iterator_function = CreateFunction(
         isolate(), "RegExpStringIterator", JS_REG_EXP_STRING_ITERATOR_TYPE,
-        JSRegExpStringIterator::kHeaderSize, 0,
-        regexp_string_iterator_prototype, Builtin::kIllegal, 0, kDontAdapt);
+        sizeof(JSRegExpStringIterator), 0, regexp_string_iterator_prototype,
+        Builtin::kIllegal, 0, kDontAdapt);
     regexp_string_iterator_function->shared()->set_native(false);
     native_context()->set_initial_regexp_string_iterator_prototype_map(
         regexp_string_iterator_function->initial_map());
@@ -4465,7 +4461,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
   {  // -- B i g I n t
     DirectHandle<JSFunction> bigint_fun = InstallFunction(
         isolate_, global, "BigInt", JS_PRIMITIVE_WRAPPER_TYPE,
-        JSPrimitiveWrapper::kHeaderSize, 0, factory->the_hole_value(),
+        sizeof(JSPrimitiveWrapper), 0, factory->the_hole_value(),
         Builtin::kBigIntConstructor, 1, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, bigint_fun,
                                      Context::BIGINT_FUNCTION_INDEX);
@@ -4641,7 +4637,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
         Builtin::kWrapForValidIteratorPrototypeReturn, 0, kAdapt);
     DirectHandle<Map> valid_iterator_wrapper_map =
         factory->NewContextfulMapForCurrentContext(
-            JS_VALID_ITERATOR_WRAPPER_TYPE, JSValidIteratorWrapper::kHeaderSize,
+            JS_VALID_ITERATOR_WRAPPER_TYPE, sizeof(JSValidIteratorWrapper),
             TERMINAL_FAST_ELEMENTS_KIND, 0);
     Map::SetPrototype(isolate(), valid_iterator_wrapper_map,
                       wrap_for_valid_iterator_prototype);

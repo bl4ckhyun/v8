@@ -5495,7 +5495,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyLoad(
       ValueNode* string;
       GET_VALUE_OR_ABORT(
           string, BuildLoadTaggedField(lookup_start_object,
-                                       JSPrimitiveWrapper::kValueOffset));
+                                       offsetof(JSPrimitiveWrapper, value_)));
       return AddNewNodeNoInputConversion<StringLength>({string});
     }
     case compiler::PropertyAccessInfo::kTypedArrayLength: {
@@ -14602,7 +14602,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSStringWrapper(ValueNode* value) {
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSObject::kElementsOffset,
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSPrimitiveWrapper::kValueOffset, value);
+  vobj->set(offsetof(JSPrimitiveWrapper, value_), value);
   return vobj;
 }
 

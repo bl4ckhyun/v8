@@ -4126,7 +4126,10 @@ class ClassFieldOffsetGenerator : public FieldOffsetsGenerator {
       if (parent_name == "HeapObject" || parent_name == "TrustedObject" ||
           parent_name == "ExposedTrustedObject" ||
           parent_name == "JSReceiver" || parent_name == "JSObject" ||
-          parent_name == "JSObjectWithEmbedderSlots") {
+          parent_name == "JSObjectWithEmbedderSlots" ||
+          parent_name == "JSAPIObjectWithEmbedderSlots" ||
+          parent_name == "JSCustomElementsObject" ||
+          parent_name == "JSSpecialObject") {
         parent_name += "Layout";
       }
 

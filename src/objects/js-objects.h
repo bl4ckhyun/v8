@@ -57,6 +57,7 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // Delegate trampolines into the legacy JSReceiver class. These let ported
   // subclasses and their callers keep using method-call syntax without
   // threading Cast<JSReceiver>(...) through every callsite during migration.
+  inline bool HasFastProperties() const;
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
       Isolate* isolate) const;
@@ -407,8 +408,9 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   // `Cast<JSObject>(...)` through every callsite during the migration.
   // StructLayout::StructVerify is the precedent for the verifier form.
   DECL_VERIFIER(JSObject)
-  inline Tagged<Object> InObjectPropertyAtOffset(int offset);
+  inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
   inline int GetEmbedderFieldCount() const;
+  inline Tagged<FixedArrayBase> elements() const;
 
  public:
   TaggedMember<FixedArrayBase> elements_;
@@ -430,6 +432,38 @@ V8_OBJECT class JSObjectWithEmbedderSlotsLayout : public JSObjectLayout {
 
 inline constexpr int JSObjectWithEmbedderSlotsLayout::kHeaderSize =
     sizeof(JSObjectWithEmbedderSlotsLayout);
+
+// Stubs for the other two abstract layout bases that can introduce
+// embedder slots. Intentionally empty for now: the cpp_heap_wrappable
+// field they conceptually carry requires a CppHeapPointerMember type
+// that doesn't exist yet.
+//
+// TODO(jgruber): once CppHeapPointerMember lands, add
+//   CppHeapPointerMember cpp_heap_wrappable_;
+// to JSAPIObjectWithEmbedderSlotsLayout and JSSpecialObjectLayout.
+V8_OBJECT class JSAPIObjectWithEmbedderSlotsLayout : public JSObjectLayout {
+ public:
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSAPIObjectWithEmbedderSlotsLayout::kHeaderSize =
+    sizeof(JSAPIObjectWithEmbedderSlotsLayout);
+
+V8_OBJECT class JSCustomElementsObjectLayout : public JSObjectLayout {
+ public:
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSCustomElementsObjectLayout::kHeaderSize =
+    sizeof(JSCustomElementsObjectLayout);
+
+V8_OBJECT class JSSpecialObjectLayout : public JSCustomElementsObjectLayout {
+ public:
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSSpecialObjectLayout::kHeaderSize =
+    sizeof(JSSpecialObjectLayout);
 
 // The JSObject describes real heap allocated JavaScript objects with
 // properties.
@@ -1300,15 +1334,19 @@ class JSGlobalObject
 };
 
 // Representation for JS Wrapper objects, String, Number, Boolean, etc.
-class JSPrimitiveWrapper
-    : public TorqueGeneratedJSPrimitiveWrapper<JSPrimitiveWrapper,
-                                               JSCustomElementsObject> {
+V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObjectLayout {
  public:
+  inline Tagged<JSAny> value() const;
+  inline void set_value(Tagged<JSAny> value,
+                        WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
   // Dispatched behavior.
   DECL_PRINTER(JSPrimitiveWrapper)
+  DECL_VERIFIER(JSPrimitiveWrapper)
 
-  TQ_OBJECT_CONSTRUCTORS(JSPrimitiveWrapper)
-};
+ public:
+  TaggedMember<JSAny> value_;
+} V8_OBJECT_END;
 
 class DateCache;
 
@@ -1471,20 +1509,30 @@ class JSMessageObject
 // An object which wraps an ordinary Iterator and converts it to behave
 // according to the Async Iterator protocol.
 // (See https://tc39.es/proposal-async-iteration/#sec-iteration)
-class JSAsyncFromSyncIterator
-    : public TorqueGeneratedJSAsyncFromSyncIterator<JSAsyncFromSyncIterator,
-                                                    JSObject> {
+V8_OBJECT class JSAsyncFromSyncIterator : public JSObjectLayout {
  public:
-  DECL_PRINTER(JSAsyncFromSyncIterator)
-
   // Async-from-Sync Iterator instances are ordinary objects that inherit
   // properties from the %AsyncFromSyncIteratorPrototype% intrinsic object.
   // Async-from-Sync Iterator instances are initially created with the internal
   // slots listed in Table 4.
   // (https://tc39.es/proposal-async-iteration/#table-async-from-sync-iterator-internal-slots)
+  inline Tagged<JSReceiver> sync_iterator() const;
+  inline void set_sync_iterator(Tagged<JSReceiver> value,
+                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
-  TQ_OBJECT_CONSTRUCTORS(JSAsyncFromSyncIterator)
-};
+  // The "next" method is loaded during GetIterator, and is not reloaded for
+  // subsequent "next" invocations.
+  inline Tagged<Object> next() const;
+  inline void set_next(Tagged<Object> value,
+                       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  DECL_PRINTER(JSAsyncFromSyncIterator)
+  DECL_VERIFIER(JSAsyncFromSyncIterator)
+
+ public:
+  TaggedMember<JSReceiver> sync_iterator_;
+  TaggedMember<Object> next_;
+} V8_OBJECT_END;
 
 V8_OBJECT class JSStringIterator : public JSObjectLayout {
  public:
@@ -1507,14 +1555,25 @@ V8_OBJECT class JSStringIterator : public JSObjectLayout {
 // The valid iterator wrapper is the wrapper object created by
 // Iterator.from(obj), which attempts to wrap iterator-like objects into an
 // actual iterator with %Iterator.prototype%.
-class JSValidIteratorWrapper
-    : public TorqueGeneratedJSValidIteratorWrapper<JSValidIteratorWrapper,
-                                                   JSObject> {
+V8_OBJECT class JSValidIteratorWrapper : public JSObjectLayout {
  public:
-  DECL_PRINTER(JSValidIteratorWrapper)
+  // The [[Iterated]] slot, modelled as the two fields of an
+  // iterator::IteratorRecord struct (object + next).
+  inline Tagged<JSReceiver> underlying_object() const;
+  inline void set_underlying_object(
+      Tagged<JSReceiver> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
-  TQ_OBJECT_CONSTRUCTORS(JSValidIteratorWrapper)
-};
+  inline Tagged<JSAny> underlying_next() const;
+  inline void set_underlying_next(Tagged<JSAny> value,
+                                  WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  DECL_PRINTER(JSValidIteratorWrapper)
+  DECL_VERIFIER(JSValidIteratorWrapper)
+
+ public:
+  TaggedMember<JSReceiver> underlying_object_;
+  TaggedMember<JSAny> underlying_next_;
+} V8_OBJECT_END;
 
 // JSPromiseWithResolversResult is just a JSObject with a specific initial map.
 // This initial map adds in-object properties for "promise", "resolve", and

@@ -3232,7 +3232,7 @@ class GraphBuildingNodeProcessor {
     } ELSE {
       string = V<String>::Cast(
           __ LoadTaggedField(V<JSPrimitiveWrapper>::Cast(string_or_wrapper),
-                             JSPrimitiveWrapper::kValueOffset));
+                             offsetof(JSPrimitiveWrapper, value_)));
     }
     SetMap(node, string);
     return maglev::ProcessResult::kContinue;

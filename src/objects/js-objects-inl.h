@@ -590,12 +590,20 @@ Tagged<Object> JSObject::InObjectPropertyAtOffset(int offset) {
   return TaggedField<Object>::load(*this, offset);
 }
 
-Tagged<Object> JSObjectLayout::InObjectPropertyAtOffset(int offset) {
+Tagged<Object> JSObjectLayout::InObjectPropertyAtOffset(int offset) const {
   return Cast<JSObject>(this)->InObjectPropertyAtOffset(offset);
 }
 
 int JSObjectLayout::GetEmbedderFieldCount() const {
   return Cast<JSObject>(this)->GetEmbedderFieldCount();
+}
+
+Tagged<FixedArrayBase> JSObjectLayout::elements() const {
+  return elements_.load();
+}
+
+bool JSReceiverLayout::HasFastProperties() const {
+  return Cast<JSReceiver>(this)->HasFastProperties();
 }
 
 std::optional<Tagged<NativeContext>> JSReceiverLayout::GetCreationContext()
@@ -748,6 +756,46 @@ int JSStringIterator::index() const { return index_.load().value(); }
 
 void JSStringIterator::set_index(int value) {
   index_.store(this, Smi::FromInt(value));
+}
+
+Tagged<JSReceiver> JSAsyncFromSyncIterator::sync_iterator() const {
+  return sync_iterator_.load();
+}
+
+void JSAsyncFromSyncIterator::set_sync_iterator(Tagged<JSReceiver> value,
+                                                WriteBarrierMode mode) {
+  sync_iterator_.store(this, value, mode);
+}
+
+Tagged<Object> JSAsyncFromSyncIterator::next() const { return next_.load(); }
+
+void JSAsyncFromSyncIterator::set_next(Tagged<Object> value,
+                                       WriteBarrierMode mode) {
+  next_.store(this, value, mode);
+}
+
+Tagged<JSAny> JSPrimitiveWrapper::value() const { return value_.load(); }
+
+void JSPrimitiveWrapper::set_value(Tagged<JSAny> value, WriteBarrierMode mode) {
+  value_.store(this, value, mode);
+}
+
+Tagged<JSReceiver> JSValidIteratorWrapper::underlying_object() const {
+  return underlying_object_.load();
+}
+
+void JSValidIteratorWrapper::set_underlying_object(Tagged<JSReceiver> value,
+                                                   WriteBarrierMode mode) {
+  underlying_object_.store(this, value, mode);
+}
+
+Tagged<JSAny> JSValidIteratorWrapper::underlying_next() const {
+  return underlying_next_.load();
+}
+
+void JSValidIteratorWrapper::set_underlying_next(Tagged<JSAny> value,
+                                                 WriteBarrierMode mode) {
+  underlying_next_.store(this, value, mode);
 }
 
 bool JSMessageObject::DidEnsureSourcePositionsAvailable() const {

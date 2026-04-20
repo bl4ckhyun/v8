@@ -5881,7 +5881,7 @@ void UnwrapStringWrapper::GenerateCode(MaglevAssembler* masm,
   Register input = ToRegister(ValueInput());
   Label done;
   __ JumpIfString(input, &done, Label::kNear);
-  __ LoadTaggedField(input, input, JSPrimitiveWrapper::kValueOffset);
+  __ LoadTaggedField(input, input, offsetof(JSPrimitiveWrapper, value_));
   __ bind(&done);
 }
 

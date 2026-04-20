@@ -5852,7 +5852,7 @@ struct VirtualJSIteratorResultShape : VirtualJSObjectShape {
 
 struct VirtualJSPrimitiveWrapperShape : VirtualJSObjectShape {
   using T = JSPrimitiveWrapper;
-#define FIELD_LIST(V) V(value, T::kValueOffset, vobj::FieldType::kTagged)
+#define FIELD_LIST(V) V(value, offsetof(T, value_), vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualJSObjectShape, FIELD_LIST);
 #undef FIELD_LIST
 };

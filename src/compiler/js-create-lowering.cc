@@ -1479,12 +1479,12 @@ Reduction JSCreateLowering::ReduceJSCreateStringWrapper(Node* node) {
   Node* primitive_value = NodeProperties::GetValueInput(node, 0);
 
   MapRef map = native_context().string_function(broker()).initial_map(broker());
-  DCHECK_EQ(map.instance_size(), JSPrimitiveWrapper::kHeaderSize);
+  DCHECK_EQ(map.instance_size(), sizeof(JSPrimitiveWrapper));
   CHECK(!map.IsInobjectSlackTrackingInProgress());
 
   // Emit code to allocate the JSPrimitiveWrapper instance for the given {map}.
   AllocationBuilder a(jsgraph(), broker(), effect, graph()->start());
-  a.Allocate(JSPrimitiveWrapper::kHeaderSize, AllocationType::kYoung,
+  a.Allocate(sizeof(JSPrimitiveWrapper), AllocationType::kYoung,
              Type::StringWrapper());
   a.Store(AccessBuilder::ForMap(), map);
   a.Store(AccessBuilder::ForJSObjectPropertiesOrHash(),
