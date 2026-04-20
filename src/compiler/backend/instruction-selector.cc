@@ -2070,13 +2070,15 @@ void InstructionSelector::VisitProjection(OpIndex node) {
   const Operation& value_op = this->Get(projection.input());
   if (value_op.Is<OverflowCheckedBinopOp>() ||
       value_op.Is<OverflowCheckedUnaryOp>() || value_op.Is<TryChangeOp>() ||
-      value_op.Is<Word32PairBinopOp>() || value_op.Is<Word64MulWideOp>()) {
+      value_op.Is<Word32PairBinopOp>()) {
     if (projection.index == 0u) {
       EmitIdentity(node);
     } else {
       DCHECK_EQ(1u, projection.index);
       MarkAsUsed(projection.input());
     }
+  } else if (value_op.Is<Word64Add128Op>() || value_op.Is<Word64MulWideOp>()) {
+    MarkAsUsed(projection.input());
   } else if (value_op.Is<DidntThrowOp>()) {
     // Nothing to do here?
   } else if (value_op.Is<CallOp>()) {
@@ -3259,6 +3261,10 @@ void InstructionSelector::VisitNode(OpIndex node) {
         }
       }
       UNREACHABLE();
+    }
+    case Opcode::kWord64Add128: {
+      MarkPairProjectionsAsWord64(node);
+      return VisitUint64Add128(node);
     }
     case Opcode::kWord64MulWide: {
       const Word64MulWideOp& wideop = op.Cast<Word64MulWideOp>();

@@ -2854,13 +2854,13 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
   // (Mul and either Smulh or Umulh).
   const turboshaft::Word64MulWideOp& op =
       this->Get(node).Cast<turboshaft::Word64MulWideOp>();
-  OpIndex lhs = op.left();
-  OpIndex rhs = op.right();
 
-  InstructionOperand left = g.UseRegister(lhs);
-  InstructionOperand right = g.UseRegister(rhs);
+  InstructionOperand left = g.UseRegister(op.left());
+  InstructionOperand right = g.UseRegister(op.right());
 
-  Emit(kArm64Mul, g.DefineAsRegister(node), left, right);
+  OptionalOpIndex out_low = FindProjection(node, 0);
+  Emit(kArm64Mul, g.DefineAsRegister(out_low.valid() ? out_low.value() : node),
+       left, right);
 
   OptionalOpIndex out_high = FindProjection(node, 1);
   if (out_high.valid() && IsUsed(out_high.value())) {
@@ -2868,6 +2868,8 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
     Emit(high_opcode, g.DefineAsRegister(out_high.value()), left, right);
   }
 }
+
+void InstructionSelector::VisitUint64Add128(OpIndex node) { UNIMPLEMENTED(); }
 
 #if V8_ENABLE_WEBASSEMBLY
 namespace {

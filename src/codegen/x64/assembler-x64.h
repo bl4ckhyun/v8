@@ -425,6 +425,7 @@ inline bool operator!=(Operand op, XMMRegister r) { return true; }
 
 #define ASSEMBLER_INSTRUCTION_LIST(V) \
   V(add)                              \
+  V(adc)                              \
   V(and)                              \
   V(cmp)                              \
   V(cmpxchg)                          \
@@ -437,7 +438,7 @@ inline bool operator!=(Operand op, XMMRegister r) { return true; }
   V(mov)                              \
   V(movzxb)                           \
   V(movzxw)                           \
-  V(not )                             \
+  V(not)                              \
   V(or)                               \
   V(repmovs)                          \
   V(sbb)                              \
@@ -3075,6 +3076,26 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
 
   void emit_add(Operand dst, Immediate src, int size) {
     immediate_arithmetic_op(0x0, dst, src, size);
+  }
+
+  void emit_adc(Register dst, Register src, int size) {
+    arithmetic_op(0x13, dst, src, size);
+  }
+
+  void emit_adc(Register dst, Immediate src, int size) {
+    immediate_arithmetic_op(0x2, dst, src, size);
+  }
+
+  void emit_adc(Register dst, Operand src, int size) {
+    arithmetic_op(0x13, dst, src, size);
+  }
+
+  void emit_adc(Operand dst, Register src, int size) {
+    arithmetic_op(0x11, src, dst, size);
+  }
+
+  void emit_adc(Operand dst, Immediate src, int size) {
+    immediate_arithmetic_op(0x2, dst, src, size);
   }
 
   void emit_and(Register dst, Register src, int size) {

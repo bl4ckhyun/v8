@@ -4740,8 +4740,13 @@ class AssemblerOpInterface : public Next {
                                             right_high, kind);
   }
 
-  V<Tuple<Word64, Word64>> Word64MulWide(V<Word64> left, V<Word64> right,
-                                         Word64MulWideOp::Kind kind) {
+  V<Word64Pair> Add128(V<Word64> a_low, V<Word64> a_high, V<Word64> b_low,
+                       V<Word64> b_high) {
+    return ReduceIfReachableWord64Add128(a_low, a_high, b_low, b_high);
+  }
+
+  V<Word64Pair> Word64MulWide(V<Word64> left, V<Word64> right,
+                              Word64MulWideOp::Kind kind) {
     return ReduceIfReachableWord64MulWide(left, right, kind);
   }
 

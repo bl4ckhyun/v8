@@ -86,8 +86,9 @@ using compiler::turboshaft::WasmStructNullable;
 using compiler::turboshaft::WasmTypeAnnotationOp;
 using compiler::turboshaft::WasmTypeCastOp;
 using compiler::turboshaft::Word;
-using compiler::turboshaft::Word32;
+using compiler::turboshaft::Word64;
 using compiler::turboshaft::Word64MulWideOp;
+using compiler::turboshaft::Word64Pair;
 using compiler::turboshaft::WordPtr;
 using compiler::turboshaft::WordRepresentation;
 using compiler::turboshaft::deprecated::BuiltinCallDescriptor;
@@ -912,12 +913,28 @@ class TurboshaftGraphBuildingInterface
   void WideOp2(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_val,
                const Value& rhs_val, Value* result_low, Value* result_high) {
     DCHECK(opcode == kExprI64MulWideS || opcode == kExprI64MulWideU);
-    V<Tuple<Word64, Word64>> tuple = __ Word64MulWide(
+    V<Word64Pair> tuple = __ Word64MulWide(
         lhs_val.get<Word64>(), rhs_val.get<Word64>(),
         opcode == kExprI64MulWideS ? Word64MulWideOp::Kind::kSigned
                                    : Word64MulWideOp::Kind::kUnsigned);
     result_low->op = __ template Projection<0>(tuple);
     result_high->op = __ template Projection<1>(tuple);
+  }
+
+  void WideOp4(FullDecoder* decoder, WasmOpcode opcode, const Value& al,
+               const Value& ah, const Value& bl, const Value& bh,
+               Value* result_low, Value* result_high) {
+    V<compiler::turboshaft::Word64Pair> op;
+    switch (opcode) {
+      case kExprI64Add128:
+        op = __ Add128(al.get<Word64>(), ah.get<Word64>(), bl.get<Word64>(),
+                       bh.get<Word64>());
+        break;
+      default:
+        UNREACHABLE();
+    }
+    result_low->op = __ template Projection<0>(op);
+    result_high->op = __ template Projection<1>(op);
   }
 
   void TraceInstruction(FullDecoder* decoder, uint32_t markid) {

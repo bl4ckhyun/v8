@@ -294,6 +294,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(WordBinop)                               \
   V(FloatBinop)                              \
   V(Word32PairBinop)                         \
+  V(Word64Add128)                            \
   V(Word64MulWide)                           \
   V(OverflowCheckedBinop)                    \
   V(WordUnary)                               \
@@ -1842,6 +1843,34 @@ struct Word64MulWideOp : FixedArityOperationT<2, Word64MulWideOp> {
 
   auto options() const { return std::tuple{kind}; }
   void PrintOptions(std::ostream& os) const;
+};
+
+struct Word64Add128Op : FixedArityOperationT<4, Word64Add128Op> {
+  static constexpr OpEffects effects = OpEffects();
+
+  base::Vector<const RegisterRepresentation> outputs_rep() const {
+    return RepVector<RegisterRepresentation::Word64(),
+                     RegisterRepresentation::Word64()>();
+  }
+
+  base::Vector<const MaybeRegisterRepresentation> inputs_rep(
+      const ZoneVector<MaybeRegisterRepresentation>& storage) const {
+    return MaybeRepVector<MaybeRegisterRepresentation::Word64(),
+                          MaybeRegisterRepresentation::Word64(),
+                          MaybeRegisterRepresentation::Word64(),
+                          MaybeRegisterRepresentation::Word64()>();
+  }
+
+  V<Word64> left_low() const { return input<Word64>(0); }
+  V<Word64> left_high() const { return input<Word64>(1); }
+  V<Word64> right_low() const { return input<Word64>(2); }
+  V<Word64> right_high() const { return input<Word64>(3); }
+
+  Word64Add128Op(V<Word64> al, V<Word64> ah, V<Word64> bl, V<Word64> bh)
+      : Base(al, ah, bl, bh) {}
+
+  auto options() const { return std::tuple{}; }
+  void PrintOptions(std::ostream& os) const {}
 };
 
 struct WordBinopDeoptOnOverflowOp

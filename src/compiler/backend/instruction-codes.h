@@ -490,7 +490,7 @@ static_assert(kMaxCParameters <= FPParamField::kMax);
 // back fixes that add new opcodes.
 // It is OK to temporarily reduce the required slack if we have a tracking bug
 // to reduce the number of used opcodes again.
-static_assert(ArchOpcodeField::kMax - kLastArchOpcode >= 14,
+static_assert(ArchOpcodeField::kMax - kLastArchOpcode >= 13,
               "We are running close to the number of available opcodes.");
 
 }  // namespace compiler

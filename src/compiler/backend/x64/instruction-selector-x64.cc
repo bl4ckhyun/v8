@@ -565,6 +565,7 @@ class X64OperandGenerator final : public OperandGenerator {
       case kX64Or:
       case kX64Xor:
       case kX64Add:
+      case kX64Add128:
       case kX64Sub:
       case kX64Push:
       case kX64Cmp:
@@ -2442,7 +2443,9 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
   InstructionOperand temps[1];
   size_t temp_count = 0;
 
-  outputs[output_count++] = g.DefineAsFixed(node, rax);
+  OptionalOpIndex out_low = FindProjection(node, 0);
+  outputs[output_count++] =
+      g.DefineAsFixed(out_low.valid() ? out_low.value() : node, rax);
   OptionalOpIndex out_high = FindProjection(node, 1);
   if (out_high.valid()) {
     outputs[output_count++] = g.DefineAsFixed(out_high.value(), rdx);
@@ -2451,6 +2454,72 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
   }
   DCHECK_GE(arraysize(outputs), output_count);
   Emit(opcode, output_count, outputs, input_count, inputs, temp_count, temps);
+}
+
+void InstructionSelector::VisitUint64Add128(OpIndex node) {
+  X64OperandGenerator g(this);
+
+  InstructionOperand inputs[8];
+  size_t input_count = 0;
+  InstructionOperand outputs[2];
+  size_t output_count = 0;
+
+  const auto& op = this->Get(node).Cast<Word64Add128Op>();
+
+  // Note: we're about to shuffle the order of operands. The incoming IR node
+  // has order a_low, a_high, b_low, b_high; to conveniently support the case
+  // where we can fall back to a plain 64-bit operation because {out_high} is
+  // unused, we define kX64Add128 to take its inputs in order a_low, b_low,
+  // a_high, b_high.
+  InstructionCode opcode = kX64Add128;
+  InstructionCode opcode_no_high = kX64Add;
+
+  // a_low.
+  inputs[input_count++] = g.UseRegister(op.left_low());
+
+  // b_low.
+  auto b_low = op.right_low();
+  int effect_level = this->GetEffectLevel(node);
+  if (g.CanBeImmediate(b_low)) {
+    inputs[input_count++] = g.UseImmediate(b_low);
+  } else if (g.CanBeMemoryOperand(opcode, node, b_low, effect_level)) {
+    AddressingMode addressing_mode =
+        g.GetEffectiveAddressMemoryOperand(b_low, inputs, &input_count);
+    opcode |= AddressingModeField::encode(addressing_mode);
+    opcode_no_high |= AddressingModeField::encode(addressing_mode);
+  } else {
+    inputs[input_count++] = g.UseRegister(b_low);
+  }
+  OptionalOpIndex out_low = FindProjection(node, 0);
+  outputs[output_count++] =
+      g.DefineSameAsFirst(out_low.valid() ? out_low.value() : node);
+
+  OptionalOpIndex out_high = this->FindProjection(node, 1);
+  if (!out_high.valid() || !IsUsed(out_high.value())) {
+    this->Emit(opcode_no_high, output_count, outputs, input_count, inputs);
+    return;
+  }
+
+  // a_high.
+  int a_high_index = static_cast<int>(input_count);
+  inputs[input_count++] = g.UseRegister(op.left_high());
+  // b_high.
+  if (g.CanBeImmediate(op.right_high())) {
+    inputs[input_count++] = g.UseImmediate(op.right_high());
+  } else if (g.CanBeMemoryOperand(kX64Add128, node, op.right_high(),
+                                  effect_level)) {
+    AddressingMode addressing_mode = g.GetEffectiveAddressMemoryOperand(
+        op.right_high(), inputs, &input_count,
+        X64OperandGenerator::RegisterUseKind::kUseUniqueRegister);
+    opcode |= MiscField::encode(addressing_mode);
+  } else {
+    inputs[input_count++] = g.UseUniqueRegister(op.right_high());
+  }
+  DCHECK_GE(arraysize(inputs), input_count);
+
+  outputs[output_count++] = g.DefineSameAsInput(out_high.value(), a_high_index);
+
+  this->Emit(opcode, output_count, outputs, input_count, inputs);
 }
 
 void InstructionSelector::VisitInt32Div(OpIndex node) {

@@ -190,8 +190,7 @@ class X64OperandConverter : public InstructionOperandConverter {
     return static_cast<ScaleFactor>(scale);
   }
 
-  Operand MemoryOperand(size_t* offset) {
-    AddressingMode mode = AddressingModeField::decode(instr_->opcode());
+  Operand MemoryOperand(AddressingMode mode, size_t* offset) {
     switch (mode) {
       case kMode_MR: {
         Register base = InputRegister(NextOffset(offset));
@@ -269,6 +268,10 @@ class X64OperandConverter : public InstructionOperandConverter {
         UNREACHABLE();
     }
     UNREACHABLE();
+  }
+
+  Operand MemoryOperand(size_t* offset) {
+    return MemoryOperand(AddressingModeField::decode(instr_->opcode()), offset);
   }
 
   Operand MemoryOperand(size_t first_input = 0) {
@@ -1041,6 +1044,15 @@ void EmitTSANRelaxedLoadOOLIfNeeded(Zone* zone, CodeGenerator* codegen,
       }                                                          \
     }                                                            \
   } while (false)
+
+#define ASSEMBLE_RHS(asm_instr, dst, index)       \
+  if (HasImmediateInput(instr, index)) {          \
+    __ asm_instr(dst, i.InputImmediate(index++)); \
+  } else if (HasRegisterInput(instr, index)) {    \
+    __ asm_instr(dst, i.InputRegister(index++));  \
+  } else {                                        \
+    __ asm_instr(dst, i.InputOperand(index++));   \
+  }
 
 #define ASSEMBLE_COMPARE(cmp_instr, test_instr)                    \
   do {                                                             \
@@ -2254,6 +2266,45 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
     case kX64Sub:
       ASSEMBLE_BINOP(subq);
       break;
+    case kX64Add128: {
+      // Inputs: a_low, b_low, a_high, b_high.
+      Register low_out = i.OutputRegister(0);
+      Register high_out = i.OutputRegister(1);
+      DCHECK_EQ(low_out, i.InputRegister(0));
+      size_t index = 1;
+      if (HasAddressingMode(instr)) {
+        Operand b_low = i.MemoryOperand(&index);
+        __ addq(low_out, b_low);
+      } else {
+        ASSEMBLE_RHS(addq, low_out, index);
+      }
+
+      DCHECK(HasRegisterInput(instr, index));
+      Register a_high = i.InputRegister(index++);
+      CHECK_NE(a_high, low_out);
+      AddressingMode b_high_mode =
+          static_cast<AddressingMode>(MiscField::decode(instr->opcode()));
+      if (b_high_mode != kMode_None) {
+        Operand b_high = i.MemoryOperand(b_high_mode, &index);
+        __ adcq(high_out, b_high);
+      } else {
+        // If b_high is a register, it must not alias with low_out.
+        CHECK(!HasRegisterInput(instr, index) ||
+              i.InputRegister(index) != low_out);
+        // Special case: if b_high happens to be a register and happens to
+        // equal {high_out}, skip unnecessary moves.
+        if (HasRegisterInput(instr, index) &&
+            i.InputRegister(index) == high_out) {
+          __ adcq(high_out, a_high);
+          index++;
+        } else {
+          __ Move(high_out, a_high);  // Possibly no-op.
+          ASSEMBLE_RHS(adcq, high_out, index);
+        }
+      }
+      DCHECK_EQ(index, instr->InputCount());
+      break;
+    }
     case kX64And32:
       ASSEMBLE_BINOP(andl);
       break;
