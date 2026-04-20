@@ -1670,9 +1670,16 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
     }
     case kMips64TruncUlD: {
       FPURegister scratch = kScratchDoubleReg;
+      bool set_overflow_to_min_u64 = MiscField::decode(instr->opcode());
       Register result = instr->OutputCount() > 1 ? i.OutputRegister(1) : no_reg;
       __ Trunc_ul_d(i.OutputRegister(0), i.InputDoubleRegister(0), scratch,
                     result);
+      if (set_overflow_to_min_u64) {
+        // Avoid UINT64_MAX as an overflow indicator and use 0 instead,
+        // because 0 allows easier out-of-bounds detection.
+        __ Daddu(kScratchReg, i.OutputRegister(), 1);
+        __ Movz(i.OutputRegister(), zero_reg, kScratchReg);
+      }
       break;
     }
     case kMips64BitcastDL:

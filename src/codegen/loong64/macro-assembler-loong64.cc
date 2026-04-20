@@ -2206,18 +2206,21 @@ void MacroAssembler::Ffint_d_ul(FPURegister fd, FPURegister fj) {
 void MacroAssembler::Ffint_d_ul(FPURegister fd, Register rj) {
   BlockTrampolinePoolScope block_trampoline_pool(this);
   UseScratchRegisterScope temps(this);
-  Register scratch = temps.Acquire();
-  DCHECK(rj != scratch);
+  Register scratch1 = temps.Acquire();
+  DCHECK(rj != scratch1);
 
   Label msb_clear, conversion_done;
 
   Branch(&msb_clear, ge, rj, Operand(zero_reg));
 
   // Rj >= 2^63
-  andi(scratch, rj, 1);
-  srli_d(rj, rj, 1);
-  or_(scratch, scratch, rj);
-  movgr2fr_d(fd, scratch);
+  {
+    Register scratch2 = temps.Acquire();
+    andi(scratch1, rj, 1);
+    srli_d(scratch2, rj, 1);
+    or_(scratch1, scratch1, scratch2);
+  }
+  movgr2fr_d(fd, scratch1);
   ffint_d_l(fd, fd);
   fadd_d(fd, fd, fd);
   Branch(&conversion_done);
@@ -2260,18 +2263,21 @@ void MacroAssembler::Ffint_s_ul(FPURegister fd, FPURegister fj) {
 void MacroAssembler::Ffint_s_ul(FPURegister fd, Register rj) {
   BlockTrampolinePoolScope block_trampoline_pool(this);
   UseScratchRegisterScope temps(this);
-  Register scratch = temps.Acquire();
-  DCHECK(rj != scratch);
+  Register scratch1 = temps.Acquire();
+  DCHECK(rj != scratch1);
 
   Label positive, conversion_done;
 
   Branch(&positive, ge, rj, Operand(zero_reg));
 
   // Rs >= 2^31.
-  andi(scratch, rj, 1);
-  srli_d(rj, rj, 1);
-  or_(scratch, scratch, rj);
-  movgr2fr_d(fd, scratch);
+  {
+    Register scratch2 = temps.Acquire();
+    andi(scratch1, rj, 1);
+    srli_d(scratch2, rj, 1);
+    or_(scratch1, scratch1, scratch2);
+  }
+  movgr2fr_d(fd, scratch1);
   ffint_s_l(fd, fd);
   fadd_s(fd, fd, fd);
   Branch(&conversion_done);

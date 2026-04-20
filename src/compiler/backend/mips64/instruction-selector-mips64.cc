@@ -874,7 +874,15 @@ void InstructionSelector::VisitChangeFloat64ToUint32(OpIndex node) {
 }
 
 void InstructionSelector::VisitChangeFloat64ToUint64(OpIndex node) {
-  VisitRR(this, kMips64TruncUlD, node);
+  Mips64OperandGenerator g(this);
+  const ChangeOp& op = Cast<ChangeOp>(node);
+  InstructionCode opcode = kMips64TruncUlD;
+
+  if (op.Is<Opmask::kTruncateFloat64ToUint64OverflowToMin>()) {
+    opcode |= MiscField::encode(true);
+  }
+
+  Emit(opcode, g.DefineAsRegister(node), g.UseRegister(op.input()));
 }
 
 void InstructionSelector::VisitTruncateFloat64ToUint32(OpIndex node) {

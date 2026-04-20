@@ -2218,9 +2218,13 @@ void MacroAssembler::Cvt_d_ul(FPURegister fd, Register rs) {
   Branch(&msb_clear, ge, rs, Operand(zero_reg));
 
   // Rs >= 2^63
-  andi(t9, rs, 1);
-  dsrl(rs, rs, 1);
-  or_(t9, t9, rs);
+  {
+    UseScratchRegisterScope temps(this);
+    Register scratch = temps.Acquire();
+    andi(t9, rs, 1);
+    dsrl(scratch, rs, 1);
+    or_(t9, t9, scratch);
+  }
   dmtc1(t9, fd);
   cvt_d_l(fd, fd);
   Branch(USE_DELAY_SLOT, &conversion_done);
@@ -2272,9 +2276,13 @@ void MacroAssembler::Cvt_s_ul(FPURegister fd, Register rs) {
   Branch(&positive, ge, rs, Operand(zero_reg));
 
   // Rs >= 2^31.
-  andi(t9, rs, 1);
-  dsrl(rs, rs, 1);
-  or_(t9, t9, rs);
+  {
+    UseScratchRegisterScope temps(this);
+    Register scratch = temps.Acquire();
+    andi(t9, rs, 1);
+    dsrl(scratch, rs, 1);
+    or_(t9, t9, scratch);
+  }
   dmtc1(t9, fd);
   cvt_s_l(fd, fd);
   Branch(USE_DELAY_SLOT, &conversion_done);
