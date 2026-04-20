@@ -67,9 +67,9 @@ void ProcessorImpl::FromStringClassic(RWDigits Z,
 //   Parts and multipliers both grow in each iteration, and get fewer, so we
 //   use the space of two adjacent old chunks for one new chunk.
 //   Since the {heap_parts_} vector has the right size, we can use that memory.
-//   {Z} is also big enough, but in-sandbox, so to guard against concurrent
-//   modifications we don't use it for temporary values, only for the final
-//   result. So we need to allocate two scratch vectors.
+//   {Z} is also big enough, but it's convenient to let only the last round
+//   write into it, so the result always ends up in the right place without
+//   needing another copy. So we need to allocate two scratch vectors.
 // - We don't have to keep track of the positions and sizes of the chunks,
 //   because we can deduce their precise placement from the iteration index.
 //
@@ -91,11 +91,7 @@ void ProcessorImpl::FromStringLarge(RWDigits Z,
                                     FromStringAccumulator* accumulator) {
   uint32_t num_parts = static_cast<uint32_t>(accumulator->heap_parts_.size());
   DCHECK(num_parts >= 2);
-  // This is a release-mode check to guard against concurrent in-sandbox
-  // corruption. Due to the rotating-buffer scheme described above, if Z
-  // was too short, the algorithm would get confused and eventually perform
-  // OOB writes into {multipliers_storage} (allocated below).
-  CHECK(Z.len() >= num_parts);
+  DCHECK(Z.len() >= num_parts);
   RWDigits parts(accumulator->heap_parts_.data(), num_parts);
   Storage temp_storage(num_parts * 2, platform());
   RWDigits multipliers(temp_storage.get(), num_parts);

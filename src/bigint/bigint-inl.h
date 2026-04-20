@@ -561,7 +561,7 @@ inline int Compare(Digits A, Digits B) {
 
 inline digit_t Add(RWDigits Z, Digits X, Digits Y) {
   if (X.len() < Y.len()) std::swap(X, Y);  // Now X.len() >= Y.len().
-  CHECK(Z.len() >= X.len());
+  DCHECK(Z.len() >= X.len());
   uint32_t i = 0;
   digit_t carry = 0;
   digit_t top = 0;
@@ -581,7 +581,7 @@ inline digit_t Add(RWDigits Z, Digits X, Digits Y) {
 inline digit_t Subtract(RWDigits Z, Digits X, Digits Y) {
   DCHECK(IsDigitNormalized(X));
   DCHECK(IsDigitNormalized(Y));
-  CHECK(Z.len() >= X.len() && X.len() >= Y.len());
+  DCHECK(Z.len() >= X.len() && X.len() >= Y.len());
   uint32_t i = 0;
   digit_t borrow = 0;
   digit_t top = 0;
@@ -694,7 +694,7 @@ inline digit_t InplaceSubAndReturnBorrow(RWDigits Z, Digits X) {
 // These add exactly Y's digits to the matching digits in X, storing the
 // result in (part of) Z, and return the carry/borrow.
 inline digit_t AddAndReturnCarry(RWDigits Z, Digits X, Digits Y) {
-  CHECK(Z.len() >= Y.len() && X.len() >= Y.len());
+  DCHECK(Z.len() >= Y.len() && X.len() >= Y.len());
   digit_t carry = 0;
   for (uint32_t i = 0; i < Y.len(); i++) {
     Z[i] = digit_add3(X[i], Y[i], carry, &carry);
@@ -703,7 +703,7 @@ inline digit_t AddAndReturnCarry(RWDigits Z, Digits X, Digits Y) {
 }
 
 inline digit_t SubtractAndReturnBorrow(RWDigits Z, Digits X, Digits Y) {
-  CHECK(Z.len() >= Y.len() && X.len() >= Y.len());
+  DCHECK(Z.len() >= Y.len() && X.len() >= Y.len());
   digit_t borrow = 0;
   for (uint32_t i = 0; i < Y.len(); i++) {
     Z[i] = digit_sub2(X[i], Y[i], borrow, &borrow);
@@ -909,8 +909,7 @@ inline digit_t ModSingle(Digits A, digit_t b) {
 inline std::pair<bool, digit_t> DivideSmall(RWDigits& Q, Digits& A, Digits& B) {
   DCHECK(IsDigitNormalized(A));
   DCHECK(IsDigitNormalized(B));
-  // This is a Release-mode check for security fuzzing purposes.
-  CHECK(B.len() > 0);
+  DCHECK(B.len() > 0);
   int cmp = CompareNoNormalize(A, B);
   if (cmp < 0) {
     Q.Clear();
@@ -933,8 +932,7 @@ inline std::pair<bool, digit_t> DivideSmall(RWDigits& Q, Digits& A, Digits& B) {
 inline std::pair<bool, digit_t> ModuloSmall(RWDigits& R, Digits& A, Digits& B) {
   DCHECK(IsDigitNormalized(A));
   DCHECK(IsDigitNormalized(B));
-  // This is a Release-mode check for security fuzzing purposes.
-  CHECK(B.len() > 0);
+  DCHECK(B.len() > 0);
   int cmp = CompareNoNormalize(A, B);
   if (cmp < 0) {
     digit_t top;
