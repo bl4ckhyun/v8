@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cinttypes>
 
+#include "src/codegen/code-comments.h"
 #include "src/codegen/source-position-table.h"
 #include "src/flags/flags.h"  // For ENABLE_CONTROL_FLOW_INTEGRITY_BOOL
 #include "src/objects/code-inl.h"
@@ -69,6 +70,7 @@ void EmbeddedFileWriter::WriteBuiltin(PlatformEmbeddedFileWriterBase* w,
   w->DeclareFunctionBegin(builtin_symbol.begin(),
                           blob->InstructionSizeOf(builtin));
   const int builtin_id = static_cast<int>(builtin);
+  const std::vector<uint8_t>& current_comments = code_comments_[builtin_id];
   const std::vector<uint8_t>& current_positions = source_positions_[builtin_id];
   // The code below interleaves bytes of assembly code for the builtin
   // function with source positions at the appropriate offsets.
@@ -88,6 +90,12 @@ void EmbeddedFileWriter::WriteBuiltin(PlatformEmbeddedFileWriterBase* w,
   const std::vector<LabelInfo>& current_labels = label_info_[builtin_id];
   auto label = current_labels.begin();
 
+  std::optional<CodeCommentsIterator> cmt_it;
+  if (!current_comments.empty()) {
+    cmt_it.emplace(reinterpret_cast<Address>(current_comments.data()),
+                   static_cast<uint32_t>(current_comments.size()));
+  }
+
   const uint8_t* data =
       reinterpret_cast<const uint8_t*>(blob->InstructionStartOf(builtin));
   uint32_t size = blob->PaddedInstructionSizeOf(builtin);
@@ -96,6 +104,8 @@ void EmbeddedFileWriter::WriteBuiltin(PlatformEmbeddedFileWriterBase* w,
       static_cast<uint32_t>(positions.done() ? size : positions.code_offset());
   uint32_t next_label_offset = static_cast<uint32_t>(
       (label == current_labels.end()) ? size : label->offset);
+  uint32_t next_cmt_offset = static_cast<uint32_t>(
+      (cmt_it && cmt_it->HasCurrent()) ? cmt_it->GetPCOffset() : size);
   uint32_t next_offset = 0;
   while (i < size) {
     if (i == next_source_pos_offset) {
@@ -116,7 +126,24 @@ void EmbeddedFileWriter::WriteBuiltin(PlatformEmbeddedFileWriterBase* w,
           (label == current_labels.end()) ? size : label->offset);
       CHECK_GE(next_label_offset, i);
     }
-    next_offset = std::min(next_source_pos_offset, next_label_offset);
+    if (i == next_cmt_offset) {
+      const char* comment = cmt_it->GetComment();
+      if (strncmp(comment, "CFI:", 4) == 0) {
+        std::string dir(comment + 4);
+        size_t pos = dir.find(" - ");
+        if (pos != std::string::npos) {
+          dir = dir.substr(0, pos);
+        }
+        fprintf(w->fp(), "%s\n", dir.c_str());
+      } else {
+        w->Comment(comment);
+      }
+      cmt_it->Next();
+      next_cmt_offset = static_cast<uint32_t>(
+          (cmt_it && cmt_it->HasCurrent()) ? cmt_it->GetPCOffset() : size);
+    }
+    next_offset =
+        std::min({next_source_pos_offset, next_label_offset, next_cmt_offset});
     WriteBinaryContentsAsInlineAssembly(w, data + i, next_offset - i);
     i = next_offset;
   }
@@ -389,12 +416,21 @@ void EmbeddedFileWriter::PrepareBuiltinSourcePositionMap(Builtins* builtins) {
        ++builtin) {
     // Retrieve the SourcePositionTable and copy it.
     Tagged<Code> code = builtins->code(builtin);
-    if (!code->has_source_position_table()) continue;
-    Tagged<TrustedByteArray> source_position_table =
-        code->source_position_table();
-    std::vector<unsigned char> data(source_position_table->begin(),
-                                    source_position_table->end());
-    source_positions_[static_cast<int>(builtin)] = data;
+    if (code->has_source_position_table()) {
+      Tagged<TrustedByteArray> source_position_table =
+          code->source_position_table();
+      std::vector<unsigned char> data(source_position_table->begin(),
+                                      source_position_table->end());
+      source_positions_[static_cast<int>(builtin)] = data;
+    }
+    // Also copy code comments if present.
+    if (code->code_comments_size() > 0) {
+      std::vector<unsigned char> data(
+          reinterpret_cast<unsigned char*>(code->code_comments()),
+          reinterpret_cast<unsigned char*>(code->code_comments()) +
+              code->code_comments_size());
+      code_comments_[static_cast<int>(builtin)] = data;
+    }
   }
 }
 

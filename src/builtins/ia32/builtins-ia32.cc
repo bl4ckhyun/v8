@@ -329,8 +329,17 @@ void Generate_JSEntryVariant(MacroAssembler* masm, StackFrame::Type type,
     NoRootArrayScope uninitialized_root_register(masm);
 
     // Set up frame.
+    __ RecordCfi(".cfi_startproc");
     __ push(ebp);
     __ mov(ebp, esp);
+    // The layout of the stack at this point is:
+    // [ebp + 4]  : Return address of JSEntry back to C++ (Invoke).
+    // [ebp]      : Saved ebp of the caller (Invoke).
+    //
+    // We lock the CFA to ebp + 8.
+    // We tell GDB that the saved ebp is at cfa - 8 (which is [ebp]).
+    __ RecordCfi(".cfi_def_cfa ebp, 8");
+    __ RecordCfi(".cfi_offset ebp, -8");
 
     // Push marker in two places.
     __ push(Immediate(StackFrame::TypeToMarker(type)));
@@ -427,6 +436,7 @@ void Generate_JSEntryVariant(MacroAssembler* masm, StackFrame::Type type,
   // Restore frame pointer and return.
   __ pop(ebp);
   __ ret(0);
+  __ RecordCfi(".cfi_endproc");
 }
 
 }  // namespace
