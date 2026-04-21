@@ -144,21 +144,19 @@ void AccessorAssembler::HandlePolymorphicCase(
   }
 }
 
-void AccessorAssembler::TryHomomorphicCase(
-    TNode<Object> lookup_start_object, TNode<Map> lookup_start_object_map,
-    TNode<Name> name, TVariable<MaybeObject>* var_handler, TNode<Object> vector,
-    TNode<TaggedIndex> slot, Label* miss, ExitPoint* exit_point) {
+void AccessorAssembler::TryHomomorphicCase(TNode<Object> lookup_start_object,
+                                           TNode<Map> lookup_start_object_map,
+                                           TNode<Name> name,
+                                           TNode<Object> vector,
+                                           TNode<TaggedIndex> slot, Label* miss,
+                                           ExitPoint* exit_point) {
   // Check if feedback is WeakHomomorphicFixedArray.
   TNode<MaybeObject> feedback = LoadFeedbackVectorSlot(CAST(vector), slot);
   // We assume the caller (LoadIC_Noninlined) has checked that feedback is a
   // WeakHomomorphicFixedArray.
   TNode<WeakHomomorphicFixedArray> array = CAST(feedback);
-  TNode<Smi> handler;
-  if (var_handler->IsBound()) {
-    handler = CAST(var_handler->value());
-  } else {
-    handler = CAST(LoadFeedbackVectorSlot(CAST(vector), slot, kTaggedSize));
-  }
+  TNode<Smi> handler =
+      CAST(LoadFeedbackVectorSlot(CAST(vector), slot, kTaggedSize));
 
   Label execute_handler(this);
 
@@ -291,7 +289,7 @@ void AccessorAssembler::TryHomomorphicCase(
 
   BIND(&if_array_len);
   {
-    GotoIfNot(IsJSArray(lookup_start_object_map), miss);
+    GotoIfNot(IsJSArrayMap(lookup_start_object_map), miss);
     exit_point->Return(LoadJSArrayLength(CAST(lookup_start_object)));
   }
 }
@@ -3811,8 +3809,8 @@ void AccessorAssembler::LoadIC_Noninlined(const LoadICParameters* p,
     BIND(&try_homomorphic);
     {
       TryHomomorphicCase(p->lookup_start_object(), lookup_start_object_map,
-                         CAST(p->name()), var_handler, p->vector(), p->slot(),
-                         miss, exit_point);
+                         CAST(p->name()), p->vector(), p->slot(), miss,
+                         exit_point);
     }
 
     BIND(&try_megadom);

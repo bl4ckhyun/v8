@@ -553,13 +553,13 @@ class HeapObjectType {
     }                                                    \
   }
 
-class HeapObjectRef : public ObjectRef {
+class V8_EXPORT_PRIVATE HeapObjectRef : public ObjectRef {
  public:
   DEFINE_REF_CONSTRUCTOR(HeapObject, ObjectRef)
 
   IndirectHandle<HeapObject> object() const;
 
-  V8_EXPORT_PRIVATE MapRef map(JSHeapBroker* broker) const;
+  MapRef map(JSHeapBroker* broker) const;
 
   // Only for use in special situations where we need to read the object's
   // current map (instead of returning the cached map). Use with care.
@@ -852,7 +852,7 @@ class NativeContextRef : public ContextRef {
   bool GlobalIsDetached(JSHeapBroker* broker) const;
 };
 
-class NameRef : public HeapObjectRef {
+class V8_EXPORT_PRIVATE NameRef : public HeapObjectRef {
  public:
   DEFINE_REF_CONSTRUCTOR(Name, HeapObjectRef)
 

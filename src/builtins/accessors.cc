@@ -14,6 +14,7 @@
 #include "src/execution/isolate-inl.h"
 #include "src/execution/messages.h"
 #include "src/heap/factory.h"
+#include "src/ic/handler-configuration.h"
 #include "src/logging/runtime-call-stats-scope.h"
 #include "src/objects/api-callbacks.h"
 #include "src/objects/contexts.h"
@@ -77,7 +78,8 @@ bool Accessors::IsJSObjectFieldAccessor(Isolate* isolate, DirectHandle<Map> map,
   switch (map->instance_type()) {
     case JS_ARRAY_TYPE:
       if (fake_descriptor_index)
-        *fake_descriptor_index = InternalIndex(kMaxNumberOfDescriptors + 1);
+        *fake_descriptor_index =
+            InternalIndex(LoadHandler::kArrayLengthFieldDescriptorIndex);
       return CheckForName(isolate, name, isolate->factory()->length_string(),
                           JSArray::kLengthOffset, FieldIndex::kTagged, index);
     default:

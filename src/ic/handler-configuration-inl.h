@@ -86,7 +86,7 @@ Tagged<Smi> LoadHandler::LoadField(int offset_in_words, bool is_in_object,
   if (descriptor_index.is_found()) {
     config |= DescriptorIndexBits::encode(descriptor_index.as_int());
   }
-  return Smi::FromInt(config);
+  return Smi::From31BitPattern(config);
 }
 
 DirectHandle<Smi> LoadHandler::LoadWasmStructField(Isolate* isolate,

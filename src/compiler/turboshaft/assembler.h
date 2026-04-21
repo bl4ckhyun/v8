@@ -4901,6 +4901,16 @@ class AssemblerOpInterface : public Next {
                                feedback);
   }
 
+  void CheckHomomorphic(V<HeapObject> heap_object,
+                        V<turboshaft::FrameState> frame_state, NameRef name,
+                        WeakHomomorphicFixedArrayRef homomorphic_array,
+                        int handler_value, bool check_heap_object,
+                        const FeedbackSource& feedback) {
+    ReduceIfReachableCheckHomomorphic(heap_object, frame_state, name,
+                                      homomorphic_array, handler_value,
+                                      check_heap_object, feedback);
+  }
+
   void AssumeMap(V<HeapObject> heap_object, const ZoneRefSet<Map>& maps) {
     ReduceIfReachableAssumeMap(heap_object, maps);
   }

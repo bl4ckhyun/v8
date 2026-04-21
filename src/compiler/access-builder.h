@@ -158,6 +158,7 @@ class V8_EXPORT_PRIVATE AccessBuilder final
 
   // Provides access to JSArray::length() field.
   static FieldAccess ForJSArrayLength(ElementsKind elements_kind);
+  static FieldAccess ForJSArrayLength();
 
   // Provides access to JSArrayBuffer::bit_field() field.
   static FieldAccess ForJSArrayBufferBitField();

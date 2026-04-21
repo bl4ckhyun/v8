@@ -49,6 +49,8 @@ class HeapObject;
 }  // namespace v8::internal
 namespace v8::internal::compiler {
 class CallDescriptor;
+class NameRef;
+class WeakHomomorphicFixedArrayRef;
 class JSWasmCallParameters;
 class DeoptimizeParameters;
 class FrameStateInfo;
@@ -233,6 +235,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(CheckedClosure)                             \
   V(WordBinopDeoptOnOverflow)                   \
   V(CheckEqualsInternalizedString)              \
+  V(CheckHomomorphic)                           \
   V(CheckMaps)                                  \
   V(CompareMaps)                                \
   V(Float64Is)                                  \
@@ -6684,6 +6687,47 @@ struct CheckMapsOp : OperationT<CheckMapsOp> {
   }
 };
 
+struct CheckHomomorphicOp : FixedArityOperationT<2, CheckHomomorphicOp> {
+  NameRef name;
+  WeakHomomorphicFixedArrayRef homomorphic_array;
+  int handler_value;
+  bool check_heap_object;
+  FeedbackSource feedback;
+
+  static constexpr OpEffects effects =
+      OpEffects().CanDependOnChecks().CanDeopt().CanReadHeapMemory();
+  base::Vector<const RegisterRepresentation> outputs_rep() const { return {}; }
+
+  base::Vector<const MaybeRegisterRepresentation> inputs_rep(
+      ZoneVector<MaybeRegisterRepresentation>& storage) const {
+    return MaybeRepVector<MaybeRegisterRepresentation::Tagged()>();
+  }
+
+  V<Object> heap_object() const { return Base::input<Object>(0); }
+  V<FrameState> frame_state() const { return Base::input<FrameState>(1); }
+
+  CheckHomomorphicOp(V<Object> heap_object, V<FrameState> frame_state,
+                     NameRef name,
+                     WeakHomomorphicFixedArrayRef homomorphic_array,
+                     int handler_value, bool check_heap_object,
+                     const FeedbackSource& feedback)
+      : Base(heap_object, frame_state),
+        name(name),
+        homomorphic_array(homomorphic_array),
+        handler_value(handler_value),
+        check_heap_object(check_heap_object),
+        feedback(feedback) {}
+
+  void Validate(const Graph& graph) const {
+    DCHECK(Get(graph, frame_state()).Is<FrameStateOp>());
+  }
+
+  auto options() const {
+    return std::tuple{name, homomorphic_array, handler_value, check_heap_object,
+                      feedback};
+  }
+};
+
 // AssumeMaps are inserted after CheckMaps have been lowered, in order to keep
 // map information around and easily accessible for subsequent optimization
 // passes (Load Elimination for instance can then use those AssumeMap to
@@ -10220,6 +10264,8 @@ inline size_t input_count(const ElementsTransitionWithMultipleSources) {
 }
 inline size_t input_count(const FeedbackSource) { return 0; }
 inline size_t input_count(const ZoneRefSet<Map>) { return 0; }
+inline size_t input_count(const NameRef) { return 0; }
+inline size_t input_count(const WeakHomomorphicFixedArrayRef) { return 0; }
 inline size_t input_count(ConstantOp::Storage) { return 0; }
 inline size_t input_count(Type) { return 0; }
 inline size_t input_count(base::Vector<const RegisterRepresentation>) {

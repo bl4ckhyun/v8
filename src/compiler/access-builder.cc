@@ -468,14 +468,7 @@ FieldAccess AccessBuilder::ForJSAsyncGeneratorObjectIsAwaiting() {
 // static
 FieldAccess AccessBuilder::ForJSArrayLength(ElementsKind elements_kind) {
   TypeCache const* type_cache = TypeCache::Get();
-  FieldAccess access = {kTaggedBase,
-                        JSArray::kLengthOffset,
-                        Handle<Name>(),
-                        OptionalMapRef(),
-                        type_cache->kJSArrayLengthType,
-                        MachineType::AnyTagged(),
-                        kFullWriteBarrier,
-                        "JSArrayLength"};
+  FieldAccess access = AccessBuilder::ForJSArrayLength();
   if (IsDoubleElementsKind(elements_kind)) {
     access.type = type_cache->kFixedDoubleArrayLengthType;
     access.machine_type = MachineType::TaggedSigned();
@@ -486,6 +479,19 @@ FieldAccess AccessBuilder::ForJSArrayLength(ElementsKind elements_kind) {
     access.write_barrier_kind = kNoWriteBarrier;
   }
   return access;
+}
+
+// static
+FieldAccess AccessBuilder::ForJSArrayLength() {
+  TypeCache const* type_cache = TypeCache::Get();
+  return {kTaggedBase,
+          JSArray::kLengthOffset,
+          Handle<Name>(),
+          OptionalMapRef(),
+          type_cache->kJSArrayLengthType,
+          MachineType::AnyTagged(),
+          kFullWriteBarrier,
+          "JSArrayLength"};
 }
 
 // static
