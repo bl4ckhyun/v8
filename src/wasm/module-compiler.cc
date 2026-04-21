@@ -1190,6 +1190,7 @@ bool CompileLazy(Isolate* isolate, NativeModule* native_module,
 void ThrowLazyCompilationError(Isolate* isolate,
                                const NativeModule* native_module,
                                int func_index) {
+  HandleScope handle_scope(isolate);
   const WasmModule* module = native_module->module();
 
   CompilationStateImpl* compilation_state =
@@ -3329,6 +3330,7 @@ void AsyncStreamingProcessor::OnFinishedStream(
       owns_cache_entry_ = false;
     }
     // Calling {Failed} will invalidate the {AsyncCompileJob} and delete {this}.
+    HandleScope handle_scope(isolate);
     std::move(*job_).Failed();
     return;
   }
