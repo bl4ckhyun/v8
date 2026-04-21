@@ -1075,6 +1075,7 @@ RUNTIME_FUNCTION(Runtime_FreezeWasmLazyCompilation) {
 RUNTIME_FUNCTION(Runtime_FlushLiftoffCode) {
   SealHandleScope shs(isolate);
   DisallowGarbageCollection no_gc;
+  if (!v8_flags.flush_liftoff_code) return CrashUnlessFuzzing(isolate);
   wasm::GetWasmEngine()->FlushLiftoffCode();
   return ReadOnlyRoots(isolate).undefined_value();
 }
