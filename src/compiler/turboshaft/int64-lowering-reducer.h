@@ -43,6 +43,9 @@ class Int64LoweringReducer : public Next {
   using Word32OrWord32Pair = OpIndex;
 
   Int64LoweringReducer() {
+    // Int64 lowering is currently only supported and used in Wasm pipelines.
+    CHECK_NE(__ data()->pipeline_kind(), TurboshaftPipelineKind::kJS);
+
     wasm::CallOrigin origin = __ data() -> is_js_to_wasm()
                                   ? wasm::kCalledFromJS
                                   : wasm::kCalledFromWasm;
