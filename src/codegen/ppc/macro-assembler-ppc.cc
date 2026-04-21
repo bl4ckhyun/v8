@@ -110,6 +110,8 @@ int MacroAssembler::PopCallerSaved(SaveFPRegsMode fp_mode, Register scratch1,
 }
 
 void MacroAssembler::GetLabelAddress(Register dest, Label* target) {
+  BlockTrampolinePoolScope block_trampoline_pool(this);
+
   // This should be just a
   //    add(dest, pc, branch_offset(target));
   // but current implementation of Assembler::bind_to()/target_at_put() add
