@@ -3767,27 +3767,47 @@ void MacroAssembler::FaddS(FPURegister dst, FPURegister lhs, FPURegister rhs) {
 #if V8_TARGET_ARCH_RISCV64
 void MacroAssembler::Floor_d_d(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_d(dst, src, RDN);
+    return;
+  }
   RoundHelper<double>(dst, src, fpu_scratch, RDN);
 }
 
 void MacroAssembler::Ceil_d_d(FPURegister dst, FPURegister src,
                               FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_d(dst, src, RUP);
+    return;
+  }
   RoundHelper<double>(dst, src, fpu_scratch, RUP);
 }
 
 void MacroAssembler::Trunc_d_d(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_d(dst, src, RTZ);
+    return;
+  }
   RoundHelper<double>(dst, src, fpu_scratch, RTZ);
 }
 
 void MacroAssembler::Round_d_d(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_d(dst, src, RNE);
+    return;
+  }
   RoundHelper<double>(dst, src, fpu_scratch, RNE);
 }
 #endif
 
 void MacroAssembler::Floor_s_s(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_s(dst, src, RDN);
+    return;
+  }
 #if V8_TARGET_ARCH_RISCV64
   RoundHelper<float>(dst, src, fpu_scratch, RDN);
 #elif V8_TARGET_ARCH_RISCV32
@@ -3797,6 +3817,10 @@ void MacroAssembler::Floor_s_s(FPURegister dst, FPURegister src,
 
 void MacroAssembler::Ceil_s_s(FPURegister dst, FPURegister src,
                               FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_s(dst, src, RUP);
+    return;
+  }
 #if V8_TARGET_ARCH_RISCV64
   RoundHelper<float>(dst, src, fpu_scratch, RUP);
 #elif V8_TARGET_ARCH_RISCV32
@@ -3806,6 +3830,10 @@ void MacroAssembler::Ceil_s_s(FPURegister dst, FPURegister src,
 
 void MacroAssembler::Trunc_s_s(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_s(dst, src, RTZ);
+    return;
+  }
 #if V8_TARGET_ARCH_RISCV64
   RoundHelper<float>(dst, src, fpu_scratch, RTZ);
 #elif V8_TARGET_ARCH_RISCV32
@@ -3815,6 +3843,10 @@ void MacroAssembler::Trunc_s_s(FPURegister dst, FPURegister src,
 
 void MacroAssembler::Round_s_s(FPURegister dst, FPURegister src,
                                FPURegister fpu_scratch) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fround_s(dst, src, RNE);
+    return;
+  }
 #if V8_TARGET_ARCH_RISCV64
   RoundHelper<float>(dst, src, fpu_scratch, RNE);
 #elif V8_TARGET_ARCH_RISCV32
@@ -4016,6 +4048,14 @@ void MacroAssembler::InsertLowWordF64(FPURegister dst, Register src_low) {
 
 void MacroAssembler::LoadFPRImmediate(FPURegister dst, uint32_t src) {
   ASM_CODE_COMMENT(this);
+  if (CpuFeatures::IsSupported(ZFA)) {
+    float value = base::bit_cast<float>(src);
+    int imm5 = GetImm5ForFLIS(value);
+    if (imm5 >= 0) {
+      fli_s(dst, static_cast<uint8_t>(imm5));
+      return;
+    }
+  }
   // Handle special values first.
   if (src == base::bit_cast<uint32_t>(0.0f) && has_single_zero_reg_set_) {
     if (dst != kSingleRegZero) fmv_s(dst, kSingleRegZero);
@@ -4042,6 +4082,14 @@ void MacroAssembler::LoadFPRImmediate(FPURegister dst, uint32_t src) {
 
 void MacroAssembler::LoadFPRImmediate(FPURegister dst, uint64_t src) {
   ASM_CODE_COMMENT(this);
+  if (CpuFeatures::IsSupported(ZFA)) {
+    double value = base::bit_cast<double>(src);
+    int imm5 = GetImm5ForFLID(value);
+    if (imm5 >= 0) {
+      fli_d(dst, static_cast<uint8_t>(imm5));
+      return;
+    }
+  }
   // Handle special values first.
   if (src == base::bit_cast<uint64_t>(0.0) && has_double_zero_reg_set_) {
     if (dst != kDoubleRegZero) fmv_d(dst, kDoubleRegZero);
@@ -4480,6 +4528,11 @@ void MacroAssembler::TruncateDoubleToI(Isolate* isolate, Zone* zone,
                                        Register result,
                                        DoubleRegister double_input,
                                        StubCallMode stub_mode) {
+  if (CpuFeatures::IsSupported(ZFA)) {
+    fcvtmod_w_d(result, double_input);
+    return;
+  }
+
   Label done;
 
   TryInlineTruncateDoubleToI(result, double_input, &done);
