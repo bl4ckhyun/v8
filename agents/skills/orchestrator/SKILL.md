@@ -51,6 +51,17 @@ This skill defines the behavior of the Main Agent acting as an Orchestrator and 
         -   Determine if the agent was "too hasty" or missed critical invariants.
         -   Trace the logical gap in the investigation.
     -   **Process Refinement**: Formulate proposals to update skills based on lessons learned, and implement them in separate, dedicated CLs.
+-   **Workspace and Branch Management**: Always base new branches on a clean upstream (e.g., `origin/main`). Avoid creating spurious CLs or polluting existing CLs with unrelated changes. Use isolated worktrees for tasks that modify the workspace state.
+
+## Specialized Subagents
+
+The Orchestrator delegates tasks to the following specialized subagents:
+
+-   **`researcher`**: Prompted to find relevant code, documentation, and information in the V8 codebase and the web. Reports findings with file paths and line numbers.
+-   **`builder`**: Prompted to compile V8 for specified configurations. Can read files and search code to understand build errors.
+-   **`tester`**: Prompted to run tests and benchmarks and report results. Can read files and search code to understand test failures.
+-   **`debugger`**: Prompted to investigate crashes and unexpected behavior using GDB and other tools.
+
 ## Advanced Scheduling & DAG Management
 - **Directed Acyclic Graph (DAG)**: The Orchestrator must maintain the task list as a DAG to handle dependencies correctly.
 - **Dynamic Re-planning**: When a subagent discovers new information or a task fails, the Orchestrator must dynamically update the DAG (adding, removing, or reordering tasks).
@@ -79,4 +90,3 @@ This skill defines the behavior of the Main Agent acting as an Orchestrator and 
 -   **Task = Process/Thread**: A discrete unit of work.
 -   **Dependencies = Synchronization Primitives**: Tasks wait on other tasks to complete (join).
 -   **Orchestrator = Kernel Scheduler**: Decides what runs when and on which "CPU" (subagent).
-- **Workspace and Branch Management**: Always base new branches on a clean upstream (e.g., `origin/main`). Avoid creating spurious CLs or polluting existing CLs with unrelated changes. Use isolated worktrees for tasks that modify the workspace state.

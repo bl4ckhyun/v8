@@ -34,7 +34,9 @@ To prevent breaking the diff history in Gerrit (e.g., "Base not found" or messy 
 
 - **Committing Changes**: Prefer creating **new local commits** for incremental changes instead of amending, as it preserves local history and is often less annoying. `git cl upload` will still update the same CL as long as the branch is associated correctly.
 - **Descriptive Patch Message**: Always provide a meaningful message for each patchset during upload.
-  - `git cl upload -f -m "Brief description of what changed since the last patchset"`
+  - Use `git cl upload -t "Brief description of what changed"` to set the patchset message.
+  - Use `--commit-description=+` to use the local commit description, or `--commit-description=-` to pipe it from stdin.
+  - Do NOT use `-m` as it is deprecated and can trigger interactive editors.
 - **Preserve Change-Id**: Ensure the `Change-Id` footer is preserved in the commit message.
 
 - **Mis-targeting Safeguards**:
