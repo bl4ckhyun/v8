@@ -80,7 +80,6 @@ class EmbeddedFileWriter : public EmbeddedFileWriterInterface {
     WriteExternalFilenames(writer.get());
     WriteDataSection(writer.get(), blob);
     WriteCodeSection(writer.get(), blob);
-    WriteDebugSection(writer.get(), blob);
     WriteFileEpilogue(writer.get(), blob);
 
     base::Fclose(fp);
@@ -162,9 +161,6 @@ class EmbeddedFileWriter : public EmbeddedFileWriterInterface {
 
   void WriteCodeSection(PlatformEmbeddedFileWriterBase* w,
                         const i::EmbeddedData* blob) const;
-
-  void WriteDebugSection(PlatformEmbeddedFileWriterBase* w,
-                         const i::EmbeddedData* blob) const;
 
   void WriteFileEpilogue(PlatformEmbeddedFileWriterBase* w,
                          const i::EmbeddedData* blob) const;
