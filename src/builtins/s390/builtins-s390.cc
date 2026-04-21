@@ -3110,6 +3110,10 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
     FrameAndConstantPoolScope scope(masm, StackFrame::INTERNAL);
 
     {
+      // Save all parameters and restore them before jumping to the generated
+      // code later. The spilled parameters are *not* visited by GC, but the
+      // `WasmCompileLazy` runtime function does not trigger GC except for
+      // exceptions (and then we unwind before using the spilled values).
       SaveWasmParamsScope save_params(masm);
 
       // Push the instance data as an explicit argument to the runtime function.
