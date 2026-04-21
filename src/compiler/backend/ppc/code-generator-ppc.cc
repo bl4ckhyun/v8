@@ -1476,22 +1476,6 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
                  LeaveOE, i.OutputRCBit());
       }
       break;
-    case kPPC_Mul32WithHigh32:
-      if (i.OutputRegister(0) == i.InputRegister(0) ||
-          i.OutputRegister(0) == i.InputRegister(1) ||
-          i.OutputRegister(1) == i.InputRegister(0) ||
-          i.OutputRegister(1) == i.InputRegister(1)) {
-        __ mullw(kScratchReg, i.InputRegister(0), i.InputRegister(1));  // low
-        __ mulhw(i.OutputRegister(1), i.InputRegister(0),
-                 i.InputRegister(1));  // high
-        __ mr(i.OutputRegister(0), kScratchReg);
-      } else {
-        __ mullw(i.OutputRegister(0), i.InputRegister(0),
-                 i.InputRegister(1));  // low
-        __ mulhw(i.OutputRegister(1), i.InputRegister(0),
-                 i.InputRegister(1));  // high
-      }
-      break;
     case kPPC_MulHighS64:
       __ mulhd(i.OutputRegister(), i.InputRegister(0), i.InputRegister(1),
                i.OutputRCBit());
