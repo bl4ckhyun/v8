@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# LINT.IfChange
+
 import("//build/config/android/config.gni")
 import("//build/config/arm.gni")
 import("//build/config/c++/c++.gni")
@@ -3051,6 +3053,10 @@ action("v8_dump_build_config") {
   simulator_run = target_cpu != v8_target_cpu
   use_sanitizer = is_asan || is_cfi || is_msan || is_tsan || is_ubsan
 
+  # Close the ITTT block, because stacked blocks are not allowed.
+  # LINT.ThenChange(BUILD.bazel)
+  # LINT.IfChange
+
   # This lists all build-time switches consumed by the test framework. All
   # switches can be used automatically in the status files as is - no
   # further files need to be modified.
@@ -3129,6 +3135,9 @@ action("v8_dump_build_config") {
     # Please add new switches also in `build_config_content` in `bazel/defs.bzl`
     # so that the switches also work for tests triggered by bazel.
   ]
+
+  # LINT.ThenChange(bazel/defs.bzl)
+  # LINT.IfChange
 }
 
 # Generate a json file containing essential V8 build flags.
@@ -8849,3 +8858,4 @@ if (current_toolchain == default_toolchain) {
 
   write_file("$root_build_dir/gn_logs.txt", _lines)
 }
+# LINT.ThenChange(BUILD.bazel)
