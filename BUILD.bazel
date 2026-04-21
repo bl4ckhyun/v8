@@ -2596,6 +2596,8 @@ filegroup(
         "src/sandbox/tagged-payload.h",
         "src/sandbox/testing.cc",
         "src/sandbox/testing.h",
+        "src/sandbox/trap-fuzzer.cc",
+        "src/sandbox/trap-fuzzer.h",
         "src/snapshot/builtins-effects-dummy.cc",
         "src/snapshot/code-serializer.cc",
         "src/snapshot/code-serializer.h",
