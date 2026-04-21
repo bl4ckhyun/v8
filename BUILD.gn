@@ -58,6 +58,9 @@ declare_args() {
   # Sets -DVERIFY_PREDICTABLE
   v8_enable_verify_predictable = false
 
+  # Enable DWARF line info for Torque files.
+  v8_enable_torque_dwarf = is_debug
+
   # Enable compiler warnings when using V8_DEPRECATED apis.
   v8_deprecation_warnings = true
 
@@ -2469,6 +2472,9 @@ template("run_torque") {
     if (v8_annotate_torque_ir) {
       args += [ "-annotate-ir" ]
     }
+    if (v8_enable_torque_dwarf) {
+      args += [ "-torque-dwarf" ]
+    }
     if (defined(invoker.args)) {
       args += invoker.args
     }
@@ -2881,6 +2887,10 @@ template("run_mksnapshot") {
 
     if (v8_enable_snapshot_code_comments) {
       args += [ "--code-comments" ]
+    }
+
+    if (v8_enable_torque_dwarf) {
+      args += [ "--torque-dwarf" ]
     }
 
     if (v8_enable_snapshot_native_code_counters) {

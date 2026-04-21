@@ -3778,6 +3778,7 @@ DEFINE_BOOL(gdbjit, false, "enable GDBJIT interface")
 DEFINE_BOOL(gdbjit_full, false, "enable GDBJIT interface for all code objects")
 DEFINE_BOOL(gdbjit_dump, false, "dump elf objects with debug info to disk")
 DEFINE_BOOL(maglev_gdbjit, true, "enable GDBJIT line info for Maglev graph")
+DEFINE_BOOL(torque_dwarf, false, "enable DWARF line info for Torque files")
 DEFINE_STRING(gdbjit_dump_filter, "",
               "dump only objects containing this substring")
 

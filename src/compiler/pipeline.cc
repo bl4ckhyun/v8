@@ -2187,6 +2187,9 @@ CodeAssemblerCompilationJob::CodeAssemblerCompilationJob(
       jump_opt_(ShouldOptimizeJumps(isolate) ? new JumpOptimizationInfo()
                                              : nullptr),
       finalize_order_(finalize_order) {
+  if (v8_flags.torque_dwarf) {
+    compilation_info_.set_source_positions();
+  }
   DCHECK(code_kind == CodeKind::BUILTIN ||
          code_kind == CodeKind::BYTECODE_HANDLER ||
          code_kind == CodeKind::FOR_TESTING ||
