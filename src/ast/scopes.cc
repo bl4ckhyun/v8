@@ -2455,37 +2455,57 @@ void SetNeedsHoleCheck(Variable* var, VariableProxy* proxy,
   var->ForceHoleInitialization(flag);
 }
 
-void UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
+bool UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
                           int access_position) {
+  switch (var->hole_check_state()) {
+    case Variable::HoleCheckState::kSkip:
+      if (var->mode() != VariableMode::kDynamicLocal) {
+        DCHECK_NE(var->scope(), scope);
+      }
+      return false;
+    case Variable::HoleCheckState::kForce: {
+      Variable* target = var;
+      if (var->mode() == VariableMode::kDynamicLocal) {
+        target = var->local_if_not_shadowed();
+        DCHECK(!target->scope()->IsOuterScopeUpToClosureScopeOf(scope));
+      } else {
+        DCHECK_NE(var->scope(), scope);
+      }
+      SetNeedsHoleCheck(target, proxy,
+                        Variable::kHasHoleCheckUseInDifferentClosureScope);
+      return true;
+    }
+    case Variable::HoleCheckState::kUncached:
+      break;
+  }
+
   if (var->mode() == VariableMode::kDynamicLocal) {
     // Dynamically introduced variables never need a hole check (since they're
     // VariableMode::kVar bindings, either from var or function declarations),
     // but the variable they shadow might need a hole check, which we want to do
     // if we decide that no shadowing variable was dynamically introduced.
     DCHECK_EQ(kCreatedInitialized, var->initialization_flag());
-    return UpdateNeedsHoleCheck(var->local_if_not_shadowed(), proxy, scope,
-                                access_position);
+    // The access_position passed to the recursive call is the closest access
+    // position to the underlying variable (since it was updated during the
+    // lookup traversal).
+    bool needs_check = UpdateNeedsHoleCheck(var->local_if_not_shadowed(), proxy,
+                                            scope, access_position);
+    if (needs_check) {
+      var->set_hole_check_state(Variable::HoleCheckState::kForce);
+    } else {
+      var->set_hole_check_state(Variable::HoleCheckState::kSkip);
+    }
+    return needs_check;
   }
 
-  if (var->initialization_flag() == kCreatedInitialized) return;
+  if (var->initialization_flag() == kCreatedInitialized) return false;
 
   // It's impossible to eliminate module import hole checks here, because it's
   // unknown at compilation time whether the binding referred to in the
   // exporting module itself requires hole checks.
   if (var->location() == VariableLocation::MODULE && !var->IsExport()) {
     SetNeedsHoleCheck(var, proxy, Variable::kHasHoleCheckUseInUnknownScope);
-    return;
-  }
-
-  switch (var->hole_check_state()) {
-    case Variable::HoleCheckState::kSkip:
-      return;
-    case Variable::HoleCheckState::kForce:
-      SetNeedsHoleCheck(var, proxy,
-                        Variable::kHasHoleCheckUseInDifferentClosureScope);
-      return;
-    case Variable::HoleCheckState::kUncached:
-      break;
+    return true;
   }
 
   // We should always have valid source positions.
@@ -2497,7 +2517,7 @@ void UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
                       same_closure_scope
                           ? Variable::kHasHoleCheckUseInSameClosureScope
                           : Variable::kHasHoleCheckUseInDifferentClosureScope);
-    return;
+    return true;
   }
 
   if (!same_closure_scope) {
@@ -2507,13 +2527,14 @@ void UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
         ScopeInfo::kMaxVariablePositionDistance) {
       SetNeedsHoleCheck(var, proxy,
                         Variable::kHasHoleCheckUseInDifferentClosureScope);
-      return;
+      return true;
     }
   }
 
   if (var->scope()->is_reparsed()) {
     var->set_hole_check_state(Variable::HoleCheckState::kSkip);
   }
+  return false;
 }
 
 }  // anonymous namespace
