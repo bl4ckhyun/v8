@@ -2995,8 +2995,8 @@ void WebAssemblyTagType(const v8::FunctionCallbackInfo<v8::Value>& info) {
     // This also handles the case where the tag does not have an instance.
     sig = reinterpret_cast<const i::wasm::FunctionSig*>(csig);
   }
-  constexpr bool kForException = true;
-  auto type = i::wasm::GetTypeForFunction(i_isolate, sig, kForException);
+  constexpr bool kForTag = true;
+  auto type = i::wasm::GetTypeForFunction(i_isolate, sig, kForTag);
   info.GetReturnValue().Set(Utils::ToLocal(type));
 }
 

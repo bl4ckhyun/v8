@@ -285,7 +285,7 @@ DirectHandle<String> ToValueTypeString(Isolate* isolate, ValueType type) {
 
 DirectHandle<JSObject> GetTypeForFunction(Isolate* isolate,
                                           const FunctionSig* sig,
-                                          bool for_exception) {
+                                          bool for_tag) {
   Factory* factory = isolate->factory();
 
   // Extract values for the {ValueType[]} arrays.
@@ -308,7 +308,8 @@ DirectHandle<JSObject> GetTypeForFunction(Isolate* isolate,
   JSObject::AddProperty(isolate, object, params_string, params, NONE);
 
   // Now add the result types if needed.
-  if (for_exception) {
+  // With WasmFX, tags are allowed to have return types.
+  if (for_tag && !v8_flags.experimental_wasm_wasmfx) {
     DCHECK_EQ(sig->returns().size(), 0);
   } else {
     int result_index = 0;
