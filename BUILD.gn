@@ -3212,6 +3212,10 @@ v8_source_set("v8_snapshot") {
 
   configs = [ ":internal_config" ]
 
+  if (is_debug) {
+    asmflags = [ "-g" ]
+  }
+
   if (v8_use_external_startup_data) {
     deps += [ ":v8_base" ]
 

@@ -2093,6 +2093,12 @@ void EventHandler(const v8::JitCodeEvent* event) {
             isolate->heap()->FindCodeForInnerPointer(addr);
         is_function = CodeKindIsOptimizedJSFunction(lookup_result->kind());
         kind = lookup_result->kind();
+        // Skip GDB JIT registration for builtins because it is very slow. Also,
+        // we already emit debug information in the embedded blob.
+        if (kind == CodeKind::BUILTIN || kind == CodeKind::BYTECODE_HANDLER) {
+          delete lineinfo;
+          return;
+        }
         if (kind == CodeKind::MAGLEV) {
           opt_id =
               lookup_result->deoptimization_data()->OptimizationId().value();
