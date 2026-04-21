@@ -2657,18 +2657,15 @@ uint32_t CommonFrameWithJSLinkage::ComputeParametersCount() const {
          isolate()->heap()->gc_state() == Heap::NOT_IN_GC);
   // Use the (trusted) parameter count from the Bytecode or Code object.
   uint32_t parameter_count;
-  if (is_interpreted()) {
-    const InterpretedFrame* iframe = InterpretedFrame::cast(this);
-    parameter_count =
-        iframe->GetBytecodeArray()->parameter_count_without_receiver();
+  if (is_unoptimized_js()) {
+    parameter_count = UnoptimizedJSFrame::cast(this)
+                          ->GetBytecodeArray()
+                          ->parameter_count_without_receiver();
   } else {
     Tagged<GcSafeCode> code = GcSafeLookupCode();
     parameter_count = code->parameter_count_without_receiver();
+    SBXCHECK_NE(code->parameter_count(), kDontAdaptArgumentsSentinel);
   }
-  // TODO(saelo): remove once we're confident that the two always match.
-  DCHECK_EQ(
-      parameter_count,
-      function()->shared()->internal_formal_parameter_count_without_receiver());
   return parameter_count;
 }
 

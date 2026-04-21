@@ -606,6 +606,23 @@ RUNTIME_FUNCTION(Runtime_OptimizeFunctionOnNextCall) {
           : CodeKind::TURBOFAN_JS);
 }
 
+RUNTIME_FUNCTION(Runtime_ExhaustInterruptBudget) {
+  HandleScope scope(isolate);
+  CHECK_UNLESS_FUZZING(args.length() == 1);
+  CHECK_UNLESS_FUZZING(IsJSFunction(args[0]));
+  DirectHandle<JSFunction> function = args.at<JSFunction>(0);
+
+  if (!function->has_feedback_vector()) {
+    IsCompiledScope is_compiled_scope;
+    EnsureCompiledAndFeedbackVector(isolate, function, &is_compiled_scope);
+  }
+
+  function->SetInterruptBudget(isolate, BudgetModification::kReset);
+  function->raw_feedback_cell()->set_interrupt_budget(0);
+
+  return ReadOnlyRoots(isolate).undefined_value();
+}
+
 RUNTIME_FUNCTION(Runtime_EnsureFeedbackVectorForFunction) {
   HandleScope scope(isolate);
   CHECK_UNLESS_FUZZING(args.length() == 1);
