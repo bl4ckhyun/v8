@@ -131,6 +131,12 @@ void EmbeddedFileWriter::WriteBuiltinLabels(PlatformEmbeddedFileWriterBase* w,
 
 void EmbeddedFileWriter::WriteCodeSection(PlatformEmbeddedFileWriterBase* w,
                                           const i::EmbeddedData* blob) const {
+  if (v8_flags.torque_dwarf) {
+    FILE* fp = w->fp();
+    fprintf(fp, ".section .debug_line,\"\",@progbits\n");
+    fprintf(fp, ".Lline_table_start0:\n");
+  }
+
   w->Comment(
       "The embedded blob code section starts here. It contains the builtin");
   w->Comment("instruction streams.");
@@ -167,6 +173,103 @@ void EmbeddedFileWriter::WriteCodeSection(PlatformEmbeddedFileWriterBase* w,
   w->AlignToPageSizeIfNeeded();
   w->DeclareLabelEpilogue();
   w->Newline();
+}
+
+void EmbeddedFileWriter::WriteDebugSection(PlatformEmbeddedFileWriterBase* w,
+                                           const i::EmbeddedData* blob) const {
+  if (!v8_flags.torque_dwarf) return;
+
+  FILE* fp = w->fp();
+
+  // 1. .debug_abbrev
+  fprintf(fp, ".section .debug_abbrev,\"\",@progbits\n");
+  fprintf(fp, ".Ldebug_abbrev0:\n");
+  fprintf(fp, "  .byte 1\n");   // Abbrev 1
+  fprintf(fp, "  .byte 17\n");  // DW_TAG_compile_unit
+  fprintf(fp, "  .byte 1\n");   // DW_CHILDREN_yes
+  fprintf(fp, "  .byte 37\n");  // DW_AT_producer
+  fprintf(fp, "  .byte 14\n");  // DW_FORM_strp
+  fprintf(fp, "  .byte 19\n");  // DW_AT_language
+  fprintf(fp, "  .byte 5\n");   // DW_FORM_data2
+  fprintf(fp, "  .byte 3\n");   // DW_AT_name
+  fprintf(fp, "  .byte 14\n");  // DW_FORM_strp
+  fprintf(fp, "  .byte 16\n");  // DW_AT_stmt_list
+  fprintf(fp, "  .byte 23\n");  // DW_FORM_sec_offset
+  fprintf(fp, "  .byte 27\n");  // DW_AT_comp_dir
+  fprintf(fp, "  .byte 14\n");  // DW_FORM_strp
+  fprintf(fp, "  .byte 17\n");  // DW_AT_low_pc
+  fprintf(fp, "  .byte 1\n");   // DW_FORM_addr
+  fprintf(fp, "  .byte 18\n");  // DW_AT_high_pc
+  fprintf(fp, "  .byte 6\n");   // DW_FORM_data4
+  fprintf(fp, "  .byte 0\n");   // EOM
+  fprintf(fp, "  .byte 0\n");   // EOM
+
+  fprintf(fp, "  .byte 2\n");   // Abbrev 2
+  fprintf(fp, "  .byte 46\n");  // DW_TAG_subprogram
+  fprintf(fp, "  .byte 0\n");   // DW_CHILDREN_no
+  fprintf(fp, "  .byte 3\n");   // DW_AT_name
+  fprintf(fp, "  .byte 14\n");  // DW_FORM_strp
+  fprintf(fp, "  .byte 17\n");  // DW_AT_low_pc
+  fprintf(fp, "  .byte 1\n");   // DW_FORM_addr
+  fprintf(fp, "  .byte 18\n");  // DW_AT_high_pc
+  fprintf(fp, "  .byte 6\n");   // DW_FORM_data4
+  fprintf(fp, "  .byte 0\n");   // EOM
+  fprintf(fp, "  .byte 0\n");   // EOM
+  fprintf(fp, "  .byte 0\n");   // End of abbrev
+
+  // 2. .debug_info
+  fprintf(fp, ".section .debug_info,\"\",@progbits\n");
+  fprintf(fp, ".Lcu_begin0:\n");
+  fprintf(fp, "  .long .Ldebug_info_end0 - .Ldebug_info_start0\n");  // Length
+  fprintf(fp, ".Ldebug_info_start0:\n");
+  fprintf(fp, "  .short 4\n");                      // Version
+  fprintf(fp, "  .long .debug_abbrev\n");           // Abbrev offset
+  fprintf(fp, "  .byte %d\n", kSystemPointerSize);  // Address size
+
+  fprintf(fp, "  .byte 1\n");                    // Abbrev 1 (Compile Unit)
+  fprintf(fp, "  .long .Linfo_string0\n");       // Producer
+  fprintf(fp, "  .short 2\n");                   // Language (C)
+  fprintf(fp, "  .long .Linfo_string1\n");       // Name
+  fprintf(fp, "  .long .Lline_table_start0\n");  // Stmt list
+  fprintf(fp, "  .long .Linfo_string2\n");       // Comp dir
+  w->IndentedDataDirective(PointerSizeDirective());
+  fprintf(fp, "%s\n", EmbeddedBlobCodeSymbol().c_str());  // Low PC
+  fprintf(fp, "  .long %u\n", blob->code_size());         // High PC
+
+  int string_offset = 3;  // We already have 3 strings in header!
+
+  for (ReorderedBuiltinIndex embedded_index = 0;
+       embedded_index < Builtins::kBuiltinCount; embedded_index++) {
+    Builtin builtin = blob->GetBuiltinId(embedded_index);
+    const char* name = Builtins::name(builtin);
+
+    fprintf(fp, "  .byte 2\n");  // Abbrev 2 (Subprogram)
+    fprintf(fp, "  .long .Linfo_string%d\n", string_offset++);  // Name
+    w->IndentedDataDirective(PointerSizeDirective());
+    fprintf(fp, "Builtins_%s\n", name);                             // Low PC
+    fprintf(fp, "  .long %u\n", blob->InstructionSizeOf(builtin));  // High PC
+  }
+  fprintf(fp, "  .byte 0\n");  // End of children
+  fprintf(fp, ".Ldebug_info_end0:\n");
+
+  // 3. .debug_str
+  fprintf(fp, ".section .debug_str,\"MS\",@progbits,1\n");
+  fprintf(fp, ".Linfo_string0:\n");
+  fprintf(fp, "  .asciz \"Torque\"\n");
+  fprintf(fp, ".Linfo_string1:\n");
+  fprintf(fp, "  .asciz \"embedded.S\"\n");
+  fprintf(fp, ".Linfo_string2:\n");
+  fprintf(fp, "  .asciz \".\"\n");
+
+  string_offset = 3;
+  for (ReorderedBuiltinIndex embedded_index = 0;
+       embedded_index < Builtins::kBuiltinCount; embedded_index++) {
+    Builtin builtin = blob->GetBuiltinId(embedded_index);
+    const char* name = Builtins::name(builtin);
+    fprintf(fp, ".Linfo_string%d:\n", string_offset++);
+    fprintf(fp, "  .asciz \"Builtins_%s\"\n", name);
+  }
+  fprintf(fp, "\n");
 }
 
 void EmbeddedFileWriter::WriteFileEpilogue(PlatformEmbeddedFileWriterBase* w,
