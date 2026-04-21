@@ -1137,6 +1137,8 @@ bool ScopeIterator::SetLocalVariableValue(DirectHandle<String> variable_name,
             JavaScriptFrame* frame = GetFrame();
             if (!frame->is_unoptimized()) return false;
 
+            CHECK_GE(index, 0);
+            CHECK_LT(index, frame->ComputeExpressionsCount());
             frame->SetExpression(index, *new_value);
           }
           return true;
