@@ -27,6 +27,7 @@ Use this skill when tasked with debugging a specific issue, usually associated w
     - If the user denies or does not provide the information, **let the user tell you how to proceed**. Do not guess or proceed without guidance.
     - Store the test source in the workspace (e.g., `scratch/regress-<issue_id>.js`) to avoid modifying the user's environment directly.
 5.  **Worktree Isolation**: For issue debugging, you MUST create and switch to an isolated git worktree BEFORE running any builds or tests, to avoid clobbering the main workspace or rebuilding unnecessarily.
+6.  **Cross-Pollination & Communication**: The Orchestrator MUST actively relay relevant discoveries and hypotheses between subagents working on overlapping or related tasks to avoid duplicate work and find matching patterns.
 
 
 ## Workflow
@@ -34,10 +35,10 @@ Use this skill when tasked with debugging a specific issue, usually associated w
 ### 1. Triage & Parallel Track Initialization
 -   Analyze the request and extract the Issue ID if available.
 -   **Worktree Setup**: If an issue ID is identified, immediately create and switch to a separate git worktree to isolate the investigation.
--   Initialize the following tracks in PARALLEL:
-    -   **Track A: Heavy Infrastructure**: Build `d8` and prepare GDB/rr in the worktree.
-    -   **Track B: Conceptual Triage**: Analyze the reproducing JS source.
-    -   **Track C: Static Research**: Search for related code and spec text.
+-   **Eager Delegation (MANDATORY)**: The Orchestrator MUST proactively spawn subagents to handle all of the following tracks in PARALLEL:
+    -   **Track A: Heavy Infrastructure**: Spawn a subagent to build `d8` and prepare GDB/rr in the worktree.
+    -   **Track B: Conceptual Triage**: Spawn a subagent to analyze the reproducing JS source.
+    -   **Track C: Static Research**: Spawn a subagent to search for related code and spec text, and understand affected areas super deeply.
 
 ### 2. Work Branching
 -   Spawn subagents for independent dimensions (e.g., Spec vs. Runtime).
@@ -50,7 +51,7 @@ Use this skill when tasked with debugging a specific issue, usually associated w
 -   Combine findings to locate the root cause.
 
 ### 5. Fix & Verify
--   Propose a fix following [V8 Best Practices](../v8_best_practices/SKILL.md).
+-   Propose a fix following [V8 Best Practices](../v8_best_practices/SKILL.md). <!-- TODO: Skills should be self-contained. Avoid cross-references. -->
 -   **Architectural Skepticism (MANDATORY)**: Before presenting the fix, the agent MUST explicitly argue *against* its own proposal.
     -   *Skepticism Prompt*: "Is this fix too hasty? Does it accidentally disable a valid optimization path? Am I fixing a symptom (crashing line) rather than the root cause (invariant violation)?"
 -   **Deep Reasoning**: If the root cause isn't fully understood, spawn a subagent to reason deeper about why the failing line exists and what invariant it's protecting.
