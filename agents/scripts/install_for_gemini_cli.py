@@ -51,6 +51,10 @@ for item in os.listdir(src_dir):
           gemini_tools.append("run_shell_command")
         elif t == "list_dir":
           gemini_tools.append("list_directory")
+        elif t == "search_web":
+          gemini_tools.append("google_web_search")
+        elif t == "call_mcp_tool":
+          pass
         else:
           gemini_tools.append(t)
 
