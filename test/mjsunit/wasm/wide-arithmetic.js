@@ -210,6 +210,14 @@ function testMulWideS() {
   assertEquals([20n, 0n], mulWideS(-4n, -5n));
   assertEquals([-2n, 0n], mulWideS(0x7fffffffffffffffn, 2n));
   assertEquals([-0x8000000000000000n, 0n], mulWideS(-0x8000000000000000n, -1n));
+  assertEquals(
+      [1n, 0x3fffffffffffffffn],
+      mulWideS(0x7fffffffffffffffn, 0x7fffffffffffffffn));
+  assertEquals(
+      [0n, -0x80000000n], mulWideS(-0x8000000000000000n, 0x100000000n));
+  assertEquals(
+      [0x7fffffff00000001n, 0x7fffffffn],
+      mulWideS(0xffffffffn, 0x7fffffffffffffffn));
 
   let view = new DataView(instance.exports.memory.buffer);
   view.setBigInt64(1, -5n, true);
@@ -262,6 +270,11 @@ function testMulWideU() {
   assertEquals([-1n, 0n], mulWideU(0xffffffffffffffffn, 1n));
   assertEquals([-2n, 1n], mulWideU(0xffffffffffffffffn, 2n));
   assertEquals([20n, -9n], mulWideU(-4n, -5n));
+  assertEquals([1n, -2n], mulWideU(0xffffffffffffffffn, 0xffffffffffffffffn));
+  assertEquals([0n, 0x80000000n], mulWideU(0x8000000000000000n, 0x100000000n));
+  assertEquals(
+      [0x7fffffff00000001n, 0x7fffffffn],
+      mulWideU(0xffffffffn, 0x7fffffffffffffffn));
 
   let view = new DataView(instance.exports.memory.buffer);
   view.setBigInt64(1, -5n, true);

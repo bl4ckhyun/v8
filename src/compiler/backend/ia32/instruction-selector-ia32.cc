@@ -1719,7 +1719,8 @@ void InstructionSelector::VisitInt32Mul(OpIndex node) {
 }
 
 void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
-  UNIMPLEMENTED();
+  // Should be handled by Int64LoweringReducer.
+  UNREACHABLE();
 }
 
 void InstructionSelector::VisitUint64Add128(OpIndex node) { UNIMPLEMENTED(); }
