@@ -14,6 +14,7 @@
 #include "src/execution/arguments-inl.h"
 #include "src/execution/frames-inl.h"
 #include "src/execution/frames.h"
+#include "src/handles/handles.h"
 #include "src/heap/factory.h"
 #include "src/heap/read-only-heap.h"
 #include "src/numbers/conversions.h"
@@ -349,31 +350,41 @@ RUNTIME_FUNCTION(Runtime_WasmStackGuardLoop) {
 }
 
 RUNTIME_FUNCTION(Runtime_WasmCompileLazy) {
+  SealHandleScope shs(isolate);
   DCHECK_EQ(2, args.length());
-  Tagged<WasmTrustedInstanceData> trusted_instance_data =
-      TrustedCast<WasmTrustedInstanceData>(args[0]);
+  // A raw pointer is fine here, as the native module is kept alive by the
+  // caller implicitly (via the `WasmTrustedInstanceData`).
+  wasm::NativeModule* native_module;
   int func_index = args.smi_value_at(1);
+  {
+    // Note: When returning normally, this runtime function *must not* cause a
+    // GC, because the calling builtin (also called "WasmCompileLazy") spilled
+    // all arguments to the call but those are never visited by GC.
+    DisallowGarbageCollection no_gc;
+    Tagged<WasmTrustedInstanceData> trusted_instance_data =
+        TrustedCast<WasmTrustedInstanceData>(args[0]);
 
-  TRACE_EVENT1("v8.wasm", "wasm.CompileLazy", "func_index", func_index);
-  DisallowHeapAllocation no_gc;
-  SealHandleScope scope(isolate);
-  wasm::NativeModule* native_module = trusted_instance_data->native_module();
+    TRACE_EVENT1("v8.wasm", "wasm.CompileLazy", "func_index", func_index);
+    native_module = trusted_instance_data->native_module();
 
-  DCHECK(isolate->context().is_null());
-  DCHECK(trusted_instance_data->has_native_context());
-  isolate->set_context(trusted_instance_data->native_context());
-  bool success = wasm::CompileLazy(isolate, native_module, func_index);
-  native_module->counter_updates()->Publish(isolate);
-  if (!success) {
-    DCHECK(v8_flags.wasm_lazy_validation);
-    AllowHeapAllocation throwing_unwinds_the_stack;
-    wasm::ThrowLazyCompilationError(isolate, native_module, func_index);
-    DCHECK(isolate->has_exception());
-    return ReadOnlyRoots{isolate}.exception();
+    DCHECK(isolate->context().is_null());
+    DCHECK(trusted_instance_data->has_native_context());
+    isolate->set_context(trusted_instance_data->native_context());
+    bool success = wasm::CompileLazy(isolate, native_module, func_index);
+    native_module->counter_updates()->Publish(isolate);
+    if (success) {
+      return Smi::FromInt(
+          wasm::JumpTableOffset(native_module->module(), func_index));
+    }
   }
 
-  return Smi::FromInt(
-      wasm::JumpTableOffset(native_module->module(), func_index));
+  // Lazy compilation can only fail if lazy validation is enabled.
+  DCHECK(v8_flags.wasm_lazy_validation);
+  // Note: This throws the error via the `ErrorThrower` which comes with its own
+  // HandleScope.
+  wasm::ThrowLazyCompilationError(isolate, native_module, func_index);
+  DCHECK(isolate->has_exception());
+  return ReadOnlyRoots{isolate}.exception();
 }
 
 namespace {
@@ -555,6 +566,8 @@ RUNTIME_FUNCTION(Runtime_TierUpJSToWasmWrapper) {
 }
 
 RUNTIME_FUNCTION(Runtime_IsWasmExternalFunction) {
+  SealHandleScope shs(isolate);
+  DisallowGarbageCollection no_gc;
   DCHECK_EQ(1, args.length());
   return isolate->heap()->ToBoolean(
       WasmExternalFunction::IsWasmExternalFunction(args[0]));
@@ -658,6 +671,7 @@ RUNTIME_FUNCTION(Runtime_WasmTriggerTierUp) {
   SealHandleScope shs(isolate);
 
   {
+    // The main code does not allocate, but interrupt handling below could.
     DisallowGarbageCollection no_gc;
     DCHECK_EQ(1, args.length());
     Tagged<WasmTrustedInstanceData> trusted_data =
@@ -1098,7 +1112,7 @@ RUNTIME_FUNCTION(Runtime_WasmDebugBreak) {
 // TODO(manoskouk): Unify part of this with the implementation in
 // wasm-extern-refs.cc
 RUNTIME_FUNCTION(Runtime_WasmArrayCopy) {
-  HandleScope scope(isolate);
+  SealHandleScope shs(isolate);
   DisallowGarbageCollection no_gc;
   DCHECK_EQ(5, args.length());
   Tagged<WasmArray> dst_array = Cast<WasmArray>(args[0]);
@@ -1362,6 +1376,8 @@ RUNTIME_FUNCTION(Runtime_WasmAllocateSuspender) {
 // This is a runtime function to avoid writing trusted space memory from
 // generated code.
 RUNTIME_FUNCTION(Runtime_ClearWasmSuspenderResumeField) {
+  SealHandleScope shs(isolate);
+  DisallowGarbageCollection no_gc;
   // Should only be used in stress stack switching mode.
   CHECK(v8_flags.stress_wasm_stack_switching);
 
@@ -2786,10 +2802,11 @@ RUNTIME_FUNCTION(Runtime_WasmStringViewWtf8Slice) {
 
 #ifdef V8_ENABLE_DRUMBRAKE
 RUNTIME_FUNCTION(Runtime_WasmTraceBeginExecution) {
+  SealHandleScope shs(isolate);
+  DisallowGarbageCollection no_gc;
   DCHECK(v8_flags.slow_histograms && !v8_flags.wasm_jitless &&
          v8_flags.wasm_enable_exec_time_histograms);
   DCHECK_EQ(0, args.length());
-  HandleScope scope(isolate);
 
   wasm::WasmExecutionTimer* timer = isolate->wasm_execution_timer();
   timer->Start();
@@ -2798,10 +2815,11 @@ RUNTIME_FUNCTION(Runtime_WasmTraceBeginExecution) {
 }
 
 RUNTIME_FUNCTION(Runtime_WasmTraceEndExecution) {
+  SealHandleScope shs(isolate);
+  DisallowGarbageCollection no_gc;
   DCHECK(v8_flags.slow_histograms && !v8_flags.wasm_jitless &&
          v8_flags.wasm_enable_exec_time_histograms);
   DCHECK_EQ(0, args.length());
-  HandleScope scope(isolate);
 
   wasm::WasmExecutionTimer* timer = isolate->wasm_execution_timer();
   timer->Stop();
@@ -2853,8 +2871,9 @@ RUNTIME_FUNCTION(Runtime_WasmStringFromCodePoint) {
 }
 
 RUNTIME_FUNCTION(Runtime_WasmStringHash) {
-  DCHECK_EQ(1, args.length());
   SealHandleScope seal_handle_scope(isolate);
+  DisallowGarbageCollection no_gc;
+  DCHECK_EQ(1, args.length());
   Tagged<String> string(Cast<String>(args[0]));
   uint32_t hash = string->EnsureHash();
   return Smi::FromInt(static_cast<int>(hash));
