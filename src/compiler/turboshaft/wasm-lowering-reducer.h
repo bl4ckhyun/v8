@@ -242,13 +242,14 @@ class WasmLoweringReducer : public Next {
   }
 
   V<Any> REDUCE(StructGet)(V<WasmStructNullable> object,
+                           OptionalV<FrameState> frame_state,
                            const wasm::StructType* type,
                            wasm::ModuleTypeIndex type_index, int field_index,
                            bool is_signed, CheckForNull null_check,
                            std::optional<AtomicMemoryOrder> memory_order) {
     if (field_index == StructGetOp::kDescFieldIndex) {
       if (null_check == kWithNullCheck) {
-        __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef),
+        __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef), frame_state,
                   TrapId::kTrapNullDereference);
       }
       V<Map> map = __ LoadMapField(object);
@@ -265,7 +266,7 @@ class WasmLoweringReducer : public Next {
         null_check, field_index, requires_aligned_access);
 
     if (explicit_null_check) {
-      __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef),
+      __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef), frame_state,
                 TrapId::kTrapNullDereference);
     }
 
@@ -286,6 +287,7 @@ class WasmLoweringReducer : public Next {
   }
 
   V<None> REDUCE(StructSet)(V<WasmStructNullable> object, V<Any> value,
+                            OptionalV<FrameState> frame_state,
                             const wasm::StructType* type,
                             wasm::ModuleTypeIndex type_index, int field_index,
                             CheckForNull null_check,
@@ -304,7 +306,7 @@ class WasmLoweringReducer : public Next {
         null_check, field_index, requires_aligned_access);
 
     if (explicit_null_check) {
-      __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef),
+      __ TrapIf(__ IsNull(object, wasm::kWasmAnyRef), frame_state,
                 TrapId::kTrapNullDereference);
     }
 

@@ -5149,8 +5149,20 @@ class AssemblerOpInterface : public Next {
                    wasm::ModuleTypeIndex type_index, int field_index,
                    bool is_signed, CheckForNull null_check,
                    std::optional<AtomicMemoryOrder> memory_order) {
-    return ReduceIfReachableStructGet(object, type, type_index, field_index,
-                                      is_signed, null_check, memory_order);
+    return ReduceIfReachableStructGet(
+        object, OptionalV<turboshaft::FrameState>{}, type, type_index,
+        field_index, is_signed, null_check, memory_order);
+  }
+
+  V<Any> StructGet(V<WasmStructNullable> object,
+                   OptionalV<turboshaft::FrameState> frame_state,
+                   const wasm::StructType* type,
+                   wasm::ModuleTypeIndex type_index, int field_index,
+                   bool is_signed, CheckForNull null_check,
+                   std::optional<AtomicMemoryOrder> memory_order) {
+    return ReduceIfReachableStructGet(object, frame_state, type, type_index,
+                                      field_index, is_signed, null_check,
+                                      memory_order);
   }
 
   void StructSet(V<WasmStructNullable> object, V<Any> value,
@@ -5158,8 +5170,20 @@ class AssemblerOpInterface : public Next {
                  int field_index, CheckForNull null_check,
                  std::optional<AtomicMemoryOrder> memory_order,
                  WriteBarrierKind write_barrier) {
-    ReduceIfReachableStructSet(object, value, type, type_index, field_index,
-                               null_check, memory_order, write_barrier);
+    ReduceIfReachableStructSet(
+        object, value, OptionalV<turboshaft::FrameState>{}, type, type_index,
+        field_index, null_check, memory_order, write_barrier);
+  }
+
+  void StructSet(V<WasmStructNullable> object,
+                 OptionalV<turboshaft::FrameState> frame_state, V<Any> value,
+                 const wasm::StructType* type, wasm::ModuleTypeIndex type_index,
+                 int field_index, CheckForNull null_check,
+                 std::optional<AtomicMemoryOrder> memory_order,
+                 WriteBarrierKind write_barrier) {
+    ReduceIfReachableStructSet(object, value, frame_state, type, type_index,
+                               field_index, null_check, memory_order,
+                               write_barrier);
   }
 
   V<Any> StructAtomicRMW(V<WasmStructNullable> object, V<Any> value,

@@ -20,6 +20,7 @@ const builder = new WasmModuleBuilder();
 const array = builder.addArray(kWasmI32);
 const struct = builder.addStruct([makeField(kWasmI32, true)]);
 const array8 = builder.addArray(kWasmI8);
+const struct8 = builder.addStruct([makeField(kWasmI8, true)]);
 const globalI32 = builder.addGlobal(kWasmI32, true, false);
 const globalEqRef = builder.addGlobal(kWasmEqRef, true, false);
 
@@ -388,39 +389,14 @@ addTestcase('unreachable', kSig_v_v, [], [
   kExprUnreachable,
 ]);
 
-// CHECK: Considering Wasm function [{{[0-9]+}}] arrayLenParam of module {{.*}} for inlining
+// CHECK: Considering Wasm function [{{[0-9]+}}] empty of module {{.*}} for inlining
 // CHECK-NEXT: - inlining Wasm function
-addTestcase('arrayLenParam', makeSig([kWasmExternRef], [kWasmI32]), [null], [
-  kExprLocalGet, 0,
-  kGCPrefix, kExprAnyConvertExtern,
-  kGCPrefix, kExprRefCastNull, array,
-  kGCPrefix, kExprArrayLen,
-], (wasmExports) => {
-  const array = wasmExports.createArray(42);
-  return function js_arrayLenParam() {
-    wasmExports.arrayLenParam(array);
-  };
-});
-
-const globalArray = builder.addGlobal(wasmRefNullType(array), true, false);
-const globalArray8 = builder.addGlobal(wasmRefNullType(array8), true, false);
-
-builder.addFunction('initGlobalArray', makeSig([], [])).addBody([
-  ...wasmI32Const(42),
-  kGCPrefix, kExprArrayNewDefault, array,
-  kExprGlobalSet, globalArray.index,
-]).exportFunc();
-
-// CHECK: Considering Wasm function [{{[0-9]+}}] arrayLenGlobal of module {{.*}} for inlining
+// CHECK: Considering Wasm function [{{[0-9]+}}] sameModuleMultipleFunctions of module {{.*}} for inlining
 // CHECK-NEXT: - inlining Wasm function
-addTestcase('arrayLenGlobal', makeSig([], [kWasmI32]), [], [
-  kExprGlobalGet, globalArray.index,
-  kGCPrefix, kExprArrayLen,
-], (wasmExports) => {
-  wasmExports.initGlobalArray();
-  return function js_arrayLenGlobal() {
-    const len = wasmExports.arrayLenGlobal();
-    return len;
+addTestcase('sameModuleMultipleFunctions', kSig_v_v, [], [], (wasmExports) => {
+  return function js_sameModuleMultipleFunctions() {
+    wasmExports.empty();
+    wasmExports.sameModuleMultipleFunctions();
   };
 });
 
@@ -433,6 +409,10 @@ addTestcase('arrayLenNull', kSig_i_v, [], [
   kExprGlobalGet, globalNullArray.index,
   kGCPrefix, kExprArrayLen,
 ]);
+
+// -----------------------------------------------------------------------------
+// Casts and type checks.
+// -----------------------------------------------------------------------------
 
 // We statically know that this cast will not succeed (because it's casting an
 // array to a struct), so this is optimized into a null check only.
@@ -527,14 +507,43 @@ addTestcase('refCastAbstractFail', makeSig([], [kWasmI32]), [], [
   };
 });
 
-// CHECK: Considering Wasm function [{{[0-9]+}}] empty of module {{.*}} for inlining
+// -----------------------------------------------------------------------------
+// Array operations.
+// -----------------------------------------------------------------------------
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayLenParam of module {{.*}} for inlining
 // CHECK-NEXT: - inlining Wasm function
-// CHECK: Considering Wasm function [{{[0-9]+}}] sameModuleMultipleFunctions of module {{.*}} for inlining
+addTestcase('arrayLenParam', makeSig([kWasmExternRef], [kWasmI32]), [null], [
+  kExprLocalGet, 0,
+  kGCPrefix, kExprAnyConvertExtern,
+  kGCPrefix, kExprRefCastNull, array,
+  kGCPrefix, kExprArrayLen,
+], (wasmExports) => {
+  const array = wasmExports.createArray(42);
+  return function js_arrayLenParam() {
+    wasmExports.arrayLenParam(array);
+  };
+});
+
+const globalArray = builder.addGlobal(wasmRefNullType(array), true, false);
+const globalArray8 = builder.addGlobal(wasmRefNullType(array8), true, false);
+
+builder.addFunction('initGlobalArray', makeSig([], [])).addBody([
+  ...wasmI32Const(42),
+  kGCPrefix, kExprArrayNewDefault, array,
+  kExprGlobalSet, globalArray.index,
+]).exportFunc();
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayLenGlobal of module {{.*}} for inlining
 // CHECK-NEXT: - inlining Wasm function
-addTestcase('sameModuleMultipleFunctions', kSig_v_v, [], [], (wasmExports) => {
-  return function js_sameModuleMultipleFunctions() {
-    wasmExports.empty();
-    wasmExports.sameModuleMultipleFunctions();
+addTestcase('arrayLenGlobal', makeSig([], [kWasmI32]), [], [
+  kExprGlobalGet, globalArray.index,
+  kGCPrefix, kExprArrayLen,
+], (wasmExports) => {
+  wasmExports.initGlobalArray();
+  return function js_arrayLenGlobal() {
+    const len = wasmExports.arrayLenGlobal();
+    return len;
   };
 });
 
@@ -562,6 +571,21 @@ addTestcase('arrayGet', kSig_i_v, [], [
   wasmExports.arraySet();
   return function js_arrayGet() {
     return wasmExports.arrayGet();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] arrayGetParam of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('arrayGetParam', makeSig([kWasmExternRef], [kWasmI32]), [null], [
+  kExprLocalGet, 0,
+  kGCPrefix, kExprAnyConvertExtern,
+  kGCPrefix, kExprRefCastNull, array,
+  ...wasmI32Const(0),
+  kGCPrefix, kExprArrayGet, array,
+], (wasmExports) => {
+  const arr = wasmExports.createArray(42);
+  return function js_arrayGetParam() {
+    return wasmExports.arrayGetParam(arr);
   };
 });
 
@@ -626,6 +650,98 @@ addTestcase('arraySetNull', kSig_v_v, [], [
   kGCPrefix, kExprArraySet, array,
 ]);
 
+// -----------------------------------------------------------------------------
+// Struct operations.
+// -----------------------------------------------------------------------------
+
+const globalStruct = builder.addGlobal(wasmRefNullType(struct), true, false);
+const globalStruct8 = builder.addGlobal(wasmRefNullType(struct8), true, false);
+const globalNullStruct = builder.addGlobal(wasmRefNullType(struct), true, false);
+
+builder.addFunction('initGlobalStruct', makeSig([], [])).addBody([
+  ...wasmI32Const(42),
+  kGCPrefix, kExprStructNew, struct,
+  kExprGlobalSet, globalStruct.index,
+]).exportFunc();
+
+builder.addFunction('initGlobalStruct8', makeSig([], [])).addBody([
+  ...wasmI32Const(-1),
+  kGCPrefix, kExprStructNew, struct8,
+  kExprGlobalSet, globalStruct8.index,
+]).exportFunc();
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structSet of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structSet', kSig_v_v, [], [
+  kExprGlobalGet, globalStruct.index,
+  ...wasmI32Const(23),
+  kGCPrefix, kExprStructSet, struct, 0,
+], (wasmExports) => {
+  wasmExports.initGlobalStruct();
+  return function js_structSet() {
+    wasmExports.structSet();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structGet of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structGet', kSig_i_v, [], [
+  kExprGlobalGet, globalStruct.index,
+  kGCPrefix, kExprStructGet, struct, 0,
+], (wasmExports) => {
+  wasmExports.structSet();
+  return function js_structGet() {
+    return wasmExports.structGet();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structGetParam of module {{.*}} for inlining
+// CHECK-NEXT: - inlining Wasm function
+addTestcase('structGetParam', makeSig([kWasmExternRef], [kWasmI32]), [null], [
+  kExprLocalGet, 0,
+  kGCPrefix, kExprAnyConvertExtern,
+  kGCPrefix, kExprRefCastNull, struct,
+  kGCPrefix, kExprStructGet, struct, 0,
+], (wasmExports) => {
+  const str = wasmExports.createStruct();
+  return function js_structGetParam() {
+    return wasmExports.structGetParam(str);
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structGetS of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structGetS', kSig_i_v, [], [
+  kExprGlobalGet, globalStruct8.index,
+  kGCPrefix, kExprStructGetS, struct8, 0,
+], (wasmExports) => {
+  wasmExports.initGlobalStruct8();
+  return function js_structGetS() {
+    return wasmExports.structGetS();
+  };
+});
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structGetU of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structGetU', kSig_i_v, [], [
+  kExprGlobalGet, globalStruct8.index,
+  kGCPrefix, kExprStructGetU, struct8, 0,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structGetNull of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structGetNull', kSig_i_v, [], [
+  kExprGlobalGet, globalNullStruct.index,
+  kGCPrefix, kExprStructGet, struct, 0,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] structSetNull of module {{.*}} for inlining
+// CHECK-NEXT: - inlining
+addTestcase('structSetNull', kSig_v_v, [], [
+  kExprGlobalGet, globalNullStruct.index,
+  ...wasmI32Const(23),
+  kGCPrefix, kExprStructSet, struct, 0,
+]);
 
 
 // =============================================================================
@@ -639,6 +755,13 @@ addTestcase('arraySetNull', kSig_v_v, [], [
 addTestcase('createArray', makeSig([kWasmI32], [kWasmExternRef]), [42], [
   kExprLocalGet, 0,
   kGCPrefix, kExprArrayNewDefault, array,
+  kGCPrefix, kExprExternConvertAny,
+]);
+
+// CHECK: Considering Wasm function [{{[0-9]+}}] createStruct of module {{.*}} for inlining
+// CHECK-NEXT: - not inlining: unsupported operation: struct.new_default
+addTestcase('createStruct', makeSig([], [kWasmExternRef]), [], [
+  kGCPrefix, kExprStructNewDefault, struct,
   kGCPrefix, kExprExternConvertAny,
 ]);
 

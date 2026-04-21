@@ -997,14 +997,28 @@ class WasmInJsInliningInterface {
                         const Value& descriptor, Value* result) {
     Bailout(decoder);
   }
+
   void StructGet(FullDecoder* decoder, const Value& struct_object,
                  const FieldImmediate& field, bool is_signed, Value* result) {
-    Bailout(decoder);
+    result->op = __ StructGet(
+        struct_object.get<WasmStructNullable>(), frame_state_,
+        field.struct_imm.struct_type, field.struct_imm.index,
+        field.field_imm.index, is_signed,
+        struct_object.type.is_nullable() ? compiler::kWithNullCheck
+                                         : compiler::kWithoutNullCheck,
+        {});
   }
+
   void StructSet(FullDecoder* decoder, const Value& struct_object,
                  const FieldImmediate& field, const Value& field_value) {
-    Bailout(decoder);
+    __ StructSet(struct_object.get<WasmStructNullable>(), frame_state_,
+                 field_value.op, field.struct_imm.struct_type,
+                 field.struct_imm.index, field.field_imm.index,
+                 struct_object.type.is_nullable() ? compiler::kWithNullCheck
+                                                  : compiler::kWithoutNullCheck,
+                 {}, wasm::FieldImmediateToWriteBarrier(field));
   }
+
   void StructAtomicGet(FullDecoder* decoder, const Value& struct_obj,
                        const FieldImmediate& field, bool is_signed,
                        AtomicMemoryOrder memory_order, Value* result) {
@@ -1015,6 +1029,7 @@ class WasmInJsInliningInterface {
                        AtomicMemoryOrder memory_order) {
     Bailout(decoder);
   }
+
   void ArrayNew(FullDecoder* decoder, const ArrayIndexImmediate& imm,
                 const Value& length, const Value& initial_value,
                 Value* result) {

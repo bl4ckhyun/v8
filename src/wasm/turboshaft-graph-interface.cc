@@ -9489,11 +9489,6 @@ class TurboshaftGraphBuildingInterface
     }
   }
 
-  WriteBarrierKind FieldImmediateToWriteBarrier(const FieldImmediate& field) {
-    return field.struct_imm.struct_type->field(field.field_imm.index).is_ref()
-               ? kFullWriteBarrier
-               : kNoWriteBarrier;
-  }
 
   // We need this shift so that resulting OpIndex offsets are multiples of
   // `sizeof(OperationStorageSlot)`.
@@ -9743,6 +9738,13 @@ compiler::WriteBarrierKind ArrayIndexImmediateToWriteBarrier(
     const ArrayIndexImmediate& array) {
   return array.array_type->element_type().is_ref() ? compiler::kFullWriteBarrier
                                                    : compiler::kNoWriteBarrier;
+}
+
+compiler::WriteBarrierKind FieldImmediateToWriteBarrier(
+    const FieldImmediate& field) {
+  return field.struct_imm.struct_type->field(field.field_imm.index).is_ref()
+             ? compiler::kFullWriteBarrier
+             : compiler::kNoWriteBarrier;
 }
 
 V8_EXPORT_PRIVATE void BuildTSGraph(
