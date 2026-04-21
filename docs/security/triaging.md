@@ -95,11 +95,12 @@ Fields: **Type=Bug**, **Security_Impact-None**
 
 V8 relies on `nullptr` dereferences to deterministically crash.
 
-### Broken `DCHECK`s or reliable `CHECK` crashers
+### Bogus `DCHECK`s or reliable `CHECK` crashers
 
 Fields: **Type=Bug**, **Security_Impact-None**
 
-Rationale: Crashes either cannot happen in production builds (e.g., `DCHECK` failures) or they deterministically crash the process (e.g., `CHECK` failures).
+Rationale: These issues are not considered security vulnerabilities because the crashes either cannot happen in production builds (e.g., `DCHECK` failures, which are compiled out) or they result in a safe, deterministic crash (e.g., `CHECK` failures).
+Invalid ("bogus") `DCHECK`s should still be fixed or removed.
 
 Note: `CHECK`s must not be behind special builds or phases, such as `--verify-*`.
 
