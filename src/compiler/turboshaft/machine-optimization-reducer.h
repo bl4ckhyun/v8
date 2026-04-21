@@ -2241,14 +2241,21 @@ class MachineOptimizationReducer : public Next {
   V<Simd128> REDUCE(Simd128ReplaceLane)(V<Simd128> into, V<Any> new_lane,
                                         Simd128ReplaceLaneOp::Kind kind,
                                         uint8_t lane) {
+    LABEL_BLOCK(no_change) {
+      return Next::ReduceSimd128ReplaceLane(into, new_lane, kind, lane);
+    }
     if (kind == Simd128ReplaceLaneOp::Kind::kF16x8) {
       // Not supported yet.
-      return Next::ReduceSimd128ReplaceLane(into, new_lane, kind, lane);
+      goto no_change;
     }
 
     if (const Simd128ExtractLaneOp* extract =
             matcher_.TryCast<Simd128ExtractLaneOp>(new_lane)) {
       Simd128ExtractLaneOp::Kind extract_kind = extract->kind;
+      if (extract_kind == Simd128ExtractLaneOp::Kind::kF16x8) {
+        // Not supported yet.
+        goto no_change;
+      }
       int extract_bytes =
           ElementSizeInBytes(Simd128ExtractLaneOp::element_rep(extract_kind));
       int replace_bytes =
@@ -2284,7 +2291,7 @@ class MachineOptimizationReducer : public Next {
                                   from_lane);
       }
     }
-    return Next::ReduceSimd128ReplaceLane(into, new_lane, kind, lane);
+    goto no_change;
   }
 
   V<Any> REDUCE(Simd128ExtractLane)(V<Simd128> input,
