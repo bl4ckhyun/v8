@@ -51,7 +51,7 @@ Use this skill when tasked with debugging a specific issue, usually associated w
 -   Combine findings to locate the root cause.
 
 ### 5. Fix & Verify
--   Propose a fix following [V8 Best Practices](../v8_best_practices/SKILL.md). <!-- TODO: Skills should be self-contained. Avoid cross-references. -->
+-   Propose a fix following [V8 Best Practices](../../rules/v8_best_practices.md). <!-- TODO: Skills should be self-contained. Avoid cross-references. -->
 -   **Architectural Skepticism (MANDATORY)**: Before presenting the fix, the agent MUST explicitly argue *against* its own proposal.
     -   *Skepticism Prompt*: "Is this fix too hasty? Does it accidentally disable a valid optimization path? Am I fixing a symptom (crashing line) rather than the root cause (invariant violation)?"
 -   **Deep Reasoning**: If the root cause isn't fully understood, spawn a subagent to reason deeper about why the failing line exists and what invariant it's protecting.

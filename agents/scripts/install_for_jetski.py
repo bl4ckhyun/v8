@@ -28,9 +28,17 @@ for item in os.listdir(agents_src):
   if item.startswith("."):
     continue
 
-  if item in ["agents", "skills"]:
+  if item in ["agents", "skills", "rules"]:
     # Create real directory in .agents/
     os.makedirs(dest_item, exist_ok=True)
+
+    # Cleanup dead symlinks
+    for sub_item in os.listdir(dest_item):
+      dest_sub = os.path.join(dest_item, sub_item)
+      if os.path.islink(dest_sub) and not os.path.exists(dest_sub):
+        print(f"Removing dead symlink {dest_sub}")
+        os.unlink(dest_sub)
+
     # Symlink individual items inside
     for sub_item in os.listdir(src_item):
       src_sub = os.path.join(src_item, sub_item)

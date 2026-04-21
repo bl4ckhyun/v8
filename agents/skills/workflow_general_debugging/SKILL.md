@@ -23,7 +23,7 @@ Workflow for general debugging tasks in a pristine branch or project work, witho
 
 ### 3. Propose Fix
 -   Develop a minimal fix targeting the root cause.
--   Follow [V8 Best Practices](../v8_best_practices/SKILL.md).
+-   Follow [V8 Best Practices](../../rules/v8_best_practices.md).
 -   **Architectural Skepticism**: Argue against your own proposal. Does it disable optimizations? Does it violate invariants?
 
 ### 4. Verify
