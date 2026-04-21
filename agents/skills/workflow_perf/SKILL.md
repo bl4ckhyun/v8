@@ -49,10 +49,10 @@ Crossbench is the central benchmark runner that should always be used to run thi
 -   **Update**: Always ensure you are running the latest version.
 -   **Basic Usage**:
     -   Navigate to the crossbench directory.
-    -   **MANDATORY**: Use `poetry run cb` instead of just running `./cb.py`.
+    -   Use `./cb.py` directly.
     ```bash
     # Run JetStream3 with a specific d8 binary
-    poetry run cb jetstream --browser=/path/to/d8 --env-validation=warn
+    ./cb.py jetstream --browser=/path/to/d8 --env-validation=warn
     ```
 -   **Profiling with Probes**:
     -   Use `--probe='v8.log'` to generate a `v8.log` file.
@@ -104,7 +104,16 @@ Beyond hotspots, look for areas where V8 can be improved to handle patterns bett
 
 ### 9. Optimization & Verification
 -   Propose a V8 change to improve performance (e.g., specialized builtin, improved optimization pass).
--   Verify by:
-    -   Re-running the benchmark.
-    -   Comparing `perf` stats (cycles, instructions).
-    -   Ensuring no regressions in correctness or other benchmarks.
+-   **Verification on Pinpoint (Preferred)**:
+    *   Commit changes to a local branch.
+    *   Use the automation script to upload a CL and start a Pinpoint job:
+        ```bash
+        scripts/upload_and_pinpoint.py \
+          --benchmark=<benchmark_name> \
+          --bot=<bot_name> \
+          --message="Experiment: My performance optimization"
+        ```
+-   **Local Verification**:
+    *   Re-run the benchmark locally if Pinpoint is unavailable.
+    *   Compare `perf` stats (cycles, instructions).
+    *   Ensure no regressions in correctness or other benchmarks.
