@@ -20,12 +20,26 @@ The V8 environment relies on specialized tools and MCP servers for advanced work
 
 ### 1. Crossbench
 Crossbench is the central benchmark runner.
-- **Check**: Look for it in `~/crossbench` or ask the user.
-- **Installation**: If missing, you cannot install it directly via `pip` in this environment usually. Suggest the user to clone it from Chromium sources:
+- **Check**: Ask the user for the location of the Crossbench directory if not found in a standard location.
+- **Installation**: If missing, suggest the user to fetch it using `depot_tools` or clone it from Chromium sources:
   ```bash
-  git clone https://chromium.googlesource.com/chromium/src/tools/crossbench
+  fetch crossbench
+  # or
+  git clone https://chromium.googlesource.com/crossbench
   ```
-- **Configuration**: Follow the guidelines in `workflow_perf` (use `poetry run cb`, `--env-validation=warn`).
+- **Configuration**:
+  - Check if `cb.py` is executable. You can usually run it directly by referencing its full path: `/path/to/crossbench/cb.py`.
+- **MCP Server Installation**:
+  - To install `crossbench-mcp`, add it to `mcp_config.json` pointing directly to the executable `cb.py`:
+    ```json
+    "crossbench-mcp": {
+      "command": "/path/to/crossbench/cb.py",
+      "args": [
+        "mcp"
+      ]
+    }
+    ```
+  - It will automatically use the managed environment if run in an environment where `vpython3` is available (like `depot_tools`).
 
 ### 2. MCP Servers (v8-utils, gdb-mcp, buganizerMcp, clangd-mcp)
 These servers provide advanced capabilities like benchmark running, debugging, and issue tracking.
