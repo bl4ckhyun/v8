@@ -174,6 +174,12 @@
 #include "src/diagnostics/unwinding-info-win64.h"
 #endif  // V8_OS_WIN64
 
+#if defined(V8_OS_DARWIN)
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif  // V8_OS_DARWIN
+
 #if USE_SIMULATOR
 #include "src/execution/simulator-base.h"
 #endif
@@ -225,6 +231,47 @@ std::atomic<const uint8_t*> current_embedded_blob_code_(nullptr);
 std::atomic<uint32_t> current_embedded_blob_code_size_(0);
 std::atomic<const uint8_t*> current_embedded_blob_data_(nullptr);
 std::atomic<uint32_t> current_embedded_blob_data_size_(0);
+
+#ifdef DEBUG
+bool IsDebuggerAttached() {
+#ifdef V8_OS_LINUX
+  FILE* fp = fopen("/proc/self/status", "r");
+  if (!fp) return false;
+  char line[128];
+  bool attached = false;
+  while (fgets(line, sizeof(line), fp)) {
+    if (strncmp(line, "TracerPid:", 10) == 0) {
+      int pid = atoi(line + 10);
+      if (pid != 0) {
+        attached = true;
+      }
+      break;
+    }
+  }
+  fclose(fp);
+  return attached;
+#elif defined(V8_OS_DARWIN)
+  int mib[4];
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_PROC;
+  mib[2] = KERN_PROC_PID;
+  mib[3] = getpid();
+
+  struct kinfo_proc info;
+  size_t size = sizeof(info);
+
+  info.kp_proc.p_flag = 0;
+
+  if (sysctl(mib, 4, &info, &size, NULL, 0) == -1) {
+    return false;
+  }
+
+  return ((info.kp_proc.p_flag & P_TRACED) != 0);
+#else
+  return false;
+#endif
+}
+#endif  // DEBUG
 
 // The various workflows around embedded snapshots are fairly complex. We need
 // to support plain old snapshot builds, nosnap builds, and the requirements of
@@ -352,11 +399,16 @@ void Isolate::SetEmbeddedBlob(const uint8_t* code, uint32_t code_size,
   }
   if (v8_flags.text_is_readable) {
     if (d.EmbeddedBlobCodeHash() != d.CreateEmbeddedBlobCodeHash()) {
-      FATAL(
-          "Embedded blob code section checksum verification failed. This "
-          "indicates that the embedded blob has been modified since "
-          "compilation time. A common cause is a debugging breakpoint set "
-          "within builtin code.");
+      if (IsDebuggerAttached()) {
+        PrintF(
+            "Warning: Embedded blob code section checksum verification failed, "
+            "but debugger is attached. Skipping.\n");
+      } else
+        FATAL(
+            "Embedded blob code section checksum verification failed. This "
+            "indicates that the embedded blob has been modified since "
+            "compilation time. A common cause is a debugging breakpoint set "
+            "within builtin code.");
     }
   }
 #endif  // DEBUG
