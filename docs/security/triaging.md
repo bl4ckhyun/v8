@@ -38,6 +38,7 @@ Specifically, the following properties are different from regular security bugs:
 
 Security bugs should have proof-of-concept reproductions (POCs) attached to them.
 V8 currently still accepts bugs without a POC with the caveat that such bugs have a much higher chance of being dismissed quickly.
+See [the detailed documentation](reproducing-bugs.md) for the various different configurations V8 can be put in.
 
 ### Regular security bugs
 
