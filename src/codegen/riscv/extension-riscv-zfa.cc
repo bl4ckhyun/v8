@@ -175,8 +175,7 @@ float GetFLISValue(uint8_t imm5) {
   }
   // imm5=31: Canonical NaN
   if (imm5 == 31) {
-    uint32_t bits = 0x7fc00000;  // exp=255, mantissa=0x400000
-    return base::bit_cast<float>(bits);
+    return base::bit_cast<float>(kFP32DefaultNaN);
   }
   // imm5=2..29: use lookup table
   return base::bit_cast<float>(kLoadFP32ImmArr[imm5 - 2]);
@@ -191,8 +190,7 @@ float GetFLISValue(uint8_t imm5) {
 double GetFLIDValue(uint8_t imm5) {
   DCHECK(is_uint5(imm5));
   if (imm5 == 1) {
-    return base::bit_cast<double>(
-        0x0010000000000000ULL);  // DBL_MIN = 2^(-1022)
+    return base::bit_cast<double>(kFP64DblMin);
   }
   // For all other imm5 values, convert the single-precision value to double.
   // The numerical value is the same, just with different representation.
@@ -208,9 +206,9 @@ int GetImm5ForFLIS(float value) {
 
   // Check for NaN (imm5=31: Canonical NaN)
   if (std::isnan(value)) {
-    // Only canonical NaN (0x7fc00000) is encodable
+    // Only canonical NaN is encodable
     uint32_t bits = base::bit_cast<uint32_t>(value);
-    return (bits == 0x7fc00000) ? 31 : -1;
+    return (bits == kFP32DefaultNaN) ? 31 : -1;
   }
 
   // Check for infinity (imm5=30: +∞)
@@ -219,8 +217,8 @@ int GetImm5ForFLIS(float value) {
   }
 
   // Check for minimum positive normal (imm5=1)
-  // FLT_MIN = 2^(-126) = 0x00800000
-  if (base::bit_cast<uint32_t>(value) == 0x00800000) {
+  // FLT_MIN = 2^(-126)
+  if (base::bit_cast<uint32_t>(value) == kFP32FltMin) {
     return 1;
   }
 
@@ -261,24 +259,30 @@ int GetImm5ForFLIS(float value) {
 // Returns the FLI.D immediate encoding (imm5) for the given double-precision
 // floating-point value, or -1 if the value cannot be encoded by FLI.D.
 //
-// All FLI constants can be exactly represented in both float and double.
-// The imm5 index is the same for both precisions. So we convert to float
-// and reuse the single-precision logic.
 int GetImm5ForFLID(double value) {
   if (std::isnan(value)) {
-    // Only canonical NaN (0x7FF8000000000000ULL) is encodable
     uint64_t bits = base::bit_cast<uint64_t>(value);
-    return (bits == 0x7FF8000000000000ULL) ? 31 : -1;
+    return (bits == kFP64DefaultNaN) ? 31 : -1;
   }
-  if (base::bit_cast<uint64_t>(value) == 0x0010000000000000ULL) {  // DBL_MIN
+  if (base::bit_cast<uint64_t>(value) == kFP64DblMin) {  // DBL_MIN
     return 1;
   }
-  // Convert to float and check for precision loss.
-  // All FLI constants can be exactly represented in float, so any double
-  // that loses precision during conversion cannot be an FLI constant.
+
+  // This check is always false for all values in the kLoadFP32ImmArr constant
+  // table, since all FLI-defined values are exactly representable in both float
+  // and double.
   float fvalue = static_cast<float>(value);
-  // Reuse the single-precision logic
-  return GetImm5ForFLIS(fvalue);
+  if (static_cast<double>(fvalue) != value) {
+    return -1;
+  }
+  int result = GetImm5ForFLIS(fvalue);
+  // imm5=1 for FLI.D is DBL_MIN, already handled above.
+  // If GetImm5ForFLIS returned 1 here, the value is FLT_MIN (2^-126)
+  // which is NOT encodable by FLI.D.
+  if (result == 1) {
+    return -1;
+  }
+  return result;
 }
 
 }  // namespace internal

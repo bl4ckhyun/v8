@@ -1369,7 +1369,7 @@ static const FLIDCASE kFLIDTestCases[] = {
     {11, 0.4375, 0x3FDC000000000000, "0.4375"},
     {12, 0.5, 0x3FE0000000000000, "0.5"},
     {13, 0.625, 0x3FE4000000000000, "0.625"},
-    {14, 0.75, 0x3FE8000000000000, "₀.75"},
+    {14, 0.75, 0x3FE8000000000000, "0.75"},
     {15, 0.875, 0x3FEC000000000000, "0.875"},
     {16, 1.0, 0x3FF0000000000000, "1.0"},
     {17, 1.25, 0x3FF4000000000000, "1.25"},
@@ -1479,6 +1479,12 @@ TEST_F(MacroAssemblerTest, GetImm5ForFLID_NonEncodableValues) {
   double non_canonical_nan = base::bit_cast<double>(0x7FF8000000000001ULL);
   CHECK(std::isnan(non_canonical_nan));
   CHECK_EQ(-1, GetImm5ForFLID(non_canonical_nan));
+
+  // FLT_MIN (2^-126) is encodable by FLI.S (imm5=1) but NOT by FLI.D.
+  // FLI.D imm5=1 is DBL_MIN (2^-1022), which is a different value.
+  CHECK_EQ(-1, GetImm5ForFLID(std::pow(2.0, -126)));
+  // Also verify that DBL_MIN IS encodable (should return imm5=1)
+  CHECK_EQ(1, GetImm5ForFLID(std::pow(2.0, -1022)));
 }
 
 TEST_F(MacroAssemblerTest, FLI_RoundTrip) {
@@ -1496,6 +1502,76 @@ TEST_F(MacroAssemblerTest, FLI_RoundTrip) {
     int recovered_imm5 = GetImm5ForFLID(value);
 
     CHECK_EQ(static_cast<int>(tc.imm5), recovered_imm5);
+  }
+}
+
+TEST_F(MacroAssemblerTest, LoadFPRImmediate_Float_UsesFLI) {
+  if (!CpuFeatures::IsSupported(ZFA)) return;
+
+  for (const auto& tc : kFLISTestCases) {
+    auto fn = [&tc](MacroAssembler& masm) {
+      Label start;
+      masm.bind(&start);
+      masm.LoadFPRImmediate(fa0, tc.expected_float);
+      int count = masm.InstructionsGeneratedSince(&start);
+      CHECK_EQ(1, count);
+      masm.fmv_x_w(a0, fa0);
+    };
+    int64_t res = GenAndRunTest(fn);
+    uint32_t result_bits = static_cast<uint32_t>(res);
+    CHECK_EQ(tc.expected_bits, result_bits);
+  }
+}
+
+TEST_F(MacroAssemblerTest, LoadFPRImmediate_Double_UsesFLI) {
+  if (!CpuFeatures::IsSupported(ZFA)) return;
+
+  for (const auto& tc : kFLIDTestCases) {
+    auto fn = [&tc](MacroAssembler& masm) {
+      Label start;
+      masm.bind(&start);
+      masm.LoadFPRImmediate(fa0, tc.expected_float);
+      int count = masm.InstructionsGeneratedSince(&start);
+      CHECK_EQ(1, count);
+      masm.fmv_x_d(a0, fa0);
+    };
+    int64_t res = GenAndRunTest(fn);
+    uint64_t result_bits = base::bit_cast<uint64_t>(res);
+    CHECK_EQ(tc.expected_bits, result_bits);
+  }
+}
+
+TEST_F(MacroAssemblerTest, LoadFPRImmediate_Float_NonEncodable_Fallback) {
+  uint32_t cases[] = {
+      0x00000000,  // 0.0
+      0x80000000,  // -0.0
+      0x3F8CCCCD,  // 1.1
+      0x40490FDB,  // pi
+  };
+  for (auto bits : cases) {
+    auto fn = [bits](MacroAssembler& masm) {
+      masm.LoadFPRImmediate(fa0, bits);
+      masm.fmv_x_w(a0, fa0);
+    };
+    int64_t res = GenAndRunTest(fn);
+    CHECK_EQ(bits, static_cast<uint32_t>(res));
+  }
+}
+
+TEST_F(MacroAssemblerTest, LoadFPRImmediate_Double_NonEncodable_Fallback) {
+  uint64_t cases[] = {
+      0x0000000000000000ULL,  // 0.0
+      0x8000000000000000ULL,  // -0.0
+      0x3FF199999999999AULL,  // 1.1
+      0x400921FB54442D18ULL,  // pi
+  };
+  for (auto bits : cases) {
+    auto fn = [bits](MacroAssembler& masm) {
+      masm.LoadFPRImmediate(fa0, bits);
+      masm.fmv_x_d(a0, fa0);
+    };
+    int64_t res = GenAndRunTest(fn);
+    CHECK_EQ(bits, base::bit_cast<uint64_t>(res));
   }
 }
 

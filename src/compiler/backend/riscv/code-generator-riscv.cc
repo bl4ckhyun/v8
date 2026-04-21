@@ -3400,7 +3400,7 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       Simd128Register result = kSimd128ScratchReg;
       if (sew == E32) {
         // Working on 32-bit floats.
-        __ li(kScratchReg, 0x7FC00000);
+        __ li(kScratchReg, kFP32DefaultNaN);
         __ vmv_vx(result, kScratchReg);
       } else {
 #ifdef V8_TARGET_ARCH_RISCV32
@@ -3439,7 +3439,7 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       Simd128Register result = kSimd128ScratchReg;
       if (sew == E32) {
         // Working on 32-bit floats.
-        __ li(kScratchReg, 0x7FC00000);
+        __ li(kScratchReg, kFP32DefaultNaN);
         __ vmv_vx(result, kScratchReg);
       } else {
 #ifdef V8_TARGET_ARCH_RISCV32
