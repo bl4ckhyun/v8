@@ -32,6 +32,9 @@ namespace internal {
 bool UseApxSetzucc() {
   return v8_flags.enable_apx_f_setzucc && CpuFeatures::IsSupported(APX_F);
 }
+bool UseApxCmovcc() {
+  return v8_flags.enable_apx_f_cmovcc && CpuFeatures::IsSupported(APX_F);
+}
 #endif
 // -----------------------------------------------------------------------------
 // Implementation of CpuFeatures

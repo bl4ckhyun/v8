@@ -84,7 +84,11 @@ TEST_F(TurboshaftInstructionSelectorTest, SelectWord32) {
   EXPECT_EQ(1U, s[0]->OutputCount());
   EXPECT_EQ(kFlags_select, s[0]->flags_mode());
   EXPECT_EQ(kNotEqual, s[0]->flags_condition());
-  EXPECT_TRUE(s.IsSameAsInput(s[0]->Output(), 2));
+  if (UseApxCmovcc()) {
+    EXPECT_TRUE(UnallocatedOperand::cast(s[0]->Output())->HasRegisterPolicy());
+  } else {
+    EXPECT_TRUE(s.IsSameAsInput(s[0]->Output(), 2));
+  }
 }
 
 TEST_F(TurboshaftInstructionSelectorTest, SelectWord64) {
@@ -98,7 +102,11 @@ TEST_F(TurboshaftInstructionSelectorTest, SelectWord64) {
   EXPECT_EQ(1U, s[0]->OutputCount());
   EXPECT_EQ(kFlags_select, s[0]->flags_mode());
   EXPECT_EQ(kNotEqual, s[0]->flags_condition());
-  EXPECT_TRUE(s.IsSameAsInput(s[0]->Output(), 2));
+  if (UseApxCmovcc()) {
+    EXPECT_TRUE(UnallocatedOperand::cast(s[0]->Output())->HasRegisterPolicy());
+  } else {
+    EXPECT_TRUE(s.IsSameAsInput(s[0]->Output(), 2));
+  }
 }
 
 namespace {

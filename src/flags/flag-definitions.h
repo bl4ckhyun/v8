@@ -2863,7 +2863,10 @@ DEFINE_BOOL(enable_popcnt, true,
 DEFINE_BOOL(enable_apx_f, false, "enable use of APX_F instruction if available")
 DEFINE_BOOL(enable_apx_f_setzucc, false,
             "enable use of APX setzucc for x64 zero-extending setcc patterns")
+DEFINE_BOOL(enable_apx_f_cmovcc, false,
+            "enable use of APX cmovcc for x64 conditional move patterns")
 DEFINE_IMPLICATION(enable_apx_f_setzucc, enable_apx_f)
+DEFINE_IMPLICATION(enable_apx_f_cmovcc, enable_apx_f)
 #endif
 DEFINE_STRING(arm_arch, ARM_ARCH_DEFAULT,
               "generate instructions for the selected ARM architecture if "

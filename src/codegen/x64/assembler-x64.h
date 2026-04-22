@@ -67,6 +67,10 @@ class MaglevSafepointTableBuilder;
 
 #ifdef V8_ENABLE_APX_F
 V8_EXPORT_PRIVATE bool UseApxSetzucc();
+V8_EXPORT_PRIVATE bool UseApxCmovcc();
+#else
+V8_EXPORT_PRIVATE inline bool UseApxSetzucc() { return false; }
+V8_EXPORT_PRIVATE inline bool UseApxCmovcc() { return false; }
 #endif
 
 enum Condition : int {

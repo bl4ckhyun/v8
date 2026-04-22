@@ -6154,7 +6154,8 @@ void InstructionSelector::AddOutputToSelectContinuation(OperandGenerator* g,
                                                         int first_input_index,
                                                         OpIndex node) {
   continuation_outputs_.push_back(
-      g->DefineSameAsInput(node, first_input_index));
+      UseApxCmovcc() ? g->DefineAsRegister(node)
+                     : g->DefineSameAsInput(node, first_input_index));
 }
 
 // static
