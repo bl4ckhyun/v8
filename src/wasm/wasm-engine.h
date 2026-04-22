@@ -9,7 +9,7 @@
 #error This header should only be included if WebAssembly is enabled.
 #endif  // !V8_ENABLE_WEBASSEMBLY
 
-#include <algorithm>
+#include <compare>
 #include <map>
 #include <memory>
 #include <optional>
@@ -88,14 +88,16 @@ class NativeModuleCache {
     base::Vector<const uint8_t> bytes;
 
     bool operator==(const Key& other) const {
-      bool eq = bytes == other.bytes &&
-                compile_imports.compare(other.compile_imports) == 0;
+      bool eq =
+          bytes == other.bytes && compile_imports == other.compile_imports;
       DCHECK_IMPLIES(eq, prefix_hash == other.prefix_hash);
       return eq;
     }
 
     bool operator<(const Key& other) const {
       if (prefix_hash != other.prefix_hash) {
+        // Streaming keys have empty bytes, so we only check this invariant
+        // when both keys have full bytes.
         DCHECK_IMPLIES(!bytes.empty() && !other.bytes.empty(),
                        bytes != other.bytes);
         return prefix_hash < other.prefix_hash;
@@ -103,7 +105,7 @@ class NativeModuleCache {
       if (bytes.size() != other.bytes.size()) {
         return bytes.size() < other.bytes.size();
       }
-      if (int cmp = compile_imports.compare(other.compile_imports)) {
+      if (auto cmp = compile_imports <=> other.compile_imports; cmp != 0) {
         return cmp < 0;
       }
       // Fast path when the base pointers are the same.

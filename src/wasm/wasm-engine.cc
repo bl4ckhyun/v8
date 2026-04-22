@@ -320,9 +320,7 @@ std::shared_ptr<NativeModule> NativeModuleCache::MaybeGetNativeModule(
     }
     if (it->second.has_value()) {
       if (auto shared_native_module = it->second.value().lock()) {
-        DCHECK_EQ(
-            shared_native_module->compile_imports().compare(compile_imports),
-            0);
+        DCHECK_EQ(shared_native_module->compile_imports(), compile_imports);
         DCHECK_EQ(shared_native_module->wire_bytes(), wire_bytes);
         return shared_native_module;
       }
@@ -1068,7 +1066,7 @@ MaybeDirectHandle<WasmModuleObject> WasmEngine::ImportNativeModule(
 
   // On denormals mismatch, we recompile the module with the correct
   // flags. SyncCompile will check the cache first to avoid redundant work.
-  if (target_imports.compare(native_module->compile_imports()) != 0) {
+  if (target_imports != native_module->compile_imports()) {
     ErrorThrower thrower(isolate, "WasmEngine::ImportNativeModule");
     return SyncCompile(
         isolate, native_module->enabled_features(), target_imports, &thrower,
