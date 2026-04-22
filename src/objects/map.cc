@@ -388,6 +388,9 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
     case JS_WEAK_REF_TYPE:
       return kVisitJSWeakRef;
 
+    case JS_PROXY_TYPE:
+      return kVisitJSProxy;
+
     case WEAK_CELL_TYPE:
       return kVisitWeakCell;
 

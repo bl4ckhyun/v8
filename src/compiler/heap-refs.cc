@@ -2248,7 +2248,7 @@ std::optional<Tagged<Object>> JSObjectRef::GetOwnConstantElementFromHeap(
   //   of `length` below.
   if (i::IsJSArray(*holder)) {
     Tagged<Object> array_length_obj =
-        Cast<JSArray>(*holder)->length(broker->isolate(), kRelaxedLoad);
+        Cast<JSArray>(*holder)->length(kRelaxedLoad);
     if (!i::IsSmi(array_length_obj)) {
       // Can't safely read into HeapNumber objects without atomic semantics
       // (relaxed would be sufficient due to the guarantees above).
@@ -2341,7 +2341,7 @@ ObjectRef JSArrayRef::GetBoilerplateLength(JSHeapBroker* broker) const {
 }
 
 OptionalObjectRef JSArrayRef::length_unsafe(JSHeapBroker* broker) const {
-  return TryMakeRef(broker, object()->length(broker->isolate(), kRelaxedLoad));
+  return TryMakeRef(broker, object()->length(kRelaxedLoad));
 }
 
 OptionalObjectRef JSArrayRef::GetOwnCowElement(JSHeapBroker* broker,

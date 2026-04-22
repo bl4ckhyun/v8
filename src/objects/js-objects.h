@@ -59,11 +59,27 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // threading Cast<JSReceiver>(...) through every callsite during migration.
   inline void set_raw_properties_or_hash(
       Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline void SetProperties(Tagged<HeapObject> properties);
   inline bool HasFastProperties() const;
+  DECL_GETTER(property_dictionary, Tagged<NameDictionary>)
+  DECL_GETTER(property_dictionary_swiss, Tagged<SwissNameDictionary>)
   inline void initialize_properties(Isolate* isolate);
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
       Isolate* isolate) const;
+
+  V8_WARN_UNUSED_RESULT static inline Maybe<bool> OrdinaryDefineOwnProperty(
+      Isolate* isolate, DirectHandle<JSObject> object, DirectHandle<Object> key,
+      PropertyDescriptor* desc, Maybe<ShouldThrow> should_throw);
+  V8_WARN_UNUSED_RESULT static inline Maybe<bool>
+  IsCompatiblePropertyDescriptor(Isolate* isolate, bool extensible,
+                                 PropertyDescriptor* desc,
+                                 PropertyDescriptor* current,
+                                 DirectHandle<Name> property_name,
+                                 Maybe<ShouldThrow> should_throw);
+  V8_WARN_UNUSED_RESULT static inline Maybe<bool> GetOwnPropertyDescriptor(
+      Isolate* isolate, DirectHandle<JSReceiver> object,
+      DirectHandle<Object> key, PropertyDescriptor* desc);
 
  public:
   TaggedMember<UnionOf<SwissNameDictionary, FixedArrayBase, PropertyArray, Smi>>
@@ -415,9 +431,23 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   inline int GetEmbedderFieldCount() const;
   inline Tagged<PropertyArray> property_array() const;
   inline Tagged<FixedArrayBase> elements() const;
+  inline Tagged<FixedArrayBase> elements(RelaxedLoadTag) const;
   inline void set_elements(Tagged<FixedArrayBase> value,
                            WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void initialize_elements();
+  inline ElementsKind GetElementsKind() const;
+  inline bool HasObjectElements() const;
+  inline bool HasFastElements() const;
+  inline bool HasHoleyElements() const;
+  inline bool HasSmiOrObjectElements() const;
+  inline bool HasDictionaryElements() const;
+  inline void RequireSlowElements(Tagged<NumberDictionary> dictionary);
+  inline ElementsAccessor* GetElementsAccessor() const;
+  inline Tagged<NumberDictionary> element_dictionary() const;
+  inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
+                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
+                                SeqCstAccessTag tag);
 
  public:
   TaggedMember<FixedArrayBase> elements_;

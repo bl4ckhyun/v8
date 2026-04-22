@@ -22,11 +22,13 @@ namespace internal {
 //    - fast, backing storage is a FixedArray and length <= elements.length();
 //       Please note: push and pop can be used to grow and shrink the array.
 //    - slow, backing storage is a HashTable with numbers as keys.
-class JSArray : public TorqueGeneratedJSArray<JSArray, JSObject> {
+V8_OBJECT class JSArray : public JSObjectLayout {
  public:
   // [length]: The length property.
-  DECL_ACCESSORS(length, Tagged<Number>)
-  DECL_RELAXED_GETTER(length, Tagged<Number>)
+  inline Tagged<Number> length() const;
+  inline Tagged<Number> length(RelaxedLoadTag) const;
+  inline void set_length(Tagged<Number> value,
+                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   // Acquire/release semantics on this field are explicitly forbidden to avoid
   // confusion, since the default setter uses relaxed semantics. If
@@ -34,7 +36,7 @@ class JSArray : public TorqueGeneratedJSArray<JSArray, JSObject> {
   // be reverted to non-atomic behavior, and setters with explicit tags
   // introduced and used when required.
   Tagged<Number> length(PtrComprCageBase cage_base,
-                        AcquireLoadTag tag) const = delete;
+                        AcquireLoadTag) const = delete;
   void set_length(Tagged<Number> value, ReleaseStoreTag tag,
                   WriteBarrierMode mode = UPDATE_WRITE_BARRIER) = delete;
 
@@ -151,13 +153,22 @@ class JSArray : public TorqueGeneratedJSArray<JSArray, JSObject> {
   // Min. stack size for detecting an Array.prototype.join() call cycle.
   static const uint32_t kMinJoinStackSize = 2;
 
-  static const int kInitialMaxFastElementArray =
-      (kMaxRegularHeapObjectSize - sizeof(FixedArray) - kHeaderSize -
-       sizeof(AllocationMemento)) >>
-      kDoubleSizeLog2;
+  // Defined out-of-line below the class so `offsetof` / `sizeof` on the
+  // still-incomplete type can appear in an initializer.
+  static const int kLengthOffset;
+  static const int kHeaderSize;
+  static const int kInitialMaxFastElementArray;
 
-  TQ_OBJECT_CONSTRUCTORS(JSArray)
-};
+ public:
+  TaggedMember<Number> length_;
+} V8_OBJECT_END;
+
+inline constexpr int JSArray::kLengthOffset = offsetof(JSArray, length_);
+inline constexpr int JSArray::kHeaderSize = sizeof(JSArray);
+inline constexpr int JSArray::kInitialMaxFastElementArray =
+    (kMaxRegularHeapObjectSize - static_cast<int>(sizeof(FixedArray)) -
+     JSArray::kHeaderSize - static_cast<int>(sizeof(AllocationMemento))) >>
+    kDoubleSizeLog2;
 
 // The JSArrayIterator describes JavaScript Array Iterators Objects, as
 // defined in https://tc39.es/ecma262/#sec-array-iterator-objects.
@@ -190,13 +201,39 @@ V8_OBJECT class JSArrayIterator : public JSObjectLayout {
 } V8_OBJECT_END;
 
 // Helper class for JSArrays that are template literal objects
-class TemplateLiteralObject
-    : public TorqueGeneratedTemplateLiteralObject<TemplateLiteralObject,
-                                                  JSArray> {
+V8_OBJECT class TemplateLiteralObject : public JSArray {
  public:
- private:
-  TQ_OBJECT_CONSTRUCTORS(TemplateLiteralObject)
-};
+  inline Tagged<JSArray> raw() const;
+  inline void set_raw(Tagged<JSArray> value,
+                      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline int function_literal_id() const;
+  inline void set_function_literal_id(int value);
+
+  inline int slot_id() const;
+  inline void set_slot_id(int value);
+
+  // Defined out-of-line below the class so `offsetof` / `sizeof` on the
+  // still-incomplete type can appear in an initializer.
+  static const int kRawOffset;
+  static const int kFunctionLiteralIdOffset;
+  static const int kSlotIdOffset;
+  static const int kHeaderSize;
+
+ public:
+  TaggedMember<JSArray> raw_;
+  TaggedMember<Smi> function_literal_id_;
+  TaggedMember<Smi> slot_id_;
+} V8_OBJECT_END;
+
+inline constexpr int TemplateLiteralObject::kRawOffset =
+    offsetof(TemplateLiteralObject, raw_);
+inline constexpr int TemplateLiteralObject::kFunctionLiteralIdOffset =
+    offsetof(TemplateLiteralObject, function_literal_id_);
+inline constexpr int TemplateLiteralObject::kSlotIdOffset =
+    offsetof(TemplateLiteralObject, slot_id_);
+inline constexpr int TemplateLiteralObject::kHeaderSize =
+    sizeof(TemplateLiteralObject);
 
 }  // namespace internal
 }  // namespace v8

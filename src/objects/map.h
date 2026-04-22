@@ -82,6 +82,7 @@ enum InstanceType : uint16_t;
   V(JSFunction)                       \
   V(JSObject)                         \
   V(JSObjectFast)                     \
+  V(JSProxy)                          \
   V(JSRegExp)                         \
   V(JSSynchronizationPrimitive)       \
   V(JSTypedArray)                     \

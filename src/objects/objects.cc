@@ -590,7 +590,7 @@ MaybeDirectHandle<String> Object::NoSideEffectsToMaybeString(
   } else if (IsJSProxy(*input)) {
     DirectHandle<Object> currInput = input;
     do {
-      Tagged<HeapObject> target = Cast<JSProxy>(currInput)->target(isolate);
+      Tagged<HeapObject> target = Cast<JSProxy>(currInput)->target();
       currInput = direct_handle(target, isolate);
     } while (IsJSProxy(*currInput));
     return NoSideEffectsToString(isolate, currInput);

@@ -1979,10 +1979,14 @@ void InstructionStream::InstructionStreamVerify(Isolate* isolate) {
 }
 
 void JSArray::JSArrayVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSArrayVerify(*this, isolate);
+  Tagged<JSObject> self = Cast<JSObject>(this);
+  self->JSObjectVerify(isolate);
+  CHECK(IsJSArray(this, isolate));
+  Object::VerifyPointer(isolate, length());
+  CHECK(IsSmi(length()) || IsHeapNumber(length()));
   // If a GC was caused while constructing this array, the elements
   // pointer may point to a one pointer filler map.
-  if (!ElementsAreSafeToExamine(isolate)) return;
+  if (!self->ElementsAreSafeToExamine(isolate)) return;
   if (IsUndefined(elements(), isolate)) return;
   CHECK(IsFixedArray(elements()) || IsFixedDoubleArray(elements()));
   uint32_t elements_len = elements()->ulength().value();
@@ -1990,11 +1994,13 @@ void JSArray::JSArrayVerify(Isolate* isolate) {
     CHECK_EQ(elements(), ReadOnlyRoots(isolate).empty_fixed_array());
   }
   // Verify that the length and the elements backing store are in sync.
-  if (IsSmi(length()) && (HasFastElements() || HasAnyNonextensibleElements())) {
+  if (IsSmi(length()) &&
+      (self->HasFastElements() || self->HasAnyNonextensibleElements())) {
     if (elements_len > 0) {
-      CHECK_IMPLIES(HasDoubleElements(), IsFixedDoubleArray(elements()));
-      CHECK_IMPLIES(HasSmiOrObjectElements() || HasAnyNonextensibleElements(),
-                    IsFixedArray(elements()));
+      CHECK_IMPLIES(self->HasDoubleElements(), IsFixedDoubleArray(elements()));
+      CHECK_IMPLIES(
+          self->HasSmiOrObjectElements() || self->HasAnyNonextensibleElements(),
+          IsFixedArray(elements()));
     }
     uint32_t size = Smi::ToUInt(length());
     // Holey / Packed backing stores might have slack or might have not been
@@ -2002,7 +2008,7 @@ void JSArray::JSArrayVerify(Isolate* isolate) {
     CHECK(size <= elements_len ||
           elements() == ReadOnlyRoots(isolate).empty_fixed_array());
   } else {
-    CHECK(HasDictionaryElements());
+    CHECK(self->HasDictionaryElements());
     uint32_t array_length;
     CHECK(Object::ToArrayLength(length(), &array_length));
     if (array_length == 0xFFFFFFFF) {
@@ -2651,7 +2657,12 @@ void RegExpDataWrapper::RegExpDataWrapperVerify(Isolate* isolate) {
 }
 
 void JSProxy::JSProxyVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSProxyVerify(*this, isolate);
+  Cast<JSReceiver>(this)->JSReceiverVerify(isolate);
+  CHECK(IsJSProxy(this, isolate));
+  Object::VerifyPointer(isolate, target());
+  CHECK(IsNull(target()) || IsJSReceiver(target()));
+  Object::VerifyPointer(isolate, handler());
+  CHECK(IsNull(handler()) || IsJSReceiver(handler()));
   CHECK(IsJSFunction(map()->GetConstructor()));
   if (!IsRevoked()) {
     CHECK_EQ(IsCallable(target()), map()->is_callable());

@@ -1387,6 +1387,19 @@ ObjectSlot HeapObject::RawField(int byte_offset) const {
   return ObjectSlot(field_address(byte_offset));
 }
 
+ObjectSlot HeapObjectLayout::RawField(int byte_offset) const {
+  return ObjectSlot(field_address(byte_offset));
+}
+
+ExternalPointerSlot HeapObjectLayout::RawExternalPointerField(
+    int byte_offset, ExternalPointerTagRange tag_range) const {
+  return ExternalPointerSlot(field_address(byte_offset), tag_range);
+}
+
+HeapObjectLayout::operator Tagged<HeapObject>() const {
+  return Tagged<HeapObject>(this);
+}
+
 MaybeObjectSlot HeapObject::RawMaybeWeakField(int byte_offset) const {
   return MaybeObjectSlot(field_address(byte_offset));
 }

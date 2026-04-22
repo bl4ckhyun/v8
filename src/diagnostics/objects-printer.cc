@@ -995,9 +995,16 @@ void JSGeneratorObject::JSGeneratorObjectPrint(std::ostream& os) {
 }
 
 void JSArray::JSArrayPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSArray");
+  JSObjectPrintHeader(os, this, "JSArray");
   os << "\n - length: " << Brief(this->length());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
+}
+
+void JSProxy::JSProxyPrint(std::ostream& os) {
+  PrintHeader(os, "JSProxy");
+  os << "\n - target: " << Brief(target());
+  os << "\n - handler: " << Brief(handler());
+  os << '\n';
 }
 
 void JSPromise::JSPromisePrint(std::ostream& os) {

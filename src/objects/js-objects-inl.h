@@ -606,6 +606,10 @@ Tagged<FixedArrayBase> JSObjectLayout::elements() const {
   return elements_.load();
 }
 
+Tagged<FixedArrayBase> JSObjectLayout::elements(RelaxedLoadTag) const {
+  return elements_.Relaxed_Load();
+}
+
 void JSObjectLayout::set_elements(Tagged<FixedArrayBase> value,
                                   WriteBarrierMode mode) {
   elements_.store(this, value, mode);
@@ -615,13 +619,104 @@ void JSObjectLayout::initialize_elements() {
   Cast<JSObject>(this)->initialize_elements();
 }
 
+ElementsKind JSObjectLayout::GetElementsKind() const {
+  return Cast<JSObject>(this)->GetElementsKind();
+}
+
+bool JSObjectLayout::HasObjectElements() const {
+  return Cast<JSObject>(this)->HasObjectElements();
+}
+
+bool JSObjectLayout::HasFastElements() const {
+  return Cast<JSObject>(this)->HasFastElements();
+}
+
+bool JSObjectLayout::HasHoleyElements() const {
+  return Cast<JSObject>(this)->HasHoleyElements();
+}
+
+bool JSObjectLayout::HasSmiOrObjectElements() const {
+  return Cast<JSObject>(this)->HasSmiOrObjectElements();
+}
+
+bool JSObjectLayout::HasDictionaryElements() const {
+  return Cast<JSObject>(this)->HasDictionaryElements();
+}
+
+void JSObjectLayout::RequireSlowElements(Tagged<NumberDictionary> dictionary) {
+  Cast<JSObject>(this)->RequireSlowElements(dictionary);
+}
+
+void JSObjectLayout::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
+                                       WriteBarrierMode mode) {
+  Cast<JSObject>(this)->FastPropertyAtPut(index, value, mode);
+}
+
+void JSObjectLayout::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
+                                       SeqCstAccessTag tag) {
+  Cast<JSObject>(this)->FastPropertyAtPut(index, value, tag);
+}
+
+ElementsAccessor* JSObjectLayout::GetElementsAccessor() const {
+  return Cast<JSObject>(this)->GetElementsAccessor();
+}
+
+Tagged<NumberDictionary> JSObjectLayout::element_dictionary() const {
+  return Cast<JSObject>(this)->element_dictionary();
+}
+
 void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
                                                   WriteBarrierMode mode) {
   Cast<JSReceiver>(this)->set_raw_properties_or_hash(value, mode);
 }
 
+void JSReceiverLayout::SetProperties(Tagged<HeapObject> properties) {
+  Cast<JSReceiver>(this)->SetProperties(properties);
+}
+
+// static
+Maybe<bool> JSReceiverLayout::OrdinaryDefineOwnProperty(
+    Isolate* isolate, DirectHandle<JSObject> object, DirectHandle<Object> key,
+    PropertyDescriptor* desc, Maybe<ShouldThrow> should_throw) {
+  return JSReceiver::OrdinaryDefineOwnProperty(isolate, object, key, desc,
+                                               should_throw);
+}
+
+// static
+Maybe<bool> JSReceiverLayout::IsCompatiblePropertyDescriptor(
+    Isolate* isolate, bool extensible, PropertyDescriptor* desc,
+    PropertyDescriptor* current, DirectHandle<Name> property_name,
+    Maybe<ShouldThrow> should_throw) {
+  return JSReceiver::IsCompatiblePropertyDescriptor(
+      isolate, extensible, desc, current, property_name, should_throw);
+}
+
+// static
+Maybe<bool> JSReceiverLayout::GetOwnPropertyDescriptor(
+    Isolate* isolate, DirectHandle<JSReceiver> object, DirectHandle<Object> key,
+    PropertyDescriptor* desc) {
+  return JSReceiver::GetOwnPropertyDescriptor(isolate, object, key, desc);
+}
+
 bool JSReceiverLayout::HasFastProperties() const {
   return Cast<JSReceiver>(this)->HasFastProperties();
+}
+
+Tagged<NameDictionary> JSReceiverLayout::property_dictionary() const {
+  return Cast<JSReceiver>(this)->property_dictionary();
+}
+Tagged<NameDictionary> JSReceiverLayout::property_dictionary(
+    PtrComprCageBase cage_base) const {
+  return Cast<JSReceiver>(this)->property_dictionary(cage_base);
+}
+
+Tagged<SwissNameDictionary> JSReceiverLayout::property_dictionary_swiss()
+    const {
+  return Cast<JSReceiver>(this)->property_dictionary_swiss();
+}
+Tagged<SwissNameDictionary> JSReceiverLayout::property_dictionary_swiss(
+    PtrComprCageBase cage_base) const {
+  return Cast<JSReceiver>(this)->property_dictionary_swiss(cage_base);
 }
 
 void JSReceiverLayout::initialize_properties(Isolate* isolate) {

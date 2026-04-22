@@ -79,6 +79,7 @@ class MaybeObjectSize final {
   V(PreparseData)                     \
   V(PropertyArray)                    \
   V(PropertyCell)                     \
+  V(JSProxy)                          \
   V(PrototypeInfo)                    \
   V(PrototypeSharedClosureInfo)       \
   V(RegExpBoilerplateDescription)     \

@@ -34,6 +34,7 @@
 #include "src/objects/js-atomics-synchronization-inl.h"
 #include "src/objects/js-collection.h"
 #include "src/objects/js-objects.h"
+#include "src/objects/js-proxy.h"
 #include "src/objects/js-weak-refs.h"
 #include "src/objects/literal-objects.h"
 #include "src/objects/megadom-handler-inl.h"
@@ -624,6 +625,21 @@ class JSWeakRef::BodyDescriptor final : public BodyDescriptorBase {
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
     return map->instance_size();
+  }
+};
+
+class JSProxy::BodyDescriptor final : public BodyDescriptorBase {
+ public:
+  template <typename ObjectVisitor>
+  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
+                                 int object_size, ObjectVisitor* v) {
+    // Iterate properties_or_hash_, target_, handler_; skip non-tagged flags_.
+    IteratePointers(obj, offsetof(JSProxy, properties_or_hash_),
+                    offsetof(JSProxy, flags_), v);
+  }
+
+  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
+    return sizeof(JSProxy);
   }
 };
 

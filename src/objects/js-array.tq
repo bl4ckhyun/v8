@@ -59,6 +59,7 @@ macro CreateArrayIterator(
   return CreateArrayIterator(array, kind, 0);
 }
 
+@cppObjectLayoutDefinition
 extern class JSArray extends JSObject {
   macro IsEmpty(): bool {
     return this.length == 0;
@@ -68,6 +69,7 @@ extern class JSArray extends JSObject {
 
 @hasSameInstanceTypeAsParent
 @doNotGenerateCast
+@cppObjectLayoutDefinition
 extern class TemplateLiteralObject extends JSArray {
   raw: JSArray;
   function_literal_id: Smi;

@@ -39,7 +39,9 @@ using SafeHeapObjectSize = base::StrongAlias<class HeapObjectSizeTag, uint32_t>;
 
 V8_OBJECT class HeapObjectLayout {
  public:
-  HeapObjectLayout() = delete;
+  // TODO(jgruber): Remove once V8_OBJECT migration is complete and no
+  // Torque-generated class inherits from a V8_OBJECT layout class.
+  HeapObjectLayout() V8_NOEXCEPT = default;
 
   // [map]: Contains a map which contains the object's reflective
   // information.
@@ -96,6 +98,33 @@ V8_OBJECT class HeapObjectLayout {
 
   // Returns the address of this HeapObject.
   inline Address address() const { return reinterpret_cast<Address>(this); }
+
+  // Compatibility delegates for Torque-generated subclasses that inherit from
+  // a V8_OBJECT layout class, mirroring the HeapObject API they lost.
+  // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
+  inline Address field_address(size_t offset) const {
+    return address() + offset;
+  }
+  inline ObjectSlot RawField(int byte_offset) const;
+  inline ExternalPointerSlot RawExternalPointerField(
+      int byte_offset, ExternalPointerTagRange tag_range) const;
+  inline operator Tagged<HeapObject>() const;
+
+  template <class T>
+  inline T ReadField(size_t offset) const
+    requires(std::is_arithmetic_v<T> || std::is_enum_v<T> ||
+             std::is_pointer_v<T>)
+  {
+    return ReadMaybeUnalignedValue<T>(field_address(offset));
+  }
+
+  template <class T>
+  inline void WriteField(size_t offset, T value) const
+    requires(std::is_arithmetic_v<T> || std::is_enum_v<T> ||
+             std::is_pointer_v<T>)
+  {
+    return WriteMaybeUnalignedValue<T>(field_address(offset), value);
+  }
 
   // This is slower that GetReadOnlyRoots, but safe to call during
   // bootstrapping.
@@ -550,8 +579,10 @@ class HeapObject : public TaggedImpl<HeapObjectReferenceType::STRONG, Address> {
   HeapObject* operator->() { return this; }
   const HeapObject* operator->() const { return this; }
 
- protected:
+ public:
   struct SkipTypeCheckTag {};
+
+ protected:
   friend class Tagged<HeapObject>;
   explicit V8_INLINE constexpr HeapObject(Address ptr,
                                           HeapObject::SkipTypeCheckTag)

@@ -31,13 +31,23 @@ class JSArgumentsObject
 
 // JSSloppyArgumentsObject is just a JSArgumentsObject with specific initial
 // map. This initial map adds in-object properties for "length" and "callee".
-class JSSloppyArgumentsObject
-    : public TorqueGeneratedJSSloppyArgumentsObject<JSSloppyArgumentsObject,
-                                                    JSArgumentsObject> {
+// Shape-style: no own C++ storage; fields live in the parent
+// JSArgumentsObject's in-object property slots at fixed offsets past
+// JSArgumentsObject::kHeaderSize.
+class JSSloppyArgumentsObject : public JSArgumentsObject {
  public:
-  // Offsets of in-object properties.
-  static const int kLengthOffset = kHeaderSize;
-  static const int kCalleeOffset = kLengthOffset + kTaggedSize;
+  // Slot indices of the in-object properties, relative to the parent's
+  // kHeaderSize.
+  static constexpr int kLengthSlotIndex = 0;
+  static constexpr int kCalleeSlotIndex = 1;
+  static constexpr int kInObjectPropertyCount = 2;
+
+  static constexpr int kLengthOffset =
+      JSArgumentsObject::kHeaderSize + kLengthSlotIndex * kTaggedSize;
+  static constexpr int kCalleeOffset =
+      JSArgumentsObject::kHeaderSize + kCalleeSlotIndex * kTaggedSize;
+  static constexpr int kSize =
+      JSArgumentsObject::kHeaderSize + kInObjectPropertyCount * kTaggedSize;
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(JSSloppyArgumentsObject);
@@ -45,12 +55,15 @@ class JSSloppyArgumentsObject
 
 // JSStrictArgumentsObject is just a JSArgumentsObject with specific initial
 // map. This initial map adds an in-object property for "length".
-class JSStrictArgumentsObject
-    : public TorqueGeneratedJSStrictArgumentsObject<JSStrictArgumentsObject,
-                                                    JSArgumentsObject> {
+class JSStrictArgumentsObject : public JSArgumentsObject {
  public:
-  // Offsets of in-object properties.
-  static const int kLengthOffset = kHeaderSize;
+  static constexpr int kLengthSlotIndex = 0;
+  static constexpr int kInObjectPropertyCount = 1;
+
+  static constexpr int kLengthOffset =
+      JSArgumentsObject::kHeaderSize + kLengthSlotIndex * kTaggedSize;
+  static constexpr int kSize =
+      JSArgumentsObject::kHeaderSize + kInObjectPropertyCount * kTaggedSize;
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(JSStrictArgumentsObject);
