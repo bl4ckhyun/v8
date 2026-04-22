@@ -174,5 +174,22 @@ void StaticRootsTableGen::write(Isolate* isolate, const char* file) {
       << "#endif  // V8_ROOTS_" << defname << "_\n";
 }
 
+void StaticRootsTableGen::write_text(Isolate* isolate, const char* file) {
+#if V8_STATIC_ROOTS_BOOL
+  CHECK(file);
+  std::ofstream out(file, std::ios::binary);
+
+  StaticRootsTableGenImpl gen(isolate);
+
+  for (auto& entry : gen.sorted_roots()) {
+    Tagged_t ptr = entry.first;
+    const std::list<RootIndex>& roots = entry.second;
+
+    for (RootIndex root : roots) {
+      out << "0x" << std::hex << ptr << " = k" << gen.camel_name(root) << "\n";
+    }
+  }
+#endif
+}
 }  // namespace internal
 }  // namespace v8
