@@ -31,6 +31,7 @@ gdb --args out/x64.debug/d8 --my-flag my-script.js
 - `--trace-deopt`: Log when and why functions are deoptimized.
 - `--trace-gc`: Log garbage collection events.
 - `--allow-natives-syntax`: Enables calling of internal V8 functions (e.g., `%OptimizeFunctionOnNextCall(f)`) from JavaScript for testing purposes.
+- `--gdbjit`: Allows seeing Maglev graphs or JavaScript code in GDB backtraces. To debug issues involving code motion disable gdbjit (as it disables code motion).
 
 A comprehensive list of all flags can be found by running `out/x64.debug/d8 --help`.
 
