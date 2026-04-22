@@ -112,9 +112,6 @@ Tagged<Code> SharedFunctionInfo::GetCode(Isolate* isolate) const {
       DCHECK(HasWasmExportedFunctionData(isolate));
       return wasm_exported_function_data()->wrapper_code(isolate);
     }
-    if (IsWasmJSFunctionData(trusted_data)) {
-      return wasm_js_function_data()->wrapper_code(isolate);
-    }
     if (IsWasmCapiFunctionData(trusted_data)) {
       return wasm_capi_function_data()->wrapper_code(isolate);
     }

@@ -2659,11 +2659,6 @@ void JSFunction::JSFunctionPrint(std::ostream& os) {
     os << "\n - Wasm instance data: " << Brief(data->instance_data());
     os << "\n - Wasm function index: " << data->function_index();
   }
-  if (WasmJSFunction::IsWasmJSFunction(*this)) {
-    Tagged<WasmJSFunction> function = Cast<WasmJSFunction>(*this);
-    os << "\n - Wasm wrapper around: "
-       << Brief(function->shared()->wasm_js_function_data()->GetCallable());
-  }
 #endif  // V8_ENABLE_WEBASSEMBLY
   shared()->PrintSourceCode(os);
   JSObjectPrintBody(os, *this);
@@ -3409,13 +3404,6 @@ void WasmExportedFunctionData::WasmExportedFunctionDataPrint(std::ostream& os) {
   os << "\n - packed_args_size: " << packed_args_size();
   os << "\n - c_wrapper_code: "
      << c_wrapper_code(GetCurrentIsolateForSandbox());
-  os << "\n";
-}
-
-void WasmJSFunctionData::WasmJSFunctionDataPrint(std::ostream& os) {
-  PrintHeader(os, "WasmJSFunctionData");
-  WasmFunctionDataPrint(os);
-  os << "\n - offheap_data: " << offheap_data();
   os << "\n";
 }
 

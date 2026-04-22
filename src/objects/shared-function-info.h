@@ -43,7 +43,6 @@ class Signature;
 class WasmFunctionData;
 class WasmCapiFunctionData;
 class WasmExportedFunctionData;
-class WasmJSFunctionData;
 class WasmResumeData;
 
 #if V8_ENABLE_WEBASSEMBLY
@@ -416,7 +415,6 @@ class SharedFunctionInfo
   //  - a UncompiledDataWithPreparseData for lazy compilation
   //    [HasUncompiledDataWithPreparseData()]
   //  - a WasmExportedFunctionData for Wasm [HasWasmExportedFunctionData()]
-  //  - a WasmJSFunctionData for functions created with WebAssembly.Function
   //  - a WasmCapiFunctionData for Wasm C-API functions
   //  - a WasmResumeData for JSPI Wasm functions
   //
@@ -500,7 +498,6 @@ class SharedFunctionInfo
   inline bool HasAsmWasmData() const;
   inline bool HasWasmFunctionData(IsolateForSandbox) const;
   inline bool HasWasmExportedFunctionData(IsolateForSandbox) const;
-  inline bool HasWasmJSFunctionData(IsolateForSandbox) const;
   inline bool HasWasmCapiFunctionData(IsolateForSandbox) const;
   inline bool HasWasmResumeData() const;
   DECL_ACCESSORS(asm_wasm_data, Tagged<AsmWasmData>)
@@ -510,7 +507,6 @@ class SharedFunctionInfo
   // concurrently running worker.
   DECL_GETTER(wasm_function_data, Tagged<WasmFunctionData>)
   DECL_GETTER(wasm_exported_function_data, Tagged<WasmExportedFunctionData>)
-  DECL_GETTER(wasm_js_function_data, Tagged<WasmJSFunctionData>)
   DECL_GETTER(wasm_capi_function_data, Tagged<WasmCapiFunctionData>)
 
   DECL_GETTER(wasm_resume_data, Tagged<WasmResumeData>)

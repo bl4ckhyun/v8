@@ -3953,13 +3953,6 @@ CodeStubAssembler::LoadSharedFunctionInfoWasmExportedFunctionData(
       kWasmExportedFunctionDataIndirectPointerTag>(
       sfi, SharedFunctionInfo::kTrustedFunctionDataOffset);
 }
-
-TNode<WasmJSFunctionData>
-CodeStubAssembler::LoadSharedFunctionInfoWasmJSFunctionData(
-    TNode<SharedFunctionInfo> sfi) {
-  return LoadTrustedPointerFromObject<kWasmJSFunctionDataIndirectPointerTag>(
-      sfi, SharedFunctionInfo::kTrustedFunctionDataOffset);
-}
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 TNode<BytecodeArray> CodeStubAssembler::LoadInterpreterDataBytecodeArray(
@@ -19146,7 +19139,6 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
 #if V8_ENABLE_WEBASSEMBLY
           {WASM_CAPI_FUNCTION_DATA_TYPE, &check_is_wasm_function_data},
           {WASM_EXPORTED_FUNCTION_DATA_TYPE, &check_is_wasm_function_data},
-          {WASM_JS_FUNCTION_DATA_TYPE, &check_is_wasm_function_data},
 #endif  // V8_ENABLE_WEBASSEMBLY
       });
 

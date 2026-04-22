@@ -213,41 +213,6 @@ RUNTIME_FUNCTION(Runtime_HasUnoptimizedWasmToJSWrapper) {
           call_target, wrapper_entry));
 }
 
-RUNTIME_FUNCTION(Runtime_HasUnoptimizedJSToJSWrapper) {
-  HandleScope shs(isolate);
-  if (args.length() != 1) {
-    return CrashUnlessFuzzing(isolate);
-  }
-  Handle<Object> param = args.at<Object>(0);
-  if (!WasmJSFunction::IsWasmJSFunction(*param)) {
-    return isolate->heap()->ToBoolean(false);
-  }
-  auto wasm_js_function = Cast<WasmJSFunction>(param);
-  DirectHandle<WasmJSFunctionData> function_data(
-      wasm_js_function->shared()->wasm_js_function_data(), isolate);
-
-  DirectHandle<JSFunction> external_function =
-      WasmInternalFunction::GetOrCreateExternal(
-          direct_handle(function_data->internal(), isolate));
-  DirectHandle<Code> external_function_code(external_function->code(isolate),
-                                            isolate);
-  DirectHandle<Code> function_data_code(function_data->wrapper_code(isolate),
-                                        isolate);
-  Tagged<Code> wrapper = isolate->builtins()->code(Builtin::kJSToJSWrapper);
-  // TODO(saelo): we have to use full pointer comparison here until all Code
-  // objects are located in trusted space. Currently, builtin Code objects are
-  // still inside the main pointer compression cage.
-  static_assert(!kAllCodeObjectsLiveInTrustedSpace);
-  if (!wrapper.SafeEquals(*external_function_code)) {
-    return isolate->heap()->ToBoolean(false);
-  }
-  if (wrapper != *function_data_code) {
-    return isolate->heap()->ToBoolean(false);
-  }
-
-  return isolate->heap()->ToBoolean(true);
-}
-
 RUNTIME_FUNCTION(Runtime_WasmTraceEnter) {
   SealHandleScope shs(isolate);
   DisallowGarbageCollection no_gc;

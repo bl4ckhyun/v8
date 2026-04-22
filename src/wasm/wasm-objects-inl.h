@@ -467,27 +467,6 @@ void WasmInternalFunction::set_call_target(WasmCodePointer code_pointer) {
   set_raw_call_target(code_pointer.value());
 }
 
-// WasmJSFunctionData
-PROTECTED_POINTER_ACCESSORS(WasmJSFunctionData, protected_offheap_data,
-                            TrustedManaged<WasmJSFunctionData::OffheapData>,
-                            kProtectedOffheapDataOffset)
-
-WasmJSFunctionData::OffheapData* WasmJSFunctionData::offheap_data() const {
-  return protected_offheap_data()->get().get();
-}
-
-// WasmJSFunction
-
-template <>
-struct CastTraits<WasmJSFunction> {
-  static inline bool AllowFrom(Tagged<Object> value) {
-    return WasmJSFunction::IsWasmJSFunction(value);
-  }
-  static inline bool AllowFrom(Tagged<HeapObject> value) {
-    return WasmJSFunction::IsWasmJSFunction(value);
-  }
-};
-
 // WasmCapiFunction
 
 template <>

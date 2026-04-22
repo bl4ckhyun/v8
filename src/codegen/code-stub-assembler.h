@@ -1758,8 +1758,6 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
 #ifdef V8_ENABLE_WEBASSEMBLY
   TNode<WasmExportedFunctionData>
   LoadSharedFunctionInfoWasmExportedFunctionData(TNode<SharedFunctionInfo> sfi);
-  TNode<WasmJSFunctionData> LoadSharedFunctionInfoWasmJSFunctionData(
-      TNode<SharedFunctionInfo> sfi);
 #endif  // V8_ENABLE_WEBASSEMBLY
 
   TNode<BytecodeArray> LoadInterpreterDataBytecodeArray(

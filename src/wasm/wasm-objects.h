@@ -259,9 +259,6 @@ class WasmTableObject
   );
   static void UpdateDispatchTable(
       Isolate* isolate, DirectHandle<WasmDispatchTable> dispatch_table,
-      int entry_index, DirectHandle<WasmJSFunction> function);
-  static void UpdateDispatchTable(
-      Isolate* isolate, DirectHandle<WasmDispatchTable> dispatch_table,
       int entry_index, DirectHandle<WasmCapiFunction> capi_function);
 
   V8_EXPORT_PRIVATE static void SetFunctionTablePlaceholder(
@@ -1078,20 +1075,6 @@ class WasmExportedFunction : public JSFunction {
   OBJECT_CONSTRUCTORS(WasmExportedFunction, JSFunction);
 };
 
-// A Wasm function that was created by wrapping a JavaScript callable.
-// Representation of WebAssembly.Function JavaScript-level object.
-class WasmJSFunction : public JSFunction {
- public:
-  static bool IsWasmJSFunction(Tagged<Object> object);
-
-  static DirectHandle<WasmJSFunction> New(Isolate* isolate,
-                                          const wasm::FunctionSig* sig,
-                                          DirectHandle<JSReceiver> callable,
-                                          wasm::Suspend suspend);
-
-  OBJECT_CONSTRUCTORS(WasmJSFunction, JSFunction);
-};
-
 // An external function exposed to Wasm via the C/C++ API.
 class WasmCapiFunction : public JSFunction {
  public:
@@ -1116,7 +1099,6 @@ class WasmCapiFunction : public JSFunction {
 // Any external function that can be imported/exported in modules. This abstract
 // class just dispatches to the following concrete classes:
 //  - {WasmExportedFunction}: A proper Wasm function exported from a module.
-//  - {WasmJSFunction}: A function constructed via WebAssembly.Function in JS.
 //  - {WasmCapiFunction}: A function constructed via the C/C++ API.
 class WasmExternalFunction : public JSFunction {
  public:
@@ -1249,52 +1231,6 @@ class WasmFuncRef : public TorqueGeneratedWasmFuncRef<WasmFuncRef, HeapObject> {
                                kWasmInternalFunctionIndirectPointerTag>>;
 
   TQ_OBJECT_CONSTRUCTORS(WasmFuncRef)
-};
-
-// Information for a WasmJSFunction which is referenced as the function data of
-// the SharedFunctionInfo underlying the function. For details please see the
-// {SharedFunctionInfo::HasWasmJSFunctionData} predicate.
-class WasmJSFunctionData
-    : public TorqueGeneratedWasmJSFunctionData<WasmJSFunctionData,
-                                               WasmFunctionData> {
- public:
-  // The purpose of this class is to provide lifetime management for compiled
-  // wrappers: the {WasmJSFunction} owns an {OffheapData} via {TrustedManaged},
-  // which decrements the wrapper handle's refcount when the {WasmJSFunction} is
-  // garbage-collected.
-  class OffheapData {
-   public:
-    explicit OffheapData(
-        std::shared_ptr<wasm::WasmWrapperHandle> wrapper_handle)
-        : wrapper_handle_(wrapper_handle) {}
-
-    std::shared_ptr<wasm::WasmWrapperHandle> wrapper_handle() const {
-      return wrapper_handle_;
-    }
-
-   private:
-    const std::shared_ptr<wasm::WasmWrapperHandle> wrapper_handle_;
-  };
-
-  DECL_PROTECTED_POINTER_ACCESSORS(protected_offheap_data,
-                                   TrustedManaged<OffheapData>)
-  inline OffheapData* offheap_data() const;
-
-  Tagged<JSReceiver> GetCallable() const;
-  wasm::Suspend GetSuspend() const;
-  bool MatchesSignature(
-      wasm::CanonicalTypeIndex other_canonical_sig_index) const;
-
-  // Dispatched behavior.
-  DECL_PRINTER(WasmJSFunctionData)
-
-  using BodyDescriptor = StackedBodyDescriptor<
-      SubclassBodyDescriptor<WasmFunctionData::BodyDescriptor,
-                             FixedBodyDescriptorFor<WasmJSFunctionData>>,
-      WithProtectedPointer<kProtectedOffheapDataOffset>>;
-
- private:
-  TQ_OBJECT_CONSTRUCTORS(WasmJSFunctionData)
 };
 
 class WasmCapiFunctionData

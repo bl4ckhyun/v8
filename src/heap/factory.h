@@ -82,7 +82,6 @@ class SyntheticModule;
 class TemplateObjectDescription;
 class WasmCapiFunctionData;
 class WasmExportedFunctionData;
-class WasmJSFunctionData;
 
 #if V8_ENABLE_WEBASSEMBLY
 namespace wasm {
@@ -832,13 +831,6 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   DirectHandle<WasmFastApiCallData> NewWasmFastApiCallData(
       DirectHandle<HeapObject> signature, DirectHandle<Object> callback_data);
 
-  // {opt_call_target} is kNullAddress for JavaScript functions, and
-  // non-null for exported Wasm functions.
-  DirectHandle<WasmJSFunctionData> NewWasmJSFunctionData(
-      const wasm::CanonicalSig* sig, DirectHandle<JSReceiver> callable,
-      DirectHandle<Code> wrapper_code, DirectHandle<Map> rtt,
-      wasm::Suspend suspend, wasm::Promise promise,
-      std::shared_ptr<wasm::WasmWrapperHandle> wrapper_handle);
   DirectHandle<WasmResumeData> NewWasmResumeData(
       DirectHandle<WasmSuspenderObject> suspender, wasm::OnResume on_resume);
   DirectHandle<WasmSuspenderObject> NewWasmSuspenderObject();
@@ -881,8 +873,6 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   DirectHandle<SharedFunctionInfo> NewSharedFunctionInfoForWasmExportedFunction(
       DirectHandle<String> name, DirectHandle<WasmExportedFunctionData> data,
       int len, AdaptArguments adapt);
-  DirectHandle<SharedFunctionInfo> NewSharedFunctionInfoForWasmJSFunction(
-      DirectHandle<String> name, DirectHandle<WasmJSFunctionData> data);
   DirectHandle<SharedFunctionInfo> NewSharedFunctionInfoForWasmResume(
       DirectHandle<WasmResumeData> data);
   DirectHandle<SharedFunctionInfo> NewSharedFunctionInfoForWasmCapiFunction(

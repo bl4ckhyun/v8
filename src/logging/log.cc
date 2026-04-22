@@ -2767,11 +2767,6 @@ void ExistingCodeLogger::LogExistingFunction(
             CallbackEvent(fun_name, fun_data->GetCFunction(i).address))
       }
     }
-#if V8_ENABLE_WEBASSEMBLY
-  } else if (shared->HasWasmJSFunctionData(isolate_)) {
-    CALL_CODE_EVENT_HANDLER(
-        CodeCreateEvent(CodeTag::kFunction, code, "wasm-to-js"));
-#endif  // V8_ENABLE_WEBASSEMBLY
   }
 }
 

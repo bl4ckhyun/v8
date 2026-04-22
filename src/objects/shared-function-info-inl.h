@@ -967,11 +967,6 @@ bool SharedFunctionInfo::HasWasmExportedFunctionData(
   return IsWasmExportedFunctionData(GetTrustedData(isolate));
 }
 
-bool SharedFunctionInfo::HasWasmJSFunctionData(
-    IsolateForSandbox isolate) const {
-  return IsWasmJSFunctionData(GetTrustedData(isolate));
-}
-
 bool SharedFunctionInfo::HasWasmCapiFunctionData(
     IsolateForSandbox isolate) const {
   return IsWasmCapiFunctionData(GetTrustedData(isolate));
@@ -1008,14 +1003,6 @@ DEF_GETTER(SharedFunctionInfo, wasm_exported_function_data,
   DCHECK(HasWasmExportedFunctionData(isolate));
   return GetTrustedData<WasmExportedFunctionData,
                         kWasmExportedFunctionDataIndirectPointerTag>(isolate);
-}
-
-DEF_GETTER(SharedFunctionInfo, wasm_js_function_data,
-           Tagged<WasmJSFunctionData>) {
-  IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
-  DCHECK(HasWasmJSFunctionData(isolate));
-  return GetTrustedData<WasmJSFunctionData,
-                        kWasmJSFunctionDataIndirectPointerTag>(isolate);
 }
 
 DEF_GETTER(SharedFunctionInfo, wasm_capi_function_data,

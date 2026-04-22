@@ -2212,45 +2212,6 @@ DirectHandle<WasmFuncRef> Factory::NewWasmFuncRef(
   return direct_handle(func_ref, isolate());
 }
 
-DirectHandle<WasmJSFunctionData> Factory::NewWasmJSFunctionData(
-    const wasm::CanonicalSig* sig, DirectHandle<JSReceiver> callable,
-    DirectHandle<Code> wrapper_code, DirectHandle<Map> rtt,
-    wasm::Suspend suspend, wasm::Promise promise,
-    std::shared_ptr<wasm::WasmWrapperHandle> wrapper_handle) {
-  DirectHandle<WasmImportData> import_data = NewWasmImportData(
-      callable, suspend, DirectHandle<WasmTrustedInstanceData>(), sig,
-      SharedFlag::kNo);
-
-  DirectHandle<WasmInternalFunction> internal = NewWasmInternalFunction(
-      import_data, -1, SharedFlag::kNo, wrapper_handle->code_pointer(), sig);
-  DirectHandle<WasmFuncRef> func_ref =
-      NewWasmFuncRef(internal, rtt, SharedFlag::kNo);
-  import_data->SetFuncRefAsCallOrigin(*internal);
-
-  // Rough guess for a wrapper that may be shared with other users of it.
-  constexpr size_t kOffheapDataSizeEstimate = 100;
-  DirectHandle<TrustedManaged<WasmJSFunctionData::OffheapData>> offheap_data =
-      TrustedManaged<WasmJSFunctionData::OffheapData>::From(
-          isolate(), kOffheapDataSizeEstimate,
-          std::make_shared<WasmJSFunctionData::OffheapData>(
-              std::move(wrapper_handle)),
-          SharedFlag::kNo);
-
-  Tagged<Map> map = *wasm_js_function_data_map();
-  Tagged<WasmJSFunctionData> result =
-      TrustedCast<WasmJSFunctionData>(AllocateRawWithImmortalMap(
-          map->instance_size(), AllocationType::kTrusted, map));
-  result->InitAndPublish(isolate());
-  DisallowGarbageCollection no_gc;
-  result->set_func_ref(*func_ref);
-  result->set_internal(*internal);
-  result->set_wrapper_code(*wrapper_code);
-  result->set_js_promise_flags(WasmFunctionData::SuspendField::encode(suspend) |
-                               WasmFunctionData::PromiseField::encode(promise));
-  result->set_protected_offheap_data(*offheap_data);
-  return direct_handle(result, isolate());
-}
-
 DirectHandle<WasmResumeData> Factory::NewWasmResumeData(
     DirectHandle<WasmSuspenderObject> suspender, wasm::OnResume on_resume) {
   Tagged<Map> map = *wasm_resume_data_map();
@@ -2554,13 +2515,6 @@ Factory::NewSharedFunctionInfoForWasmExportedFunction(
     DirectHandle<String> name, DirectHandle<WasmExportedFunctionData> data,
     int len, AdaptArguments adapt) {
   return NewSharedFunctionInfo(name, data, Builtin::kNoBuiltinId, len, adapt);
-}
-
-DirectHandle<SharedFunctionInfo>
-Factory::NewSharedFunctionInfoForWasmJSFunction(
-    DirectHandle<String> name, DirectHandle<WasmJSFunctionData> data) {
-  return NewSharedFunctionInfo(name, data, Builtin::kNoBuiltinId, 0,
-                               kDontAdapt);
 }
 
 DirectHandle<SharedFunctionInfo> Factory::NewSharedFunctionInfoForWasmResume(

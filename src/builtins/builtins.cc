@@ -722,8 +722,6 @@ Builtins::JSBuiltinStateFlags Builtins::GetJSBuiltinState(Builtin builtin) {
     // These builtins with JS calling convention are not JS language builtins
     // but are allowed to be installed into JSFunctions.
     case Builtin::kJSToWasmWrapper:
-    case Builtin::kJSToJSWrapper:
-    case Builtin::kJSToJSWrapperInvalidSig:
     case Builtin::kWasmPromising:
 #if V8_ENABLE_DRUMBRAKE
     case Builtin::kJSToWasmInterpreterWrapper:

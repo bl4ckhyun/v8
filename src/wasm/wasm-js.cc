@@ -2371,8 +2371,7 @@ void WebAssemblySuspendingImpl(
   i::DirectHandle<i::JSReceiver> callable =
       Utils::OpenDirectHandle(*info[0].As<Function>());
 
-  if (i::WasmExportedFunction::IsWasmExportedFunction(*callable) ||
-      i::WasmJSFunction::IsWasmJSFunction(*callable)) {
+  if (i::WasmExportedFunction::IsWasmExportedFunction(*callable)) {
     thrower.TypeError("Argument 0 must not be a WebAssembly function");
     return;
   }

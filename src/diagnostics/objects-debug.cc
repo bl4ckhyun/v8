@@ -1659,7 +1659,6 @@ void SharedFunctionInfo::SharedFunctionInfoVerify(LocalIsolate* isolate) {
 
 #if V8_ENABLE_WEBASSEMBLY
   bool is_wasm = HasWasmExportedFunctionData(isolate) || HasAsmWasmData() ||
-                 HasWasmJSFunctionData(isolate) ||
                  HasWasmCapiFunctionData(isolate) || HasWasmResumeData();
 #else
   bool is_wasm = false;

@@ -14,9 +14,6 @@ type PodArrayOfWasmValueType extends ByteArray
 type ManagedWasmNativeModule extends Foreign
     constexpr 'Managed<wasm::NativeModule>';
 @useParentTypeChecker
-type TrustedManagedWasmJSFunctionOffheapData extends TrustedForeign
-    constexpr 'TrustedManaged<WasmJSFunctionData::OffheapData>';
-@useParentTypeChecker
 type ManagedBackingStore extends Foreign
     constexpr 'Managed<BackingStore>';
 
@@ -153,11 +150,6 @@ extern operator '.instance_data' macro
     LoadWasmTrustedInstanceDataFromWasmExportedFunctionData(
         WasmExportedFunctionData): WasmTrustedInstanceData;
 
-extern class WasmJSFunctionData extends WasmFunctionData {
-  protected_offheap_data:
-      ProtectedPointer<TrustedManagedWasmJSFunctionOffheapData>;
-}
-
 extern class WasmCapiFunctionData extends WasmFunctionData {
   embedder_data: Foreign;  // Managed<wasm::FuncData>
 }
@@ -208,8 +200,7 @@ extern class WasmTableObject extends JSObject {
   // bigger to make future growth more efficient.
   // If this is a function table, each element is either
   //   - a WasmFuncRef (Wasm function added from Wasm),
-  //   - a WasmExportedFunction (exported Wasm function added from JS),
-  //   - a WasmJSFunction (WebAssembly.Function created from JS), or
+  //   - a WasmExportedFunction (exported Wasm function added from JS), or
   //   - a Tuple2 (placeholder for lazy initialization), holding a
   //     WasmInstanceObject and Smi for the function index.
   entries: FixedArray;
