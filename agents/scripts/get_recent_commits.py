@@ -2,19 +2,20 @@
 # Copyright 2026 the V8 project authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+from __future__ import annotations
 import sys
 import subprocess
 
 
-def get_recent_commits(n=5):
+def get_recent_commits(n: int = 5) -> None:
   try:
     # Get the last N commits
     git_log_cmd = ["git", "log", f"-n {n}", "--oneline", "--format=%H"]
     result = subprocess.run(
         git_log_cmd, capture_output=True, text=True, check=True)
-    commit_hashes = result.stdout.strip().split('\n')
+    commit_hashes = result.stdout.strip().split("\n")
 
-    if not commit_hashes or commit_hashes == ['']:
+    if not commit_hashes or commit_hashes == [""]:
       print("No commits found.")
       return
 

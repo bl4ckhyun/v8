@@ -2,17 +2,20 @@
 # Copyright 2026 the V8 project authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+from __future__ import annotations
 
 import argparse
 import subprocess
 import re
 import sys
-import os
+import shlex
+from pathlib import Path
 
 
-def run_command(cmd, cwd=None):
-  print(f"Running: {' '.join(cmd)}")
-  result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+def run_command(cmd: list[str], cwd: str | None = None) -> str:
+  print(f"Running: {shlex.join(cmd)}")
+  result = subprocess.run(
+      cmd, cwd=cwd, capture_output=True, text=True, check=False)
   if result.returncode != 0:
     print(f"Error running command: {result.stderr}")
     print(f"Stdout: {result.stdout}")
@@ -20,7 +23,7 @@ def run_command(cmd, cwd=None):
   return result.stdout
 
 
-def main():
+def main() -> None:
   parser = argparse.ArgumentParser(
       description="Upload CL and start Pinpoint job.")
   parser.add_argument(
@@ -32,15 +35,11 @@ def main():
   parser.add_argument(
       "--message", required=True, help="Commit message for git cl upload")
 
-  home = os.path.expanduser('~')
+  home = Path.home()
   parser.add_argument(
-      "--v8-dir",
-      default=os.path.join(home, "v8"),
-      help="V8 repository directory")
+      "--v8-dir", default=home / "v8", help="V8 repository directory")
   parser.add_argument(
-      "--cb-dir",
-      default=os.path.join(home, "crossbench"),
-      help="Crossbench directory")
+      "--cb-dir", default=home / "crossbench", help="Crossbench directory")
 
   args = parser.parse_args()
 
