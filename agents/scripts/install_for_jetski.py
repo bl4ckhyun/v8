@@ -57,3 +57,11 @@ for item in os.listdir(agents_src):
         print(f"Symlinked {src_item} to {dest_item}")
       except Exception as e:
         print(f"Failed to create symlink for {item}: {e}")
+
+gemini_md_path = os.path.join(repo_root, "GEMINI.md")
+if not os.path.exists(gemini_md_path):
+  with open(gemini_md_path, "w") as f:
+    f.write("@agents/prompts/templates/modular.md\n")
+  print("Created GEMINI.md in the repository root.")
+else:
+  print("Skipping GEMINI.md creation since it already exists.")
