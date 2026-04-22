@@ -2944,6 +2944,9 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
     FrameScope scope(masm, StackFrame::INTERNAL);
 
     // Save registers that we need to keep alive across the runtime call.
+    // The spilled parameters are *not* visited by GC, but the `WasmCompileLazy`
+    // runtime function does not trigger GC except for exceptions (and then we
+    // unwind before using the spilled values).
     __ Push(kWasmImplicitArgRegister);
     __ MultiPush(kSavedGpRegs);
     // Check if machine has simd enabled, if so push vector registers. If not
