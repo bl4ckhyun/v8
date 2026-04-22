@@ -275,6 +275,12 @@ class WasmInJsInliningInterface {
                     decoder->SafeOpcodeNameAt(decoder->pc()));
   }
 
+#define BAILOUT_WASM_OP(name)                  \
+  template <typename... Args>                  \
+  void name(FullDecoder* decoder, Args&&...) { \
+    Bailout(decoder);                          \
+  }
+
   void StartFunction(FullDecoder* decoder) {
     // Make sure we have a source positions for generated code before the first
     // Wasm opcode, e.g., initializing locals.
@@ -315,10 +321,6 @@ class WasmInJsInliningInterface {
     // This is just for testing bailouts in Liftoff, here it's just a nop.
   }
 
-  void TraceInstruction(FullDecoder* decoder, uint32_t markid) {
-    Bailout(decoder);
-  }
-
   void UnOp(FullDecoder* decoder, WasmOpcode opcode, const Value& value,
             Value* result) {
     result->op = UnOpImpl(decoder, opcode, value.op, value.type);
@@ -326,17 +328,6 @@ class WasmInJsInliningInterface {
   void BinOp(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs,
              const Value& rhs, Value* result) {
     result->op = BinOpImpl(decoder, opcode, lhs.op, rhs.op);
-  }
-
-  void WideOp2(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_val,
-               const Value& rhs_val, Value* result_low, Value* result_high) {
-    Bailout(decoder);
-  }
-
-  void WideOp4(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_lo_val,
-               const Value& lhs_hi_val, const Value& rhs_lo_val,
-               const Value& rhs_hi_val, Value* result_low, Value* result_high) {
-    Bailout(decoder);
   }
 
   OpIndex UnOpImpl(FullDecoder* decoder, WasmOpcode opcode, OpIndex arg,
@@ -661,11 +652,6 @@ class WasmInJsInliningInterface {
     result->op = __ Word32Constant(value);
   }
 
-  void I64Const(FullDecoder* decoder, Value* result, int64_t value) {
-    // TODO(dlehmann,353475584): Support i64 ops.
-    Bailout(decoder);
-  }
-
   void F32Const(FullDecoder* decoder, Value* result, float value) {
     result->op = __ Float32Constant(value);
   }
@@ -674,22 +660,11 @@ class WasmInJsInliningInterface {
     result->op = __ Float64Constant(value);
   }
 
-  void S128Const(FullDecoder* decoder, const Simd128Immediate& imm,
-                 Value* result) {
-    Bailout(decoder);
-  }
-
-  void RefNull(FullDecoder* decoder, ValueType type, Value* result) {
-    Bailout(decoder);
-  }
-
-  void RefFunc(FullDecoder* decoder, uint32_t function_index, Value* result) {
-    Bailout(decoder);
-  }
-
-  void RefAsNonNull(FullDecoder* decoder, const Value& arg, Value* result) {
-    Bailout(decoder);
-  }
+  // TODO(dlehmann,353475584): Support more of these simple constants.
+  BAILOUT_WASM_OP(I64Const)
+  BAILOUT_WASM_OP(RefNull)
+  BAILOUT_WASM_OP(RefFunc)
+  BAILOUT_WASM_OP(RefAsNonNull)
 
   void Drop(FullDecoder* decoder) {}
 
@@ -726,27 +701,10 @@ class WasmInJsInliningInterface {
     __ GlobalSet(trusted_instance_data_, value.op, imm.global);
   }
 
-  // TODO(dlehmann,353475584): Support control-flow in the inlinee.
-
-  void Block(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void Loop(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void If(FullDecoder* decoder, const Value& cond, Control* if_block) {
-    Bailout(decoder);
-  }
-  void Else(FullDecoder* decoder, Control* if_block) { Bailout(decoder); }
-  void BrOrRet(FullDecoder* decoder, uint32_t depth, uint32_t drop_values = 0) {
-    Bailout(decoder);
-  }
-  void BrIf(FullDecoder* decoder, const Value& cond, uint32_t depth) {
-    Bailout(decoder);
-  }
-  void BrTable(FullDecoder* decoder, const BranchTableImmediate& imm,
-               const Value& key) {
-    Bailout(decoder);
+  void Forward(FullDecoder* decoder, const Value& from, Value* to) {
+    to->op = from.op;
   }
 
-  void FallThruTo(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void PopControl(FullDecoder* decoder, Control* block) { Bailout(decoder); }
   void DoReturn(FullDecoder* decoder, uint32_t drop_values) {
     size_t return_count = decoder->sig_->return_count();
 
@@ -766,94 +724,6 @@ class WasmInJsInliningInterface {
     }
     result_.success = true;
   }
-  void Select(FullDecoder* decoder, const Value& cond, const Value& fval,
-              const Value& tval, Value* result) {
-    Bailout(decoder);
-  }
-
-  // TODO(dlehmann,353475584): Support exceptions in the inlinee.
-
-  void Try(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void Throw(FullDecoder* decoder, const TagIndexImmediate& imm,
-             const Value arg_values[]) {
-    Bailout(decoder);
-  }
-  void Rethrow(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void CatchException(FullDecoder* decoder, const TagIndexImmediate& imm,
-                      Control* block, base::Vector<Value> values) {
-    Bailout(decoder);
-  }
-  void Delegate(FullDecoder* decoder, uint32_t depth, Control* block) {
-    Bailout(decoder);
-  }
-
-  void CatchAll(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void TryTable(FullDecoder* decoder, Control* block) { Bailout(decoder); }
-  void CatchCase(FullDecoder* decoder, Control* block,
-                 const wasm::CatchCase& catch_case,
-                 base::Vector<Value> values) {
-    Bailout(decoder);
-  }
-  void ThrowRef(FullDecoder* decoder, Value* value) { Bailout(decoder); }
-
-  void ContNew(FullDecoder* decoder, const wasm::ContIndexImmediate& imm,
-               const Value& func_ref, Value* result) {
-    Bailout(decoder);
-  }
-
-  void ContBind(FullDecoder* decoder, const wasm::ContIndexImmediate& orig_imm,
-                Value input_cont, const Value args[],
-                const wasm::ContIndexImmediate& new_imm, Value* result) {
-    Bailout(decoder);
-  }
-
-  void Resume(FullDecoder* decoder, const wasm::ContIndexImmediate& imm,
-              base::Vector<wasm::HandlerCase> handlers, const Value& cont_ref,
-              const Value args[], const Value returns[]) {
-    Bailout(decoder);
-  }
-
-  void BeginEffectHandlers(FullDecoder* decoder) { Bailout(decoder); }
-
-  void EndEffectHandlers(FullDecoder* decoder) { Bailout(decoder); }
-
-  void ResumeHandler(FullDecoder* decoder, const wasm::HandlerCase& handler,
-                     size_t handler_index, Value* cont_val, Value* tag_params) {
-    Bailout(decoder);
-  }
-
-  void ResumeThrow(FullDecoder* decoder,
-                   const wasm::ContIndexImmediate& cont_imm,
-                   const TagIndexImmediate& exc_imm,
-                   base::Vector<wasm::HandlerCase> handlers, const Value& cont,
-                   const Value args[], const Value returns[]) {
-    Bailout(decoder);
-  }
-
-  void ResumeThrowRef(FullDecoder* decoder,
-                      const wasm::ContIndexImmediate& cont_imm,
-                      base::Vector<wasm::HandlerCase> handlers,
-                      const Value& cont, const Value& exn,
-                      const Value returns[]) {
-    Bailout(decoder);
-  }
-
-  void Switch(FullDecoder* decoder, const TagIndexImmediate& tag_imm,
-              const wasm::ContIndexImmediate& con_imm, const Value& cont_ref,
-              const Value args[], Value returns[]) {
-    Bailout(decoder);
-  }
-
-  void Suspend(FullDecoder* decoder, const TagIndexImmediate& imm,
-               const Value args[], const Value returns[]) {
-    Bailout(decoder);
-  }
-
-  void EffectHandlerTable(FullDecoder* decoder, Control* block) {
-    Bailout(decoder);
-  }
-
-  // TODO(dlehmann,353475584): Support traps in the inlinee.
 
   void Trap(FullDecoder* decoder, wasm::TrapReason reason) {
     __ WasmTrap(frame_state_, compiler::GetTrapIdForTrap(reason));
@@ -878,128 +748,6 @@ class WasmInJsInliningInterface {
               TrapId::kTrapIllegalCast);
     Forward(decoder, obj, result);
   }
-  void AtomicNotify(FullDecoder* decoder, const MemoryAccessImmediate& imm,
-                    OpIndex index, OpIndex num_waiters_to_wake, Value* result) {
-    Bailout(decoder);
-  }
-  void AtomicWait(FullDecoder* decoder, WasmOpcode opcode,
-                  const MemoryAccessImmediate& imm, OpIndex index,
-                  OpIndex expected, V<Word64> timeout, Value* result) {
-    Bailout(decoder);
-  }
-  void AtomicOp(FullDecoder* decoder, WasmOpcode opcode, const Value args[],
-                const size_t argc, const MemoryAccessImmediate& imm,
-                Value* result) {
-    Bailout(decoder);
-  }
-  void AtomicFence(FullDecoder* decoder) { Bailout(decoder); }
-
-  void Pause(FullDecoder* decoder) { Bailout(decoder); }
-
-  void StructAtomicRMW(FullDecoder* decoder, WasmOpcode opcode,
-                       const Value& struct_object, const FieldImmediate& field,
-                       const Value& field_value, AtomicMemoryOrder order,
-                       Value* result) {
-    Bailout(decoder);
-  }
-
-  void StructAtomicCompareExchange(FullDecoder* decoder, WasmOpcode opcode,
-                                   const Value& struct_object,
-                                   const FieldImmediate& field,
-                                   const Value& expected_value,
-                                   const Value& new_value,
-                                   AtomicMemoryOrder order, Value* result) {
-    Bailout(decoder);
-  }
-
-  void StructWait(FullDecoder* decoder, const Value& struct_obj,
-                  const FieldImmediate& imm, const Value& expected_value,
-                  const Value& timeout_ns, Value* result) {
-    Bailout(decoder);
-  }
-
-  void StructNotify(FullDecoder* decoder, const Value& struct_obj,
-                    const FieldImmediate& imm, const Value& max_waiters,
-                    Value* result) {
-    Bailout(decoder);
-  }
-
-  void ArrayAtomicRMW(FullDecoder* decoder, WasmOpcode opcode,
-                      const Value& array_obj, const ArrayIndexImmediate& imm,
-                      const Value& index, const Value& value,
-                      AtomicMemoryOrder order, Value* result) {
-    Bailout(decoder);
-  }
-
-  void ArrayAtomicCompareExchange(FullDecoder* decoder, WasmOpcode opcode,
-                                  const Value& array_obj,
-                                  const ArrayIndexImmediate& imm,
-                                  const Value& index,
-                                  const Value& expected_value,
-                                  const Value& new_value,
-                                  AtomicMemoryOrder order, Value* result) {
-    Bailout(decoder);
-  }
-
-  void MemoryInit(FullDecoder* decoder, const MemoryInitImmediate& imm,
-                  const Value& dst, const Value& src, const Value& size) {
-    Bailout(decoder);
-  }
-  void MemoryCopy(FullDecoder* decoder, const MemoryCopyImmediate& imm,
-                  const Value& dst, const Value& src, const Value& size) {
-    Bailout(decoder);
-  }
-  void MemoryFill(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                  const Value& dst, const Value& value, const Value& size) {
-    Bailout(decoder);
-  }
-  void DataDrop(FullDecoder* decoder, const IndexImmediate& imm) {
-    Bailout(decoder);
-  }
-
-  void TableGet(FullDecoder* decoder, const Value& index, Value* result,
-                const TableIndexImmediate& imm) {
-    Bailout(decoder);
-  }
-  void TableSet(FullDecoder* decoder, const Value& index, const Value& value,
-                const TableIndexImmediate& imm) {
-    Bailout(decoder);
-  }
-  void TableInit(FullDecoder* decoder, const TableInitImmediate& imm,
-                 const Value& dst_val, const Value& src_val,
-                 const Value& size_val) {
-    Bailout(decoder);
-  }
-  void TableCopy(FullDecoder* decoder, const TableCopyImmediate& imm,
-                 const Value& dst_val, const Value& src_val,
-                 const Value& size_val) {
-    Bailout(decoder);
-  }
-  void TableGrow(FullDecoder* decoder, const TableIndexImmediate& imm,
-                 const Value& value, const Value& delta, Value* result) {
-    Bailout(decoder);
-  }
-  void TableFill(FullDecoder* decoder, const TableIndexImmediate& imm,
-                 const Value& start, const Value& value, const Value& count) {
-    Bailout(decoder);
-  }
-  void TableSize(FullDecoder* decoder, const TableIndexImmediate& imm,
-                 Value* result) {
-    Bailout(decoder);
-  }
-
-  void ElemDrop(FullDecoder* decoder, const IndexImmediate& imm) {
-    Bailout(decoder);
-  }
-
-  void StructNew(FullDecoder* decoder, const StructIndexImmediate& imm,
-                 const Value& descriptor, const Value args[], Value* result) {
-    Bailout(decoder);
-  }
-  void StructNewDefault(FullDecoder* decoder, const StructIndexImmediate& imm,
-                        const Value& descriptor, Value* result) {
-    Bailout(decoder);
-  }
 
   void StructGet(FullDecoder* decoder, const Value& struct_object,
                  const FieldImmediate& field, bool is_signed, Value* result) {
@@ -1020,31 +768,6 @@ class WasmInJsInliningInterface {
                  struct_object.type.is_nullable() ? compiler::kWithNullCheck
                                                   : compiler::kWithoutNullCheck,
                  {}, wasm::FieldImmediateToWriteBarrier(field));
-  }
-
-  void StructAtomicGet(FullDecoder* decoder, const Value& struct_obj,
-                       const FieldImmediate& field, bool is_signed,
-                       AtomicMemoryOrder memory_order, Value* result) {
-    Bailout(decoder);
-  }
-  void StructAtomicSet(FullDecoder* decoder, const Value& struct_object,
-                       const FieldImmediate& field, const Value& field_value,
-                       AtomicMemoryOrder memory_order) {
-    Bailout(decoder);
-  }
-
-  void ArrayNew(FullDecoder* decoder, const ArrayIndexImmediate& imm,
-                const Value& length, const Value& initial_value,
-                Value* result) {
-    Bailout(decoder);
-  }
-  void ArrayNewDefault(FullDecoder* decoder, const ArrayIndexImmediate& imm,
-                       const Value& length, Value* result) {
-    // TODO(dlehmann): This will pull in/cause a lot of code duplication wrt.
-    // the Wasm pipeline / `TurboshaftGraphBuildingInterface`.
-    // How to reduce duplication best? Common superclass? But both will have
-    // different Assemblers (reducer stacks), so I will have to templatize that.
-    Bailout(decoder);
   }
 
   void ArrayGet(FullDecoder* decoder, const Value& array_obj,
@@ -1068,75 +791,11 @@ class WasmInJsInliningInterface {
                 wasm::ArrayIndexImmediateToWriteBarrier(imm));
   }
 
-  void ArrayAtomicGet(FullDecoder* decoder, const Value& array_obj,
-                      const ArrayIndexImmediate& imm, const Value& index,
-                      bool is_signed, AtomicMemoryOrder memory_order,
-                      Value* result) {
-    Bailout(decoder);
-  }
-  void ArrayAtomicSet(FullDecoder* decoder, const Value& array_obj,
-                      const ArrayIndexImmediate& imm, const Value& index_val,
-                      const Value& value_val, AtomicMemoryOrder order) {
-    Bailout(decoder);
-  }
   void ArrayLen(FullDecoder* decoder, const Value& array_obj, Value* result) {
     result->op = __ ArrayLength(
         array_obj.get<WasmArrayNullable>(), frame_state_,
         array_obj.type.is_nullable() ? compiler::kWithNullCheck
                                      : compiler::kWithoutNullCheck);
-  }
-  void ArrayCopy(FullDecoder* decoder, const Value& dst, const Value& dst_index,
-                 const Value& src, const Value& src_index,
-                 const ArrayIndexImmediate& src_imm, const Value& length) {
-    Bailout(decoder);
-  }
-  void ArrayFill(FullDecoder* decoder, ArrayIndexImmediate& imm,
-                 const Value& array, const Value& index, const Value& value,
-                 const Value& length) {
-    Bailout(decoder);
-  }
-  void ArrayNewFixed(FullDecoder* decoder, const ArrayIndexImmediate& array_imm,
-                     const IndexImmediate& length_imm, const Value elements[],
-                     Value* result) {
-    Bailout(decoder);
-  }
-  void ArrayNewSegment(FullDecoder* decoder,
-                       const ArrayIndexImmediate& array_imm,
-                       const IndexImmediate& segment_imm, const Value& offset,
-                       const Value& length, Value* result) {
-    Bailout(decoder);
-  }
-  void ArrayInitSegment(FullDecoder* decoder,
-                        const ArrayIndexImmediate& array_imm,
-                        const IndexImmediate& segment_imm, const Value& array,
-                        const Value& array_index, const Value& segment_offset,
-                        const Value& length) {
-    Bailout(decoder);
-  }
-
-  void RefI31(FullDecoder* decoder, const Value& input, Value* result) {
-    Bailout(decoder);
-  }
-  void I31GetS(FullDecoder* decoder, const Value& input, Value* result) {
-    Bailout(decoder);
-  }
-
-  void I31GetU(FullDecoder* decoder, const Value& input, Value* result) {
-    Bailout(decoder);
-  }
-
-  void RefGetDesc(FullDecoder* decoder, wasm::ModuleTypeIndex struct_index,
-                  const Value& ref, Value* desc) {
-    Bailout(decoder);
-  }
-
-  void RefTest(FullDecoder* decoder, wasm::HeapType target_type,
-               const Value& object, Value* result, bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void RefTestAbstract(FullDecoder* decoder, const Value& object,
-                       wasm::HeapType type, Value* result, bool null_succeeds) {
-    Bailout(decoder);
   }
 
   V<FixedArray> managed_object_maps() {
@@ -1147,6 +806,11 @@ class WasmInJsInliningInterface {
                                          MemoryRepresentation::TaggedPointer());
   }
 
+  // TODO(dlehmann): This and other decoder interface method implementations
+  // share a lot of code with the regular Wasm pipeline in
+  // `turboshaft-graph-interface.cc`. Think of a way to DRY, e.g., by moving
+  // functionality into Turboshaft `Assembler::Wasm*()` methods or introducing a
+  // new, common reducer.
   void RefCast(FullDecoder* decoder, const Value& object, Value* result) {
     ValueType target = result->type;
     if (target.is_shared() == SharedFlag::kYes) {
@@ -1163,11 +827,6 @@ class WasmInJsInliningInterface {
         compiler::GetExactness(decoder->module_, target.heap_type())};
     result->op =
         __ WasmTypeCast(object.get<Object>(), rtt, config, frame_state_);
-  }
-
-  void RefCastDescEq(FullDecoder* decoder, const Value& object,
-                     const Value& descriptor, Value* result) {
-    Bailout(decoder);
   }
 
   void RefCastAbstract(FullDecoder* decoder, const Value& object,
@@ -1189,279 +848,170 @@ class WasmInJsInliningInterface {
         __ WasmTypeCast(object.get<Object>(), rtt, config, frame_state_);
   }
 
-  void LoadMem(FullDecoder* decoder, wasm::LoadType type,
-               const MemoryAccessImmediate& imm, const Value& index,
-               Value* result) {
-    Bailout(decoder);
-  }
-  void LoadTransform(FullDecoder* decoder, wasm::LoadType type,
-                     wasm::LoadTransformationKind transform,
-                     const MemoryAccessImmediate& imm, const Value& index,
-                     Value* result) {
-    Bailout(decoder);
-  }
-  void LoadLane(FullDecoder* decoder, wasm::LoadType type, const Value& value,
-                const Value& index, const MemoryAccessImmediate& imm,
-                const uint8_t laneidx, Value* result) {
-    Bailout(decoder);
-  }
+  // TODO(dlehmann,353475584): Support linear memory in the inlinee.
+  BAILOUT_WASM_OP(LoadMem)
+  BAILOUT_WASM_OP(StoreMem)
+  BAILOUT_WASM_OP(CurrentMemoryPages)
+  BAILOUT_WASM_OP(MemoryGrow)
 
-  void StoreMem(FullDecoder* decoder, wasm::StoreType type,
-                const MemoryAccessImmediate& imm, const Value& index,
-                const Value& value) {
-    Bailout(decoder);
-  }
+  // TODO(dlehmann,353475584): Support control-flow in the inlinee.
+  BAILOUT_WASM_OP(Block)
+  BAILOUT_WASM_OP(Loop)
+  BAILOUT_WASM_OP(If)
+  BAILOUT_WASM_OP(Else)
+  BAILOUT_WASM_OP(BrOrRet)
+  BAILOUT_WASM_OP(BrIf)
+  BAILOUT_WASM_OP(BrTable)
+  BAILOUT_WASM_OP(FallThruTo)
+  BAILOUT_WASM_OP(PopControl)
+  BAILOUT_WASM_OP(Select)
 
-  void StoreLane(FullDecoder* decoder, wasm::StoreType type,
-                 const MemoryAccessImmediate& imm, const Value& index,
-                 const Value& value, const uint8_t laneidx) {
-    Bailout(decoder);
-  }
-
-  void CurrentMemoryPages(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                          Value* result) {
-    Bailout(decoder);
-  }
-
-  void MemoryGrow(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                  const Value& value, Value* result) {
-    Bailout(decoder);
-  }
+  // TODO(dlehmann,353475584): Support exceptions in the inlinee.
+  BAILOUT_WASM_OP(Try)
+  BAILOUT_WASM_OP(Throw)
+  BAILOUT_WASM_OP(Rethrow)
+  BAILOUT_WASM_OP(CatchException)
+  BAILOUT_WASM_OP(Delegate)
+  BAILOUT_WASM_OP(CatchAll)
+  BAILOUT_WASM_OP(TryTable)
+  BAILOUT_WASM_OP(CatchCase)
+  BAILOUT_WASM_OP(ThrowRef)
 
   // TODO(dlehmann,353475584): Support non-leaf functions as the inlinee (i.e.,
   // calls).
+  BAILOUT_WASM_OP(CallDirect)
+  BAILOUT_WASM_OP(ReturnCall)
+  BAILOUT_WASM_OP(CallIndirect)
+  BAILOUT_WASM_OP(ReturnCallIndirect)
+  BAILOUT_WASM_OP(CallRef)
+  BAILOUT_WASM_OP(ReturnCallRef)
 
-  void CallDirect(FullDecoder* decoder, const CallFunctionImmediate& imm,
-                  const Value args[], Value returns[]) {
-    Bailout(decoder);
-  }
-  void ReturnCall(FullDecoder* decoder, const CallFunctionImmediate& imm,
-                  const Value args[]) {
-    Bailout(decoder);
-  }
-  void CallIndirect(FullDecoder* decoder, const Value& index,
-                    const CallIndirectImmediate& imm, const Value args[],
-                    Value returns[]) {
-    Bailout(decoder);
-  }
-  void ReturnCallIndirect(FullDecoder* decoder, const Value& index,
-                          const CallIndirectImmediate& imm,
-                          const Value args[]) {
-    Bailout(decoder);
-  }
-  void CallRef(FullDecoder* decoder, const Value& func_ref,
-               const wasm::FunctionSig* sig, const Value args[],
-               Value returns[]) {
-    Bailout(decoder);
-  }
+  // Continuations / stack switching:
+  BAILOUT_WASM_OP(ContNew)
+  BAILOUT_WASM_OP(ContBind)
+  BAILOUT_WASM_OP(Resume)
+  BAILOUT_WASM_OP(BeginEffectHandlers)
+  BAILOUT_WASM_OP(EndEffectHandlers)
+  BAILOUT_WASM_OP(ResumeHandler)
+  BAILOUT_WASM_OP(ResumeThrow)
+  BAILOUT_WASM_OP(ResumeThrowRef)
+  BAILOUT_WASM_OP(Switch)
+  BAILOUT_WASM_OP(Suspend)
+  BAILOUT_WASM_OP(EffectHandlerTable)
 
-  void ReturnCallRef(FullDecoder* decoder, const Value& func_ref,
-                     const wasm::FunctionSig* sig, const Value args[]) {
-    Bailout(decoder);
-  }
+  // Atomics:
+  BAILOUT_WASM_OP(AtomicNotify)
+  BAILOUT_WASM_OP(AtomicWait)
+  BAILOUT_WASM_OP(AtomicOp)
+  BAILOUT_WASM_OP(AtomicFence)
+  BAILOUT_WASM_OP(Pause)
 
-  void BrOnNull(FullDecoder* decoder, const Value& ref_object, uint32_t depth,
-                bool pass_null_along_branch, Value* result_on_fallthrough) {
-    Bailout(decoder);
-  }
+  BAILOUT_WASM_OP(StructAtomicRMW)
+  BAILOUT_WASM_OP(StructAtomicCompareExchange)
+  BAILOUT_WASM_OP(StructWait)
+  BAILOUT_WASM_OP(StructNotify)
 
-  void BrOnNonNull(FullDecoder* decoder, const Value& ref_object, Value* result,
-                   uint32_t depth, bool /* drop_null_on_fallthrough */) {
-    Bailout(decoder);
-  }
+  BAILOUT_WASM_OP(ArrayAtomicRMW)
+  BAILOUT_WASM_OP(ArrayAtomicCompareExchange)
 
-  void BrOnCast(FullDecoder* decoder, wasm::HeapType target_type,
-                const Value& object, Value* value_on_branch, uint32_t br_depth,
-                bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void BrOnCastDescEq(FullDecoder* decoder, wasm::HeapType target_type,
-                      const Value& object, const Value& descriptor,
-                      Value* value_on_branch, uint32_t br_depth,
-                      bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void BrOnCastAbstract(FullDecoder* decoder, const Value& object,
-                        wasm::HeapType type, Value* value_on_branch,
-                        uint32_t br_depth, bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void BrOnCastFail(FullDecoder* decoder, wasm::HeapType target_type,
-                    const Value& object, Value* value_on_fallthrough,
-                    uint32_t br_depth, bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void BrOnCastDescEqFail(FullDecoder* decoder, wasm::HeapType target_type,
-                          const Value& object, const Value& descriptor,
-                          Value* value_on_fallthrough, uint32_t br_depth,
-                          bool null_succeeds) {
-    Bailout(decoder);
-  }
-  void BrOnCastFailAbstract(FullDecoder* decoder, const Value& object,
-                            wasm::HeapType type, Value* value_on_fallthrough,
-                            uint32_t br_depth, bool null_succeeds) {
-    Bailout(decoder);
-  }
+  // Bulk memory:
+  BAILOUT_WASM_OP(MemoryInit)
+  BAILOUT_WASM_OP(MemoryCopy)
+  BAILOUT_WASM_OP(MemoryFill)
+  BAILOUT_WASM_OP(DataDrop)
+
+  // Tables:
+  BAILOUT_WASM_OP(TableGet)
+  BAILOUT_WASM_OP(TableSet)
+  BAILOUT_WASM_OP(TableInit)
+  BAILOUT_WASM_OP(TableCopy)
+  BAILOUT_WASM_OP(TableGrow)
+  BAILOUT_WASM_OP(TableFill)
+  BAILOUT_WASM_OP(TableSize)
+  BAILOUT_WASM_OP(ElemDrop)
+
+  // Wasm GC / structs and arrays:
+  BAILOUT_WASM_OP(StructNew)
+  BAILOUT_WASM_OP(StructNewDefault)
+
+  BAILOUT_WASM_OP(ArrayNew)
+  BAILOUT_WASM_OP(ArrayNewDefault)
+
+  BAILOUT_WASM_OP(StructAtomicGet)
+  BAILOUT_WASM_OP(StructAtomicSet)
+
+  BAILOUT_WASM_OP(ArrayAtomicGet)
+  BAILOUT_WASM_OP(ArrayAtomicSet)
+
+  BAILOUT_WASM_OP(ArrayCopy)
+  BAILOUT_WASM_OP(ArrayFill)
+  BAILOUT_WASM_OP(ArrayNewFixed)
+  BAILOUT_WASM_OP(ArrayNewSegment)
+  BAILOUT_WASM_OP(ArrayInitSegment)
+
+  BAILOUT_WASM_OP(RefI31)
+  BAILOUT_WASM_OP(I31GetS)
+  BAILOUT_WASM_OP(I31GetU)
+  BAILOUT_WASM_OP(RefGetDesc)
+  BAILOUT_WASM_OP(RefTest)
+  BAILOUT_WASM_OP(RefTestAbstract)
+
+  BAILOUT_WASM_OP(RefCastDescEq)
+
+  BAILOUT_WASM_OP(BrOnNull)
+  BAILOUT_WASM_OP(BrOnNonNull)
+  BAILOUT_WASM_OP(BrOnCast)
+  BAILOUT_WASM_OP(BrOnCastDescEq)
+  BAILOUT_WASM_OP(BrOnCastAbstract)
+  BAILOUT_WASM_OP(BrOnCastFail)
+  BAILOUT_WASM_OP(BrOnCastDescEqFail)
+  BAILOUT_WASM_OP(BrOnCastFailAbstract)
 
   // SIMD:
+  BAILOUT_WASM_OP(S128Const)
+  BAILOUT_WASM_OP(SimdOp)
+  BAILOUT_WASM_OP(SimdLaneOp)
+  BAILOUT_WASM_OP(Simd8x16ShuffleOp)
+  BAILOUT_WASM_OP(LoadTransform)
+  BAILOUT_WASM_OP(LoadLane)
+  BAILOUT_WASM_OP(StoreLane)
 
-  void SimdOp(FullDecoder* decoder, WasmOpcode opcode, const Value* args,
-              Value* result) {
-    Bailout(decoder);
-  }
-  void SimdLaneOp(FullDecoder* decoder, WasmOpcode opcode,
-                  const SimdLaneImmediate& imm,
-                  base::Vector<const Value> inputs, Value* result) {
-    Bailout(decoder);
-  }
-  void Simd8x16ShuffleOp(FullDecoder* decoder, const Simd128Immediate& imm,
-                         const Value& input0, const Value& input1,
-                         Value* result) {
-    Bailout(decoder);
-  }
+  // Strings:
+  BAILOUT_WASM_OP(StringNewWtf8)
+  BAILOUT_WASM_OP(StringNewWtf8Array)
+  BAILOUT_WASM_OP(StringNewWtf16)
+  BAILOUT_WASM_OP(StringNewWtf16Array)
+  BAILOUT_WASM_OP(StringConst)
+  BAILOUT_WASM_OP(StringMeasureWtf8)
+  BAILOUT_WASM_OP(StringMeasureWtf16)
+  BAILOUT_WASM_OP(StringEncodeWtf8)
+  BAILOUT_WASM_OP(StringEncodeWtf8Array)
+  BAILOUT_WASM_OP(StringEncodeWtf16)
+  BAILOUT_WASM_OP(StringEncodeWtf16Array)
+  BAILOUT_WASM_OP(StringConcat)
+  BAILOUT_WASM_OP(StringEq)
+  BAILOUT_WASM_OP(StringIsUSVSequence)
+  BAILOUT_WASM_OP(StringAsWtf8)
+  BAILOUT_WASM_OP(StringViewWtf8Advance)
+  BAILOUT_WASM_OP(StringViewWtf8Encode)
+  BAILOUT_WASM_OP(StringViewWtf8Slice)
+  BAILOUT_WASM_OP(StringAsWtf16)
+  BAILOUT_WASM_OP(StringViewWtf16GetCodeUnit)
+  BAILOUT_WASM_OP(StringViewWtf16Encode)
+  BAILOUT_WASM_OP(StringViewWtf16Slice)
+  BAILOUT_WASM_OP(StringAsIter)
+  BAILOUT_WASM_OP(StringViewIterNext)
+  BAILOUT_WASM_OP(StringViewIterAdvance)
+  BAILOUT_WASM_OP(StringViewIterRewind)
+  BAILOUT_WASM_OP(StringViewIterSlice)
+  BAILOUT_WASM_OP(StringCompare)
+  BAILOUT_WASM_OP(StringFromCodePoint)
+  BAILOUT_WASM_OP(StringHash)
 
-  // String stuff:
-
-  void StringNewWtf8(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                     const unibrow::Utf8Variant variant, const Value& offset,
-                     const Value& size, Value* result) {
-    Bailout(decoder);
-  }
-  void StringNewWtf8Array(FullDecoder* decoder,
-                          const unibrow::Utf8Variant variant,
-                          const Value& array, const Value& start,
-                          const Value& end, Value* result) {
-    Bailout(decoder);
-  }
-  void StringNewWtf16(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                      const Value& offset, const Value& size, Value* result) {
-    Bailout(decoder);
-  }
-  void StringNewWtf16Array(FullDecoder* decoder, const Value& array,
-                           const Value& start, const Value& end,
-                           Value* result) {
-    Bailout(decoder);
-  }
-  void StringConst(FullDecoder* decoder, const StringConstImmediate& imm,
-                   Value* result) {
-    Bailout(decoder);
-  }
-  void StringMeasureWtf8(FullDecoder* decoder,
-                         const unibrow::Utf8Variant variant, const Value& str,
-                         Value* result) {
-    Bailout(decoder);
-  }
-  void StringMeasureWtf16(FullDecoder* decoder, const Value& str,
-                          Value* result) {
-    Bailout(decoder);
-  }
-  void StringEncodeWtf8(FullDecoder* decoder,
-                        const MemoryIndexImmediate& memory,
-                        const unibrow::Utf8Variant variant, const Value& str,
-                        const Value& offset, Value* result) {
-    Bailout(decoder);
-  }
-  void StringEncodeWtf8Array(FullDecoder* decoder,
-                             const unibrow::Utf8Variant variant,
-                             const Value& str, const Value& array,
-                             const Value& start, Value* result) {
-    Bailout(decoder);
-  }
-  void StringEncodeWtf16(FullDecoder* decoder, const MemoryIndexImmediate& imm,
-                         const Value& str, const Value& offset, Value* result) {
-    Bailout(decoder);
-  }
-  void StringEncodeWtf16Array(FullDecoder* decoder, const Value& str,
-                              const Value& array, const Value& start,
-                              Value* result) {
-    Bailout(decoder);
-  }
-  void StringConcat(FullDecoder* decoder, const Value& head, const Value& tail,
-                    Value* result) {
-    Bailout(decoder);
-  }
-  void StringEq(FullDecoder* decoder, const Value& a, const Value& b,
-                Value* result) {
-    Bailout(decoder);
-  }
-  void StringIsUSVSequence(FullDecoder* decoder, const Value& str,
-                           Value* result) {
-    Bailout(decoder);
-  }
-  void StringAsWtf8(FullDecoder* decoder, const Value& str, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewWtf8Advance(FullDecoder* decoder, const Value& view,
-                             const Value& pos, const Value& bytes,
-                             Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewWtf8Encode(FullDecoder* decoder,
-                            const MemoryIndexImmediate& memory,
-                            const unibrow::Utf8Variant variant,
-                            const Value& view, const Value& addr,
-                            const Value& pos, const Value& bytes,
-                            Value* next_pos, Value* bytes_written) {
-    Bailout(decoder);
-  }
-  void StringViewWtf8Slice(FullDecoder* decoder, const Value& view,
-                           const Value& start, const Value& end,
-                           Value* result) {
-    Bailout(decoder);
-  }
-  void StringAsWtf16(FullDecoder* decoder, const Value& str, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewWtf16GetCodeUnit(FullDecoder* decoder, const Value& view,
-                                  const Value& pos, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewWtf16Encode(FullDecoder* decoder,
-                             const MemoryIndexImmediate& imm, const Value& view,
-                             const Value& offset, const Value& pos,
-                             const Value& codeunits, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewWtf16Slice(FullDecoder* decoder, const Value& view,
-                            const Value& start, const Value& end,
-                            Value* result) {
-    Bailout(decoder);
-  }
-  void StringAsIter(FullDecoder* decoder, const Value& str, Value* result) {
-    Bailout(decoder);
-  }
-
-  void StringViewIterNext(FullDecoder* decoder, const Value& view,
-                          Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewIterAdvance(FullDecoder* decoder, const Value& view,
-                             const Value& codepoints, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewIterRewind(FullDecoder* decoder, const Value& view,
-                            const Value& codepoints, Value* result) {
-    Bailout(decoder);
-  }
-  void StringViewIterSlice(FullDecoder* decoder, const Value& view,
-                           const Value& codepoints, Value* result) {
-    Bailout(decoder);
-  }
-  void StringCompare(FullDecoder* decoder, const Value& lhs, const Value& rhs,
-                     Value* result) {
-    Bailout(decoder);
-  }
-  void StringFromCodePoint(FullDecoder* decoder, const Value& code_point,
-                           Value* result) {
-    Bailout(decoder);
-  }
-  void StringHash(FullDecoder* decoder, const Value& string, Value* result) {
-    Bailout(decoder);
-  }
-
-  void Forward(FullDecoder* decoder, const Value& from, Value* to) {
-    to->op = from.op;
-  }
+  // Misc. proposals:
+  BAILOUT_WASM_OP(TraceInstruction)
+  BAILOUT_WASM_OP(WideOp2)
+  BAILOUT_WASM_OP(WideOp4)
 
  private:
   void set_current_wasm_source_position(FullDecoder* decoder) {
@@ -1488,6 +1038,8 @@ class WasmInJsInliningInterface {
   // Populated only after decoding finished successfully, i.e., didn't bail out.
   WasmBodyInliningResult result_ = WasmBodyInliningResult::Failed();
 };
+
+#undef BAILOUT_WASM_OP
 
 template <class Next>
 WasmBodyInliningResult WasmInJSInliningReducer<Next>::TryInlineWasmBody(
