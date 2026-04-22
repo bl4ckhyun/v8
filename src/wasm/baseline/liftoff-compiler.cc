@@ -3016,7 +3016,20 @@ class LiftoffCompiler {
 
   void WideOp2(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_val,
                const Value& rhs_val, Value* result_low, Value* result_high) {
-    unsupported(decoder, kUnsupportedArchitecture, "wide arithmetic");
+#if V8_TARGET_ARCH_X64
+    switch (opcode) {
+      case kExprI64MulWideS:
+        __ emit_i64_mul_wide_s();
+        break;
+      case kExprI64MulWideU:
+        __ emit_i64_mul_wide_u();
+        break;
+      default:
+        UNREACHABLE();
+    }
+#else
+    unsupported(decoder, kUnsupportedArchitecture, "wide multiplication");
+#endif
   }
 
   void WideOp4(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_lo_val,

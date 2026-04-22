@@ -1629,6 +1629,39 @@ void LiftoffAssembler::emit_i64_addi(LiftoffRegister dst, LiftoffRegister lhs,
   }
 }
 
+namespace liftoff {
+template <void (Assembler::*op)(Register)>
+void EmitI64MulWide(LiftoffAssembler* assm) {
+  static_assert(
+      op == static_cast<void (Assembler::*)(Register)>(&Assembler::imulq) ||
+          op == static_cast<void (Assembler::*)(Register)>(&Assembler::mulq),
+      "EmitI64MulWide only supports imulq or mulq");
+  DCHECK(!assm->cache_state()->frozen);
+  LiftoffRegister lrax{rax};
+  LiftoffRegister lrdx{rdx};
+  // For simplicity, force the input into rdx (the explicit input to the
+  // multiply). We have to free up rdx anyway because the machine instruction
+  // will overwrite it.
+  assm->PopToFixedRegister(lrdx);
+  assm->PopToFixedRegister(lrax);
+  // PopToFixedRegister can return without spilling the register.
+  if (assm->cache_state()->is_used(lrax)) assm->SpillRegister(lrax);
+  if (assm->cache_state()->is_used(lrdx)) assm->SpillRegister(lrdx);
+  // lhs = rax is implicit. Result is in [rdx:rax].
+  (assm->*op)(rdx);
+  assm->PushRegister(kI64, lrax);
+  assm->PushRegister(kI64, lrdx);
+}
+}  // namespace liftoff
+
+void LiftoffAssembler::emit_i64_mul_wide_s() {
+  liftoff::EmitI64MulWide<&Assembler::imulq>(this);
+}
+
+void LiftoffAssembler::emit_i64_mul_wide_u() {
+  liftoff::EmitI64MulWide<&Assembler::mulq>(this);
+}
+
 void LiftoffAssembler::emit_i64_sub(LiftoffRegister dst, LiftoffRegister lhs,
                                     LiftoffRegister rhs) {
   if (lhs.gp() == rhs.gp()) {

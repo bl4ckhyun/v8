@@ -1978,6 +1978,10 @@ void LiftoffAssembler::emit_i64_mul(LiftoffRegister dst, LiftoffRegister lhs,
   if (dst != dst_tmp) Move(dst, dst_tmp, kI64);
 }
 
+void LiftoffAssembler::emit_i64_mul_wide_s() { UNIMPLEMENTED(); }
+
+void LiftoffAssembler::emit_i64_mul_wide_u() { UNIMPLEMENTED(); }
+
 bool LiftoffAssembler::emit_i64_divs(LiftoffRegister dst, LiftoffRegister lhs,
                                      LiftoffRegister rhs,
                                      Label* trap_div_by_zero,

@@ -1707,6 +1707,10 @@ void LiftoffAssembler::emit_i64_muli(LiftoffRegister dst, LiftoffRegister lhs,
   Mul(dst.gp().X(), lhs.gp().X(), scratch);
 }
 
+void LiftoffAssembler::emit_i64_mul_wide_s() { UNIMPLEMENTED(); }
+
+void LiftoffAssembler::emit_i64_mul_wide_u() { UNIMPLEMENTED(); }
+
 void LiftoffAssembler::emit_i64_and(LiftoffRegister dst, LiftoffRegister lhs,
                                     LiftoffRegister rhs) {
   And(dst.gp().X(), lhs.gp().X(), rhs.gp().X());
