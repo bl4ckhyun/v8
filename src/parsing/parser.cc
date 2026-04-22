@@ -729,7 +729,7 @@ void Parser::ParseProgram(Isolate* isolate, DirectHandle<Script> script,
   RCS_SCOPE(runtime_call_stats_, flags().is_eval()
                                      ? RuntimeCallCounterId::kParseEval
                                      : RuntimeCallCounterId::kParseProgram);
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.ParseProgram");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.ParseProgram");
   base::ElapsedTimer timer;
   if (V8_UNLIKELY(v8_flags.log_function_events)) timer.Start();
 
@@ -1074,7 +1074,7 @@ void Parser::ParseFunction(Isolate* isolate, ParseInfo* info,
   // called in the main thread.
   DCHECK(parsing_on_main_thread_);
   RCS_SCOPE(runtime_call_stats_, RuntimeCallCounterId::kParseFunction);
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.ParseFunction");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.ParseFunction");
   base::ElapsedTimer timer;
   if (V8_UNLIKELY(v8_flags.log_function_events)) timer.Start();
 
@@ -3107,7 +3107,7 @@ bool Parser::SkipFunction(int function_literal_id,
 
   // With no cached data, we partially parse the function, without building an
   // AST. This gathers the data needed to build a lazy function.
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.PreParse");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.compile"), "V8.PreParse");
 
   std::optional<base::ElapsedTimer> timer;
   if (v8_flags.enable_preparser_ablation &&
