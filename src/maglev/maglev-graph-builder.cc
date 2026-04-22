@@ -5400,10 +5400,19 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildStoreField(
 
   if (field_representation.IsDouble()) {
     if (access_info.HasTransitionMap()) {
-      if (access_info.IsFastDataConstant() &&
-          value->value_representation() == ValueRepresentation::kHoleyFloat64) {
-        GET_VALUE_OR_ABORT(value,
-                           AddNewNode<HoleyFloat64ToSilencedFloat64>({value}));
+      if (access_info.IsFastDataConstant()) {
+        // Force conversion to Float64 to ensure we can check for hole NaN.
+        GET_VALUE_OR_ABORT(value, GetFloat64(value));
+
+        if (value->value_representation() ==
+            ValueRepresentation::kHoleyFloat64) {
+          GET_VALUE_OR_ABORT(
+              value, AddNewNode<HoleyFloat64ToSilencedFloat64>({value}));
+        } else if (value->value_representation() ==
+                   ValueRepresentation::kFloat64) {
+          GET_VALUE_OR_ABORT(value,
+                             AddNewNode<Float64ToSilencedFloat64>({value}));
+        }
       }
       // Allocate the mutable double box owned by the field.
       ValueNode* heapnumber_value;
