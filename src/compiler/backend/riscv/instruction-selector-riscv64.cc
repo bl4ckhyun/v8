@@ -1675,10 +1675,10 @@ void InstructionSelector::EmitPrepareArguments(
   if (call_descriptor->IsCFunctionCall()) {
     int gp_param_count = static_cast<int>(call_descriptor->GPParameterCount());
     int fp_param_count = static_cast<int>(call_descriptor->FPParameterCount());
-    Emit(kArchPrepareCallCFunction | ParamField::encode(gp_param_count) |
-             FPParamField::encode(fp_param_count),
-         0, nullptr, 0, nullptr);
-
+    uint32_t param_counts = ParamField::encode(gp_param_count) |
+                            FPParamField::encode(fp_param_count);
+    Emit(kArchPrepareCallCFunction, g.NoOutput(),
+         g.TempImmediate(param_counts));
     // Poke any stack arguments.
     int slot = 0;
     for (PushParameter input : (*arguments)) {
