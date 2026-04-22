@@ -1356,7 +1356,7 @@ V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObjectLayout {
 class DateCache;
 
 // Representation for JS date objects.
-class JSDate : public TorqueGeneratedJSDate<JSDate, JSObject> {
+V8_OBJECT class JSDate : public JSObjectLayout {
  public:
   static V8_WARN_UNUSED_RESULT MaybeDirectHandle<JSDate> New(
       Isolate* isolate, DirectHandle<JSFunction> constructor,
@@ -1375,6 +1375,41 @@ class JSDate : public TorqueGeneratedJSDate<JSDate, JSObject> {
   static Address GetField(Isolate* isolate, Address raw_date,
                           Address smi_index);
 
+  inline double value() const;
+  inline void set_value(double v);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> year() const;
+  inline void set_year(Tagged<UnionOf<Smi, HeapNumber>> value,
+                       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> month() const;
+  inline void set_month(Tagged<UnionOf<Smi, HeapNumber>> value,
+                        WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> day() const;
+  inline void set_day(Tagged<UnionOf<Smi, HeapNumber>> value,
+                      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> weekday() const;
+  inline void set_weekday(Tagged<UnionOf<Smi, HeapNumber>> value,
+                          WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> hour() const;
+  inline void set_hour(Tagged<UnionOf<Smi, HeapNumber>> value,
+                       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> min() const;
+  inline void set_min(Tagged<UnionOf<Smi, HeapNumber>> value,
+                      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> sec() const;
+  inline void set_sec(Tagged<UnionOf<Smi, HeapNumber>> value,
+                      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<Smi, HeapNumber>> cache_stamp() const;
+  inline void set_cache_stamp(Tagged<UnionOf<Smi, HeapNumber>> value,
+                              WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
   void SetValue(Isolate* isolate, double v);
   void SetNanValue();
 
@@ -1382,7 +1417,7 @@ class JSDate : public TorqueGeneratedJSDate<JSDate, JSObject> {
 
   // Dispatched behavior.
   DECL_PRINTER(JSDate)
-  DECL_VERIFIER(JSDate)
+  EXPORT_DECL_VERIFIER(JSDate)
 
   // The order is important. It must be kept in sync with date macros
   // in macros.py.
@@ -1423,8 +1458,17 @@ class JSDate : public TorqueGeneratedJSDate<JSDate, JSObject> {
   inline void SetCachedFields(Isolate* isolate, int64_t local_time_ms,
                               DateCache* date_cache);
 
-  TQ_OBJECT_CONSTRUCTORS(JSDate)
-};
+ public:
+  UnalignedDoubleMember value_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> year_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> month_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> day_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> weekday_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> hour_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> min_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> sec_;
+  TaggedMember<UnionOf<Smi, HeapNumber>> cache_stamp_;
+} V8_OBJECT_END;
 
 // Representation of message objects used for error reporting through
 // the API. The messages are formatted in JavaScript so this object is

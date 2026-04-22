@@ -2243,7 +2243,7 @@ static const char* const weekdays[] = {"???", "Sun", "Mon", "Tue",
                                        "Wed", "Thu", "Fri", "Sat"};
 
 void JSDate::JSDatePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSDate");
+  JSObjectPrintHeader(os, this, "JSDate");
   os << "\n - value: " << value();
   os << "\n - cache_stamp: " << cache_stamp()
      << " (vs. Isolate::date_time_stamp: "
@@ -2263,7 +2263,7 @@ void JSDate::JSDatePrint(std::ostream& os) {
              IsSmi(sec()) ? Smi::ToInt(sec()) : -1);
     os << buf.begin();
   }
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSSet::JSSetPrint(std::ostream& os) {

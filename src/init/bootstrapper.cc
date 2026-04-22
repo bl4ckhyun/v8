@@ -2970,7 +2970,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
   {  // --- D a t e ---
     DirectHandle<JSFunction> date_fun = InstallFunction(
-        isolate_, global, "Date", JS_DATE_TYPE, JSDate::kHeaderSize, 0,
+        isolate_, global, "Date", JS_DATE_TYPE, sizeof(JSDate), 0,
         factory->the_hole_value(), Builtin::kDateConstructor, 7, kDontAdapt);
     InstallWithIntrinsicDefaultProto(isolate_, date_fun,
                                      Context::DATE_FUNCTION_INDEX);

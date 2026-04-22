@@ -470,10 +470,9 @@ class JSDate::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, JSObject::BodyDescriptor::kStartOffset,
-                    JSDate::kValueOffset, v);
-    IterateJSObjectBodyImpl(map, obj, JSDate::kStartOfStrongFieldsOffset,
-                            object_size, v);
+    IteratePointers(obj, offsetof(JSDate, properties_or_hash_),
+                    offsetof(JSDate, value_), v);
+    IterateJSObjectBodyImpl(map, obj, offsetof(JSDate, year_), object_size, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {

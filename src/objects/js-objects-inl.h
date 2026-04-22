@@ -812,6 +812,27 @@ void JSValidIteratorWrapper::set_underlying_next(Tagged<JSAny> value,
   underlying_next_.store(this, value, mode);
 }
 
+double JSDate::value() const { return value_.value(); }
+void JSDate::set_value(double v) { value_.set_value(v); }
+
+#define DEFINE_JSDATE_CACHED_ACCESSOR(name)                       \
+  Tagged<UnionOf<Smi, HeapNumber>> JSDate::name() const {         \
+    return name##_.load();                                        \
+  }                                                               \
+  void JSDate::set_##name(Tagged<UnionOf<Smi, HeapNumber>> value, \
+                          WriteBarrierMode mode) {                \
+    name##_.store(this, value, mode);                             \
+  }
+DEFINE_JSDATE_CACHED_ACCESSOR(year)
+DEFINE_JSDATE_CACHED_ACCESSOR(month)
+DEFINE_JSDATE_CACHED_ACCESSOR(day)
+DEFINE_JSDATE_CACHED_ACCESSOR(weekday)
+DEFINE_JSDATE_CACHED_ACCESSOR(hour)
+DEFINE_JSDATE_CACHED_ACCESSOR(min)
+DEFINE_JSDATE_CACHED_ACCESSOR(sec)
+DEFINE_JSDATE_CACHED_ACCESSOR(cache_stamp)
+#undef DEFINE_JSDATE_CACHED_ACCESSOR
+
 bool JSMessageObject::DidEnsureSourcePositionsAvailable() const {
   return shared_info() == Smi::zero();
 }

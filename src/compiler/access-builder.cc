@@ -637,7 +637,7 @@ FieldAccess AccessBuilder::ForJSDataViewDataPointer() {
 // static
 FieldAccess AccessBuilder::ForJSDateValue() {
   FieldAccess access = {kTaggedBase,
-                        JSDate::kValueOffset,
+                        offsetof(JSDate, value_),
                         MaybeHandle<Name>(),
                         OptionalMapRef(),
                         TypeCache::Get()->kJSDateValueType,
@@ -650,14 +650,15 @@ FieldAccess AccessBuilder::ForJSDateValue() {
 // static
 FieldAccess AccessBuilder::ForJSDateField(JSDate::FieldIndex index) {
   DCHECK_LT(index, JSDate::kFirstUncachedField);
-  FieldAccess access = {kTaggedBase,
-                        JSDate::kYearOffset + index * kTaggedSize,
-                        MaybeHandle<Name>(),
-                        OptionalMapRef(),
-                        TypeCache::Get()->kJSDateFields[index],
-                        MachineType::AnyTagged(),
-                        kFullWriteBarrier,
-                        "JSDateField"};
+  FieldAccess access = {
+      kTaggedBase,
+      static_cast<int>(offsetof(JSDate, year_)) + index * kTaggedSize,
+      MaybeHandle<Name>(),
+      OptionalMapRef(),
+      TypeCache::Get()->kJSDateFields[index],
+      MachineType::AnyTagged(),
+      kFullWriteBarrier,
+      "JSDateField"};
   return access;
 }
 

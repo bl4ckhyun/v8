@@ -1424,7 +1424,19 @@ void JSAsyncGeneratorObject::JSAsyncGeneratorObjectVerify(Isolate* isolate) {
 }
 
 void JSDate::JSDateVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSDateVerify(*this, isolate);
+  JSObjectVerify(isolate);
+
+  auto IsValidCachedField = [](Tagged<UnionOf<Smi, HeapNumber>> f) {
+    return IsSmi(f) || IsNaN(f);
+  };
+  CHECK(IsValidCachedField(year()));
+  CHECK(IsValidCachedField(month()));
+  CHECK(IsValidCachedField(day()));
+  CHECK(IsValidCachedField(weekday()));
+  CHECK(IsValidCachedField(hour()));
+  CHECK(IsValidCachedField(min()));
+  CHECK(IsValidCachedField(sec()));
+  CHECK(IsValidCachedField(cache_stamp()));
 
   if (IsSmi(month())) {
     int month = Smi::ToInt(this->month());

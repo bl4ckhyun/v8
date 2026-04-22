@@ -168,6 +168,7 @@ extern class JSMessageObject extends JSObject {
   error_level: Smi;
 }
 
+@cppObjectLayoutDefinition
 extern class JSDate extends JSObject {
   // If one component is NaN, all of them are, indicating a NaN time value.
 

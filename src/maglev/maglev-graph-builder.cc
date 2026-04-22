@@ -10492,7 +10492,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceDatePrototypeGetField(
 
   ValueNode* receiver = args.receiver();
   DCHECK_NOT_NULL(receiver);
-  int field_offset = JSDate::kYearOffset + field_index * kTaggedSize;
+  int field_offset = offsetof(JSDate, year_) + field_index * kTaggedSize;
   ValueNode* field_value;
   GET_VALUE_OR_ABORT(field_value, BuildLoadTaggedField(receiver, field_offset));
   // All cached JSDate fields are Smi|NaN.
@@ -10510,7 +10510,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceDatePrototypeGetTime(
 
   ValueNode* receiver = args.receiver();
   DCHECK_NOT_NULL(receiver);
-  return AddNewNode<LoadFloat64>({receiver}, JSDate::kValueOffset);
+  return AddNewNode<LoadFloat64>({receiver},
+                                 static_cast<int>(offsetof(JSDate, value_)));
 }
 
 MaybeReduceResult MaglevGraphBuilder::TryReduceDatePrototypeGetFullYear(

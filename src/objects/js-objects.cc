@@ -2582,7 +2582,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_PRIMITIVE_WRAPPER_TYPE:
       return sizeof(JSPrimitiveWrapper);
     case JS_DATE_TYPE:
-      return JSDate::kHeaderSize;
+      return sizeof(JSDate);
     case JS_DISPOSABLE_STACK_BASE_TYPE:
       return sizeof(JSDisposableStackBase);
     case JS_ASYNC_DISPOSABLE_STACK_TYPE:
