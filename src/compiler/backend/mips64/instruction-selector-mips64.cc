@@ -1331,9 +1331,8 @@ void InstructionSelector::EmitPrepareArguments(
 
   // Prepare for C function call.
   if (call_descriptor->IsCFunctionCall()) {
-    Emit(kArchPrepareCallCFunction | MiscField::encode(static_cast<int>(
-                                         call_descriptor->ParameterCount())),
-         0, nullptr, 0, nullptr);
+    int param_count = static_cast<int>(call_descriptor->ParameterCount());
+    Emit(kArchPrepareCallCFunction, g.NoOutput(), g.TempImmediate(param_count));
 
     // Poke any stack arguments.
     int slot = kCArgSlotCount;

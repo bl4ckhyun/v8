@@ -724,8 +724,10 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       break;
     }
     case kArchPrepareCallCFunction: {
-      int const num_parameters = MiscField::decode(instr->opcode());
-      __ PrepareCallCFunction(num_parameters, kScratchReg);
+      UseScratchRegisterScope temps(masm());
+      Register scratch = temps.Acquire();
+      int const num_parameters = i.InputInt32(0);
+      __ PrepareCallCFunction(num_parameters, scratch);
       // Frame alignment requires using FP-relative frame addressing.
       frame_access_state()->SetFrameAccessToFP();
       break;
