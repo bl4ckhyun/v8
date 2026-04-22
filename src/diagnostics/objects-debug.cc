@@ -2222,7 +2222,8 @@ void JSWeakRef::JSWeakRefVerify(Isolate* isolate) {
 }
 
 void JSFinalizationRegistry::JSFinalizationRegistryVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSFinalizationRegistryVerify(*this, isolate);
+  CHECK(IsJSFinalizationRegistry(this));
+  JSObjectVerify(isolate);
   if (IsWeakCell(active_cells())) {
     CHECK(IsUndefined(Cast<WeakCell>(active_cells())->prev(), isolate));
   }
@@ -2784,6 +2785,22 @@ void AsyncGeneratorRequest::AsyncGeneratorRequestVerify(Isolate* isolate) {
 void BigIntBase::BigIntBaseVerify(Isolate* isolate) {
   CHECK_GE(length(), 0);
   CHECK_IMPLIES(is_zero(), !sign());  // There is no -0n.
+}
+
+void CoverageInfo::CoverageInfoVerify(Isolate* isolate) {
+  CHECK(IsCoverageInfo(this));
+  CHECK_GE(slot_count(), 0);
+}
+
+void AccessorInfo::AccessorInfoVerify(Isolate* isolate) {
+  CHECK(IsAccessorInfo(this));
+  Object::VerifyPointer(isolate, data());
+  Object::VerifyPointer(isolate, name());
+}
+
+void InterceptorInfo::InterceptorInfoVerify(Isolate* isolate) {
+  CHECK(IsInterceptorInfo(this));
+  Object::VerifyPointer(isolate, data());
 }
 
 void SourceTextModuleInfoEntry::SourceTextModuleInfoEntryVerify(

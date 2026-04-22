@@ -1340,8 +1340,11 @@ const char* SideEffectType2String(SideEffectType type) {
 #define AS_PTR(x) reinterpret_cast<void*>(x)
 
 void AccessorInfo::AccessorInfoPrint(std::ostream& os) {
-  TorqueGeneratedAccessorInfo<AccessorInfo, HeapObject>::AccessorInfoPrint(os);
-  os << " - is_sloppy: " << is_sloppy();
+  PrintHeader(os, "AccessorInfo");
+  os << "\n - data: " << Brief(data());
+  os << "\n - name: " << Brief(name());
+  os << "\n - flags: " << flags();
+  os << "\n - is_sloppy: " << is_sloppy();
   os << "\n - replace_on_access: " << replace_on_access();
   os << "\n - getter_side_effect_type: "
      << SideEffectType2String(getter_side_effect_type());
@@ -1375,8 +1378,9 @@ void AccessCheckInfo::AccessCheckInfoPrint(std::ostream& os) {
 }
 
 void InterceptorInfo::InterceptorInfoPrint(std::ostream& os) {
-  TorqueGeneratedInterceptorInfo<InterceptorInfo,
-                                 HeapObject>::InterceptorInfoPrint(os);
+  PrintHeader(os, "InterceptorInfo");
+  os << "\n - data: " << Brief(data());
+  os << "\n - flags: " << flags();
   IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
   if (is_named()) {
     os << " - getter: " << AS_PTR(named_getter(isolate));
@@ -2320,7 +2324,7 @@ void JSWrappedFunction::JSWrappedFunctionPrint(std::ostream& os) {
 }
 
 void JSFinalizationRegistry::JSFinalizationRegistryPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSFinalizationRegistry");
+  JSObjectPrintHeader(os, this, "JSFinalizationRegistry");
   os << "\n - native_context: " << Brief(native_context());
   os << "\n - cleanup: " << Brief(cleanup());
   os << "\n - active_cells: " << Brief(active_cells());
@@ -2336,7 +2340,7 @@ void JSFinalizationRegistry::JSFinalizationRegistryPrint(std::ostream& os) {
     cleared_cell = Cast<WeakCell>(cleared_cell)->next();
   }
   os << "\n - key_map: " << Brief(key_map());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSSharedArray::JSSharedArrayPrint(std::ostream& os) {

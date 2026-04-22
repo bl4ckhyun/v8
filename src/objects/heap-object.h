@@ -110,6 +110,26 @@ V8_OBJECT class HeapObjectLayout {
       int byte_offset, ExternalPointerTagRange tag_range) const;
   inline operator Tagged<HeapObject>() const;
 
+  // External pointer field helpers mirroring the HeapObject API.
+  // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
+  template <ExternalPointerTag tag>
+  inline void InitExternalPointerField(
+      size_t offset, IsolateForSandbox isolate, Address value,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  template <ExternalPointerTagRange tag_range>
+  inline Address ReadExternalPointerField(size_t offset,
+                                          IsolateForSandbox isolate) const;
+  template <ExternalPointerTag tag>
+  inline void WriteExternalPointerField(size_t offset,
+                                        IsolateForSandbox isolate,
+                                        Address value);
+  inline void SetupLazilyInitializedExternalPointerField(size_t offset);
+  inline bool IsLazilyInitializedExternalPointerFieldInitialized(
+      size_t offset) const;
+  template <ExternalPointerTag tag>
+  inline void WriteLazilyInitializedExternalPointerField(
+      size_t offset, IsolateForSandbox isolate, Address value);
+
   template <class T>
   inline T ReadField(size_t offset) const
     requires(std::is_arithmetic_v<T> || std::is_enum_v<T> ||

@@ -1400,6 +1400,48 @@ HeapObjectLayout::operator Tagged<HeapObject>() const {
   return Tagged<HeapObject>(this);
 }
 
+template <ExternalPointerTag tag>
+void HeapObjectLayout::InitExternalPointerField(size_t offset,
+                                                IsolateForSandbox isolate,
+                                                Address value,
+                                                WriteBarrierMode mode) {
+  Tagged<HeapObject>(*this)->InitExternalPointerField<tag>(offset, isolate,
+                                                           value, mode);
+}
+
+template <ExternalPointerTagRange tag_range>
+Address HeapObjectLayout::ReadExternalPointerField(
+    size_t offset, IsolateForSandbox isolate) const {
+  return Tagged<HeapObject>(*this)->ReadExternalPointerField<tag_range>(
+      offset, isolate);
+}
+
+template <ExternalPointerTag tag>
+void HeapObjectLayout::WriteExternalPointerField(size_t offset,
+                                                 IsolateForSandbox isolate,
+                                                 Address value) {
+  Tagged<HeapObject>(*this)->WriteExternalPointerField<tag>(offset, isolate,
+                                                            value);
+}
+
+void HeapObjectLayout::SetupLazilyInitializedExternalPointerField(
+    size_t offset) {
+  Tagged<HeapObject>(*this)->SetupLazilyInitializedExternalPointerField(offset);
+}
+
+bool HeapObjectLayout::IsLazilyInitializedExternalPointerFieldInitialized(
+    size_t offset) const {
+  return Tagged<HeapObject>(*this)
+      ->IsLazilyInitializedExternalPointerFieldInitialized(offset);
+}
+
+template <ExternalPointerTag tag>
+void HeapObjectLayout::WriteLazilyInitializedExternalPointerField(
+    size_t offset, IsolateForSandbox isolate, Address value) {
+  Tagged<HeapObject>(*this)->WriteLazilyInitializedExternalPointerField<tag>(
+      offset, isolate, value);
+}
+
 MaybeObjectSlot HeapObject::RawMaybeWeakField(int byte_offset) const {
   return MaybeObjectSlot(field_address(byte_offset));
 }

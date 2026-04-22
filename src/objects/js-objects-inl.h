@@ -845,22 +845,22 @@ void* JSExternalObject::value(i::IsolateForSandbox isolate,
   // based on v8::External tag values); ExternalPointerMember's template
   // member variants require compile-time tags, so route through the
   // field_address-based free functions instead.
-  Address result =
-      ReadExternalPointerField(value_.storage_address(), isolate, tag_range);
+  Address result = ::v8::internal::ReadExternalPointerField(
+      value_.storage_address(), isolate, tag_range);
   return reinterpret_cast<void*>(result);
 }
 
 void JSExternalObject::init_value(i::IsolateForSandbox isolate,
                                   ExternalPointerTag tag, void* initial_value) {
-  InitExternalPointerField(reinterpret_cast<Address>(this),
-                           value_.storage_address(), isolate, tag,
-                           reinterpret_cast<Address>(initial_value));
+  ::v8::internal::InitExternalPointerField(
+      reinterpret_cast<Address>(this), value_.storage_address(), isolate, tag,
+      reinterpret_cast<Address>(initial_value));
 }
 
 void JSExternalObject::set_value(i::IsolateForSandbox isolate,
                                  ExternalPointerTag tag, void* value) {
-  WriteExternalPointerField(value_.storage_address(), isolate, tag,
-                            reinterpret_cast<Address>(value));
+  ::v8::internal::WriteExternalPointerField(
+      value_.storage_address(), isolate, tag, reinterpret_cast<Address>(value));
 }
 
 Tagged<String> JSStringIterator::string() const { return string_.load(); }

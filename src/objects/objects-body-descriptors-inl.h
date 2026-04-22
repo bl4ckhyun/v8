@@ -648,11 +648,13 @@ class JSFinalizationRegistry::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, JSObject::BodyDescriptor::kStartOffset,
-                    kNextDirtyOffset, v);
-    IterateCustomWeakPointer(obj, kNextDirtyOffset, v);
-    IterateJSObjectBodyImpl(map, obj, kNextDirtyOffset + kTaggedSize,
-                            object_size, v);
+    IteratePointers(obj, offsetof(JSFinalizationRegistry, properties_or_hash_),
+                    offsetof(JSFinalizationRegistry, next_dirty_), v);
+    IterateCustomWeakPointer(obj, offsetof(JSFinalizationRegistry, next_dirty_),
+                             v);
+    IterateJSObjectBodyImpl(
+        map, obj, offsetof(JSFinalizationRegistry, next_dirty_) + kTaggedSize,
+        object_size, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
