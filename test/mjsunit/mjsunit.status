@@ -607,8 +607,6 @@
   'regress/wasm/regress-1364036': [SKIP],
   'regress/wasm/regress-1446221': [SKIP],
   'regress/wasm/regress-1449208': [SKIP],
-  'regress/wasm/regress-crbug-1047368': [SKIP],
-  'regress/wasm/regress-crbug-1463219': [SKIP],
   'regress/wasm/regress-385256127': [SKIP],
   'wasm/imported-function-types': [SKIP],
   'wasm/loop-unrolling': [SKIP],
@@ -617,7 +615,6 @@
 
   # --experimental-wasm-type-reflection
   'regress/wasm/regress-crbug-1002388': [SKIP],
-  'regress/wasm/regress-crbug-1006631': [SKIP],
   'regress/wasm/regress-14695': [SKIP],
   'regress/wasm/regress-329130358': [SKIP],
   'regress/wasm/regress-336358915*': [SKIP],
@@ -627,7 +624,6 @@
   'regress/wasm/regress-390675703': [SKIP],
   'regress/wasm/regress-393632542': [SKIP],
   'wasm/call-ref': [SKIP],
-  'wasm/exceptions-type-reflection': [SKIP],
   'wasm/externref-table': [SKIP],
   'wasm/js-to-js': [SKIP],
   'wasm/gc-casts-subtypes': [SKIP],
@@ -2504,6 +2500,7 @@
   'regress/wasm/regress-379811148': [SKIP],
   'regress/wasm/regress-381120595': [SKIP],
   'regress/wasm/regress-384549252': [SKIP],
+  'regress/wasm/regress-384974501': [SKIP],
   'regress/wasm/regress-395214627': [SKIP],
   'regress/wasm/regress-398439335': [SKIP],
   'regress/wasm/regress-450694568': [SKIP],
