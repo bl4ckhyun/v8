@@ -789,12 +789,6 @@ Builtins::JSBuiltinStateFlags Builtins::GetJSBuiltinState(Builtin builtin) {
       // Various feature-dependent builtins.
       //
 
-#if V8_ENABLE_WEBASSEMBLY
-    case Builtin::kWebAssemblyFunctionPrototypeBind:
-      RETURN_FLAG_DEPENDENT_BUILTIN_STATE(
-          wasm::WasmEnabledFeatures::FromFlags().has_type_reflection());
-#endif  // V8_ENABLE_WEBASSEMBLY
-
     // --enable-experimental-regexp-engine
     case Builtin::kRegExpPrototypeLinearGetter:
       RETURN_FLAG_DEPENDENT_BUILTIN_STATE(
