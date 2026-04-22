@@ -4,6 +4,7 @@
 
 #include "src/debug/debug-scopes.h"
 
+#include <algorithm>
 #include <memory>
 
 #include "src/ast/ast.h"
@@ -930,13 +931,20 @@ bool ScopeIterator::VisitLocals(const Visitor& visitor, Mode mode,
           DCHECK(!generator_.is_null());
           Tagged<FixedArray> parameters_and_registers =
               generator_->parameters_and_registers();
-          DCHECK_GE(index, 0);
-          DCHECK_LT(static_cast<uint32_t>(index),
-                    parameters_and_registers->ulength().value());
+          CHECK_GE(index, 0);
+          CHECK_LT(static_cast<uint32_t>(index),
+                   parameters_and_registers->ulength().value());
           value = handle(parameters_and_registers->get(index), isolate_);
         } else if (var->IsReceiver()) {
           value = frame_inspector_->GetReceiver();
         } else {
+          JavaScriptFrame* frame = GetFrame();
+          if (frame->is_unoptimized()) {
+            CHECK_GE(index, 0);
+            CHECK_LT(static_cast<uint32_t>(index),
+                     std::max(frame->GetActualArgumentCount(),
+                              frame->ComputeParametersCount()));
+          }
           value = frame_inspector_->GetParameter(index);
         }
         break;
@@ -951,11 +959,16 @@ bool ScopeIterator::VisitLocals(const Visitor& visitor, Mode mode,
           int parameter_count =
               function_->shared()->scope_info()->ParameterCount();
           index += parameter_count;
-          DCHECK_GE(index, 0);
-          DCHECK_LT(static_cast<uint32_t>(index),
-                    parameters_and_registers->ulength().value());
+          CHECK_GE(index, 0);
+          CHECK_LT(static_cast<uint32_t>(index),
+                   parameters_and_registers->ulength().value());
           value = handle(parameters_and_registers->get(index), isolate_);
         } else {
+          JavaScriptFrame* frame = GetFrame();
+          if (frame->is_unoptimized()) {
+            CHECK_GE(index, 0);
+            CHECK_LT(index, frame->ComputeExpressionsCount());
+          }
           value = frame_inspector_->GetExpression(index);
           if (IsOptimizedOut(*value, isolate_)) {
             // We'll rematerialize this later.
