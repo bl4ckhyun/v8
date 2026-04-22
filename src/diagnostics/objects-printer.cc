@@ -2591,9 +2591,9 @@ void JSBoundFunction::JSBoundFunctionPrint(std::ostream& os) {
 
 void JSFunction::JSFunctionPrint(std::ostream& os) {
   Isolate* isolate = Isolate::Current();
-  JSObjectPrintHeader(os, *this, "Function");
+  JSObjectPrintHeader(os, this, "Function");
   os << "\n - function prototype: ";
-  if (IsJSFunctionWithPrototype(*this)) {
+  if (IsJSFunctionWithPrototype(this)) {
     if (has_prototype()) {
       os << Brief(prototype());
       if (map()->has_non_instance_prototype()) {
@@ -2652,8 +2652,8 @@ void JSFunction::JSFunctionPrint(std::ostream& os) {
     }
   }
 #if V8_ENABLE_WEBASSEMBLY
-  if (WasmExportedFunction::IsWasmExportedFunction(*this)) {
-    Tagged<WasmExportedFunction> function = Cast<WasmExportedFunction>(*this);
+  if (WasmExportedFunction::IsWasmExportedFunction(Tagged<HeapObject>(this))) {
+    Tagged<WasmExportedFunction> function = Cast<WasmExportedFunction>(this);
     Tagged<WasmExportedFunctionData> data =
         function->shared()->wasm_exported_function_data();
     os << "\n - Wasm instance data: " << Brief(data->instance_data());
@@ -2661,7 +2661,7 @@ void JSFunction::JSFunctionPrint(std::ostream& os) {
   }
 #endif  // V8_ENABLE_WEBASSEMBLY
   shared()->PrintSourceCode(os);
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
   os << " - feedback vector: ";
   if (!shared()->HasFeedbackMetadata()) {
     os << "feedback metadata is not available in SFI\n";
@@ -2673,6 +2673,15 @@ void JSFunction::JSFunctionPrint(std::ostream& os) {
   } else {
     os << "not available\n";
   }
+}
+
+void JSFunctionWithoutPrototype::JSFunctionWithoutPrototypePrint(
+    std::ostream& os) {
+  Cast<JSFunction>(this)->JSFunctionPrint(os);
+}
+
+void JSFunctionWithPrototype::JSFunctionWithPrototypePrint(std::ostream& os) {
+  Cast<JSFunction>(this)->JSFunctionPrint(os);
 }
 
 void SharedFunctionInfo::PrintSourceCode(std::ostream& os) {

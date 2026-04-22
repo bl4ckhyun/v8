@@ -5409,9 +5409,9 @@ Handle<JSFunction> Factory::JSFunctionBuilder::BuildRaw(
     // code->parameter_count() here instead, but not all Code objects know
     // their parameter count yet.
     function_handle->clear_dispatch_handle();
-    HeapObject::AllocateAndInstallJSDispatchHandle(
-        direct_handle(function_handle), JSFunction::kDispatchHandleOffset,
-        isolate, sfi_->internal_formal_parameter_count_with_receiver(), code);
+    JSFunction::AllocateDispatchHandle(
+        function_handle, isolate,
+        sfi_->internal_formal_parameter_count_with_receiver(), code);
   } else {
     DCHECK_NE(function_handle->dispatch_handle(), kNullJSDispatchHandle);
   }

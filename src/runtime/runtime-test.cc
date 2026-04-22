@@ -1143,7 +1143,7 @@ RUNTIME_FUNCTION(Runtime_GetAbstractModuleSource) {
   DisallowGarbageCollection no_gc;
   Tagged<JSFunction> abstract_module_source_function =
       isolate->native_context()->abstract_module_source_function();
-  CHECK(IsJSFunction(*abstract_module_source_function));
+  CHECK(IsJSFunction(abstract_module_source_function));
   return abstract_module_source_function;
 }
 

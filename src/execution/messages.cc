@@ -324,7 +324,7 @@ MaybeDirectHandle<JSAny> ErrorUtils::FormatStackTrace(
       DirectHandle<Object> prepare_stack_trace;
       ASSIGN_RETURN_ON_EXCEPTION(
           isolate, prepare_stack_trace,
-          JSFunction::GetProperty(isolate, global_error, "prepareStackTrace"));
+          JSReceiver::GetProperty(isolate, global_error, "prepareStackTrace"));
 
       if (IsJSFunction(*prepare_stack_trace)) {
         PrepareStackTraceScope scope(isolate);

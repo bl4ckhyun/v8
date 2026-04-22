@@ -598,6 +598,10 @@ int JSObjectLayout::GetEmbedderFieldCount() const {
   return Cast<JSObject>(this)->GetEmbedderFieldCount();
 }
 
+Tagged<PropertyArray> JSObjectLayout::property_array() const {
+  return Cast<JSObject>(this)->property_array();
+}
+
 Tagged<FixedArrayBase> JSObjectLayout::elements() const {
   return elements_.load();
 }
@@ -618,6 +622,10 @@ void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
 
 bool JSReceiverLayout::HasFastProperties() const {
   return Cast<JSReceiver>(this)->HasFastProperties();
+}
+
+void JSReceiverLayout::initialize_properties(Isolate* isolate) {
+  Cast<JSReceiver>(this)->initialize_properties(isolate);
 }
 
 std::optional<Tagged<NativeContext>> JSReceiverLayout::GetCreationContext()

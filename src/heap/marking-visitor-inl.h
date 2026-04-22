@@ -402,9 +402,7 @@ size_t MarkingVisitorBase<ConcreteVisitor>::VisitJSFunction(
   // We're not flushing the Code, so mark it as alive.
   // Here we can see JSFunctions that aren't fully initialized (e.g. during
   // deserialization) so we need to check for the null handle.
-  JSDispatchHandle handle(
-      js_function->Relaxed_ReadField<JSDispatchHandle::underlying_type>(
-          JSFunction::kDispatchHandleOffset));
+  JSDispatchHandle handle(js_function->dispatch_handle());
   if (handle != kNullJSDispatchHandle) {
     // See `ProcessStrongHeapObject()` for synchronization details.
     Tagged<Code> code = heap_->isolate()->js_dispatch_table().GetCode(handle);
@@ -428,7 +426,7 @@ size_t MarkingVisitorBase<ConcreteVisitor>::VisitJSFunction(
 
     // The SFI itself is synchronized via acq/rel pair here.
     Tagged<Object> maybe_sfi =
-        ACQUIRE_READ_FIELD(*js_function, JSFunction::kSharedFunctionInfoOffset);
+        js_function->shared_function_info_.Acquire_Load();
     Tagged<SharedFunctionInfo> sfi;
     if (!TryCast(maybe_sfi, &sfi)) {
       DCHECK_EQ(maybe_sfi,

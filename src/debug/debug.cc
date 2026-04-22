@@ -2065,7 +2065,7 @@ class SharedFunctionInfoFinder {
         target_position_(target_position) {}
 
   void NewCandidate(Tagged<SharedFunctionInfo> shared,
-                    Tagged<JSFunction> closure = JSFunction()) {
+                    Tagged<JSFunction> closure = {}) {
     if (!shared->IsSubjectToDebugging()) return;
     int start_position = shared->function_token_position();
     if (start_position == kNoSourcePosition) {

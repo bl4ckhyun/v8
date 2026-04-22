@@ -202,6 +202,7 @@ class JSObjectLayout;
 class JSObject;
 class JSObjectWithEmbedderSlotsLayout;
 class JSObjectWithEmbedderSlots;
+class JSFunctionOrBoundFunctionOrWrappedFunction;
 class FixedArrayBase;
 class FixedArray;
 class FixedDoubleArray;

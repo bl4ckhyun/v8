@@ -2681,7 +2681,7 @@ Tagged<JSFunction> V8HeapExplorer::GetConstructor(Isolate* isolate,
   MaybeDirectHandle<JSFunction> maybe_constructor =
       JSReceiver::GetConstructor(isolate, direct_handle(receiver, isolate));
 
-  if (maybe_constructor.is_null()) return JSFunction();
+  if (maybe_constructor.is_null()) return {};
 
   return *maybe_constructor.ToHandleChecked();
 }

@@ -60,6 +60,7 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   inline void set_raw_properties_or_hash(
       Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline bool HasFastProperties() const;
+  inline void initialize_properties(Isolate* isolate);
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
       Isolate* isolate) const;
@@ -412,6 +413,7 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   DECL_VERIFIER(JSObject)
   inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
   inline int GetEmbedderFieldCount() const;
+  inline Tagged<PropertyArray> property_array() const;
   inline Tagged<FixedArrayBase> elements() const;
   inline void set_elements(Tagged<FixedArrayBase> value,
                            WriteBarrierMode mode = UPDATE_WRITE_BARRIER);

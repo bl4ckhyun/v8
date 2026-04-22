@@ -1528,9 +1528,9 @@ void ExternalString::ExternalStringVerify(Isolate* isolate) {
 }
 
 void JSBoundFunction::JSBoundFunctionVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSBoundFunctionVerify(*this, isolate);
-  CHECK(IsCallable(*this));
-  CHECK_EQ(IsConstructor(*this), IsConstructor(bound_target_function()));
+  JSObjectVerify(isolate);
+  CHECK(IsCallable(this));
+  CHECK_EQ(IsConstructor(this), IsConstructor(bound_target_function()));
 }
 
 void JSFunction::JSFunctionVerify(Isolate* isolate) {
@@ -1543,17 +1543,16 @@ void JSFunction::JSFunctionVerify(Isolate* isolate) {
   static_assert(JSFunctionWithoutPrototype::kHeaderSize == 7 * kTaggedSize);
   static_assert(JSFunctionWithPrototype::kHeaderSize == 8 * kTaggedSize);
 
-  JSFunctionOrBoundFunctionOrWrappedFunctionVerify(isolate);
-  CHECK(IsJSFunction(*this));
-  Object::VerifyPointer(isolate, shared(isolate));
-  CHECK(IsSharedFunctionInfo(shared(isolate)));
-  Object::VerifyPointer(isolate, context(isolate, kRelaxedLoad));
-  CHECK(IsContext(context(isolate, kRelaxedLoad)));
-  Object::VerifyPointer(isolate, raw_feedback_cell(isolate));
-  CHECK(IsFeedbackCell(raw_feedback_cell(isolate)));
+  CHECK(IsJSFunction(this));
+  Object::VerifyPointer(isolate, shared());
+  CHECK(IsSharedFunctionInfo(shared()));
+  Object::VerifyPointer(isolate, context(kRelaxedLoad));
+  CHECK(IsContext(context(kRelaxedLoad)));
+  Object::VerifyPointer(isolate, raw_feedback_cell());
+  CHECK(IsFeedbackCell(raw_feedback_cell()));
   Object::VerifyPointer(isolate, code(isolate));
   CHECK(IsCode(code(isolate)));
-  CHECK(map(isolate)->is_callable());
+  CHECK(map()->is_callable());
   // Ensure that the function's meta map belongs to the same native context.
   CHECK_EQ(map()->map()->native_context_or_null(), native_context());
 
@@ -1597,9 +1596,10 @@ void JSFunction::JSFunctionVerify(Isolate* isolate) {
   DirectHandle<JSFunction> function(*this, isolate);
   LookupIterator it(isolate, function, isolate->factory()->prototype_string(),
                     LookupIterator::OWN_SKIP_INTERCEPTOR);
-  if (IsJSFunctionWithPrototype(*this)) {
-    VerifyObjectField(isolate,
-                      JSFunctionWithPrototype::kPrototypeOrInitialMapOffset);
+  if (IsJSFunctionWithPrototype(this)) {
+    Object::VerifyPointer(
+        isolate, Cast<JSFunctionWithPrototype>(this)->prototype_or_initial_map(
+                     kAcquireLoad));
   }
 
   if (has_prototype_property()) {
@@ -1617,9 +1617,18 @@ void JSFunction::JSFunctionVerify(Isolate* isolate) {
                     shared()->internal_formal_parameter_count_with_receiver()));
 }
 
+void JSFunctionWithoutPrototype::JSFunctionWithoutPrototypeVerify(
+    Isolate* isolate) {
+  Cast<JSFunction>(this)->JSFunctionVerify(isolate);
+}
+
+void JSFunctionWithPrototype::JSFunctionWithPrototypeVerify(Isolate* isolate) {
+  Cast<JSFunction>(this)->JSFunctionVerify(isolate);
+}
+
 void JSWrappedFunction::JSWrappedFunctionVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSWrappedFunctionVerify(*this, isolate);
-  CHECK(IsCallable(*this));
+  JSObjectVerify(isolate);
+  CHECK(IsCallable(this));
   // Ensure that the function's meta map belongs to the same native context.
   CHECK_EQ(map()->map()->native_context_or_null(), context());
 }

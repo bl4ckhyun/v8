@@ -1071,8 +1071,6 @@ class WasmExportedFunction : public JSFunction {
   // Return a null-terminated string with the debug name in the form
   // 'js-to-wasm:<sig>'.
   static std::unique_ptr<char[]> GetDebugName(const wasm::CanonicalSig* sig);
-
-  OBJECT_CONSTRUCTORS(WasmExportedFunction, JSFunction);
 };
 
 // An external function exposed to Wasm via the C/C++ API.
@@ -1092,8 +1090,6 @@ class WasmCapiFunction : public JSFunction {
   // serialized signature stored within this C-API function object.
   bool MatchesSignature(
       wasm::CanonicalTypeIndex other_canonical_sig_index) const;
-
-  OBJECT_CONSTRUCTORS(WasmCapiFunction, JSFunction);
 };
 
 // Any external function that can be imported/exported in modules. This abstract
@@ -1105,8 +1101,6 @@ class WasmExternalFunction : public JSFunction {
   static bool IsWasmExternalFunction(Tagged<Object> object);
 
   inline Tagged<WasmFuncRef> func_ref() const;
-
-  OBJECT_CONSTRUCTORS(WasmExternalFunction, JSFunction);
 };
 
 class WasmFunctionData

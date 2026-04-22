@@ -1369,6 +1369,20 @@ JSDispatchHandle HeapObject::AllocateAndInstallJSDispatchHandle(
   return handle;
 }
 
+template <typename ObjectType>
+JSDispatchHandle JSDispatchHandleMember::AllocateAndInstall(
+    DirectHandle<ObjectType> host, Isolate* isolate, uint16_t parameter_count,
+    DirectHandle<Code> code, WriteBarrierMode mode) {
+  JSDispatchTable::Space* space =
+      isolate->GetJSDispatchTableSpaceFor(reinterpret_cast<Address>(&storage_));
+  JSDispatchHandle handle =
+      isolate->factory()->NewJSDispatchHandle(parameter_count, code, space);
+  storage_.store(static_cast<uint32_t>(handle.value()),
+                 std::memory_order_release);
+  CONDITIONAL_JS_DISPATCH_HANDLE_WRITE_BARRIER(*host, handle, mode);
+  return handle;
+}
+
 ObjectSlot HeapObject::RawField(int byte_offset) const {
   return ObjectSlot(field_address(byte_offset));
 }

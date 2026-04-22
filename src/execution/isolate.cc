@@ -1033,7 +1033,8 @@ class CallSiteBuilder {
 
     // We store the offset of the promise into the element function's
     // hash field for element callbacks.
-    int promise_index = Smi::ToInt(element_function->GetIdentityHash()) - 1;
+    int promise_index =
+        Smi::ToInt(Cast<JSReceiver>(element_function)->GetIdentityHash()) - 1;
     AppendFrame(receiver, combinator, code, promise_index, flags);
   }
 
