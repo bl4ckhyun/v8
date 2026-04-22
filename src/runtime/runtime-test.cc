@@ -2020,6 +2020,9 @@ RUNTIME_FUNCTION(Runtime_HeapObjectVerify) {
   DirectHandle<Object> object = args.at(0);
 #ifdef VERIFY_HEAP
   Object::ObjectVerify(*object, isolate);
+  if (IsHeapObject(*object)) {
+    Cast<HeapObject>(*object)->map()->MapVerify(isolate);
+  }
 #else
   CHECK(IsObject(*object));
   if (IsHeapObject(*object)) {

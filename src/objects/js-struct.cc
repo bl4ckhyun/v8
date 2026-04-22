@@ -177,7 +177,8 @@ MaybeHandle<T> GetSpecialSlotValue(Isolate* isolate, Tagged<Map> instance_map,
 DirectHandle<Map> JSSharedStruct::CreateInstanceMap(
     Isolate* isolate, const base::Vector<const DirectHandle<Name>> field_names,
     const std::set<uint32_t>& element_names,
-    MaybeDirectHandle<String> maybe_registry_key) {
+    MaybeDirectHandle<String> maybe_registry_key,
+    bool has_interesting_properties) {
   auto* factory = isolate->factory();
 
   int num_fields = static_cast<int>(field_names.size());
@@ -268,6 +269,10 @@ DirectHandle<Map> JSSharedStruct::CreateInstanceMap(
   DirectHandle<Map> instance_map = factory->NewContextlessMap(
       JS_SHARED_STRUCT_TYPE, instance_size, DICTIONARY_ELEMENTS,
       in_object_properties, AllocationType::kSharedMap);
+
+  if (has_interesting_properties) {
+    instance_map->set_may_have_interesting_properties(true);
+  }
 
   // Prepare the enum cache if necessary.
   if (num_descriptors == 0) {
@@ -462,7 +467,7 @@ MaybeDirectHandle<Map> SharedStructTypeRegistry::CheckIfEntryMatches(
 MaybeDirectHandle<Map> SharedStructTypeRegistry::RegisterNoThrow(
     Isolate* isolate, Handle<String> key,
     const base::Vector<const DirectHandle<Name>> field_names,
-    const std::set<uint32_t>& element_names) {
+    const std::set<uint32_t>& element_names, bool has_interesting_properties) {
   key = isolate->factory()->InternalizeString(key);
 
   // To avoid deadlock with iteration during GC and modifying the table, no GC
@@ -479,7 +484,7 @@ MaybeDirectHandle<Map> SharedStructTypeRegistry::RegisterNoThrow(
 
   // We have a likely miss. Create a new instance map outside of the lock.
   DirectHandle<Map> map = JSSharedStruct::CreateInstanceMap(
-      isolate, field_names, element_names, key);
+      isolate, field_names, element_names, key, has_interesting_properties);
 
   // Relookup to see if it's in fact a miss.
   NoGarbageCollectionMutexGuard data_guard(&data_mutex_);
@@ -503,9 +508,9 @@ MaybeDirectHandle<Map> SharedStructTypeRegistry::RegisterNoThrow(
 MaybeDirectHandle<Map> SharedStructTypeRegistry::Register(
     Isolate* isolate, Handle<String> key,
     const base::Vector<const DirectHandle<Name>> field_names,
-    const std::set<uint32_t>& element_names) {
-  MaybeDirectHandle<Map> canonical_map =
-      RegisterNoThrow(isolate, key, field_names, element_names);
+    const std::set<uint32_t>& element_names, bool has_interesting_properties) {
+  MaybeDirectHandle<Map> canonical_map = RegisterNoThrow(
+      isolate, key, field_names, element_names, has_interesting_properties);
   if (canonical_map.is_null()) {
     THROW_NEW_ERROR(
         isolate,
