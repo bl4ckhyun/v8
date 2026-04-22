@@ -756,8 +756,9 @@ DirectHandle<String> Isolate::StackTraceString() {
   }
 }
 
-void Isolate::PushStackTraceAndDie(void* ptr1, void* ptr2, void* ptr3,
-                                   void* ptr4, void* ptr5, void* ptr6) {
+[[noreturn]] void Isolate::PushStackTraceAndDie(void* ptr1, void* ptr2,
+                                                void* ptr3, void* ptr4,
+                                                void* ptr5, void* ptr6) {
   // Constructing the stack trace requires allocations and handles and is
   // therefore only supported on the main thread.
   CHECK(LocalHeap::Current()->is_main_thread());
@@ -776,8 +777,9 @@ void Isolate::PushStackTraceAndDie(void* ptr1, void* ptr2, void* ptr3,
   base::OS::Abort();
 }
 
-void Isolate::PushParamsAndDie(void* ptr1, void* ptr2, void* ptr3, void* ptr4,
-                               void* ptr5, void* ptr6) {
+[[noreturn]] void Isolate::PushParamsAndDie(void* ptr1, void* ptr2, void* ptr3,
+                                            void* ptr4, void* ptr5,
+                                            void* ptr6) {
   StackTraceFailureMessage message(
       this, StackTraceFailureMessage::kDontIncludeStackTrace,
       {ptr1, ptr2, ptr3, ptr4, ptr5, ptr6});
