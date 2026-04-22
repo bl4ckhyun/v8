@@ -2629,7 +2629,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_REG_EXP_STRING_ITERATOR_TYPE:
       return sizeof(JSRegExpStringIterator);
     case JS_MESSAGE_OBJECT_TYPE:
-      return JSMessageObject::kHeaderSize;
+      return sizeof(JSMessageObject);
     case JS_EXTERNAL_OBJECT_TYPE:
       return sizeof(JSExternalObject);
     case JS_SHADOW_REALM_TYPE:

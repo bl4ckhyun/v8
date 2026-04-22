@@ -57,6 +57,8 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // Delegate trampolines into the legacy JSReceiver class. These let ported
   // subclasses and their callers keep using method-call syntax without
   // threading Cast<JSReceiver>(...) through every callsite during migration.
+  inline void set_raw_properties_or_hash(
+      Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline bool HasFastProperties() const;
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
@@ -411,6 +413,9 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
   inline int GetEmbedderFieldCount() const;
   inline Tagged<FixedArrayBase> elements() const;
+  inline void set_elements(Tagged<FixedArrayBase> value,
+                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline void initialize_elements();
 
  public:
   TaggedMember<FixedArrayBase> elements_;
@@ -1427,8 +1432,7 @@ class JSDate : public TorqueGeneratedJSDate<JSDate, JSObject> {
 // error messages are not directly accessible from JavaScript to
 // prevent leaking information to user code called during error
 // formatting.
-class JSMessageObject
-    : public TorqueGeneratedJSMessageObject<JSMessageObject, JSObject> {
+V8_OBJECT class JSMessageObject : public JSObjectLayout {
  public:
   // [type]: the type of error message.
   inline MessageTemplate type() const;
@@ -1463,17 +1467,26 @@ class JSMessageObject
   // EnsureSourcePositionsAvailable must have been called before calling this.
   DirectHandle<String> GetSourceLine() const;
 
-  DECL_INT_ACCESSORS(error_level)
+  inline Tagged<Object> argument() const;
+  inline void set_argument(Tagged<Object> value,
+                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<Script> script() const;
+  inline void set_script(Tagged<Script> value,
+                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<UnionOf<StackTraceInfo, Hole>> stack_trace() const;
+  inline void set_stack_trace(Tagged<UnionOf<StackTraceInfo, Hole>> value,
+                              WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline int error_level() const;
+  inline void set_error_level(int value);
 
   // Dispatched behavior.
   DECL_PRINTER(JSMessageObject)
+  DECL_VERIFIER(JSMessageObject)
 
-  // TODO(v8:8989): [torque] Support marker constants.
-  static const int kPointerFieldsEndOffset = kStartPositionOffset;
-
-  using BodyDescriptor =
-      FixedBodyDescriptor<HeapObject::kMapOffset, kPointerFieldsEndOffset,
-                          kHeaderSize>;
+  class BodyDescriptor;
 
  private:
   friend class Factory;
@@ -1484,25 +1497,38 @@ class JSMessageObject
 
   // [shared]: optional SharedFunctionInfo that can be used to reconstruct the
   // source position if not available when the message was generated.
-  DECL_ACCESSORS(shared_info, Tagged<Object>)
+  inline Tagged<Object> shared_info() const;
+  inline void set_shared_info(Tagged<Object> value,
+                              WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   // [bytecode_offset]: optional offset using along with |shared| to generation
   // source positions.
-  DECL_ACCESSORS(bytecode_offset, Tagged<Smi>)
+  inline Tagged<Smi> bytecode_offset() const;
+  inline void set_bytecode_offset(Tagged<Smi> value);
 
   // [start_position]: the start position in the script for the error message.
-  DECL_INT_ACCESSORS(start_position)
+  inline int start_position() const;
+  inline void set_start_position(int value);
 
   // [end_position]: the end position in the script for the error message.
-  DECL_INT_ACCESSORS(end_position)
+  inline int end_position() const;
+  inline void set_end_position(int value);
 
-  DECL_INT_ACCESSORS(raw_type)
+  inline int raw_type() const;
+  inline void set_raw_type(int value);
 
-  // Hide generated accessors; custom accessors are named "raw_type".
-  DECL_INT_ACCESSORS(message_type)
-
-  TQ_OBJECT_CONSTRUCTORS(JSMessageObject)
-};
+ public:
+  TaggedMember<Smi> message_type_;
+  TaggedMember<Object> argument_;
+  TaggedMember<Script> script_;
+  TaggedMember<UnionOf<StackTraceInfo, Hole>> stack_trace_;
+  TaggedMember<UnionOf<SharedFunctionInfo, Smi>> shared_info_;
+  // Raw data fields below (treated as non-pointers by BodyDescriptor).
+  TaggedMember<Smi> bytecode_offset_;
+  TaggedMember<Smi> start_position_;
+  TaggedMember<Smi> end_position_;
+  TaggedMember<Smi> error_level_;
+} V8_OBJECT_END;
 
 // The [Async-from-Sync Iterator] object
 // (https://tc39.es/proposal-async-iteration/#sec-async-from-sync-iterator-objects)

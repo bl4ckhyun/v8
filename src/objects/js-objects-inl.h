@@ -602,6 +602,20 @@ Tagged<FixedArrayBase> JSObjectLayout::elements() const {
   return elements_.load();
 }
 
+void JSObjectLayout::set_elements(Tagged<FixedArrayBase> value,
+                                  WriteBarrierMode mode) {
+  elements_.store(this, value, mode);
+}
+
+void JSObjectLayout::initialize_elements() {
+  Cast<JSObject>(this)->initialize_elements();
+}
+
+void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
+                                                  WriteBarrierMode mode) {
+  Cast<JSReceiver>(this)->set_raw_properties_or_hash(value, mode);
+}
+
 bool JSReceiverLayout::HasFastProperties() const {
   return Cast<JSReceiver>(this)->HasFastProperties();
 }
@@ -832,12 +846,63 @@ void JSMessageObject::set_type(MessageTemplate value) {
   set_raw_type(static_cast<int>(value));
 }
 
-ACCESSORS(JSMessageObject, shared_info, Tagged<Object>, kSharedInfoOffset)
-ACCESSORS(JSMessageObject, bytecode_offset, Tagged<Smi>, kBytecodeOffsetOffset)
-SMI_ACCESSORS(JSMessageObject, start_position, kStartPositionOffset)
-SMI_ACCESSORS(JSMessageObject, end_position, kEndPositionOffset)
-SMI_ACCESSORS(JSMessageObject, error_level, kErrorLevelOffset)
-SMI_ACCESSORS(JSMessageObject, raw_type, kMessageTypeOffset)
+Tagged<Object> JSMessageObject::shared_info() const {
+  return shared_info_.load();
+}
+void JSMessageObject::set_shared_info(Tagged<Object> value,
+                                      WriteBarrierMode mode) {
+  shared_info_.store(this, Cast<UnionOf<SharedFunctionInfo, Smi>>(value), mode);
+}
+
+Tagged<Smi> JSMessageObject::bytecode_offset() const {
+  return bytecode_offset_.load();
+}
+void JSMessageObject::set_bytecode_offset(Tagged<Smi> value) {
+  bytecode_offset_.store(this, value);
+}
+
+int JSMessageObject::start_position() const {
+  return start_position_.load().value();
+}
+void JSMessageObject::set_start_position(int value) {
+  start_position_.store(this, Smi::FromInt(value));
+}
+
+int JSMessageObject::end_position() const {
+  return end_position_.load().value();
+}
+void JSMessageObject::set_end_position(int value) {
+  end_position_.store(this, Smi::FromInt(value));
+}
+
+int JSMessageObject::error_level() const { return error_level_.load().value(); }
+void JSMessageObject::set_error_level(int value) {
+  error_level_.store(this, Smi::FromInt(value));
+}
+
+int JSMessageObject::raw_type() const { return message_type_.load().value(); }
+void JSMessageObject::set_raw_type(int value) {
+  message_type_.store(this, Smi::FromInt(value));
+}
+
+Tagged<Object> JSMessageObject::argument() const { return argument_.load(); }
+void JSMessageObject::set_argument(Tagged<Object> value,
+                                   WriteBarrierMode mode) {
+  argument_.store(this, value, mode);
+}
+
+Tagged<Script> JSMessageObject::script() const { return script_.load(); }
+void JSMessageObject::set_script(Tagged<Script> value, WriteBarrierMode mode) {
+  script_.store(this, value, mode);
+}
+
+Tagged<UnionOf<StackTraceInfo, Hole>> JSMessageObject::stack_trace() const {
+  return stack_trace_.load();
+}
+void JSMessageObject::set_stack_trace(
+    Tagged<UnionOf<StackTraceInfo, Hole>> value, WriteBarrierMode mode) {
+  stack_trace_.store(this, value, mode);
+}
 
 DEF_GETTER(JSObject, GetElementsKind, ElementsKind) {
   ElementsKind kind = map(cage_base)->elements_kind();

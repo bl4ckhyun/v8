@@ -855,7 +855,7 @@ bool Heap::CreateLateReadOnlyJSReceiverMaps() {
     // of primitive values and exist only for the purpose of passing the data
     // across V8 Api. They are not supposed to be leaked to user JS code
     // except from d8 tests and they are not proper JSReceivers.
-    ALLOCATE_MAP(JS_MESSAGE_OBJECT_TYPE, JSMessageObject::kHeaderSize,
+    ALLOCATE_MAP(JS_MESSAGE_OBJECT_TYPE, sizeof(JSMessageObject),
                  message_object)
     roots.message_object_map()->SetEnumLength(0);
     roots.message_object_map()->set_is_extensible(false);

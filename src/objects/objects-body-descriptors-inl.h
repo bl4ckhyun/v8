@@ -459,6 +459,12 @@ class JSObject::FastBodyDescriptor final : public BodyDescriptorBase {
   }
 };
 
+class JSMessageObject::BodyDescriptor final
+    : public FixedBodyDescriptor<offsetof(JSMessageObject, properties_or_hash_),
+                                 offsetof(JSMessageObject, bytecode_offset_) +
+                                     kTaggedSize,
+                                 sizeof(JSMessageObject)> {};
+
 class JSDate::BodyDescriptor final : public BodyDescriptorBase {
  public:
   template <typename ObjectVisitor>

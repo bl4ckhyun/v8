@@ -2503,6 +2503,11 @@ void SwissNameDictionary::SwissNameDictionaryVerify(Isolate* isolate,
   }
 }
 
+void JSMessageObject::JSMessageObjectVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsScript(script()));
+}
+
 void JSRegExp::JSRegExpVerify(Isolate* isolate) {
   Tagged<Object> flags = TaggedField<Object>::load(*this, kFlagsOffset);
   CHECK(IsSmi(flags) || IsUndefined(flags));

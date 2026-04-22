@@ -148,6 +148,7 @@ extern class JSPrimitiveWrapper extends JSCustomElementsObject {
   value: JSAny;
 }
 
+@cppObjectLayoutDefinition
 extern class JSMessageObject extends JSObject {
   // Tagged fields.
   message_type: Smi;

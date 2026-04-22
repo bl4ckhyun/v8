@@ -2205,7 +2205,7 @@ void JSPrimitiveWrapper::JSPrimitiveWrapperPrint(std::ostream& os) {
 }
 
 void JSMessageObject::JSMessageObjectPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSMessageObject");
+  JSObjectPrintHeader(os, this, "JSMessageObject");
   os << "\n - type: " << static_cast<int>(type());
   os << "\n - arguments: " << Brief(argument());
   os << "\n - script: " << Brief(script());
@@ -2220,7 +2220,7 @@ void JSMessageObject::JSMessageObjectPrint(std::ostream& os) {
   os << "\n - start_position: " << start_position();
   os << "\n - end_position: " << end_position();
   os << "\n - error_level: " << error_level();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void String::StringPrint(std::ostream& os) {
