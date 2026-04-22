@@ -614,8 +614,12 @@ RUNTIME_FUNCTION(Runtime_ExhaustInterruptBudget) {
 
   if (!function->has_feedback_vector()) {
     IsCompiledScope is_compiled_scope;
-    EnsureCompiledAndFeedbackVector(isolate, function, &is_compiled_scope);
+    CHECK_UNLESS_FUZZING(
+        EnsureCompiledAndFeedbackVector(isolate, function, &is_compiled_scope));
   }
+
+  CHECK_UNLESS_FUZZING(function->has_feedback_vector());
+  CHECK_UNLESS_FUZZING(function->shared()->HasBytecodeArray());
 
   function->SetInterruptBudget(isolate, BudgetModification::kReset);
   function->raw_feedback_cell()->set_interrupt_budget(0);
