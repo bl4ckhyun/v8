@@ -41,7 +41,6 @@ template <class Next>
 class WasmInJSInliningReducer : public Next {
  public:
   TURBOSHAFT_REDUCER_BOILERPLATE(WasmInJSInlining)
-  const bool has_wasm_in_js_inlining_reducer = true;
 
   // Strip ProcessWasmArgumentOp, returning just the unwrapped value so the op
   // never survives to the instruction selector. The eager frame state is
@@ -151,7 +150,7 @@ class WasmInJSInliningReducer : public Next {
       // guards that eagerly deopt if we fall off the conversion fastpath, e.g.,
       // not Smi or HeapNumber. In particular, we do not call builtins that
       // could transitively cause a lazy deopt via valueOf/Symbol.toPrimitive.
-      V<Any> result = builder.BuildJSToWasmWrapperImpl(
+      V<Any> result = builder.BuildJSToWasmWrapper(
           js_closure, js_context, arguments, continuation_frame_state,
           descriptor->lazy_deopt_on_throw, caller_frame_state);
       // The wrapper inlining will always succeed and produce a JS value, except
@@ -267,7 +266,7 @@ class WasmInJsInliningInterface {
     __ set_current_wasm_source_position(SourcePosition::Unknown());
   }
 
-  WasmBodyInliningResult Result() { return result_; }
+  WasmBodyInliningResult result() const { return result_; }
 
   void OnFirstError(FullDecoder*) {}
 
@@ -752,22 +751,20 @@ class WasmInJsInliningInterface {
     size_t return_count = decoder->sig_->return_count();
 
     if (return_count == 1) {
-      V<Any> return_value =
+      result_.result =
           decoder
               ->stack_value(static_cast<uint32_t>(return_count + drop_values))
               ->op;
-      result_ = WasmBodyInliningResult::SuccessWithValue(return_value);
     } else if (return_count == 0) {
-      // A void function doesn't produce a result. The operation that replaces
-      // the call will have no outputs. The surrounding JS-to-Wasm wrapper
-      // (outside this inlined Wasm body) is responsible for producing the
-      // JavaScript `undefined` value if the caller expects one.
-      result_ = WasmBodyInliningResult::SuccessVoid();
+      // A void function doesn't produce a result. The surrounding JS-to-Wasm
+      // wrapper (outside this inlined Wasm body) is responsible for producing
+      // the JavaScript `undefined` value.
     } else {
       // We currently don't support wrapper inlining with multi-value returns,
       // so this should never be hit.
       UNREACHABLE();
     }
+    result_.success = true;
   }
   void Select(FullDecoder* decoder, const Value& cond, const Value& fval,
               const Value& tval, Value* result) {
@@ -867,7 +864,7 @@ class WasmInJsInliningInterface {
     // `TurboshaftGraphBuildingInterface` for Wasm-in-Wasm inlining. That is,
     // have a `return_block_` and `return_phis_` passed in by the caller
     // and terminator instructions adding phi values and jumping to said block.
-    result_ = WasmBodyInliningResult::SuccessVoid();
+    result_.success = true;
   }
   void AssertNullTypecheck(FullDecoder* decoder, const Value& obj,
                            Value* result) {
@@ -1492,7 +1489,6 @@ class WasmInJsInliningInterface {
   WasmBodyInliningResult result_ = WasmBodyInliningResult::Failed();
 };
 
-
 template <class Next>
 WasmBodyInliningResult WasmInJSInliningReducer<Next>::TryInlineWasmBody(
     const WasmInlinedFunctionData& inlined_data,
@@ -1613,7 +1609,7 @@ WasmBodyInliningResult WasmInJSInliningReducer<Next>::TryInlineWasmBody(
       __ Bind(inlinee_body_and_rest);
       return WasmBodyInliningResult::Failed();
     }
-    DCHECK(can_inline_decoder.interface().Result().IsSuccess());
+    DCHECK(can_inline_decoder.interface().result().success);
   }
 
   // Second pass: Actually emit the inlinee instructions now.
@@ -1624,9 +1620,9 @@ WasmBodyInliningResult WasmInJSInliningReducer<Next>::TryInlineWasmBody(
                            frame_state, inlining_id);
   emitting_decoder.Decode();
   DCHECK(emitting_decoder.ok());
-  DCHECK(emitting_decoder.interface().Result().IsSuccess());
+  DCHECK(emitting_decoder.interface().result().success);
   TRACE("- inlining Wasm function");
-  return emitting_decoder.interface().Result();
+  return emitting_decoder.interface().result();
 }
 
 template <class Next>

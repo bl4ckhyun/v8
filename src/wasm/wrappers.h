@@ -25,27 +25,12 @@ struct WasmInlinedFunctionData {
 };
 
 struct WasmBodyInliningResult {
-  enum class Type {
-    kSuccessWithValue,  // Inlining succeeded and produced a value.
-    kSuccessVoid,       // Inlining succeeded for a void function (no value).
-    kFailed             // Inlining failed, e.g., because of bailing out due to
-                        // unsupported operations in the inlinee.
-  };
+  bool success = false;
+  OptionalV<Any> result = OptionalV<Any>::Nullopt();
 
-  Type type = Type::kFailed;
-  OptionalV<Any> value = OptionalV<Any>::Nullopt();
-
-  static WasmBodyInliningResult SuccessWithValue(V<Any> result_value) {
-    return {Type::kSuccessWithValue, result_value};
-  }
-  static WasmBodyInliningResult SuccessVoid() {
-    return {Type::kSuccessVoid, OptionalV<Any>::Nullopt()};
-  }
-  static WasmBodyInliningResult Failed() {
-    return {Type::kFailed, OptionalV<Any>::Nullopt()};
-  }
-  bool IsSuccess() const { return type != Type::kFailed; }
+  static WasmBodyInliningResult Failed() { return {}; }
 };
+
 }  // namespace v8::internal::compiler::turboshaft
 
 namespace v8::internal::wasm {
@@ -197,18 +182,18 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
                                 OptionalV<FrameState> frame_state,
                                 compiler::LazyDeoptOnThrow lazy_deopt_on_throw);
 
-  OpIndex BuildCallAndReturn(V<Context> js_context, V<HeapObject> function_data,
-                             base::Vector<OpIndex> args,
-                             OptionalV<FrameState> frame_state,
-                             compiler::LazyDeoptOnThrow lazy_deopt_on_throw);
+  V<Object> ConvertWasmResultsToJS(base::Vector<OpIndex> returns,
+                                   V<Context> js_context);
 
-  V<Any> BuildJSToWasmWrapperImpl(
-      V<JSFunction> js_closure, V<Context> js_context,
-      base::Vector<const OpIndex> arguments,
-      OptionalV<FrameState> lazy_frame_state,
-      compiler::LazyDeoptOnThrow lazy_deopt_on_throw,
-      OptionalV<FrameState> caller_frame_state);
+  // Overload for the inlined JS-to-Wasm wrapper.
+  // Returns the result of the Wasm function converted to a JS value.
+  V<Any> BuildJSToWasmWrapper(V<JSFunction> js_closure, V<Context> js_context,
+                              base::Vector<const OpIndex> arguments,
+                              OptionalV<FrameState> lazy_frame_state,
+                              compiler::LazyDeoptOnThrow lazy_deopt_on_throw,
+                              OptionalV<FrameState> caller_frame_state);
 
+  // Overload for the "regular" non-inlined compiled JS-to-Wasm wrapper.
   void BuildJSToWasmWrapper();
 
   void BuildWasmToJSWrapper(ImportCallKind kind, int expected_arity,
@@ -763,11 +748,6 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   }
 
  private:
-  V<Object> InlineWasmFunctionInsideWrapper(
-      V<Context> js_context, V<WasmFunctionData> function_data,
-      base::Vector<OpIndex> inlined_args, OptionalV<FrameState> frame_state,
-      compiler::LazyDeoptOnThrow lazy_deopt_on_throw);
-
   bool is_inlining_into_js_;
   const CanonicalSig* const sig_;
   std::optional<compiler::turboshaft::WasmInlinedFunctionData>
