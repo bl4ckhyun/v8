@@ -94,7 +94,6 @@ static CpuFeatureSet SimulatorFeatures() {
   features.Add(ZICFISS);
   features.Add(FPU);
   features.Add(ZFH);
-  features.Add(ZFA);
   return features;
 }
 #endif
@@ -150,10 +149,9 @@ void CpuFeatures::PrintFeatures() {
     printf(", vlen=%u", CpuFeatures::vlen());
   }
   printf("\n");
-  printf("RISC-V Extension zba=%d,zbb=%d,zbs=%d,ZICOND=%d, ZFA=%d\n",
+  printf("RISC-V Extension zba=%d,zbb=%d,zbs=%d,ZICOND=%d\n",
          CpuFeatures::IsSupported(ZBA), CpuFeatures::IsSupported(ZBB),
-         CpuFeatures::IsSupported(ZBS), CpuFeatures::IsSupported(ZICOND),
-         CpuFeatures::IsSupported(ZFA));
+         CpuFeatures::IsSupported(ZBS), CpuFeatures::IsSupported(ZICOND));
 }
 
 // -----------------------------------------------------------------------------
