@@ -1267,6 +1267,12 @@ MaybeHandle<Code> CompileMaglev(Isolate* isolate, Handle<JSFunction> function,
   // - aborts on memory pressure,
   // ...
 
+  IsCompiledScope is_compiled_scope =
+      function->shared()->is_compiled_scope(isolate);
+  if (!is_compiled_scope.is_compiled()) {
+    return {};
+  }
+
   // Prepare the job.
   auto job = maglev::MaglevCompilationJob::New(isolate, function, osr_offset);
 
