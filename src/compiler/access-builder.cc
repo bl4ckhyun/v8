@@ -345,17 +345,18 @@ FieldAccess AccessBuilder::ForJSBoundFunctionBoundArguments() {
 
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectContext() {
-  FieldAccess access = {kTaggedBase,          JSGeneratorObject::kContextOffset,
-                        Handle<Name>(),       OptionalMapRef(),
-                        Type::Internal(),     MachineType::TaggedPointer(),
-                        kPointerWriteBarrier, "JSGeneratorObjectContext"};
+  FieldAccess access = {
+      kTaggedBase,          offsetof(JSGeneratorObject, context_),
+      Handle<Name>(),       OptionalMapRef(),
+      Type::Internal(),     MachineType::TaggedPointer(),
+      kPointerWriteBarrier, "JSGeneratorObjectContext"};
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectFunction() {
   FieldAccess access = {kTaggedBase,
-                        JSGeneratorObject::kFunctionOffset,
+                        offsetof(JSGeneratorObject, function_),
                         Handle<Name>(),
                         OptionalMapRef(),
                         Type::CallableFunction(),
@@ -368,7 +369,7 @@ FieldAccess AccessBuilder::ForJSGeneratorObjectFunction() {
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectReceiver() {
   FieldAccess access = {
-      kTaggedBase,          JSGeneratorObject::kReceiverOffset,
+      kTaggedBase,          offsetof(JSGeneratorObject, receiver_),
       Handle<Name>(),       OptionalMapRef(),
       Type::Internal(),     MachineType::AnyTagged(),
       kPointerWriteBarrier, "JSGeneratorObjectReceiver"};
@@ -378,7 +379,7 @@ FieldAccess AccessBuilder::ForJSGeneratorObjectReceiver() {
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectContinuation() {
   FieldAccess access = {
-      kTaggedBase,         JSGeneratorObject::kContinuationOffset,
+      kTaggedBase,         offsetof(JSGeneratorObject, continuation_),
       Handle<Name>(),      OptionalMapRef(),
       Type::SignedSmall(), MachineType::TaggedSigned(),
       kNoWriteBarrier,     "JSGeneratorObjectContinuation"};
@@ -388,7 +389,7 @@ FieldAccess AccessBuilder::ForJSGeneratorObjectContinuation() {
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectInputOrDebugPos() {
   FieldAccess access = {
-      kTaggedBase,         JSGeneratorObject::kInputOrDebugPosOffset,
+      kTaggedBase,         offsetof(JSGeneratorObject, input_or_debug_pos_),
       Handle<Name>(),      OptionalMapRef(),
       Type::NonInternal(), MachineType::AnyTagged(),
       kFullWriteBarrier,   "JSGeneratorObjectInputOrDebugPos"};
@@ -397,18 +398,21 @@ FieldAccess AccessBuilder::ForJSGeneratorObjectInputOrDebugPos() {
 
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectParametersAndRegisters() {
-  FieldAccess access = {
-      kTaggedBase,          JSGeneratorObject::kParametersAndRegistersOffset,
-      Handle<Name>(),       OptionalMapRef(),
-      Type::Internal(),     MachineType::TaggedPointer(),
-      kPointerWriteBarrier, "JSGeneratorObjectParametersAndRegisters"};
+  FieldAccess access = {kTaggedBase,
+                        offsetof(JSGeneratorObject, parameters_and_registers_),
+                        Handle<Name>(),
+                        OptionalMapRef(),
+                        Type::Internal(),
+                        MachineType::TaggedPointer(),
+                        kPointerWriteBarrier,
+                        "JSGeneratorObjectParametersAndRegisters"};
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForJSGeneratorObjectResumeMode() {
   FieldAccess access = {
-      kTaggedBase,         JSGeneratorObject::kResumeModeOffset,
+      kTaggedBase,         offsetof(JSGeneratorObject, resume_mode_),
       Handle<Name>(),      OptionalMapRef(),
       Type::SignedSmall(), MachineType::TaggedSigned(),
       kNoWriteBarrier,     "JSGeneratorObjectResumeMode"};
@@ -418,7 +422,7 @@ FieldAccess AccessBuilder::ForJSGeneratorObjectResumeMode() {
 // static
 FieldAccess AccessBuilder::ForJSAsyncFunctionObjectPromise() {
   FieldAccess access = {
-      kTaggedBase,          JSAsyncFunctionObject::kPromiseOffset,
+      kTaggedBase,          offsetof(JSAsyncFunctionObject, promise_),
       Handle<Name>(),       OptionalMapRef(),
       Type::OtherObject(),  MachineType::TaggedPointer(),
       kPointerWriteBarrier, "JSAsyncFunctionObjectPromise"};
@@ -427,18 +431,21 @@ FieldAccess AccessBuilder::ForJSAsyncFunctionObjectPromise() {
 
 // static
 FieldAccess AccessBuilder::ForJSAsyncFunctionObjectAwaitResolveClosure() {
-  FieldAccess access = {
-      kTaggedBase,       JSAsyncFunctionObject::kAwaitResolveClosureOffset,
-      Handle<Name>(),    OptionalMapRef(),
-      Type::Any(),       MachineType::AnyTagged(),
-      kFullWriteBarrier, "JSAsyncFunctionObjectAwaitResolveClosure"};
+  FieldAccess access = {kTaggedBase,
+                        offsetof(JSAsyncFunctionObject, await_resolve_closure_),
+                        Handle<Name>(),
+                        OptionalMapRef(),
+                        Type::Any(),
+                        MachineType::AnyTagged(),
+                        kFullWriteBarrier,
+                        "JSAsyncFunctionObjectAwaitResolveClosure"};
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForJSAsyncFunctionObjectAwaitRejectClosure() {
   FieldAccess access = {
-      kTaggedBase,       JSAsyncFunctionObject::kAwaitRejectClosureOffset,
+      kTaggedBase,       offsetof(JSAsyncFunctionObject, await_reject_closure_),
       Handle<Name>(),    OptionalMapRef(),
       Type::Any(),       MachineType::AnyTagged(),
       kFullWriteBarrier, "JSAsyncFunctionObjectAwaitRejectClosure"};
@@ -448,7 +455,7 @@ FieldAccess AccessBuilder::ForJSAsyncFunctionObjectAwaitRejectClosure() {
 // static
 FieldAccess AccessBuilder::ForJSAsyncGeneratorObjectQueue() {
   FieldAccess access = {
-      kTaggedBase,         JSAsyncGeneratorObject::kQueueOffset,
+      kTaggedBase,         offsetof(JSAsyncGeneratorObject, queue_),
       Handle<Name>(),      OptionalMapRef(),
       Type::NonInternal(), MachineType::AnyTagged(),
       kFullWriteBarrier,   "JSAsyncGeneratorObjectQueue"};
@@ -458,7 +465,7 @@ FieldAccess AccessBuilder::ForJSAsyncGeneratorObjectQueue() {
 // static
 FieldAccess AccessBuilder::ForJSAsyncGeneratorObjectIsAwaiting() {
   FieldAccess access = {
-      kTaggedBase,         JSAsyncGeneratorObject::kIsAwaitingOffset,
+      kTaggedBase,         offsetof(JSAsyncGeneratorObject, is_awaiting_),
       Handle<Name>(),      OptionalMapRef(),
       Type::SignedSmall(), MachineType::TaggedSigned(),
       kNoWriteBarrier,     "JSAsyncGeneratorObjectIsAwaiting"};

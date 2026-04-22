@@ -2932,7 +2932,7 @@ Reduction JSTypedLowering::ReduceJSFulfillPromise(Node* node) {
   // Look through LoadField[JSAsyncFunctionObjectPromise].
   if (promise_origin->opcode() == IrOpcode::kLoadField) {
     FieldAccess const& access = FieldAccessOf(promise_origin->op());
-    if (access.offset == JSAsyncFunctionObject::kPromiseOffset) {
+    if (access.offset == offsetof(JSAsyncFunctionObject, promise_)) {
       Node* async_fn = NodeProperties::GetValueInput(promise_origin, 0);
       // The async function object is a FinishRegion wrapping its Allocate.
       // Find the StoreField[Promise] that stored the promise into it.
@@ -2942,7 +2942,8 @@ Reduction JSTypedLowering::ReduceJSFulfillPromise(Node* node) {
         Node* effect_scan = NodeProperties::GetEffectInput(async_fn);
         while (effect_scan->opcode() == IrOpcode::kStoreField) {
           FieldAccess const& store_access = FieldAccessOf(effect_scan->op());
-          if (store_access.offset == JSAsyncFunctionObject::kPromiseOffset) {
+          if (store_access.offset ==
+              offsetof(JSAsyncFunctionObject, promise_)) {
             promise_origin = NodeProperties::GetValueInput(effect_scan, 1);
             break;
           }

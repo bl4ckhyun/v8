@@ -802,7 +802,7 @@ Reduction JSCreateLowering::ReduceJSCreateAsyncFunctionObject(Node* node) {
 
   // Create the JSAsyncFunctionObject result.
   AllocationBuilder a(jsgraph(), broker(), effect, control);
-  a.Allocate(JSAsyncFunctionObject::kHeaderSize);
+  a.Allocate(sizeof(JSAsyncFunctionObject));
   a.Store(AccessBuilder::ForMap(),
           native_context().async_function_object_map(broker()));
   a.Store(AccessBuilder::ForJSObjectPropertiesOrHashKnownPointer(),

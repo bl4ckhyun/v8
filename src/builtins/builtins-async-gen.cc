@@ -292,13 +292,13 @@ TNode<Object> AsyncBuiltinsAssembler::AwaitWithReusableClosures(
 
         TNode<HeapObject> maybe_resolve = LoadObjectField<HeapObject>(
             async_function_object,
-            JSAsyncFunctionObject::kAwaitResolveClosureOffset);
+            offsetof(JSAsyncFunctionObject, await_resolve_closure_));
         GotoIf(IsUndefined(maybe_resolve), &allocate_closures);
 
         var_on_resolve = CAST(maybe_resolve);
         var_on_reject = LoadObjectField<JSFunction>(
             async_function_object,
-            JSAsyncFunctionObject::kAwaitRejectClosureOffset);
+            offsetof(JSAsyncFunctionObject, await_reject_closure_));
         Goto(&closures_ready);
 
         BIND(&allocate_closures);
@@ -313,12 +313,14 @@ TNode<Object> AsyncBuiltinsAssembler::AwaitWithReusableClosures(
               RootIndex::kAsyncFunctionAwaitRejectClosureSharedFun,
               await_context, native_context);
 
-          StoreObjectField(async_function_object,
-                           JSAsyncFunctionObject::kAwaitResolveClosureOffset,
-                           resolve_closure);
-          StoreObjectField(async_function_object,
-                           JSAsyncFunctionObject::kAwaitRejectClosureOffset,
-                           reject_closure);
+          StoreObjectField(
+              async_function_object,
+              offsetof(JSAsyncFunctionObject, await_resolve_closure_),
+              resolve_closure);
+          StoreObjectField(
+              async_function_object,
+              offsetof(JSAsyncFunctionObject, await_reject_closure_),
+              reject_closure);
 
           var_on_resolve = resolve_closure;
           var_on_reject = reject_closure;

@@ -314,7 +314,7 @@ void KnownNodeAspects::UpdateMayHaveAliasingContexts(
       // JSFunction or JSGeneratorObject.
       USE(load);
       DCHECK(load->offset() == JSFunction::kContextOffset ||
-             load->offset() == JSGeneratorObject::kContextOffset);
+             load->offset() == offsetof(JSGeneratorObject, context_));
       may_have_aliasing_contexts_ = ContextSlotLoadsAlias::kYes;
       DCHECK(NodeTypeIs(GetTypeUnchecked(broker, context), NodeType::kContext));
       break;

@@ -2554,11 +2554,11 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_ERROR_TYPE:
       return JSObject::kHeaderSize;
     case JS_GENERATOR_OBJECT_TYPE:
-      return JSGeneratorObject::kHeaderSize;
+      return sizeof(JSGeneratorObject);
     case JS_ASYNC_FUNCTION_OBJECT_TYPE:
-      return JSAsyncFunctionObject::kHeaderSize;
+      return sizeof(JSAsyncFunctionObject);
     case JS_ASYNC_GENERATOR_OBJECT_TYPE:
-      return JSAsyncGeneratorObject::kHeaderSize;
+      return sizeof(JSAsyncGeneratorObject);
     case JS_ASYNC_FROM_SYNC_ITERATOR_TYPE:
       return sizeof(JSAsyncFromSyncIterator);
     case JS_GLOBAL_PROXY_TYPE:

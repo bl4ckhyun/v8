@@ -1648,14 +1648,14 @@ void BaselineCompiler::VisitIntrinsicGeneratorGetResumeMode(
   __ LoadRegister(kInterpreterAccumulatorRegister, args[0]);
   __ LoadTaggedField(kInterpreterAccumulatorRegister,
                      kInterpreterAccumulatorRegister,
-                     JSGeneratorObject::kResumeModeOffset);
+                     offsetof(JSGeneratorObject, resume_mode_));
 }
 
 void BaselineCompiler::VisitIntrinsicGeneratorClose(
     interpreter::RegisterList args) {
   __ LoadRegister(kInterpreterAccumulatorRegister, args[0]);
   __ StoreTaggedSignedField(kInterpreterAccumulatorRegister,
-                            JSGeneratorObject::kContinuationOffset,
+                            offsetof(JSGeneratorObject, continuation_),
                             Smi::FromInt(JSGeneratorObject::kGeneratorClosed));
   __ LoadRoot(kInterpreterAccumulatorRegister, RootIndex::kUndefinedValue);
 }
@@ -2586,14 +2586,14 @@ void BaselineCompiler::VisitSwitchOnGeneratorState() {
 
   Register continuation = scratch_scope.AcquireScratch();
   __ LoadTaggedSignedFieldAndUntag(continuation, generator_object,
-                                   JSGeneratorObject::kContinuationOffset);
+                                   offsetof(JSGeneratorObject, continuation_));
   __ StoreTaggedSignedField(
-      generator_object, JSGeneratorObject::kContinuationOffset,
+      generator_object, offsetof(JSGeneratorObject, continuation_),
       Smi::FromInt(JSGeneratorObject::kGeneratorExecuting));
 
   Register context = scratch_scope.AcquireScratch();
   __ LoadTaggedField(context, generator_object,
-                     JSGeneratorObject::kContextOffset);
+                     offsetof(JSGeneratorObject, context_));
   __ StoreContext(context);
 
   interpreter::JumpTableTargetOffsets offsets =

@@ -352,14 +352,15 @@ void Builtins::Generate_ResumeGeneratorTrampoline(MacroAssembler* masm) {
   //  -- lr : return address
   // -----------------------------------
   // Store input value into generator object.
-  __ str(r0, FieldMemOperand(r1, JSGeneratorObject::kInputOrDebugPosOffset));
-  __ RecordWriteField(r1, JSGeneratorObject::kInputOrDebugPosOffset, r0,
+  __ str(r0,
+         FieldMemOperand(r1, offsetof(JSGeneratorObject, input_or_debug_pos_)));
+  __ RecordWriteField(r1, offsetof(JSGeneratorObject, input_or_debug_pos_), r0,
                       kLRHasNotBeenSaved, SaveFPRegsMode::kIgnore);
   // Check that r1 is still valid, RecordWrite might have clobbered it.
   __ AssertGeneratorObject(r1);
 
   // Load suspended function and context.
-  __ ldr(r4, FieldMemOperand(r1, JSGeneratorObject::kFunctionOffset));
+  __ ldr(r4, FieldMemOperand(r1, offsetof(JSGeneratorObject, function_)));
   __ ldr(cp, FieldMemOperand(r4, JSFunction::kContextOffset));
 
   Label prepare_step_in_if_stepping, prepare_step_in_suspended_generator;
@@ -397,8 +398,8 @@ void Builtins::Generate_ResumeGeneratorTrampoline(MacroAssembler* masm) {
   __ ldrh(r3,
           FieldMemOperand(r3, SharedFunctionInfo::kFormalParameterCountOffset));
   __ sub(r3, r3, Operand(kJSArgcReceiverSlots));
-  __ ldr(r2,
-         FieldMemOperand(r1, JSGeneratorObject::kParametersAndRegistersOffset));
+  __ ldr(r2, FieldMemOperand(
+                 r1, offsetof(JSGeneratorObject, parameters_and_registers_)));
 
   Label stack_overflow;
   __ StackOverflowCheck(r3, scratch, &stack_overflow);
@@ -415,7 +416,8 @@ void Builtins::Generate_ResumeGeneratorTrampoline(MacroAssembler* masm) {
     __ bind(&done_loop);
 
     // Push receiver.
-    __ ldr(scratch, FieldMemOperand(r1, JSGeneratorObject::kReceiverOffset));
+    __ ldr(scratch,
+           FieldMemOperand(r1, offsetof(JSGeneratorObject, receiver_)));
     __ Push(scratch);
   }
 
@@ -458,7 +460,7 @@ void Builtins::Generate_ResumeGeneratorTrampoline(MacroAssembler* masm) {
     __ PushRoot(RootIndex::kTheHoleValue);
     __ CallRuntime(Runtime::kDebugOnFunctionCall);
     __ Pop(r1);
-    __ ldr(r4, FieldMemOperand(r1, JSGeneratorObject::kFunctionOffset));
+    __ ldr(r4, FieldMemOperand(r1, offsetof(JSGeneratorObject, function_)));
   }
   __ b(&stepping_prepared);
 
@@ -468,7 +470,7 @@ void Builtins::Generate_ResumeGeneratorTrampoline(MacroAssembler* masm) {
     __ Push(r1);
     __ CallRuntime(Runtime::kDebugPrepareStepInSuspendedGenerator);
     __ Pop(r1);
-    __ ldr(r4, FieldMemOperand(r1, JSGeneratorObject::kFunctionOffset));
+    __ ldr(r4, FieldMemOperand(r1, offsetof(JSGeneratorObject, function_)));
   }
   __ b(&stepping_prepared);
 

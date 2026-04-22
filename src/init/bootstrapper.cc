@@ -5393,7 +5393,7 @@ void Genesis::InitializeIteratorFunctions() {
     // JavaScript anyways.
     DirectHandle<Map> async_function_object_map =
         factory->NewContextfulMapForCurrentContext(
-            JS_ASYNC_FUNCTION_OBJECT_TYPE, JSAsyncFunctionObject::kHeaderSize);
+            JS_ASYNC_FUNCTION_OBJECT_TYPE, sizeof(JSAsyncFunctionObject));
     native_context->set_async_function_object_map(*async_function_object_map);
 
     isolate_->async_function_map()->SetConstructor(*async_function_constructor);

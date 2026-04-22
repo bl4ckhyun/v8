@@ -1411,12 +1411,16 @@ void JSArgumentsObject::JSArgumentsObjectVerify(Isolate* isolate) {
   }
 }
 
+void JSGeneratorObject::JSGeneratorObjectVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+}
+
 void JSAsyncFunctionObject::JSAsyncFunctionObjectVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSAsyncFunctionObjectVerify(*this, isolate);
+  JSGeneratorObjectVerify(isolate);
 }
 
 void JSAsyncGeneratorObject::JSAsyncGeneratorObjectVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSAsyncGeneratorObjectVerify(*this, isolate);
+  JSGeneratorObjectVerify(isolate);
 }
 
 void JSDate::JSDateVerify(Isolate* isolate) {

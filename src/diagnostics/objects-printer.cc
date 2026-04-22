@@ -935,7 +935,7 @@ void CppHeapExternalObject::CppHeapExternalObjectPrint(std::ostream& os) {
 }
 
 void JSGeneratorObject::JSGeneratorObjectPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSGeneratorObject");
+  JSObjectPrintHeader(os, this, "JSGeneratorObject");
   os << "\n - function: " << Brief(function());
   os << "\n - context: " << Brief(context());
   os << "\n - receiver: " << Brief(receiver());
@@ -991,7 +991,7 @@ void JSGeneratorObject::JSGeneratorObjectPrint(std::ostream& os) {
     }
   }
   os << "\n - register file: " << Brief(parameters_and_registers());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSArray::JSArrayPrint(std::ostream& os) {

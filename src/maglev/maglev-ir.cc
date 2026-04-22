@@ -5177,7 +5177,7 @@ void GeneratorStore::GenerateCode(MaglevAssembler* masm,
   Register generator = ToRegister(GeneratorInput());
   Register array = WriteBarrierDescriptor::ObjectRegister();
   __ LoadTaggedField(array, generator,
-                     JSGeneratorObject::kParametersAndRegistersOffset);
+                     offsetof(JSGeneratorObject, parameters_and_registers_));
 
   RegisterSnapshot register_snapshot_during_store = register_snapshot();
   // Include the array and generator registers in the register snapshot while
@@ -5208,10 +5208,11 @@ void GeneratorStore::GenerateCode(MaglevAssembler* masm,
         MaglevAssembler::kValueCanBeSmi);
   }
 
-  __ StoreTaggedSignedField(generator, JSGeneratorObject::kContinuationOffset,
+  __ StoreTaggedSignedField(generator,
+                            offsetof(JSGeneratorObject, continuation_),
                             Smi::FromInt(suspend_id()));
   __ StoreTaggedSignedField(generator,
-                            JSGeneratorObject::kInputOrDebugPosOffset,
+                            offsetof(JSGeneratorObject, input_or_debug_pos_),
                             Smi::FromInt(bytecode_offset()));
 
   // Use WriteBarrierDescriptor::SlotAddressRegister() as the scratch
@@ -5220,7 +5221,7 @@ void GeneratorStore::GenerateCode(MaglevAssembler* masm,
   Register context = __ FromAnyToRegister(
       ContextInput(), WriteBarrierDescriptor::SlotAddressRegister());
   __ StoreTaggedFieldWithWriteBarrier(
-      generator, JSGeneratorObject::kContextOffset, context,
+      generator, offsetof(JSGeneratorObject, context_), context,
       register_snapshot(),
       ContextInput().node()->decompresses_tagged_result()
           ? MaglevAssembler::kValueIsDecompressed

@@ -13137,8 +13137,8 @@ ReduceResult MaglevGraphBuilder::VisitIntrinsicGeneratorGetResumeMode(
     interpreter::RegisterList args) {
   DCHECK_EQ(args.register_count(), 1);
   ValueNode* generator = current_interpreter_frame_.get(args[0]);
-  return SetAccumulator(
-      BuildLoadTaggedField(generator, JSGeneratorObject::kResumeModeOffset));
+  return SetAccumulator(BuildLoadTaggedField(
+      generator, offsetof(JSGeneratorObject, resume_mode_)));
 }
 
 ReduceResult MaglevGraphBuilder::VisitIntrinsicGeneratorClose(
@@ -13147,7 +13147,7 @@ ReduceResult MaglevGraphBuilder::VisitIntrinsicGeneratorClose(
   ValueNode* generator = current_interpreter_frame_.get(args[0]);
   ValueNode* value = GetSmiConstant(JSGeneratorObject::kGeneratorClosed);
   RETURN_IF_ABORT(BuildStoreTaggedFieldNoWriteBarrier(
-      generator, value, JSGeneratorObject::kContinuationOffset,
+      generator, value, offsetof(JSGeneratorObject, continuation_),
       StoreTaggedMode::kDefault));
   SetAccumulator(GetRootConstant(RootIndex::kUndefinedValue));
   return ReduceResult::Done();
@@ -13222,7 +13222,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceAsyncFunctionReject(
   ValueNode* promise;
   GET_VALUE_OR_ABORT(
       promise, BuildLoadTaggedField(async_function_object,
-                                    JSAsyncFunctionObject::kPromiseOffset));
+                                    offsetof(JSAsyncFunctionObject, promise_)));
 
   // Create a nested frame state inside the current method's most-recent
   // {frame_state} that will ensure that lazy deoptimizations at this
@@ -13266,7 +13266,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceAsyncFunctionResolve(
   ValueNode* promise;
   GET_VALUE_OR_ABORT(
       promise, BuildLoadTaggedField(async_function_object,
-                                    JSAsyncFunctionObject::kPromiseOffset));
+                                    offsetof(JSAsyncFunctionObject, promise_)));
 
   if (NodeTypeIs(GetType(value), NodeType::kJSPrimitive)) {
     // We can strength-reduce JSResolvePromise to JSFulfillPromise  if the
@@ -14819,24 +14819,26 @@ VirtualObject* MaglevGraphBuilder::CreateJSGeneratorObject(
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, object_layout, map, slot_count);
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  vobj->set(JSGeneratorObject::kPropertiesOrHashOffset,
+  vobj->set(offsetof(JSGeneratorObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSGeneratorObject::kElementsOffset,
+  vobj->set(offsetof(JSGeneratorObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSGeneratorObject::kContextOffset, context);
-  vobj->set(JSGeneratorObject::kFunctionOffset, closure);
-  vobj->set(JSGeneratorObject::kReceiverOffset, receiver);
-  vobj->set(JSGeneratorObject::kInputOrDebugPosOffset,
+  vobj->set(offsetof(JSGeneratorObject, context_), context);
+  vobj->set(offsetof(JSGeneratorObject, function_), closure);
+  vobj->set(offsetof(JSGeneratorObject, receiver_), receiver);
+  vobj->set(offsetof(JSGeneratorObject, input_or_debug_pos_),
             GetRootConstant(RootIndex::kUndefinedValue));
-  vobj->set(JSGeneratorObject::kResumeModeOffset,
+  vobj->set(offsetof(JSGeneratorObject, resume_mode_),
             GetInt32Constant(JSGeneratorObject::kNext));
-  vobj->set(JSGeneratorObject::kContinuationOffset,
+  vobj->set(offsetof(JSGeneratorObject, continuation_),
             GetInt32Constant(JSGeneratorObject::kGeneratorExecuting));
-  vobj->set(JSGeneratorObject::kParametersAndRegistersOffset, register_file);
+  vobj->set(offsetof(JSGeneratorObject, parameters_and_registers_),
+            register_file);
   if (is_async) {
-    vobj->set(JSAsyncGeneratorObject::kQueueOffset,
+    vobj->set(offsetof(JSAsyncGeneratorObject, queue_),
               GetRootConstant(RootIndex::kUndefinedValue));
-    vobj->set(JSAsyncGeneratorObject::kIsAwaitingOffset, GetInt32Constant(0));
+    vobj->set(offsetof(JSAsyncGeneratorObject, is_awaiting_),
+              GetInt32Constant(0));
   }
   return vobj;
 }
@@ -14849,7 +14851,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSAsyncFunctionObject(
   const vobj::ObjectLayout* object_layout =
       &VirtualJSAsyncFunctionObjectShape::kObjectLayout;
 
-  constexpr int slot_count = JSAsyncFunctionObject::kHeaderSize / kTaggedSize;
+  constexpr int slot_count = sizeof(JSAsyncFunctionObject) / kTaggedSize;
   static_assert(slot_count == 13,
                 "If the number of slots in JSAsyncFunctionObject changes, then "
                 "the additional slots need to be initialized below");
@@ -14857,25 +14859,25 @@ VirtualObject* MaglevGraphBuilder::CreateJSAsyncFunctionObject(
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, object_layout, map, slot_count);
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  vobj->set(JSAsyncFunctionObject::kPropertiesOrHashOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSAsyncFunctionObject::kElementsOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSAsyncFunctionObject::kContextOffset, context);
-  vobj->set(JSAsyncFunctionObject::kFunctionOffset, closure);
-  vobj->set(JSAsyncFunctionObject::kReceiverOffset, receiver);
-  vobj->set(JSAsyncFunctionObject::kInputOrDebugPosOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, context_), context);
+  vobj->set(offsetof(JSAsyncFunctionObject, function_), closure);
+  vobj->set(offsetof(JSAsyncFunctionObject, receiver_), receiver);
+  vobj->set(offsetof(JSAsyncFunctionObject, input_or_debug_pos_),
             GetRootConstant(RootIndex::kUndefinedValue));
-  vobj->set(JSAsyncFunctionObject::kResumeModeOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, resume_mode_),
             GetInt32Constant(JSGeneratorObject::kNext));
-  vobj->set(JSAsyncFunctionObject::kContinuationOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, continuation_),
             GetInt32Constant(JSGeneratorObject::kGeneratorExecuting));
-  vobj->set(JSAsyncFunctionObject::kParametersAndRegistersOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, parameters_and_registers_),
             register_file);
-  vobj->set(JSAsyncFunctionObject::kPromiseOffset, promise);
-  vobj->set(JSAsyncFunctionObject::kAwaitResolveClosureOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, promise_), promise);
+  vobj->set(offsetof(JSAsyncFunctionObject, await_resolve_closure_),
             GetRootConstant(RootIndex::kUndefinedValue));
-  vobj->set(JSAsyncFunctionObject::kAwaitRejectClosureOffset,
+  vobj->set(offsetof(JSAsyncFunctionObject, await_reject_closure_),
             GetRootConstant(RootIndex::kUndefinedValue));
 
   return vobj;
@@ -16765,11 +16767,11 @@ ReduceResult MaglevGraphBuilder::VisitSwitchOnGeneratorState() {
   ValueNode* generator = maybe_generator;
   ValueNode* state;
   GET_VALUE_OR_ABORT(
-      state,
-      BuildLoadTaggedField(generator, JSGeneratorObject::kContinuationOffset));
+      state, BuildLoadTaggedField(generator,
+                                  offsetof(JSGeneratorObject, continuation_)));
   ValueNode* new_state = GetSmiConstant(JSGeneratorObject::kGeneratorExecuting);
   RETURN_IF_ABORT(BuildStoreTaggedFieldNoWriteBarrier(
-      generator, new_state, JSGeneratorObject::kContinuationOffset,
+      generator, new_state, offsetof(JSGeneratorObject, continuation_),
       StoreTaggedMode::kDefault));
 
   // Guarantee that we have something in the accumulator.
@@ -16872,15 +16874,17 @@ ReduceResult MaglevGraphBuilder::VisitResumeGenerator() {
   // ResumeGenerator <generator> <first output register> <register count>
   ValueNode* generator = LoadRegister(0);
   ValueNode* context;
-  GET_VALUE_OR_ABORT(context, BuildLoadTaggedField(
-                                  generator, JSGeneratorObject::kContextOffset,
-                                  LoadType::kContext));
+  GET_VALUE_OR_ABORT(
+      context,
+      BuildLoadTaggedField(generator, offsetof(JSGeneratorObject, context_),
+                           LoadType::kContext));
 
   SetContext(context);
   ValueNode* array;
   GET_VALUE_OR_ABORT(
-      array, BuildLoadTaggedField(
-                 generator, JSGeneratorObject::kParametersAndRegistersOffset));
+      array,
+      BuildLoadTaggedField(
+          generator, offsetof(JSGeneratorObject, parameters_and_registers_)));
   interpreter::RegisterList registers = iterator_.GetRegisterListOperand(1);
 
   if (v8_flags.maglev_assert) {
@@ -16911,7 +16915,7 @@ ReduceResult MaglevGraphBuilder::VisitResumeGenerator() {
     }
   }
   return SetAccumulator(BuildLoadTaggedField(
-      generator, JSGeneratorObject::kInputOrDebugPosOffset));
+      generator, offsetof(JSGeneratorObject, input_or_debug_pos_)));
 }
 
 MaybeReduceResult MaglevGraphBuilder::TryReduceGetIterator(
