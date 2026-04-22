@@ -317,8 +317,8 @@ auto WasmWrapperTSGraphBuilder<Assembler>::BuildJSToWasmWrapper(
   base::SmallVector<OpIndex, 16> args(args_count);
   args[0] = instance_data;
   for (int i = 0; i < wasm_param_count; ++i) {
-    args[i + 1] = FromJS(params[i], js_context, sig_->GetParam(i),
-                         caller_frame_state, lazy_deopt_on_throw);
+    args[i + 1] =
+        FromJS(params[i], js_context, sig_->GetParam(i), caller_frame_state);
   }
 
   // Inline the Wasm function body, if possible.

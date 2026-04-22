@@ -438,9 +438,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   //   for BigInt inputs, and the conversion is modular truncation).
   //   (crbug.com/498709150)
   OpIndex FromJS(V<Object> input, OpIndex context, CanonicalValueType type,
-                 OptionalV<FrameState> caller_frame_state = {},
-                 compiler::LazyDeoptOnThrow lazy_deopt_on_throw =
-                     compiler::LazyDeoptOnThrow::kNo) {
+                 OptionalV<FrameState> caller_frame_state = {}) {
     if (type.is_numeric()) {
       switch (type.numeric_kind()) {
         case NumericKind::kI32:
