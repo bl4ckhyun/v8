@@ -24,6 +24,7 @@
 #include "src/wasm/stacks.h"
 #include "src/wasm/wasm-code-manager.h"
 #include "src/wasm/wasm-engine-globals.h"
+#include "src/wasm/wasm-features.h"
 #include "src/wasm/wasm-tier.h"
 #include "src/zone/accounting-allocator.h"
 
@@ -75,21 +76,25 @@ class V8_EXPORT_PRIVATE InstantiationResultResolver {
 class NativeModuleCache {
  public:
   struct Key {
-    Key(size_t prefix_hash, CompileTimeImports compile_imports,
+    Key(size_t prefix_hash, WasmEnabledFeatures enabled_features,
+        CompileTimeImports compile_imports,
         const base::Vector<const uint8_t>& bytes)
         : prefix_hash(prefix_hash),
+          enabled_features(enabled_features),
           compile_imports(std::move(compile_imports)),
           bytes(bytes) {}
 
     // Store the prefix hash as part of the key for faster lookup, and to
     // quickly check existing prefixes for streaming compilation.
     size_t prefix_hash;
+    WasmEnabledFeatures enabled_features;
     CompileTimeImports compile_imports;
     base::Vector<const uint8_t> bytes;
 
     bool operator==(const Key& other) const {
-      bool eq =
-          bytes == other.bytes && compile_imports == other.compile_imports;
+      bool eq = bytes == other.bytes &&
+                enabled_features == other.enabled_features &&
+                compile_imports == other.compile_imports;
       DCHECK_IMPLIES(eq, prefix_hash == other.prefix_hash);
       return eq;
     }
@@ -104,6 +109,9 @@ class NativeModuleCache {
       }
       if (bytes.size() != other.bytes.size()) {
         return bytes.size() < other.bytes.size();
+      }
+      if (auto cmp = enabled_features <=> other.enabled_features; cmp != 0) {
+        return cmp < 0;
       }
       if (auto cmp = compile_imports <=> other.compile_imports; cmp != 0) {
         return cmp < 0;
@@ -122,10 +130,13 @@ class NativeModuleCache {
 
   std::shared_ptr<NativeModule> MaybeGetNativeModule(
       ModuleOrigin origin, base::Vector<const uint8_t> wire_bytes,
+      WasmEnabledFeatures enabled_features,
       const CompileTimeImports& compile_imports);
   bool GetStreamingCompilationOwnership(
-      size_t prefix_hash, const CompileTimeImports& compile_imports);
+      size_t prefix_hash, WasmEnabledFeatures enabled_features,
+      const CompileTimeImports& compile_imports);
   void StreamingCompilationFailed(size_t prefix_hash,
+                                  WasmEnabledFeatures enabled_features,
                                   const CompileTimeImports& compile_imports);
   std::shared_ptr<NativeModule> Update(
       std::shared_ptr<NativeModule> native_module, bool error);
@@ -339,6 +350,7 @@ class V8_EXPORT_PRIVATE WasmEngine {
   // NativeModule later.
   std::shared_ptr<NativeModule> MaybeGetNativeModule(
       ModuleOrigin origin, base::Vector<const uint8_t> wire_bytes,
+      WasmEnabledFeatures enabled_features,
       const CompileTimeImports& compile_imports);
 
   // Replace the temporary {nullopt} with the new native module, or
@@ -363,11 +375,13 @@ class V8_EXPORT_PRIVATE WasmEngine {
   // the stream is finished and call {MaybeGetNativeModule} to either get the
   // module from the cache or get ownership for the compilation of these bytes.
   bool GetStreamingCompilationOwnership(
-      size_t prefix_hash, const CompileTimeImports& compile_imports);
+      size_t prefix_hash, WasmEnabledFeatures enabled_features,
+      const CompileTimeImports& compile_imports);
 
   // Remove the prefix hash from the cache when compilation failed. If
   // compilation succeeded, {UpdateNativeModuleCache} should be called instead.
   void StreamingCompilationFailed(size_t prefix_hash,
+                                  WasmEnabledFeatures enabled_features,
                                   const CompileTimeImports& compile_imports);
 
   void FreeNativeModule(NativeModule*);
