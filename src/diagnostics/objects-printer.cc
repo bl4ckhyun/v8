@@ -3886,7 +3886,7 @@ void JSRawJson::JSRawJsonPrint(std::ostream& os) {
 
 #ifdef V8_INTL_SUPPORT
 void JSV8BreakIterator::JSV8BreakIteratorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSV8BreakIterator");
+  JSObjectPrintHeader(os, this, "JSV8BreakIterator");
   os << "\n - locale: " << Brief(locale());
   os << "\n - icu break iterator with text: "
      << Brief(icu_iterator_with_text());
@@ -3899,74 +3899,74 @@ void JSV8BreakIterator::JSV8BreakIteratorPrint(std::ostream& os) {
 }
 
 void JSCollator::JSCollatorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSCollator");
+  JSObjectPrintHeader(os, this, "JSCollator");
   os << "\n - icu collator: " << Brief(icu_collator());
   os << "\n - bound compare: " << Brief(bound_compare());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSDateTimeFormat::JSDateTimeFormatPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSDateTimeFormat");
+  JSObjectPrintHeader(os, this, "JSDateTimeFormat");
   os << "\n - locale: " << Brief(locale());
   os << "\n - icu locale: " << Brief(icu_locale());
   os << "\n - icu simple date format: " << Brief(icu_simple_date_format());
   os << "\n - icu date interval format: " << Brief(icu_date_interval_format());
   os << "\n - bound format: " << Brief(bound_format());
   os << "\n - hour cycle: " << HourCycleAsString(Isolate::Current());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSDisplayNames::JSDisplayNamesPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSDisplayNames");
+  JSObjectPrintHeader(os, this, "JSDisplayNames");
   os << "\n - internal: " << Brief(internal());
   os << "\n - style: " << StyleAsString(Isolate::Current());
   os << "\n - fallback: " << FallbackAsString(Isolate::Current());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSDurationFormat::JSDurationFormatPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSDurationFormat");
+  JSObjectPrintHeader(os, this, "JSDurationFormat");
   os << "\n - style_flags: " << style_flags();
   os << "\n - display_flags: " << display_flags();
   os << "\n - icu locale: " << Brief(icu_locale());
   os << "\n - icu number formatter: " << Brief(icu_number_formatter());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSListFormat::JSListFormatPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSListFormat");
+  JSObjectPrintHeader(os, this, "JSListFormat");
   os << "\n - locale: " << Brief(locale());
   os << "\n - style: " << StyleAsString(Isolate::Current());
   os << "\n - type: " << TypeAsString(Isolate::Current());
   os << "\n - icu formatter: " << Brief(icu_formatter());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSLocale::JSLocalePrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSLocale");
+  JSObjectPrintHeader(os, this, "JSLocale");
   os << "\n - icu locale: " << Brief(icu_locale());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSNumberFormat::JSNumberFormatPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSNumberFormat");
+  JSObjectPrintHeader(os, this, "JSNumberFormat");
   os << "\n - locale: " << Brief(locale());
   os << "\n - icu_number_formatter: " << Brief(icu_number_formatter());
   os << "\n - bound_format: " << Brief(bound_format());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSPluralRules::JSPluralRulesPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSPluralRules");
+  JSObjectPrintHeader(os, this, "JSPluralRules");
   os << "\n - locale: " << Brief(locale());
   os << "\n - type: " << TypeAsString(Isolate::Current());
   os << "\n - icu plural rules: " << Brief(icu_plural_rules());
   os << "\n - icu_number_formatter: " << Brief(icu_number_formatter());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSRelativeTimeFormat::JSRelativeTimeFormatPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSRelativeTimeFormat");
+  JSObjectPrintHeader(os, this, "JSRelativeTimeFormat");
   os << "\n - locale: " << Brief(locale());
   os << "\n - numberingSystem: " << Brief(numberingSystem());
   os << "\n - numeric: " << NumericAsString(Isolate::Current());
@@ -3975,7 +3975,7 @@ void JSRelativeTimeFormat::JSRelativeTimeFormatPrint(std::ostream& os) {
 }
 
 void JSSegmentIterator::JSSegmentIteratorPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSegmentIterator");
+  JSObjectPrintHeader(os, this, "JSSegmentIterator");
   os << "\n - icu break iterator with text: "
      << Brief(icu_iterator_with_text());
   os << "\n - granularity: " << GranularityAsString(Isolate::Current());
@@ -3983,19 +3983,19 @@ void JSSegmentIterator::JSSegmentIteratorPrint(std::ostream& os) {
 }
 
 void JSSegmenter::JSSegmenterPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSegmenter");
+  JSObjectPrintHeader(os, this, "JSSegmenter");
   os << "\n - locale: " << Brief(locale());
   os << "\n - granularity: " << GranularityAsString(Isolate::Current());
   os << "\n - icu break iterator: " << Brief(icu_break_iterator());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSSegments::JSSegmentsPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSegments");
+  JSObjectPrintHeader(os, this, "JSSegments");
   os << "\n - icu break iterator with text: "
      << Brief(icu_iterator_with_text());
   os << "\n - granularity: " << GranularityAsString(Isolate::Current());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 #endif  // V8_INTL_SUPPORT
 

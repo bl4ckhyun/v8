@@ -2056,6 +2056,119 @@ void JSShadowRealm::JSShadowRealmVerify(Isolate* isolate) {
   CHECK(IsNativeContext(native_context()));
 }
 
+#ifdef V8_INTL_SUPPORT
+void JSLocale::JSLocaleVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsForeign(icu_locale()));
+}
+
+void JSCollator::JSCollatorVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsForeign(icu_collator()));
+  CHECK(IsUndefined(bound_compare()) || IsJSFunction(bound_compare()));
+  CHECK(IsString(locale()));
+}
+
+void JSV8BreakIterator::JSV8BreakIteratorVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsForeign(icu_iterator_with_text_.load()));
+  CHECK(IsUndefined(bound_adopt_text()) || IsJSFunction(bound_adopt_text()));
+  CHECK(IsUndefined(bound_first()) || IsJSFunction(bound_first()));
+  CHECK(IsUndefined(bound_next()) || IsJSFunction(bound_next()));
+  CHECK(IsUndefined(bound_current()) || IsJSFunction(bound_current()));
+  CHECK(IsUndefined(bound_break_type()) || IsJSFunction(bound_break_type()));
+}
+
+void JSDateTimeFormat::JSDateTimeFormatVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsForeign(icu_locale_.load()));
+  CHECK(IsForeign(icu_simple_date_format_.load()));
+  CHECK(IsForeign(icu_date_interval_format_.load()));
+  CHECK(IsUndefined(bound_format()) || IsJSFunction(bound_format()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSDisplayNames::JSDisplayNamesVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsForeign(internal_.load()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSDurationFormat::JSDurationFormatVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsSmi(style_flags_.load()));
+  CHECK(IsSmi(display_flags_.load()));
+  CHECK(IsForeign(icu_locale_.load()));
+  CHECK(IsForeign(icu_number_formatter_.load()));
+}
+
+void JSListFormat::JSListFormatVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsForeign(icu_formatter_.load()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSNumberFormat::JSNumberFormatVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsForeign(icu_number_formatter_.load()));
+  CHECK(IsUndefined(bound_format()) || IsJSFunction(bound_format()));
+}
+
+void JSPluralRules::JSPluralRulesVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsSmi(flags_.load()));
+  CHECK(IsForeign(icu_plural_rules_.load()));
+  CHECK(IsForeign(icu_number_formatter_.load()));
+}
+
+void JSRelativeTimeFormat::JSRelativeTimeFormatVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsString(numberingSystem()));
+  CHECK(IsForeign(icu_formatter_.load()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSSegmenter::JSSegmenterVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(locale()));
+  CHECK(IsForeign(icu_break_iterator_.load()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSSegments::JSSegmentsVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsForeign(icu_iterator_with_text_.load()));
+  CHECK(IsString(raw_string()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSSegmentIterator::JSSegmentIteratorVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsForeign(icu_iterator_with_text_.load()));
+  CHECK(IsString(raw_string()));
+  CHECK(IsSmi(flags_.load()));
+}
+
+void JSSegmentDataObject::JSSegmentDataObjectVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsString(segment()));
+  CHECK(IsSmi(index_.load()) || IsHeapNumber(index_.load()));
+  CHECK(IsString(input()));
+}
+
+void JSSegmentDataObjectWithIsWordLike::JSSegmentDataObjectWithIsWordLikeVerify(
+    Isolate* isolate) {
+  JSSegmentDataObjectVerify(isolate);
+  CHECK(IsBoolean(is_word_like()));
+}
+#endif  // V8_INTL_SUPPORT
+
 namespace {
 
 void VerifyElementIsShared(Tagged<Object> element) {
