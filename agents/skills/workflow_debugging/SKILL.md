@@ -70,14 +70,14 @@ Once the fix is approved by the user:
 
 - **Issue Association in Commits**:
     - The commit message must follow the V8 convention.
-    - It MUST include a `Bug: v8:<issue_id>` line at the bottom.
+    - It MUST include a `Bug: <issue_id>` line at the bottom.
     - Example Commit Message:
       ```
       [compiler] Fix crash in Turboshaft during loop unrolling
 
       The loop unroller failed to handle cases where...
 
-      Bug: v8:12345
+      Bug: 12345
       ```
 
 - **Test Naming and Placement**:
@@ -86,15 +86,13 @@ Once the fix is approved by the user:
     - Place the test in the appropriate directory:
         - General regressions: `test/mjsunit/regress/`
         - Component-specific regressions (if applicable): e.g., `test/mjsunit/compiler/regress-12345.js`.
-    - Ensure the test file contains a header referencing the bug:
+    - Ensure the test file contains a standard header:
       ```javascript
       // Copyright 2026 the V8 project authors. All rights reserved.
       // Use of this source code is governed by a BSD-style license that can be
       // found in the LICENSE file.
 
       // Flags: --allow-natives-syntax --any-other-flags
-
-      // Bug: v8:12345
       ```
 
 - **Finalization and Upload**:
