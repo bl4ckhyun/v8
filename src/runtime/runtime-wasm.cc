@@ -1357,7 +1357,16 @@ RUNTIME_FUNCTION(Runtime_WasmAllocateSuspender) {
   }
 
   // Update the suspender state.
-  suspender->set_parent(isolate->isolate_data()->active_suspender());
+  Tagged<WasmSuspenderObject> active_suspender =
+      isolate->isolate_data()->active_suspender();
+  if (v8_flags.experimental_wasm_wasmfx) {
+    // The active suspender is about to become inactive. Record the currently
+    // active stack (which may have changed due to WasmFX) for when we
+    // return to this suspender.
+    active_suspender->set_stack(isolate,
+                                isolate->isolate_data()->active_stack());
+  }
+  suspender->set_parent(active_suspender);
   suspender->set_stack(isolate, target_stack.get());
   // The active stack is updated in {Isolate::SwitchStacks}.
   isolate->isolate_data()->set_active_suspender(*suspender);
