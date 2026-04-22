@@ -159,8 +159,30 @@ if (V8_DIR.parent / "chrome").exists():
 else:
   CHROMIUM_DIR = None
 
-GCLIENT_FILE_PATH = (CHROMIUM_DIR.parent
-                     if CHROMIUM_DIR else V8_DIR.parent) / ".gclient"
+
+# Useful when working with multiple git worktrees.
+def find_gclient(start_dir):
+  curr = start_dir.resolve()
+  while curr != curr.parent:
+    if (curr / ".gclient").exists():
+      return curr / ".gclient"
+
+    git_file = curr / ".git"
+    if git_file.is_file():
+      try:
+        content = git_file.read_text().strip()
+        if content.startswith("gitdir:"):
+          gitdir = Path(content.split()[1]).resolve()
+          res = find_gclient(gitdir)
+          if res:
+            return res
+      except Exception:
+        pass
+    curr = curr.parent
+  return None
+
+
+GCLIENT_FILE_PATH = find_gclient(V8_DIR)
 
 out_dir_override = os.getenv("V8_GM_OUTDIR")
 if out_dir_override and Path(out_dir_override).is_dir:
@@ -196,7 +218,7 @@ def get_gclient_solution(solutions):
 # Note: this function is reused by update-compile-commands.py. When renaming
 # this, please update that file too!
 def detect_reclient():
-  if not GCLIENT_FILE_PATH.exists():
+  if not GCLIENT_FILE_PATH or not GCLIENT_FILE_PATH.exists():
     return Reclient.NONE
   content = GCLIENT_FILE_PATH.read_text()
   try:
