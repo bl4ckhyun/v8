@@ -378,16 +378,6 @@ HowToContinueAfterWatchpoint WaitForD8ToStopThenReact() {
         strsignal(signal));
 
   switch (signal) {
-    case SIGCHLD:
-      TRACE("[debugger] A child process of d8 exited; continuing d8.\n");
-      return {.signal = signal};
-
-    case SIGCONT:
-      TRACE(
-          "[debugger] d8 received a SIGCONT (probably from external job "
-          "control); continuing d8.\n");
-      return {.signal = signal};
-
     case SIGSTOP:
       // D8 requested an update on watchpoints -> execute them.
       CHECK(g_support.shared->has_changed_watchpoints.exchange(false));
@@ -414,11 +404,11 @@ HowToContinueAfterWatchpoint WaitForD8ToStopThenReact() {
     case SIGILL:
       TRACE("[debugger] d8 crashed (%s)\n", strsignal(signal));
       return {.signal = signal};
-  }
 
-  // If there are other reasons for the d8 process to stop we should handle
-  // them.
-  UNREACHABLE();
+    // All other signals are just forwarded to d8 unchanged.
+    default:
+      return {.signal = signal};
+  }
 }
 
 }  // namespace
