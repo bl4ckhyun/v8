@@ -88,7 +88,7 @@ vars = {
   'chromium_jetstream_git': 'https://chromium.googlesource.com/external/github.com/WebKit/JetStream.git',
 
   # GN CIPD package version.
-  'gn_version': 'git_revision:7f7c0c9a3b63b6b052714bbd1848b1b0723f6389',
+  'gn_version': 'git_revision:a7ad13b5c256da91a9b396cefa3fe16380d1d67f',
 
   # ninja CIPD package version
   # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/ninja
@@ -135,9 +135,9 @@ vars = {
 
 deps = {
   'build':
-    Var('chromium_url') + '/chromium/src/build.git' + '@' + '5be1810ce8aa41b38b610526b24d87781cf3b5cf',
+    Var('chromium_url') + '/chromium/src/build.git' + '@' + 'f269a731bcfcb0a581ed1872316609dd533278d8',
   'buildtools':
-    Var('chromium_url') + '/chromium/src/buildtools.git' + '@' + '56ee4382919a6b28f060b05817db6eaa793cf1a8',
+    Var('chromium_url') + '/chromium/src/buildtools.git' + '@' + 'f8142896e7c5eac4f7325ce3b82c386b0fdcdb42',
   'buildtools/linux64': {
     'packages': [
       {
@@ -248,13 +248,13 @@ deps = {
     'condition': 'checkout_android',
   },
   'third_party/depot_tools':
-    Var('chromium_url') + '/chromium/tools/depot_tools.git' + '@' + '1ea94929dc77e2b9b9b9e2ede3bbc0f39c10ebc9',
+    Var('chromium_url') + '/chromium/tools/depot_tools.git' + '@' + 'f16c2eb7bfe77c7354a75ac2460bdd18ac2f59d2',
   'third_party/dragonbox/src':
     Var('chromium_url') + '/external/github.com/jk-jeon/dragonbox.git' + '@' + 'beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44',
   'third_party/fp16/src':
     Var('chromium_url') + '/external/github.com/Maratyszcza/FP16.git' + '@' + '3d2de1816307bac63c16a297e8c4dc501b4076df',
   'third_party/fast_float/src':
-    Var('chromium_url') + '/external/github.com/fastfloat/fast_float.git' + '@' + 'cb1d42aaa1e14b09e1452cfdef373d051b8c02a4',
+    Var('chromium_url') + '/external/github.com/fastfloat/fast_float.git' + '@' + '05087a303dad9c98768b33c829d398223a649bc6',
   'third_party/fuchsia-gn-sdk': {
     'url': Var('chromium_url') + '/chromium/src/third_party/fuchsia-gn-sdk.git' + '@' + '1b201add6776a68bcb7b7e01e9d5a1ded7548d83',
     'condition': 'checkout_fuchsia',
@@ -312,7 +312,7 @@ deps = {
   'third_party/libpfm4/src':
     Var('chromium_url') + '/external/git.code.sf.net/p/perfmon2/libpfm4.git' + '@' + '977a25bb3dfe45f653a6cee71ffaae9a92fc3095',
   'third_party/libunwind/src':
-    Var('chromium_url') + '/external/github.com/llvm/llvm-project/libunwind.git' + '@' + '6ca46ff28e3578c57cbead6f233969eb3dabc176',
+    Var('chromium_url') + '/external/github.com/llvm/llvm-project/libunwind.git' + '@' + 'eef540b8e9461cd501a9d9799ddcae8e2a80c1c5',
   'third_party/llvm-libc/src':
     Var('chromium_url') + '/external/github.com/llvm/llvm-project/libc.git' + '@' + 'c34c794abfcebb7082f894ab0fec15277f346b7e',
   'third_party/llvm-build/Release+Asserts': {
@@ -494,7 +494,7 @@ deps = {
     'condition': 'not build_with_chromium',
   },
   'third_party/perfetto':
-    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + '617d7d557080f6b8908847b8bfb5ec32d124ad01',
+    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + 'a32e18b3663745dc6943482ef557049196887fd0',
   'third_party/protobuf':
     Var('chromium_url') + '/chromium/src/third_party/protobuf.git' + '@' + '04bb12d7ca5e16c58b55012acb32f07c89dd4e2b',
   'third_party/re2/src':
@@ -504,11 +504,11 @@ deps = {
       'condition': 'checkout_android',
   },
   'tools/rust':
-    Var('chromium_url') + '/chromium/src/tools/rust' + '@' + '4cd848fafc3f8e15b74f61e59f1d365effc27d19',
+    Var('chromium_url') + '/chromium/src/tools/rust' + '@' + '879786fffa8d93746e32d1e35d0f49c03c6bd3ed',
   'tools/win':
     Var('chromium_url') + '/chromium/src/tools/win' + '@' + 'd16e6b55b2bd699735919d8a13a55ff284086603',
   'third_party/rust':
-    Var('chromium_url') + '/chromium/src/third_party/rust' + '@' + '559360ea4846f003c68d8b1ad1987916e4306106',
+    Var('chromium_url') + '/chromium/src/third_party/rust' + '@' + 'd403e286a47dfb1ddbc334f84d58b75ef5ba7e5d',
   'third_party/rust-toolchain': {
     'dep_type': 'gcs',
     'bucket': 'chromium-browser-clang',
