@@ -75,7 +75,27 @@ bool JSArray::HasArrayPrototype(Isolate* isolate) {
   return map()->prototype() == *isolate->initial_array_prototype();
 }
 
-SMI_ACCESSORS(JSArrayIterator, raw_kind, kKindOffset)
+Tagged<JSReceiver> JSArrayIterator::iterated_object() const {
+  return iterated_object_.load();
+}
+void JSArrayIterator::set_iterated_object(Tagged<JSReceiver> value,
+                                          WriteBarrierMode mode) {
+  iterated_object_.store(this, value, mode);
+}
+
+Tagged<Number> JSArrayIterator::next_index() const {
+  return next_index_.load();
+}
+void JSArrayIterator::set_next_index(Tagged<Number> value,
+                                     WriteBarrierMode mode) {
+  next_index_.store(this, value, mode);
+}
+
+int JSArrayIterator::raw_kind() const { return kind_.load().value(); }
+
+void JSArrayIterator::set_raw_kind(int value) {
+  kind_.store(this, Smi::FromInt(value));
+}
 
 IterationKind JSArrayIterator::kind() const {
   return static_cast<IterationKind>(raw_kind());

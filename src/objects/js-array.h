@@ -161,9 +161,16 @@ class JSArray : public TorqueGeneratedJSArray<JSArray, JSObject> {
 
 // The JSArrayIterator describes JavaScript Array Iterators Objects, as
 // defined in https://tc39.es/ecma262/#sec-array-iterator-objects.
-class JSArrayIterator
-    : public TorqueGeneratedJSArrayIterator<JSArrayIterator, JSObject> {
+V8_OBJECT class JSArrayIterator : public JSObjectLayout {
  public:
+  inline Tagged<JSReceiver> iterated_object() const;
+  inline void set_iterated_object(Tagged<JSReceiver> value,
+                                  WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<Number> next_index() const;
+  inline void set_next_index(Tagged<Number> value,
+                             WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
   DECL_PRINTER(JSArrayIterator)
   DECL_VERIFIER(JSArrayIterator)
 
@@ -172,10 +179,15 @@ class JSArrayIterator
   inline void set_kind(IterationKind kind);
 
  private:
-  DECL_INT_ACCESSORS(raw_kind)
+  inline int raw_kind() const;
+  inline void set_raw_kind(int value);
 
-  TQ_OBJECT_CONSTRUCTORS(JSArrayIterator)
-};
+ public:
+  TaggedMember<JSReceiver> iterated_object_;
+  TaggedMember<Number> next_index_;
+  // SmiTagged<IterationKind>.
+  TaggedMember<Smi> kind_;
+} V8_OBJECT_END;
 
 // Helper class for JSArrays that are template literal objects
 class TemplateLiteralObject

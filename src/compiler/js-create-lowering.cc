@@ -761,7 +761,7 @@ Reduction JSCreateLowering::ReduceJSCreateArrayIterator(Node* node) {
 
   // Create the JSArrayIterator result.
   AllocationBuilder a(jsgraph(), broker(), effect, control);
-  a.Allocate(JSArrayIterator::kHeaderSize, AllocationType::kYoung,
+  a.Allocate(sizeof(JSArrayIterator), AllocationType::kYoung,
              Type::OtherObject());
   a.Store(AccessBuilder::ForMap(),
           native_context().initial_array_iterator_map(broker()));

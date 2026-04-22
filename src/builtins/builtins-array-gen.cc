@@ -1517,7 +1517,7 @@ TF_BUILTIN(ArrayIteratorPrototypeNext, CodeStubAssembler) {
     var_value = index;
 
     GotoIf(Word32Equal(LoadAndUntagToWord32ObjectField(
-                           iterator, JSArrayIterator::kKindOffset),
+                           iterator, offsetof(JSArrayIterator, kind_)),
                        Int32Constant(static_cast<int>(IterationKind::kKeys))),
            &allocate_iterator_result);
 
@@ -1563,7 +1563,7 @@ TF_BUILTIN(ArrayIteratorPrototypeNext, CodeStubAssembler) {
     var_value = index;
 
     Branch(Word32Equal(LoadAndUntagToWord32ObjectField(
-                           iterator, JSArrayIterator::kKindOffset),
+                           iterator, offsetof(JSArrayIterator, kind_)),
                        Int32Constant(static_cast<int>(IterationKind::kKeys))),
            &allocate_iterator_result, &if_generic);
   }
@@ -1617,7 +1617,7 @@ TF_BUILTIN(ArrayIteratorPrototypeNext, CodeStubAssembler) {
     var_value = index;
 
     GotoIf(Word32Equal(LoadAndUntagToWord32ObjectField(
-                           iterator, JSArrayIterator::kKindOffset),
+                           iterator, offsetof(JSArrayIterator, kind_)),
                        Int32Constant(static_cast<int>(IterationKind::kKeys))),
            &allocate_iterator_result);
 
@@ -1635,7 +1635,7 @@ TF_BUILTIN(ArrayIteratorPrototypeNext, CodeStubAssembler) {
   BIND(&allocate_entry_if_needed);
   {
     GotoIf(Word32Equal(LoadAndUntagToWord32ObjectField(
-                           iterator, JSArrayIterator::kKindOffset),
+                           iterator, offsetof(JSArrayIterator, kind_)),
                        Int32Constant(static_cast<int>(IterationKind::kValues))),
            &allocate_iterator_result);
 

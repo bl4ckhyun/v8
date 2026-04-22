@@ -18277,7 +18277,7 @@ ForOfNextResult CodeStubAssembler::ForOfNextHelper(
   {
     TNode<JSArrayIterator> array_iterator = CAST(object);
     TNode<JSReceiver> iterated_object = LoadObjectField<JSReceiver>(
-        array_iterator, JSArrayIterator::kIteratedObjectOffset);
+        array_iterator, offsetof(JSArrayIterator, iterated_object_));
     GotoIfNot(IsJSArray(iterated_object), &slow_path);
     TNode<JSArray> iterated_array = CAST(iterated_object);
 
@@ -18287,14 +18287,14 @@ ForOfNextResult CodeStubAssembler::ForOfNextHelper(
 
     TNode<Smi> length = LoadFastJSArrayLength(iterated_array);
     TNode<Number> current_index = LoadObjectField<Number>(
-        array_iterator, JSArrayIterator::kNextIndexOffset);
+        array_iterator, offsetof(JSArrayIterator, next_index_));
     GotoIf(TaggedIsNotSmi(current_index), &reach_end);
 
     TNode<Smi> smi_index = CAST(current_index);
     GotoIf(SmiGreaterThanOrEqual(smi_index, length), &reach_end);
 
     TNode<Smi> iteration_kind =
-        LoadObjectField<Smi>(array_iterator, JSArrayIterator::kKindOffset);
+        LoadObjectField<Smi>(array_iterator, offsetof(JSArrayIterator, kind_));
 
     TVARIABLE(Object, var_element_value);
     TNode<FixedArrayBase> elements = LoadElements(iterated_array);
@@ -18338,7 +18338,7 @@ ForOfNextResult CodeStubAssembler::ForOfNextHelper(
     BIND(&element_value_resolved);
     {
       StoreObjectFieldNoWriteBarrier(array_iterator,
-                                     JSArrayIterator::kNextIndexOffset,
+                                     offsetof(JSArrayIterator, next_index_),
                                      SmiAdd(smi_index, SmiConstant(1)));
       var_value = GetResultValueForHole(var_element_value.value());
       var_done = FalseConstant();

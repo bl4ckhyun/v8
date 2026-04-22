@@ -4,6 +4,7 @@
 
 extern enum IterationKind extends uint31 { kKeys, kValues, kEntries }
 
+@cppObjectLayoutDefinition
 extern class JSArrayIterator extends JSObject {
   iterated_object: JSReceiver;
 

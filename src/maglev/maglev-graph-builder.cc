@@ -9381,7 +9381,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
 
   std::optional<MapInference> map_inference;
   ValueNode* iterated_object =
-      iterator->get(JSArrayIterator::kIteratedObjectOffset);
+      iterator->get(offsetof(JSArrayIterator, iterated_object_));
   ElementsKind elements_kind;
   base::SmallVector<compiler::MapRef, 4> maps;
   if (iterated_object->Is<InlinedAllocation>()) {
@@ -9435,7 +9435,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
   // We can assume index and length fit in Uint32.
   ValueNode* index;
   GET_VALUE_OR_ABORT(
-      index, BuildLoadTaggedField(receiver, JSArrayIterator::kNextIndexOffset));
+      index,
+      BuildLoadTaggedField(receiver, offsetof(JSArrayIterator, next_index_)));
   ValueNode* uint32_index;
   GET_VALUE_OR_ABORT(uint32_index, GetUint32ElementIndex(index));
   ValueNode* length;
@@ -9461,10 +9462,10 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
         ValueNode* int32_index;
         GET_VALUE_OR_ABORT(int32_index, GetInt32(uint32_index));
         subgraph.set(is_done, GetBooleanConstant(false));
-        DCHECK(
-            iterator->get(JSArrayIterator::kKindOffset)->Is<Int32Constant>());
+        DCHECK(iterator->get(offsetof(JSArrayIterator, kind_))
+                   ->Is<Int32Constant>());
         IterationKind iteration_kind = static_cast<IterationKind>(
-            iterator->get(JSArrayIterator::kKindOffset)
+            iterator->get(offsetof(JSArrayIterator, kind_))
                 ->Cast<Int32Constant>()
                 ->value());
         if (iteration_kind == IterationKind::kKeys) {
@@ -9492,7 +9493,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
         EnsureType(next_index, NodeType::kSmi);
         // Update [[NextIndex]]
         return BuildStoreTaggedFieldNoWriteBarrier(
-            receiver, next_index, JSArrayIterator::kNextIndexOffset,
+            receiver, next_index, offsetof(JSArrayIterator, next_index_),
             StoreTaggedMode::kDefault);
       },
       [&] {
@@ -9510,9 +9511,10 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
           // This is not necessary for JSTypedArray's, since the length of those
           // cannot change later and so if we were ever out of bounds for them
           // we will stay out-of-bounds forever.
-          return BuildStoreTaggedField(
-              receiver, GetRootConstant(RootIndex::kMaxUInt32),
-              JSArrayIterator::kNextIndexOffset, StoreTaggedMode::kDefault);
+          return BuildStoreTaggedField(receiver,
+                                       GetRootConstant(RootIndex::kMaxUInt32),
+                                       offsetof(JSArrayIterator, next_index_),
+                                       StoreTaggedMode::kDefault);
         }
         return ReduceResult::Done();
       }));
@@ -14619,13 +14621,13 @@ VirtualObject* MaglevGraphBuilder::CreateJSArrayIterator(
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  vobj->set(JSArrayIterator::kPropertiesOrHashOffset,
+  vobj->set(offsetof(JSArrayIterator, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSArrayIterator::kElementsOffset,
+  vobj->set(offsetof(JSArrayIterator, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSArrayIterator::kIteratedObjectOffset, iterated_object);
-  vobj->set(JSArrayIterator::kNextIndexOffset, GetInt32Constant(0));
-  vobj->set(JSArrayIterator::kKindOffset,
+  vobj->set(offsetof(JSArrayIterator, iterated_object_), iterated_object);
+  vobj->set(offsetof(JSArrayIterator, next_index_), GetInt32Constant(0));
+  vobj->set(offsetof(JSArrayIterator, kind_),
             GetInt32Constant(static_cast<int>(kind)));
   return vobj;
 }

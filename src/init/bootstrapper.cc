@@ -2575,8 +2575,8 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
 
     DirectHandle<JSFunction> array_iterator_function = CreateFunction(
         isolate_, factory->ArrayIterator_string(), JS_ARRAY_ITERATOR_TYPE,
-        JSArrayIterator::kHeaderSize, 0, array_iterator_prototype,
-        Builtin::kIllegal, 0, kDontAdapt);
+        sizeof(JSArrayIterator), 0, array_iterator_prototype, Builtin::kIllegal,
+        0, kDontAdapt);
     array_iterator_function->shared()->set_native(false);
 
     native_context()->set_initial_array_iterator_map(

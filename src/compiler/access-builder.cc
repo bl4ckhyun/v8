@@ -1014,7 +1014,7 @@ ElementAccess AccessBuilder::ForSeqTwoByteStringCharacter() {
 // static
 FieldAccess AccessBuilder::ForJSArrayIteratorIteratedObject() {
   FieldAccess access = {
-      kTaggedBase,          JSArrayIterator::kIteratedObjectOffset,
+      kTaggedBase,          offsetof(JSArrayIterator, iterated_object_),
       Handle<Name>(),       OptionalMapRef(),
       Type::Receiver(),     MachineType::TaggedPointer(),
       kPointerWriteBarrier, "JSArrayIteratorIteratedObject"};
@@ -1026,7 +1026,7 @@ FieldAccess AccessBuilder::ForJSArrayIteratorNextIndex() {
   // In generic case, cap to 2^53-1 (per ToLength() in spec) via
   // kPositiveSafeInteger
   FieldAccess access = {kTaggedBase,
-                        JSArrayIterator::kNextIndexOffset,
+                        offsetof(JSArrayIterator, next_index_),
                         Handle<Name>(),
                         OptionalMapRef(),
                         TypeCache::Get()->kPositiveSafeInteger,
@@ -1039,7 +1039,7 @@ FieldAccess AccessBuilder::ForJSArrayIteratorNextIndex() {
 // static
 FieldAccess AccessBuilder::ForJSArrayIteratorKind() {
   FieldAccess access = {kTaggedBase,
-                        JSArrayIterator::kKindOffset,
+                        offsetof(JSArrayIterator, kind_),
                         Handle<Name>(),
                         OptionalMapRef(),
                         TypeCache::Get()->kJSArrayIteratorKindType,

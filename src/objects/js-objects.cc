@@ -2594,7 +2594,7 @@ int JSObject::GetHeaderSize(InstanceType type) {
     case JS_ARRAY_BUFFER_TYPE:
       return JSArrayBuffer::kHeaderSize;
     case JS_ARRAY_ITERATOR_TYPE:
-      return JSArrayIterator::kHeaderSize;
+      return sizeof(JSArrayIterator);
     case JS_TYPED_ARRAY_TYPE:
       return JSTypedArray::kHeaderSize;
     case JS_DETACHED_TYPED_ARRAY_TYPE:

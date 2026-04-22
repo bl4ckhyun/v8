@@ -2223,7 +2223,7 @@ void ScriptOrModule::ScriptOrModuleVerify(Isolate* isolate) {
 }
 
 void JSArrayIterator::JSArrayIteratorVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSArrayIteratorVerify(*this, isolate);
+  JSObjectVerify(isolate);
 
   CHECK_GE(Object::NumberValue(next_index()), 0);
   CHECK_LE(Object::NumberValue(next_index()), kMaxSafeInteger);

@@ -2546,11 +2546,11 @@ void JSTypedArray::JSTypedArrayPrint(std::ostream& os) {
 }
 
 void JSArrayIterator::JSArrayIteratorPrint(std::ostream& os) {  // NOLING
-  JSObjectPrintHeader(os, *this, "JSArrayIterator");
+  JSObjectPrintHeader(os, this, "JSArrayIterator");
   os << "\n - iterated_object: " << Brief(iterated_object());
   os << "\n - next_index: " << Brief(next_index());
   os << "\n - kind: " << kind();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSDataView::JSDataViewPrint(std::ostream& os) {
