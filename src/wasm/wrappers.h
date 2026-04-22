@@ -162,6 +162,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   }
 
   V<Object> ToJS(OpIndex ret, CanonicalValueType type, V<Context> context);
+  V<Object> BuildToJSFunctionRef(V<WasmFuncRef> ret, V<Context> context);
 
   // Generate a call to the AllocateJSArray builtin.
   V<JSArray> BuildCallAllocateJSArray(V<Number> array_length,

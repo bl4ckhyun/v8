@@ -61,6 +61,28 @@ auto WasmWrapperTSGraphBuilder<Assembler>::BuildChangeInt32ToNumber(
 }
 
 template <typename Assembler>
+auto WasmWrapperTSGraphBuilder<Assembler>::BuildToJSFunctionRef(
+    V<WasmFuncRef> ret, V<Context> context) -> V<Object> {
+  V<WasmInternalFunction> internal = V<WasmInternalFunction>::Cast(
+      __ LoadTrustedPointer(ret, LoadOp::Kind::TaggedBase(),
+                            kWasmInternalFunctionIndirectPointerTag,
+                            WasmFuncRef::kTrustedInternalOffset));
+  V<Object> maybe_external = __ Load(internal, LoadOp::Kind::TaggedBase(),
+                                     MemoryRepresentation::TaggedPointer(),
+                                     WasmInternalFunction::kExternalOffset);
+  ScopedVar<Object> result(this, OpIndex::Invalid());
+  IF (__ TaggedEqual(maybe_external,
+                     __ template LoadRoot<RootIndex::kUndefinedValue>())) {
+    result = CallBuiltin<WasmInternalFunctionCreateExternalDescriptor>(
+        Builtin::kWasmInternalFunctionCreateExternal, Operator::kNoProperties,
+        internal, context);
+  } ELSE {
+    result = maybe_external;
+  }
+  return result;
+}
+
+template <typename Assembler>
 auto WasmWrapperTSGraphBuilder<Assembler>::ToJS(OpIndex ret,
                                                 CanonicalValueType type,
                                                 V<Context> context)
@@ -91,46 +113,18 @@ auto WasmWrapperTSGraphBuilder<Assembler>::ToJS(OpIndex ret,
 
   if (type.ref_type_kind() == RefTypeKind::kFunction) {
     // Function reference. Extract the external function.
-    ScopedVar<Object> result(this, OpIndex::Invalid());
     if (type.is_nullable()) {
+      ScopedVar<Object> result(this, OpIndex::Invalid());
       IF (__ TaggedEqual(ret, __ template LoadRoot<RootIndex::kWasmNull>())) {
         result = __ template LoadRoot<RootIndex::kNullValue>();
       } ELSE {
-        V<WasmInternalFunction> internal = V<WasmInternalFunction>::Cast(
-            __ LoadTrustedPointer(ret, LoadOp::Kind::TaggedBase(),
-                                  kWasmInternalFunctionIndirectPointerTag,
-                                  WasmFuncRef::kTrustedInternalOffset));
-        V<Object> maybe_external =
-            __ Load(internal, LoadOp::Kind::TaggedBase(),
-                    MemoryRepresentation::AnyTagged(),
-                    WasmInternalFunction::kExternalOffset);
-        IF (__ TaggedEqual(
-                maybe_external,
-                __ template LoadRoot<RootIndex::kUndefinedValue>())) {
-          result = CallBuiltin<WasmInternalFunctionCreateExternalDescriptor>(
-              Builtin::kWasmInternalFunctionCreateExternal,
-              Operator::kNoProperties, internal, context);
-        } ELSE {
-          result = maybe_external;
-        }
+        result = BuildToJSFunctionRef(V<WasmFuncRef>::Cast(ret), context);
       }
+      return result;
     } else {
       // Non-nullable funcref.
-      V<WasmInternalFunction> internal = V<WasmInternalFunction>::Cast(
-          __ LoadTrustedPointer(ret, LoadOp::Kind::TaggedBase(),
-                                kWasmInternalFunctionIndirectPointerTag,
-                                WasmFuncRef::kTrustedInternalOffset));
-      result = __ Load(internal, LoadOp::Kind::TaggedBase(),
-                       MemoryRepresentation::TaggedPointer(),
-                       WasmInternalFunction::kExternalOffset);
-      IF (__ TaggedEqual(result,
-                         __ template LoadRoot<RootIndex::kUndefinedValue>())) {
-        result = CallBuiltin<WasmInternalFunctionCreateExternalDescriptor>(
-            Builtin::kWasmInternalFunctionCreateExternal,
-            Operator::kNoProperties, internal, context);
-      }
+      return BuildToJSFunctionRef(V<WasmFuncRef>::Cast(ret), context);
     }
-    return result;
   }
 
   // Always null.
