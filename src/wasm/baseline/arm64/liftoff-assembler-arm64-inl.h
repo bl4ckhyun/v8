@@ -296,12 +296,12 @@ void LiftoffAssembler::PrepareTailCall(int num_callee_stack_params,
 
   temps.Include(x17);
 
-  Register scratch = temps.AcquireX();
-
   // Shift the whole frame upwards, except for fp and lr.
   // Adjust x16 to be the new stack pointer first, so that {str} doesn't need
   // a temp register to materialize the offset.
   Sub(x16, x16, stack_param_delta * 8);
+
+  Register scratch = temps.AcquireX();
   int slot_count = num_callee_stack_params;
   for (int i = slot_count - 1; i >= 0; --i) {
     ldr(scratch, MemOperand(sp, i * 8));
