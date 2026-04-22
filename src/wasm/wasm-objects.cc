@@ -994,7 +994,7 @@ DirectHandle<JSArrayBuffer> WasmMemoryObject::RefreshBuffer(
 int32_t WasmMemoryObject::Grow(Isolate* isolate,
                                DirectHandle<WasmMemoryObject> memory_object,
                                uint32_t pages) {
-  TRACE_EVENT0("v8.wasm", "wasm.GrowMemory");
+  TRACE_EVENT("v8.wasm", "wasm.GrowMemory");
 
   Managed<BackingStore>::Ptr backing_store = memory_object->backing_store();
   DCHECK_NOT_NULL(backing_store);

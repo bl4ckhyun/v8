@@ -1044,8 +1044,8 @@ InstanceBuilder::InstanceBuilder(
 
 // Build an instance, in all of its glory.
 MaybeDirectHandle<WasmInstanceObject> InstanceBuilder::Build() {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.InstanceBuilder.Build");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.InstanceBuilder.Build");
   // Will check whether {ffi_} is available.
   SanitizeImports();
   if (thrower_->error()) return {};
@@ -1520,8 +1520,8 @@ Maybe<bool> InstanceBuilder::Build_Phase2() {
 }
 
 bool InstanceBuilder::ExecuteStartFunction() {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.ExecuteStartFunction");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.ExecuteStartFunction");
   if (start_function_.is_null()) return true;  // No start function.
 
   HandleScope scope(isolate_);

@@ -117,7 +117,7 @@ class WasmStreaming::WasmStreamingImpl {
 
 WasmStreaming::WasmStreaming(std::unique_ptr<WasmStreamingImpl> impl)
     : impl_(std::move(impl)) {
-  TRACE_EVENT0("v8.wasm", "wasm.InitializeStreaming");
+  TRACE_EVENT("v8.wasm", "wasm.InitializeStreaming");
 }
 
 // The destructor is defined here because we have a unique_ptr with forward
@@ -125,18 +125,18 @@ WasmStreaming::WasmStreaming(std::unique_ptr<WasmStreamingImpl> impl)
 WasmStreaming::~WasmStreaming() = default;
 
 void WasmStreaming::OnBytesReceived(const uint8_t* bytes, size_t size) {
-  TRACE_EVENT1("v8.wasm", "wasm.OnBytesReceived", "bytes", size);
+  TRACE_EVENT("v8.wasm", "wasm.OnBytesReceived", "bytes", size);
   impl_->OnBytesReceived(bytes, size);
 }
 
 void WasmStreaming::Finish(
     const WasmStreaming::ModuleCachingCallback& caching_callback) {
-  TRACE_EVENT0("v8.wasm", "wasm.FinishStreaming");
+  TRACE_EVENT("v8.wasm", "wasm.FinishStreaming");
   impl_->Finish(caching_callback);
 }
 
 void WasmStreaming::Abort(MaybeLocal<Value> exception) {
-  TRACE_EVENT0("v8.wasm", "wasm.AbortStreaming");
+  TRACE_EVENT("v8.wasm", "wasm.AbortStreaming");
   i::MaybeHandle<i::JSAny> maybe_exception;
   if (!exception.IsEmpty()) {
     maybe_exception =
@@ -156,14 +156,14 @@ void WasmStreaming::SetMoreFunctionsCanBeSerializedCallback(
 
 void WasmStreaming::SetUrl(const char* url, size_t length) {
   DCHECK_EQ('\0', url[length]);  // {url} is null-terminated.
-  TRACE_EVENT1("v8.wasm", "wasm.SetUrl", "url", url);
+  TRACE_EVENT("v8.wasm", "wasm.SetUrl", "url", url);
   impl_->SetUrl(base::VectorOf(url, length));
 }
 
 // static
 std::shared_ptr<WasmStreaming> WasmStreaming::Unpack(Isolate* isolate,
                                                      Local<Value> value) {
-  TRACE_EVENT0("v8.wasm", "wasm.WasmStreaming.Unpack");
+  TRACE_EVENT("v8.wasm", "wasm.WasmStreaming.Unpack");
   i::HandleScope scope(reinterpret_cast<i::Isolate*>(isolate));
   auto managed =
       i::Cast<i::Managed<WasmStreaming>>(Utils::OpenDirectHandle(*value));
@@ -240,13 +240,13 @@ class WasmModuleCompilation::Impl {
 WasmModuleCompilation::WasmModuleCompilation()
     : impl_(std::make_unique<Impl>(WasmEnabledFeatures::FromFlags(),
                                    CompileTimeImports{})) {
-  TRACE_EVENT0("v8.wasm", "wasm.ModuleCompilation");
+  TRACE_EVENT("v8.wasm", "wasm.ModuleCompilation");
 }
 
 WasmModuleCompilation::~WasmModuleCompilation() = default;
 
 void WasmModuleCompilation::OnBytesReceived(const uint8_t* bytes, size_t size) {
-  TRACE_EVENT1("v8.wasm", "wasm.OnBytesReceived", "bytes", size);
+  TRACE_EVENT("v8.wasm", "wasm.OnBytesReceived", "bytes", size);
   impl_->OnBytesReceived(bytes, size);
 }
 
@@ -254,12 +254,12 @@ void WasmModuleCompilation::Finish(
     Isolate* isolate, const ModuleCachingCallback& caching_callback,
     const std::function<void(std::variant<Local<WasmModuleObject>, Local<Value>>
                                  module_or_error)>& resolution_callback) {
-  TRACE_EVENT0("v8.wasm", "wasm.FinishModuleCompilation");
+  TRACE_EVENT("v8.wasm", "wasm.FinishModuleCompilation");
   impl_->Finish(isolate, caching_callback, resolution_callback);
 }
 
 void WasmModuleCompilation::Abort() {
-  TRACE_EVENT0("v8.wasm", "wasm.AbortModuleCompilation");
+  TRACE_EVENT("v8.wasm", "wasm.AbortModuleCompilation");
   impl_->Abort();
 }
 
@@ -274,7 +274,7 @@ void WasmModuleCompilation::SetMoreFunctionsCanBeSerializedCallback(
 
 void WasmModuleCompilation::SetUrl(const char* url, size_t length) {
   DCHECK_EQ('\0', url[length]);  // {url} is null-terminated.
-  TRACE_EVENT1("v8.wasm", "wasm.SetUrl", "url", url);
+  TRACE_EVENT("v8.wasm", "wasm.SetUrl", "url", url);
   impl_->SetUrl(base::VectorOf(url, length));
 }
 

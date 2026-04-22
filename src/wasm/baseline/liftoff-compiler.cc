@@ -11006,9 +11006,9 @@ WasmCompilationResult ExecuteLiftoffCompilation(
     start_time = base::TimeTicks::Now();
   }
   int func_body_size = static_cast<int>(func_body.end - func_body.start);
-  TRACE_EVENT2(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.CompileBaseline", "funcIndex", compiler_options.func_index,
-               "bodySize", func_body_size);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.CompileBaseline", "funcIndex", compiler_options.func_index,
+              "bodySize", func_body_size);
 
   Zone zone(GetWasmEngine()->allocator(), "LiftoffCompilationZone");
   auto call_descriptor = compiler::GetWasmCallDescriptor(&zone, func_body.sig);

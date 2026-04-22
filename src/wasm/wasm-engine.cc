@@ -592,7 +592,7 @@ WasmEngine::~WasmEngine() {
 bool WasmEngine::SyncValidate(Isolate* isolate, WasmEnabledFeatures enabled,
                               CompileTimeImports compile_imports,
                               base::Vector<const uint8_t> bytes) {
-  TRACE_EVENT0("v8.wasm", "wasm.SyncValidate");
+  TRACE_EVENT("v8.wasm", "wasm.SyncValidate");
   if (bytes.empty()) return false;
 
   WasmDetectedFeatures unused_detected_features;
@@ -611,8 +611,8 @@ MaybeHandle<AsmWasmData> WasmEngine::SyncCompileTranslatedAsmJs(
     base::Vector<const uint8_t> asm_js_offset_table_bytes,
     DirectHandle<HeapNumber> uses_bitset, LanguageMode language_mode) {
   int compilation_id = next_compilation_id_.fetch_add(1);
-  TRACE_EVENT1("v8.wasm", "wasm.SyncCompileTranslatedAsmJs", "id",
-               compilation_id);
+  TRACE_EVENT("v8.wasm", "wasm.SyncCompileTranslatedAsmJs", "id",
+              compilation_id);
   ModuleOrigin origin = language_mode == LanguageMode::kSloppy
                             ? kAsmJsSloppyOrigin
                             : kAsmJsStrictOrigin;
@@ -674,7 +674,7 @@ MaybeDirectHandle<WasmModuleObject> WasmEngine::SyncCompile(
     base::OwnedVector<const uint8_t> bytes,
     base::Vector<const char> source_url) {
   int compilation_id = next_compilation_id_.fetch_add(1);
-  TRACE_EVENT1("v8.wasm", "wasm.SyncCompile", "id", compilation_id);
+  TRACE_EVENT("v8.wasm", "wasm.SyncCompile", "id", compilation_id);
   v8::metrics::Recorder::ContextId context_id =
       isolate->GetOrRegisterRecorderContextId(isolate->native_context());
   std::shared_ptr<WasmModule> module;
@@ -746,7 +746,7 @@ MaybeDirectHandle<WasmInstanceObject> WasmEngine::SyncInstantiate(
     DirectHandle<WasmModuleObject> module_object,
     MaybeDirectHandle<JSReceiver> imports,
     MaybeDirectHandle<JSArrayBuffer> memory) {
-  TRACE_EVENT0("v8.wasm", "wasm.SyncInstantiate");
+  TRACE_EVENT("v8.wasm", "wasm.SyncInstantiate");
   return InstantiateToInstanceObject(isolate, thrower, module_object, imports,
                                      memory);
 }
@@ -756,7 +756,7 @@ void WasmEngine::AsyncInstantiate(
     DirectHandle<WasmModuleObject> module_object,
     MaybeDirectHandle<JSReceiver> imports) {
   ErrorThrower thrower(isolate, "WebAssembly.instantiate()");
-  TRACE_EVENT0("v8.wasm", "wasm.AsyncInstantiate");
+  TRACE_EVENT("v8.wasm", "wasm.AsyncInstantiate");
   // Instantiate a TryCatch so that caught exceptions won't propagate out.
   // They will still be set as exceptions on the isolate.
   // TODO(clemensb): Avoid TryCatch, use Execution::TryCall internally to invoke
@@ -795,7 +795,7 @@ void WasmEngine::AsyncCompile(
     base::OwnedVector<const uint8_t> bytes,
     const char* api_method_name_for_errors) {
   int compilation_id = next_compilation_id_.fetch_add(1);
-  TRACE_EVENT1("v8.wasm", "wasm.AsyncCompile", "id", compilation_id);
+  TRACE_EVENT("v8.wasm", "wasm.AsyncCompile", "id", compilation_id);
 
   if (!v8_flags.wasm_async_compilation || v8_flags.wasm_jitless) {
     // Asynchronous compilation disabled; fall back on synchronous compilation.
@@ -855,8 +855,8 @@ std::shared_ptr<StreamingDecoder> WasmEngine::StartStreamingCompilation(
     const char* api_method_name,
     std::shared_ptr<CompilationResultResolver> resolver) {
   int compilation_id = next_compilation_id_.fetch_add(1);
-  TRACE_EVENT1("v8.wasm", "wasm.StartStreamingCompilation", "id",
-               compilation_id);
+  TRACE_EVENT("v8.wasm", "wasm.StartStreamingCompilation", "id",
+              compilation_id);
   if (v8_flags.wasm_async_compilation) {
     AsyncCompileJob* job = CreateAsyncCompileJob(
         enabled, std::move(compile_imports), {}, api_method_name,
@@ -1545,7 +1545,7 @@ void WasmEngine::LogOutstandingCodesForIsolate(Isolate* isolate) {
   // Check again whether we still need to log code.
   bool should_log = WasmCode::ShouldBeLogged(isolate);
 
-  TRACE_EVENT0("v8.wasm", "wasm.LogCode");
+  TRACE_EVENT("v8.wasm", "wasm.LogCode");
   for (auto& [script_id, code_to_log] : code_to_log_map) {
     if (should_log) {
       for (WasmCode* code : code_to_log.code) {
@@ -1574,8 +1574,8 @@ std::shared_ptr<NativeModule> WasmEngine::NewUnownedNativeModule(
     WasmEnabledFeatures enabled_features,
     WasmDetectedFeatures detected_features, CompileTimeImports compile_imports,
     std::shared_ptr<const WasmModule> module, size_t code_size_estimate) {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.NewNativeModule");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.NewNativeModule");
 
   std::shared_ptr<NativeModule> native_module =
       GetWasmCodeManager()->NewNativeModule(
@@ -1646,14 +1646,14 @@ std::shared_ptr<NativeModule> WasmEngine::MaybeGetNativeModule(
     ModuleOrigin origin, base::Vector<const uint8_t> wire_bytes,
     WasmEnabledFeatures enabled_features,
     const CompileTimeImports& compile_imports) {
-  TRACE_EVENT1("v8.wasm", "wasm.GetNativeModuleFromCache", "wire_bytes",
-               wire_bytes.size());
+  TRACE_EVENT("v8.wasm", "wasm.GetNativeModuleFromCache", "wire_bytes",
+              wire_bytes.size());
   std::shared_ptr<NativeModule> native_module =
       native_module_cache_.MaybeGetNativeModule(
           origin, wire_bytes, enabled_features, compile_imports);
   if (native_module) {
     // Create a marker in the trace.
-    TRACE_EVENT0("v8.wasm", "CacheHit");
+    TRACE_EVENT("v8.wasm", "CacheHit");
   }
   return native_module;
 }
@@ -1675,7 +1675,7 @@ std::shared_ptr<NativeModule> WasmEngine::UpdateNativeModuleCache(
 bool WasmEngine::GetStreamingCompilationOwnership(
     size_t prefix_hash, WasmEnabledFeatures enabled_features,
     const CompileTimeImports& compile_imports) {
-  TRACE_EVENT0("v8.wasm", "wasm.GetStreamingCompilationOwnership");
+  TRACE_EVENT("v8.wasm", "wasm.GetStreamingCompilationOwnership");
   if (native_module_cache_.GetStreamingCompilationOwnership(
           prefix_hash, enabled_features, compile_imports)) {
     return true;
@@ -1683,7 +1683,7 @@ bool WasmEngine::GetStreamingCompilationOwnership(
   // This is only a marker, not for tracing execution time. There should be a
   // later "wasm.GetNativeModuleFromCache" event for trying to get the module
   // from the cache.
-  TRACE_EVENT0("v8.wasm", "CacheHit");
+  TRACE_EVENT("v8.wasm", "CacheHit");
   return false;
 }
 
@@ -1757,7 +1757,7 @@ void WasmEngine::FreeNativeModule(NativeModule* native_module) {
 
 void WasmEngine::ReportLiveCodeForGC(Isolate* isolate,
                                      std::unordered_set<WasmCode*>& live_code) {
-  TRACE_EVENT0("v8.wasm", "wasm.ReportLiveCodeForGC");
+  TRACE_EVENT("v8.wasm", "wasm.ReportLiveCodeForGC");
   TRACE_CODE_GC("Isolate %d reporting %zu live code objects.\n", isolate->id(),
                 live_code.size());
   base::MutexGuard guard(&mutex_);
@@ -1907,7 +1907,7 @@ void WasmEngine::FreeDeadCode(const DeadCodeMap& dead_code,
 void WasmEngine::FreeDeadCodeLocked(
     const DeadCodeMap& dead_code, std::vector<WasmCode*>& dead_import_wrappers,
     std::vector<WasmCode*>& dead_stack_wrappers) {
-  TRACE_EVENT0("v8.wasm", "wasm.FreeDeadCode");
+  TRACE_EVENT("v8.wasm", "wasm.FreeDeadCode");
   mutex_.AssertHeld();
   for (auto& dead_code_entry : dead_code) {
     NativeModule* native_module = dead_code_entry.first;

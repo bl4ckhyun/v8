@@ -1085,8 +1085,8 @@ void NativeModule::LogWasmCodes(Isolate* isolate, Tagged<Script> script) {
   DisallowGarbageCollection no_gc;
   if (!WasmCode::ShouldBeLogged(isolate)) return;
 
-  TRACE_EVENT1("v8.wasm", "wasm.LogWasmCodes", "functions",
-               module_->num_declared_functions);
+  TRACE_EVENT("v8.wasm", "wasm.LogWasmCodes", "functions",
+              module_->num_declared_functions);
 
   Tagged<Object> url_obj = script->name();
   DCHECK(IsString(url_obj) || IsUndefined(url_obj));
@@ -1422,8 +1422,8 @@ std::unique_ptr<WasmCode> NativeModule::AddCodeWithCodeSpace(
 }
 
 WasmCode* NativeModule::PublishCode(UnpublishedWasmCode unpublished_code) {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.PublishCode");
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.PublishCode");
   base::RecursiveMutexGuard lock(&allocation_mutex_);
   return PublishCodeLocked(std::move(unpublished_code.code),
                            unpublished_code.assumptions.get());
@@ -1431,8 +1431,8 @@ WasmCode* NativeModule::PublishCode(UnpublishedWasmCode unpublished_code) {
 
 std::vector<WasmCode*> NativeModule::PublishCode(
     base::Vector<UnpublishedWasmCode> unpublished_codes) {
-  TRACE_EVENT1(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.PublishCode", "number", unpublished_codes.size());
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"), "wasm.PublishCode",
+              "number", unpublished_codes.size());
   std::vector<WasmCode*> published_code;
   published_code.reserve(unpublished_codes.size());
   base::RecursiveMutexGuard lock(&allocation_mutex_);
@@ -2688,8 +2688,8 @@ UnpublishedWasmCode NativeModule::AddCompiledCode(
 
 std::vector<UnpublishedWasmCode> NativeModule::AddCompiledCode(
     base::Vector<WasmCompilationResult> results) {
-  TRACE_EVENT1(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
-               "wasm.AddCompiledCode", "num", results.size());
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.wasm.detailed"),
+              "wasm.AddCompiledCode", "num", results.size());
   DCHECK(!results.empty());
   std::vector<UnpublishedWasmCode> generated_code;
   generated_code.reserve(results.size());
