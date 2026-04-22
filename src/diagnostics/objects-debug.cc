@@ -2245,8 +2245,8 @@ void VerifyElementIsShared(Tagged<Object> element) {
 }  // namespace
 
 void JSSharedStruct::JSSharedStructVerify(Isolate* isolate) {
-  CHECK(IsJSSharedStruct(*this));
-  CHECK(HeapLayout::InWritableSharedSpace(*this));
+  CHECK(IsJSSharedStruct(this));
+  CHECK(HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this)));
   JSObjectVerify(isolate);
   CHECK(HasFastProperties());
   // Shared structs can only point to primitives or other shared HeapObjects,
@@ -2278,14 +2278,14 @@ void JSSharedStruct::JSSharedStructVerify(Isolate* isolate) {
 }
 
 void JSAtomicsMutex::JSAtomicsMutexVerify(Isolate* isolate) {
-  CHECK(IsJSAtomicsMutex(*this));
-  CHECK(HeapLayout::InWritableSharedSpace(*this));
+  CHECK(IsJSAtomicsMutex(this));
+  CHECK(HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this)));
   JSObjectVerify(isolate);
 }
 
 void JSAtomicsCondition::JSAtomicsConditionVerify(Isolate* isolate) {
-  CHECK(IsJSAtomicsCondition(*this));
-  CHECK(HeapLayout::InAnySharedSpace(*this));
+  CHECK(IsJSAtomicsCondition(this));
+  CHECK(HeapLayout::InAnySharedSpace(Tagged<HeapObject>(this)));
   JSObjectVerify(isolate);
 }
 
@@ -2306,7 +2306,7 @@ void JSAsyncDisposableStack::JSAsyncDisposableStackVerify(Isolate* isolate) {
 }
 
 void JSSharedArray::JSSharedArrayVerify(Isolate* isolate) {
-  CHECK(IsJSSharedArray(*this));
+  CHECK(IsJSSharedArray(this));
   JSObjectVerify(isolate);
   CHECK(HasFastProperties());
   // Shared arrays can only point to primitives or other shared HeapObjects,

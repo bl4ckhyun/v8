@@ -457,6 +457,7 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
                                 SeqCstAccessTag tag);
+  inline Tagged<JSAny> RawFastPropertyAt(FieldIndex index) const;
   inline void SetEmbedderField(int index, Tagged<Object> value);
   inline void SetEmbedderField(int index, Tagged<Smi> value);
 

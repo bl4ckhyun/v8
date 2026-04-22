@@ -2399,30 +2399,38 @@ void JSFinalizationRegistry::JSFinalizationRegistryPrint(std::ostream& os) {
 }
 
 void JSSharedArray::JSSharedArrayPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSharedArray");
-  if (HeapLayout::InWritableSharedSpace(*this)) os << " (shared)";
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSSharedArray");
+  if (HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this))) {
+    os << " (shared)";
+  }
+  JSObjectPrintBody(os, this);
 }
 
 void JSSharedStruct::JSSharedStructPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSSharedStruct");
-  if (HeapLayout::InWritableSharedSpace(*this)) os << " (shared)";
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintHeader(os, this, "JSSharedStruct");
+  if (HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this))) {
+    os << " (shared)";
+  }
+  JSObjectPrintBody(os, this);
 }
 
 void JSAtomicsMutex::JSAtomicsMutexPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSAtomicsMutex");
-  if (HeapLayout::InWritableSharedSpace(*this)) os << " (shared)";
+  JSObjectPrintHeader(os, this, "JSAtomicsMutex");
+  if (HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this))) {
+    os << " (shared)";
+  }
   os << "\n - state: " << this->state();
   os << "\n - owner_thread_id: " << this->owner_thread_id();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSAtomicsCondition::JSAtomicsConditionPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, "JSAtomicsCondition");
-  if (HeapLayout::InWritableSharedSpace(*this)) os << " (shared)";
+  JSObjectPrintHeader(os, this, "JSAtomicsCondition");
+  if (HeapLayout::InWritableSharedSpace(Tagged<HeapObject>(this))) {
+    os << " (shared)";
+  }
   os << "\n - state: " << this->state();
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 std::ostream& operator<<(std::ostream& os, DisposableStackState state) {

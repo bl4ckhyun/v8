@@ -74,7 +74,8 @@ Maybe<bool> AlwaysSharedSpaceJSObject::DefineOwnProperty(
   PropertyKey lookup_key(isolate, key);
   LookupIterator it(isolate, shared_obj, lookup_key, LookupIterator::OWN);
   PropertyDescriptor current;
-  MAYBE_RETURN(GetOwnPropertyDescriptor(&it, &current), Nothing<bool>());
+  MAYBE_RETURN(JSObject::GetOwnPropertyDescriptor(&it, &current),
+               Nothing<bool>());
 
   // The only redefinition allowed is to set the value if all attributes match.
   if (!it.IsFound() ||

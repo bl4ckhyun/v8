@@ -662,6 +662,10 @@ void JSObjectLayout::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
   Cast<JSObject>(this)->FastPropertyAtPut(index, value, tag);
 }
 
+Tagged<JSAny> JSObjectLayout::RawFastPropertyAt(FieldIndex index) const {
+  return Cast<JSObject>(this)->RawFastPropertyAt(index);
+}
+
 ElementsAccessor* JSObjectLayout::GetElementsAccessor() const {
   return Cast<JSObject>(this)->GetElementsAccessor();
 }

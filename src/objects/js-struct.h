@@ -16,9 +16,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-struct-tq.inc"
 
-class AlwaysSharedSpaceJSObject
-    : public TorqueGeneratedAlwaysSharedSpaceJSObject<AlwaysSharedSpaceJSObject,
-                                                      JSObject> {
+V8_OBJECT class AlwaysSharedSpaceJSObject : public JSObjectLayout {
  public:
   // Prepare a Map to be used as the instance map for shared JS objects.
   static void PrepareMapNoEnumerableProperties(Tagged<Map> map);
@@ -40,13 +38,16 @@ class AlwaysSharedSpaceJSObject
                                  DirectHandle<JSFunction> constructor,
                                  DirectHandle<Object> object);
 
-  static_assert(kHeaderSize == JSObject::kHeaderSize);
-  TQ_OBJECT_CONSTRUCTORS(AlwaysSharedSpaceJSObject)
-};
+  // Defined out-of-line below the class so `sizeof` on the still-incomplete
+  // type can appear in an initializer.
+  static const int kHeaderSize;
+} V8_OBJECT_END;
 
-class JSSharedStruct
-    : public TorqueGeneratedJSSharedStruct<JSSharedStruct,
-                                           AlwaysSharedSpaceJSObject> {
+inline constexpr int AlwaysSharedSpaceJSObject::kHeaderSize =
+    sizeof(AlwaysSharedSpaceJSObject);
+static_assert(sizeof(AlwaysSharedSpaceJSObject) == sizeof(JSObjectLayout));
+
+V8_OBJECT class JSSharedStruct : public AlwaysSharedSpaceJSObject {
  public:
   static DirectHandle<Map> CreateInstanceMap(
       Isolate* isolate,
@@ -72,10 +73,12 @@ class JSSharedStruct
   DECL_PRINTER(JSSharedStruct)
   EXPORT_DECL_VERIFIER(JSSharedStruct)
 
-  class BodyDescriptor;
+  // Defined out-of-line below the class so `sizeof` on the still-incomplete
+  // type can appear in an initializer.
+  static const int kHeaderSize;
+} V8_OBJECT_END;
 
-  TQ_OBJECT_CONSTRUCTORS(JSSharedStruct)
-};
+inline constexpr int JSSharedStruct::kHeaderSize = sizeof(JSSharedStruct);
 
 class SharedStructTypeRegistry final {
  public:
