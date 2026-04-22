@@ -26,6 +26,12 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
   - For CLs intended to contain ONLY process/documentation changes, verify that no code files (e.g., `.cc`, `.h`, `.js`, `.py`) are modified using `git diff --name-only origin/main`.
 - **Proactive Alert Handling**: Always run `git cl status` after uploading. If you identify failing checks or try jobs, proactively suggest addressing these alerts to the user.
 - **Post-Upload**: Provide the `chromium-review.googlesource.com` link to the user.
+- **Retrieving and Addressing Comments**:
+  - Use this rule when asked about retrieving, addressing, reviewing, or fixing comments on the current CL.
+  - If a CL number is specified, check first that it matches the current associated CL ID (find with `git cl issue`).
+  - If there is no associated CL, ask the user whether you should associate it first with `git cl issue <cl_number>`.
+  - Once associated (or if using current), fetch comments using `git cl comments`.
+  - Note: If you have access to a dedicated tool for reviewing comments (e.g., a Gerrit MCP tool), prefer using that instead of `git cl comments`.
 
 ## Helpful Commands
 - Use `git cl patch <CL_NUMBER>` to fetch and checkout the latest patchset of a CL.
