@@ -3249,8 +3249,8 @@ ReduceResult MaglevGraphBuilder::LoadAndCacheContextSlot(
   }
   if (assigned == kMaybeAssigned &&
       !known_node_aspects().IsContextCacheEmpty(assigned)) {
-    known_node_aspects().UpdateMayHaveAliasingContexts(
-        broker(), local_isolate(), context);
+    known_node_aspects().UpdateMayHaveAliasingContexts(broker(), local_isolate(),
+                                                      context);
   }
   if (HasContextCell(context_mode, assigned)) {
     // We collect feedback only for mutable context slots.
@@ -3382,10 +3382,11 @@ ReduceResult MaglevGraphBuilder::StoreAndCacheContextSlot(
                                             << offset
                                             << "]: " << PrintNode(value));
 
-  auto aliased_slots = known_node_aspects().ClearAliasedContextSlotsFor(
-      graph(), context, offset, value);
-  bool added_to_cache = known_node_aspects().SetContextCachedValue(
-      context, offset, value, maybe_assigned);
+  auto result = known_node_aspects().RecordContextSlotStore(
+      graph(), context, offset, value, maybe_assigned);
+  auto& aliased_slots = result.aliased_slots;
+  bool added_to_cache =
+      result.type == KnownNodeAspects::ContextStoreResult::kSetNewValue;
 
   // Update loop effect state.
   KnownNodeAspects::LoadedContextSlotsKey key{context, offset};
