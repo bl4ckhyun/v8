@@ -27,6 +27,7 @@
 #include "src/strings/unicode-inl.h"
 #include "src/trap-handler/trap-handler.h"
 #include "src/wasm/module-compiler.h"
+#include "src/wasm/signature-hashing.h"
 #include "src/wasm/value-type.h"
 #include "src/wasm/wasm-code-manager.h"
 #include "src/wasm/wasm-constants.h"
@@ -2941,6 +2942,7 @@ RUNTIME_FUNCTION(Runtime_WasmAllocateContinuation) {
       std::move(wrapper));
   stack->set_func_ref(*func_ref);
   stack->set_param_types(func_ref->internal(isolate)->sig()->parameters());
+  stack->set_signature_hash(wasm::SignatureHasher::Hash(sig));
   wasm::StackMemory* stack_ptr = stack.get();
   isolate->wasm_stacks().emplace_back(std::move(stack));
   DirectHandle<WasmContinuationObject> cont =
@@ -2963,6 +2965,11 @@ RUNTIME_FUNCTION(Runtime_WasmAllocateBoundContinuation) {
   // Order matters: bound arguments must be adjusted first so that they are
   // visible to the GC potentially triggered by the allocation below.
   stack->bind_arguments(num_bound_args);
+  const wasm::CanonicalSig* original_sig =
+      stack->func_ref()->internal(isolate)->sig();
+  wasm::VectorSignature bound_sig(
+      original_sig->returns(), stack->param_types() + stack->num_bound_args());
+  stack->set_signature_hash(wasm::SignatureHasher::Hash(&bound_sig));
   DirectHandle<WasmContinuationObject> cont =
       isolate->factory()->NewWasmContinuationObject(old_stack_obj);
   stack->set_current_continuation(*cont);
