@@ -3324,7 +3324,7 @@ void Parser::DeclareClassVariable(ClassScope* scope, const AstRawString* name,
 VariableProxy* Parser::CreateSyntheticContextVariableProxy(
     ClassScope* scope, ClassInfo* class_info, const AstRawString* name,
     bool is_static) {
-  if (scope->is_reparsed()) {
+  if (scope->from_scope_info()) {
     DeclarationScope* declaration_scope =
         is_static ? class_info->static_elements_scope
                   : class_info->instance_members_scope;
@@ -3396,7 +3396,7 @@ void Parser::DeclarePrivateClassMember(ClassScope* scope,
   class_info->private_members->Add(property, zone());
 
   VariableProxy* proxy;
-  if (scope->is_reparsed()) {
+  if (scope->from_scope_info()) {
     PrivateNameScopeIterator private_name_scope_iter(scope);
     proxy = ExpressionFromPrivateName(&private_name_scope_iter, property_name,
                                       position());

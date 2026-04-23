@@ -2449,7 +2449,7 @@ namespace {
 void SetNeedsHoleCheck(Variable* var, VariableProxy* proxy,
                        Variable::ForceHoleInitializationFlag flag) {
   proxy->set_needs_hole_check();
-  if (var->scope()->is_reparsed()) {
+  if (var->scope()->from_scope_info()) {
     var->set_hole_check_state(Variable::HoleCheckState::kForce);
   }
   var->ForceHoleInitialization(flag);
@@ -2531,7 +2531,7 @@ bool UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
     }
   }
 
-  if (var->scope()->is_reparsed()) {
+  if (var->scope()->from_scope_info()) {
     var->set_hole_check_state(Variable::HoleCheckState::kSkip);
   }
   return false;
@@ -3209,7 +3209,7 @@ template V8_EXPORT_PRIVATE void DeclarationScope::AllocateScopeInfos(
     ParseInfo* info, DirectHandle<Script> script, LocalIsolate* isolate);
 
 int Scope::ContextLocalCount() const {
-  DCHECK(!is_reparsed());
+  DCHECK(!from_scope_info());
   if (num_heap_slots() == 0) return 0;
   Variable* function =
       is_function_scope() ? AsDeclarationScope()->function_var() : nullptr;

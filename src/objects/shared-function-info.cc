@@ -596,7 +596,7 @@ void SharedFunctionInfo::InitFromFunctionLiteral(IsolateT* isolate,
       raw_sfi->set_private_name_lookup_skips_outer_class(
           lit->scope()->private_name_lookup_skips_outer_class());
     }
-    if (lit->scope()->is_reparsed()) {
+    if (lit->scope()->from_scope_info()) {
       raw_sfi->SetScopeInfo(*lit->scope()->scope_info());
     }
 
