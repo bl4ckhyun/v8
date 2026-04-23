@@ -1,5 +1,5 @@
 ---
-name: git_commit
+name: git-commit
 trigger: always_on
 ---
 
@@ -16,7 +16,7 @@ These rules ensure correct formatting of commits and usage of standard Git comma
 - **Tags**: All tag-like lines (e.g., `TAG=`, `BUG=`, `CONV=`) must be at the very bottom of the CL description.
   - Always include `TAG=agy` and the Conversation ID for agent-generated changes.
   - Ensure the `Change-Id` footer is preserved in the commit message.
-  - **Bug Lines**: When listing multiple bugs, do not put more than 4 or 5 bugs on a single line (Gerrit stops rendering them as links). If you have more, add a second `Bug:` line.
+  - **Bug Lines**: When listing multiple bugs, limit bug listings to a maximum of 4 or 5 per line (Gerrit stops rendering them as links). If you have more, add a second `Bug:` line.
 
 ## Git Command Usage & Avoiding Interactive Hangs
 - **Ensure Non-Interactive Behavior**: Jetski cannot interact with terminal-based editors. Always run commands non-interactively.

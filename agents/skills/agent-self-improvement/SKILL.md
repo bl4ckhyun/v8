@@ -1,6 +1,6 @@
 ---
 name: agent-self-improvement
-description: Workflow for agent self-improvement via isolated execution, evaluation, and process refinement.
+description: "Workflow for agent self-improvement via isolated execution, evaluation, and process refinement. Use when evaluating historical bugs or self-correcting skills. Do not use for new feature development."
 ---
 
 # Agent Self-Improvement Workflow
@@ -15,8 +15,8 @@ Use this skill to orchestrate self-improvement sessions for agents. The workflow
 - **Isolation**: Subagents must run in isolated environments (e.g., separate git worktrees) to prevent interference and ensure realistic testing. They MUST ignore any gathered knowledge (KIs) and session brains from the outside to ensure a self-contained test-run.
 - **Evaluation**: A separate evaluation agent analyzes the work of the execution agent.
 - **Layered Improvement**: The goal is to identify specific procedural or knowledge gaps across tools, skills, and prompts to get to a better solution.
-- **Anonymization & Generalization**: When updating skills or rules based on self-evaluation, **NEVER** record anything specific to the user or the detailed user's installation (e.g., local paths).
-- **Process Abstraction**: **NEVER** record specific tests used, specific issue IDs debugged, or specific components affected in the general skill files. Keep principles and process improvements abstract and procedural.
+- **Anonymization & Generalization**: When updating skills or rules based on self-evaluation, avoid recording anything specific to the user or the detailed user's installation (e.g., local paths).
+- **Process Abstraction**: Keep principles and process improvements abstract and procedural. Avoid recording specific tests used, specific issue IDs debugged, or specific components affected in the general skill files.
 
 ## 2. Workflow: Isolated Execution
 - **Trigger**: This workflow can be triggered by a new capability to test, a reported bug in agent behavior, or as a regular benchmark using existing CLs (Changelists).
@@ -50,6 +50,6 @@ Use this skill to orchestrate self-improvement sessions for agents. The workflow
         - **Prompt/Orchestration Layer**: Was the initial prompt unclear, or did the orchestrator fail to coordinate effectively?
 
 ## 4. Actionable Outcomes
-- **Skill Updates**: Propose specific diffs to existing skills (e.g., `workflow_debugging/SKILL.md`, `orchestrator/SKILL.md`) based on the evaluation findings.
+- **Skill Updates**: Propose specific diffs to existing skills based on the evaluation findings.
 - **Process Refinement**: Document new best practices or anti-patterns discovered during the evaluation.
 - **Report**: Send a synthesized report to the main agent detailing the execution, evaluation, and proposed improvements.

@@ -1,6 +1,6 @@
 ---
-name: v8_setup
-description: "Handles missing dependencies and configuration for V8 tools."
+name: v8-setup
+description: "Handles missing dependencies and configuration for V8 tools. Use when encountering missing tools, test runners, or workspace symlinks. Do not use for C++ coding issues."
 ---
 
 # Skill: V8 Setup
@@ -46,7 +46,7 @@ These servers provide advanced capabilities like benchmark running, debugging, a
 - **Check**: Verify if they are listed in the available MCP servers at the start of the conversation.
 - **Setup/Configuration**:
   - If missing, you cannot install them directly. You MUST ask the user to enable or configure them in their Jetski settings.
-  - **clangd-mcp**: Follow the dedicated `clangd_setup` skill to generate `compile_commands.json`.
+  - **clangd-mcp**: Ensure `compile_commands.json` is generated.
   - **gdb-mcp**: Requires GDB to be installed on the host.
   - **v8-utils**: Provides tools like `jsb_run_bench` and `v8log_analyze`.
 

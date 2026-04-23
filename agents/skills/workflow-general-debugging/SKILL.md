@@ -1,3 +1,8 @@
+---
+name: workflow-general-debugging
+description: "Workflow for general debugging tasks without the overhead of issue tracking. Use when investigating crashes, hangs, or unexpected behavior where no specific issue ID is provided. Do not use when issue ID is provided."
+---
+
 # Skill: Workflow - General Debugging
 
 Workflow for general debugging tasks in a pristine branch or project work, without the overhead of issue tracking. Use this skill when investigating crashes, hangs, or unexpected behavior where no specific issue ID is provided.
@@ -23,7 +28,7 @@ Workflow for general debugging tasks in a pristine branch or project work, witho
 
 ### 3. Propose Fix
 -   Develop a minimal fix targeting the root cause.
--   Follow [V8 Best Practices](../../rules/v8_best_practices.md).
+-   Follow V8 Best Practices.
 -   **Architectural Skepticism**: Argue against your own proposal. Does it disable optimizations? Does it violate invariants?
 
 ### 4. Verify

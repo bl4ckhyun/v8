@@ -1,11 +1,11 @@
 ---
-name: v8_commands
-description: "Key commands for building, debugging, and testing in V8."
+name: v8-commands
+description: "Key commands for building, debugging, and testing in V8. Use when needing command syntax for gm.py, d8 flags, or run-tests.py. Do not use for environment setup."
 ---
 
 # V8 Key Commands
 
-Use this skill to find the correct commands for common development tasks in V8. This unifies the commands listed in workspace configuration and ensures consistent usage. Refer to [env_abstraction](../env_abstraction/SKILL.md) for platform-specific overrides.
+Use this skill to find the correct commands for common development tasks in V8. This unifies the commands listed in workspace configuration and ensures consistent usage.
 
 ## Building
 
@@ -37,7 +37,7 @@ A comprehensive list of all flags can be found by running `out/x64.debug/d8 --he
 
 ## Testing
 
-For detailed instructions on running tests and interpreting failures, see the dedicated [v8_testing](../v8_testing/SKILL.md) skill.
+For detailed instructions on running tests and interpreting failures, see the dedicated test execution guidelines.
 
 Key commands summary:
 -   **Run tests:** `tools/run-tests.py --progress dots --outdir=out/x64.optdebug`

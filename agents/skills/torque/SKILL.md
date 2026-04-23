@@ -1,6 +1,6 @@
 ---
 name: torque
-description: Expert guidance for navigating, implementing, and verifying V8 Torque (.tq) builtins and object layouts.
+description: "Provides expert guidance for navigating, implementing, and verifying V8 Torque (.tq) builtins. Use when modifying or debugging Torque files. Do not use for C++ macro builtins."
 ---
 
 # V8 Torque

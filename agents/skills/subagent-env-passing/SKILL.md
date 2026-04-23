@@ -1,6 +1,6 @@
 ---
-name: subagent_env_passing
-description: "Workflow for passing environment variables (like PATH) from the Orchestrator to subagents."
+name: subagent-env-passing
+description: "Workflow for passing environment variables (like PATH) from the Orchestrator to subagents. Use when spawning subagents that need specific environment variables. Do not use for standard subagent execution."
 ---
 
 # Subagent Environment Passing Skill

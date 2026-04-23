@@ -1,6 +1,6 @@
 ---
-name: env_abstraction
-description: "Handles abstraction of environment-specific commands between Jetski and Gemini-CLI."
+name: env-abstraction
+description: "Handles abstraction of environment-specific commands between Jetski and Gemini-CLI. Use when switching execution context between local terminal environments. Do not use for debugging logic issues."
 ---
 
 # Environment Abstraction Skill
@@ -9,7 +9,7 @@ This skill provides a layer of abstraction over environment-specific tools and c
 
 ## Core Principles
 
-1.  **Decoupling**: Do not hardcode tool calls that are specific to one platform inside general workflow skills.
+1.  **Decoupling**: Keep tool calls independent from platform specific implementations inside general workflow skills.
 2.  **Detection**: Determine the environment at startup (e.g., via environment variables or tool availability).
 3.  **Mapping**: Map abstract actions to concrete commands or tool calls based on the environment.
 

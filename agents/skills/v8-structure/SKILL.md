@@ -1,6 +1,6 @@
 ---
-name: v8_structure
-description: "Understanding the folder structure of the V8 codebase."
+name: v8-structure
+description: "Maps the V8 folder structure and component locations. Use when locating specific subsystems or understanding repository architecture. Do not use for build command syntax."
 ---
 
 # V8 Folder Structure

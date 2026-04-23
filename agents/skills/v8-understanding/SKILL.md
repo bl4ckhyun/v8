@@ -1,6 +1,6 @@
 ---
-name: v8_understanding
-description: "Methodology for understanding V8 concepts, performance, and architecture."
+name: v8-understanding
+description: "Guides the methodology for understanding V8 concepts, performance, and architecture. Use when exploring complex behavior or forming hypotheses. Do not use for code formatting rules."
 ---
 
 # V8 Understanding Strategy

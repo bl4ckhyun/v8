@@ -1,6 +1,6 @@
 ---
 name: port-to-heapobjectlayout
-description: Guide for porting V8 classes from legacy Torque layout to the new C++ HeapObjectLayout. Use when asked to move objects, struct subclasses, or field definitions from Torque to C++ as real members.
+description: "Ports V8 classes from legacy Torque layout to the new C++ HeapObjectLayout. Use when asked to move objects, struct subclasses, or field definitions from Torque to C++ as real members. Do not use for general C++ objects."
 ---
 
 # Porting V8 Classes to HeapObjectLayout

@@ -1,5 +1,5 @@
 ---
-name: writing_skills_rule
+name: writing-skills-rule
 trigger: agents/**/*
 ---
 
@@ -25,14 +25,14 @@ skill-name/
 
 *   **SKILL.md**: Acts as the "brain." Use it for navigation and high-level procedures.
 *   **References**: Link directly from `SKILL.md`. Keep them one level deep only.
-*   **Scripts**: Use for fragile/repetitive operations where variation is a bug. Do not bundle library code here; long-lived library code belongs in standard repo CLI directories.
+*   **Scripts**: Use for fragile/repetitive operations where variation is a bug. Place long-lived library code in standard repo CLI directories.
 
 ## 3. Frontmatter Optimization
 
 The `name` and `description` in the frontmatter of your `SKILL.md` are the only fields that the agent sees before triggering a skill.
 
 *   **Strict Naming**: The `name` field must be 1-64 characters, contain only lowercase letters, numbers, and hyphens (no consecutive hyphens), and must exactly match the parent directory name (e.g., `name: wiz-testing` must live in `wiz-testing/SKILL.md`). Consider using gerund form (verb + -ing) for Skill names (e.g., `processing-pdfs`).
-*   **Trigger-Optimized Descriptions**: (Max 1,024 characters). Describe the capability in the third person and include specific triggers and "negative triggers". Cannot contain XML tags.
+*   **Trigger-Optimized Descriptions**: (Max 1,024 characters). Describe the capability in the third person and include specific triggers and "negative triggers". Ensure descriptions do not contain XML tags.
     *   *Bad*: "Wiz skills." (Too vague).
     *   *Good*: "Creates and builds Wiz components using external Sass. Use when the user wants to update component styles or build configurations. Don't use it for external Sass styles with other frameworks."
 
@@ -42,11 +42,11 @@ Maintain a pristine context window by loading information only when needed.
 
 *   **Keep SKILL.md Lean**: Limit the main file to <500 lines. Use it for navigation and primary procedures.
 *   **Use Flat Subdirectories**: Move bulky context to standard folders. Keep files exactly one level deep (e.g., `references/schema.md`, not `references/db/v1/schema.md`).
-*   **Avoid Deeply Nested References**: Keep references one level deep from `SKILL.md` to ensure complete file reads.
+*   **Keep references one level deep** from `SKILL.md` to ensure complete file reads.
 *   **Just-in-Time (JiT) Loading**: Explicitly instruct the agent when to read a file (e.g., "See `references/auth-flow.md` for specific error codes").
 *   **Explicit Pathing**: Always use relative paths with forward slashes (`/`), regardless of the OS. Avoid Windows-style paths.
-*   **For Agents, Not Humans**: Do not create `README.md`, `CHANGELOG.md`, or installation guides. Delete redundant logic.
-*   **Self-Contained**: A skill should be entirely self-contained within its directory. Do not reference files, scripts, or assets belonging to other skills.
+*   **For Agents, Not Humans**: Omit `README.md`, `CHANGELOG.md`, or installation guides. Delete redundant logic.
+*   **Self-Contained**: A skill should be entirely self-contained within its directory. Maintain isolation by keeping all files internal to the skill.
 
 ## 5. Writing Instructions for Agents
 

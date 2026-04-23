@@ -1,6 +1,6 @@
 ---
-name: v8_testing
-description: "Detailed guide for running and interpreting tests in V8."
+name: v8-testing
+description: "Executes and interprets V8 tests. Use when running unittests, cctest, or mjsunit, or when debugging test failures. Do not use for building."
 ---
 
 # V8 Testing

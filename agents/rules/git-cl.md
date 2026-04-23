@@ -1,5 +1,5 @@
 ---
-name: git_cl
+name: git-cl
 trigger: always_on
 ---
 
@@ -14,11 +14,11 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
   - **Ensure Non-Interactive Behavior**: When committing, amending, or uploading (e.g., `git cl upload`), prefix the command with `EDITOR=cat` (e.g., `EDITOR=cat git cl upload`) if there is a risk of an editor opening.
   - Provide a descriptive patch message: `git cl upload -t "Brief description of what changed"`.
   - **Initial Upload**: On the first upload of a new CL, use `git cl upload --commit-description=+` to set the description from the commit message.
-  - **Subsequent Uploads**: On subsequent uploads (new patchsets), do **NOT** use `--commit-description=+` by default, as it can combine messages or overwrite the main description incorrectly.
+  - **Subsequent Uploads**: On subsequent uploads (new patchsets), avoid using `--commit-description=+` by default, as it can combine messages or overwrite the main description incorrectly. Preferred is omitting it unless modifying description intentionally.
   - **Updating Description**: If the changes in a new patchset make the existing CL description **out-of-date** or inaccurate, you **MUST** explicitly update it by passing `--commit-description="New cohesive description content"`.
   - Verify `git diff` is not empty before uploading.
 - **Safeguards**:
-  - Before performing any CL operations, ensure you have consulted the user regarding the isolation strategy as defined in the `v8-workflow` skill (e.g., branch vs. worktree).
+  - Before performing any CL operations, consult the user regarding the isolation strategy (e.g., branch vs. worktree).
   - Preserve the issue number when reusing a CL instead of running `git cl issue 0`.
   - Before uploading, run `git cl status` to verify the Issue Description matches your task.
   - Review the modified files (`git show --stat`) or run `git diff --name-only origin/main..HEAD` to ensure no unrelated files are included. If you see commits or files that are not part of your specific task, reset your branch to `origin/main` and cherry-pick only your intended commits instead of uploading.

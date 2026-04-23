@@ -1,6 +1,6 @@
 ---
-name: workflow_perf
-description: "Workflow for performance and memory evaluation in V8."
+name: workflow-perf
+description: "Workflow for performance and memory evaluation in V8. Use when tasked with improving the performance or memory usage of a workload in V8. Do not use when debugging a crash or functionality issue."
 ---
 
 # Workflow: Performance Evaluation
@@ -17,7 +17,7 @@ Use this skill when tasked with improving the performance or memory usage of a w
 2.  **V8-Centric**: For V8 engineers, performance work usually means changing V8 to better handle the JS pattern, rather than changing the JS itself (though both are valid for general users).
 3.  **Holistic View**: Look for general efficiency improvements, not just the single hottest function.
 4.  **Contextual Interpretation**: Assume unknown terms in performance tasks are likely benchmark names or domain-specific concepts, not environmental terms (e.g., "WSL" is likely a JetStream story, not the OS). Verify before assuming. If in doubt, ask the user.
-5.  **Mandatory Orchestration**: The agent executing this workflow MUST act as an Orchestrator. Do not run benchmarks, profiles, or searches sequentially yourself. Break down the work and delegate to subagents to maximize parallelism.
+5.  **Mandatory Orchestration**: The agent executing this workflow MUST act as an Orchestrator. Delegate execution of benchmarks, profiles, or searches to subagents to maximize parallelism.
 6.  **Local Experiment Baseline**: Whenever asked to perform a local experiment, always compile the baseline first and store it in a separate directory like `x64.release-baseline` for better `gm.py` integration. This avoids recompiling at later stages.
 
 ## Workflow

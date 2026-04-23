@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: "Core skill for task scheduling and multi-agent coordination in V8 development."
+description: "Core skill for task scheduling and multi-agent coordination in V8 development. Use for any multi-step workflow or complex task. Do not use for simple linear tasks."
 ---
 
 # Orchestrator Skill
@@ -42,10 +42,10 @@ This skill defines the behavior of the Main Agent acting as an Orchestrator and 
 -   **Domain Context Awareness**: Do NOT assume terms in a task description refer to the environment (e.g., assuming "WSL" means the OS) if they could be domain-specific (e.g., a benchmark name). Verify with domain documentation or tools first before taking action.
 -   **Forced Parallelization**: The Orchestrator MUST identify at least two parallel tracks for any complex task before proceeding with execution. Do not perform work sequentially if it can be delegated to subagents to maximize concurrency.
 -   **Utilize Wait Time**: If a task involves a long wait (e.g., a V8 build), the Orchestrator MUST schedule independent research or analysis tasks to run in parallel. Do not let the main agent or subagents go idle or do trivial work if there are unanswered questions.
--   **Environment-Aware Delegation**: When delegating tasks to subagents, use the appropriate method for the current environment as defined in `env_abstraction/SKILL.md`. In `gemini-cli`, use `agentapi new-conversation` (CLI) instead of the `invoke_subagent` tool, which may not be available.
+-   **Environment-Aware Delegation**: When delegating tasks to subagents, use the appropriate method for the current environment. In `gemini-cli`, use `agentapi new-conversation` (CLI) instead of the `invoke_subagent` tool, which may not be available.
 -   **Subagent Isolation Enforcement**: When delegating tasks that involve modifying code, building, or running tests that could affect the workspace state, the Orchestrator MUST ensure the task is scheduled in an isolated worktree. Do not let subagents operate on the main workspace for destructive or environment-polluting tasks.
 -   **Post-Task Self-Reflection & Divergence Analysis**: After the task is complete:
-    -   **Analyze Process**: Run `agents/scripts/analyze_brain.py` against the session logs.
+    -   **Analyze Process**: Review the session logs.
     -   **Divergence Analysis**: If the final landed fix/result differs from the agent's initial proposal:
         -   Identify *why* the initial proposal was rejected or modified.
         -   Determine if the agent was "too hasty" or missed critical invariants.

@@ -1,5 +1,5 @@
 ---
-name: v8_best_practices
+name: v8-best-practices
 trigger: always_on
 ---
 
@@ -28,4 +28,4 @@ When proposing a fix, ensure the code adheres to V8 standards:
 - **Cleanup Constraint**: Keep diffs small by changing only the code intended for the task. Propose cleanups to nearby code as a separate patch to keep the current change focused.
 
 ## General Best Practices
-For general best practices regarding formatting, generated files, test configurations, header names, and forward declarations, please refer to **`agents/prompts/common.md`** (Common Pitfalls & Best Practices section). This rule file focuses on V8-specific fix proposals and technical guardrails.
+For general best practices regarding formatting, generated files, test configurations, header names, and forward declarations, refer to Common Pitfalls & Best Practices section. This rule file focuses on V8-specific fix proposals and technical guardrails.

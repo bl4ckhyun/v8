@@ -1,6 +1,6 @@
 ---
-name: workflow_debugging
-description: "Workflow for issue-based debugging in V8. Triggered when a specific issue or crash repro is provided."
+name: workflow-debugging
+description: "Workflow for issue-based debugging in V8. Use when tasked with debugging a specific issue, usually associated with a Buganizer ID or a specific reproduction script. Do not use for performance regressions."
 ---
 
 # Workflow: Issue Debugging
@@ -19,12 +19,12 @@ Use this skill when tasked with debugging a specific issue, usually associated w
 3.  **Issue Association**: When an issue ID is known, use it to label tests and commits.
 4.  **Handling Inaccessible URLs & Missing Info**:
     - If a URL cannot be accessed directly (e.g., due to authentication), or if the user just mentions an issue without providing the repro, you MUST prompt for it.
-    - **NEVER try to open a browser** to access the page if it is inaccessible through tools.
+    - Avoid opening a browser to access the page if it is inaccessible through tools.
     - Use separate, sequential interactive prompts (e.g., via `ask_question` or direct message to user) to gather missing information:
         - **Input 1**: The JavaScript test source code.
         - **Input 2**: The relevant `d8` flags or command-line arguments.
-    - DO NOT attempt to guess the reproduction script or flags.
-    - If the user denies or does not provide the information, **let the user tell you how to proceed**. Do not guess or proceed without guidance.
+    - Rely on user-provided reproduction script or flags.
+    - If the user denies or does not provide the information, seek explicit guidance on how to proceed.
     - Store the test source in the workspace (e.g., `scratch/regress-<issue_id>.js`) to avoid modifying the user's environment directly.
 5.  **Worktree Isolation**: For issue debugging, you MUST create and switch to an isolated git worktree BEFORE running any builds or tests, to avoid clobbering the main workspace or rebuilding unnecessarily.
 6.  **Cross-Pollination & Communication**: The Orchestrator MUST actively relay relevant discoveries and hypotheses between subagents working on overlapping or related tasks to avoid duplicate work and find matching patterns.
@@ -51,7 +51,7 @@ Use this skill when tasked with debugging a specific issue, usually associated w
 -   Combine findings to locate the root cause.
 
 ### 5. Fix & Verify
--   Propose a fix following [V8 Best Practices](../../rules/v8_best_practices.md). <!-- TODO: Skills should be self-contained. Avoid cross-references. -->
+-   Propose a fix following V8 Best Practices.
 -   **Architectural Skepticism (MANDATORY)**: Before presenting the fix, the agent MUST explicitly argue *against* its own proposal.
     -   *Skepticism Prompt*: "Is this fix too hasty? Does it accidentally disable a valid optimization path? Am I fixing a symptom (crashing line) rather than the root cause (invariant violation)?"
 -   **Deep Reasoning**: If the root cause isn't fully understood, spawn a subagent to reason deeper about why the failing line exists and what invariant it's protecting.

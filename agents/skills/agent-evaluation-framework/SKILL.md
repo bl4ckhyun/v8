@@ -1,6 +1,6 @@
 ---
 name: agent-evaluation-framework
-description: Workflow for evaluating and refining agent debugging capabilities using designated test cases and Swarm principles.
+description: "Workflow for evaluating and refining agent debugging capabilities using designated test cases and Swarm principles. Use when evaluating subagent performance or creating benchmarks. Do not use for regular bug fixing."
 ---
 
 # Agent Evaluation Framework Workflow
@@ -42,7 +42,6 @@ Use this skill to orchestrate evaluation sessions for subagents, identify proced
 The ultimate goal of evaluation is to harden the agent's skepticism and reasoning depth:
 - **Architectural Skepticism**: Require subagents to explicitly argue *against* a proposed fix before accepting it. Look at the problem from multiple orthogonal angles.
 - **Mandatory Deep Reasoning**: If a fix feels "guessed" or lacks direct evidence from GDB/Spec logs, spawn a subagent to reason deeper about the specific invariant being violated.
-- **Skill Updates**: Every evaluation session MUST conclude with a diff for `debugging/SKILL.md` or relevant subsystem skills (e.g., `ignition/SKILL.md`) to bake in the lessons learned and prevent future failures.
+- **Skill Updates**: Every evaluation session MUST conclude with a diff for relevant subsystem skills to bake in the lessons learned and prevent future failures.
 
-## 5. Tooling
-- **[analyze_brain.py](../../scripts/analyze_brain.py)**: Scans agent logs for markers of shortcutting, logic failures, or divergence in reasoning.
+- **analyze_brain.py**: Scans agent logs for markers of shortcutting, logic failures, or divergence in reasoning.

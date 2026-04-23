@@ -1,6 +1,6 @@
 ---
-name: clangd_setup
-description: "Handles installation and configuration of clangd-mcp for V8."
+name: clangd-setup
+description: "Handles installation and configuration of clangd-mcp for V8. Use when clangd-mcp is missing or needs configuration for the current workspace. Do not use for general C++ editing."
 ---
 
 # Clangd Setup Skill
