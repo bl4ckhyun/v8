@@ -582,7 +582,8 @@ int NativeRegExpMacroAssembler::Match(DirectHandle<IrRegExpData> regexp_data,
 #ifdef V8_ENABLE_REGEXP_DIAGNOSTICS
   if (V8_UNLIKELY(v8_flags.trace_regexp_exec)) {
     RegExp::TraceExecutionEnd(reinterpret_cast<Address>(isolate),
-                              regexp_data->ptr(), subject->ptr(), start_offset);
+                              regexp_data->ptr(), subject->ptr(), start_offset,
+                              res);
   }
 #endif  // V8_ENABLE_REGEXP_DIAGNOSTICS
   return res;

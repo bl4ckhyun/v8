@@ -969,7 +969,9 @@ TNode<UintPtrT> RegExpBuiltinsAssembler::RegExpExecInternal(
         std::make_pair(MachineType::AnyTagged(), data),
         std::make_pair(MachineType::AnyTagged(), string),
         std::make_pair(MachineType::Int32(),
-                       TruncateNumberToWord32(last_index)));
+                       TruncateNumberToWord32(last_index)),
+        std::make_pair(MachineType::Int32(),
+                       TruncateIntPtrToInt32(Signed(var_result.value()))));
     Goto(&next);
     BIND(&next);
   }
