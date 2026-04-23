@@ -7207,7 +7207,7 @@ UNINITIALIZED_TEST(HugeHeapLimit) {
   v8::Isolate* isolate = v8::Isolate::New(create_params);
   Isolate* i_isolate = reinterpret_cast<Isolate*>(isolate);
 #ifdef V8_COMPRESS_POINTERS
-  size_t kExpectedHeapLimit = Heap::AllocatorLimitOnMaxOldGenerationSize(0);
+  size_t kExpectedHeapLimit = Heap::kAllocatorLimitOnMaxOldGenerationSize;
 #else
   size_t kExpectedHeapLimit = size_t{4} * GB;
 #endif

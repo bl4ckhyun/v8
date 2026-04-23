@@ -300,6 +300,21 @@ class Heap final {
   // These constants control heap configuration based on the physical memory.
   static constexpr size_t kPhysicalMemoryToOldGenerationRatio = 4;
   static constexpr size_t kNewLargeObjectSpaceToSemiSpaceRatio = 1;
+  static constexpr size_t kDefaultMinHeapSize = 256u * MB;
+#ifdef V8_HOST_ARCH_64_BIT
+  static constexpr size_t kDefaultMaxHeapSize = static_cast<uint64_t>(4u) * GB;
+#else
+  static constexpr size_t kDefaultMaxHeapSize = static_cast<uint64_t>(1u) * GB;
+#endif
+
+  // Limit on the max old generation size imposed by the underlying allocator.
+#ifdef V8_COMPRESS_POINTERS
+  static constexpr size_t kAllocatorLimitOnMaxOldGenerationSize =
+      kPtrComprCageReservationSize;
+#else
+  static constexpr size_t kAllocatorLimitOnMaxOldGenerationSize =
+      std::numeric_limits<size_t>::max();
+#endif
 
   static const int kTraceRingBufferSize = 512;
   static const int kStacktraceBufferSize = 512;
@@ -320,9 +335,6 @@ class Heap final {
       uint64_t physical_memory);
 
   static size_t HeapSizeToSemiSpaceRatio(uint64_t physical_memory);
-
-  V8_EXPORT_PRIVATE static size_t DefaultMinHeapSize(uint64_t physical_memory);
-  V8_EXPORT_PRIVATE static size_t DefaultMaxHeapSize(uint64_t physical_memory);
 
   // Calculates the maximum amount of filler that could be required by the
   // given alignment.
@@ -1277,10 +1289,6 @@ class Heap final {
   size_t InitialSemiSpaceSize() { return initial_semispace_size_; }
   V8_EXPORT_PRIVATE size_t MaxOldGenerationSize();
 
-  // Limit on the max old generation size imposed by the underlying allocator.
-  V8_EXPORT_PRIVATE static size_t AllocatorLimitOnMaxOldGenerationSize(
-      uint64_t physical_memory);
-
   V8_EXPORT_PRIVATE static size_t OldGenerationSizeFromPhysicalMemory(
       uint64_t physical_memory);
   V8_EXPORT_PRIVATE static void GenerationSizesFromHeapSize(
@@ -1296,8 +1304,6 @@ class Heap final {
       size_t young_generation_size);
   V8_EXPORT_PRIVATE static size_t MinYoungGenerationSize();
   V8_EXPORT_PRIVATE static size_t MinOldGenerationSize();
-  V8_EXPORT_PRIVATE static size_t MaxOldGenerationSizeFromPhysicalMemory(
-      uint64_t physical_memory);
 
   uint64_t physical_memory() const {
     // Prevent access before its initialization in ConfigureHeap().
