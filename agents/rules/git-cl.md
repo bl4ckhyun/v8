@@ -18,7 +18,9 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
   - **Updating Description**: If the changes in a new patchset make the existing CL description **out-of-date** or inaccurate, you **MUST** explicitly update it by passing `--commit-description="New cohesive description content"`.
   - Verify `git diff` is not empty before uploading.
 - **Safeguards**:
-  - Before performing any CL operations, consult the user regarding the isolation strategy (e.g., branch vs. worktree).
+  - **ALWAYS keep CLs separate**: Use standard `git worktree` to create an isolated workspace for each independent task or CL. NEVER upload a CL from a workspace containing unrelated modifications. Always verify that the diff relative to upstream contains ONLY the intended changes before uploading.
+  - **Consult user on external changes**: When `git cl upload` detects external changes on Gerrit and prompts to fetch them or override, the agent MUST stop and ask the user for guidance, unless explicitly instructed otherwise.
+  - Before performing any CL operations, ensure you have consulted the user regarding the isolation strategy as defined in the `v8-workflow` skill (e.g., branch vs. worktree).
   - Preserve the issue number when reusing a CL instead of running `git cl issue 0`.
   - Before uploading, run `git cl status` to verify the Issue Description matches your task.
   - Review the modified files (`git show --stat`) or run `git diff --name-only origin/main..HEAD` to ensure no unrelated files are included. If you see commits or files that are not part of your specific task, reset your branch to `origin/main` and cherry-pick only your intended commits instead of uploading.
