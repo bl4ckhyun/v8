@@ -1110,7 +1110,15 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
     if (result.gp() != rax) {
       movl(result.gp(), rax);
     }
-    addq(result.gp(), kPtrComprCageBaseRegister);
+    // Pointer decompression needs to use an or instead of an add as
+    // value_reg is a full pointer. If the expected value stored in rax matches
+    // the expected value, rax is left unmodified which already contains a
+    // decompressed pointer. Now, if result.gp() is rax, we don't emit the movl
+    // above and result.gp() holds the full decompressed pointer and doing an
+    // add here would decompress twice. Using an or means decompressing the
+    // value if it isn't already decompressed but keeping it unmodified
+    // otherwise.
+    orq(result.gp(), kPtrComprCageBaseRegister);
   } else {
     cmpxchgq(dst_op, value_reg);
     if (result.gp() != rax) {

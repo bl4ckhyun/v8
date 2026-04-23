@@ -1429,11 +1429,11 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
 
   if (v8_flags.disable_write_barriers) return;
   // This assumes that the caller didn't pin any additional registers.
-  // {expected} and {new_value} are no longer needed; we need to unpin
-  // them so that enough registers are available for the write barrier.
+  // {expected}, {value_reg} and {new_value} are no longer needed; we need to
+  // unpin them so that enough registers are available for the write barrier.
   LiftoffRegList new_pinned{dst_addr, new_value_for_write_barrier, result_reg};
   DCHECK(pinned.MaskOut(new_pinned)
-             .MaskOut(LiftoffRegList{expected, new_value, eax})
+             .MaskOut(LiftoffRegList{expected, new_value, eax, value_reg})
              .is_empty());
   pinned = new_pinned;
   EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
