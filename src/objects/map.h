@@ -71,6 +71,7 @@ enum InstanceType : uint16_t;
   V(EphemeronHashTable)               \
   V(ExternalString)                   \
   V(FeedbackCell)                     \
+  V(FeedbackVector)                   \
   V(Foreign)                          \
   V(FreeSpace)                        \
   V(FunctionTemplateInfo)             \

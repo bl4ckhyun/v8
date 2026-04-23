@@ -164,6 +164,9 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
     case FEEDBACK_METADATA_TYPE:
       return kVisitFeedbackMetadata;
 
+    case FEEDBACK_VECTOR_TYPE:
+      return kVisitFeedbackVector;
+
     case ODDBALL_TYPE:
       return kVisitOddball;
 

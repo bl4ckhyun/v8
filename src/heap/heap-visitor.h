@@ -69,6 +69,7 @@ class MaybeObjectSize final {
   V(ExternalString)                   \
   V(FeedbackCell)                     \
   V(FeedbackMetadata)                 \
+  V(FeedbackVector)                   \
   V(Foreign)                          \
   V(FunctionTemplateInfo)             \
   V(HeapNumber)                       \

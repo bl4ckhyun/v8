@@ -592,6 +592,25 @@ class ScopeInfo::BodyDescriptor final
   }
 };
 
+// FeedbackVector has three strong header slots (shared_function_info_,
+// closure_feedback_cell_array_, parent_feedback_cell_) followed by a
+// variable-length maybe-weak tail of feedback slots.
+class FeedbackVector::BodyDescriptor final : public BodyDescriptorBase {
+ public:
+  template <typename ObjectVisitor>
+  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
+                                 int object_size, ObjectVisitor* v) {
+    IteratePointers(obj, FeedbackVector::kStartOfStrongFieldsOffset,
+                    FeedbackVector::kHeaderSize, v);
+    IterateMaybeWeakPointers(obj, FeedbackVector::kHeaderSize, object_size, v);
+  }
+
+  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> obj) {
+    return FeedbackVector::SizeFor(
+        UncheckedCast<FeedbackVector>(obj)->length());
+  }
+};
+
 // DescriptorArray has a strong enum_cache_ header slot followed by a
 // variable-length tail of (key, details, value) triples. Within each entry
 // key and details are always strong; only the value slot may hold a weak

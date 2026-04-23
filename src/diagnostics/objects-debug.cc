@@ -980,6 +980,23 @@ void ClosureFeedbackCellArray::ClosureFeedbackCellArrayVerify(
   }
 }
 
+void FeedbackVector::FeedbackVectorVerify(Isolate* isolate) {
+  CHECK(IsFeedbackVector(this));
+  // Strong header slots.
+  Object::VerifyPointer(isolate, shared_function_info());
+  CHECK(IsSharedFunctionInfo(shared_function_info()));
+  Object::VerifyPointer(isolate, closure_feedback_cell_array());
+  CHECK(IsClosureFeedbackCellArray(closure_feedback_cell_array()));
+  Object::VerifyPointer(isolate, parent_feedback_cell());
+  CHECK(IsFeedbackCell(parent_feedback_cell()));
+  // Variable-length maybe-weak tail.
+  const int len = length();
+  for (int i = 0; i < len; ++i) {
+    Tagged<MaybeObject> value = raw_feedback_slots()[i].Relaxed_Load();
+    Object::VerifyMaybeObjectPointer(isolate, value);
+  }
+}
+
 void WeakFixedArray::WeakFixedArrayVerify(Isolate* isolate) {
   CHECK(IsSmi(length_.load()));
   uint32_t len = ulength().value();
