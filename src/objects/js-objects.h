@@ -15,6 +15,7 @@
 #include "src/objects/internal-index.h"
 #include "src/objects/objects.h"
 #include "src/objects/property-array.h"
+#include "src/sandbox/cppheap-pointer.h"
 #include "src/sandbox/external-pointer.h"
 
 // Has to be the last include (doesn't have include guards):
@@ -57,6 +58,7 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // Delegate trampolines into the legacy JSReceiver class. These let ported
   // subclasses and their callers keep using method-call syntax without
   // threading Cast<JSReceiver>(...) through every callsite during migration.
+  inline Tagged<Object> raw_properties_or_hash() const;
   inline void set_raw_properties_or_hash(
       Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void set_raw_properties_or_hash(
@@ -67,6 +69,7 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   DECL_GETTER(property_dictionary, Tagged<NameDictionary>)
   DECL_GETTER(property_dictionary_swiss, Tagged<SwissNameDictionary>)
   inline void initialize_properties(Isolate* isolate);
+  inline Tagged<Smi> GetOrCreateIdentityHash(Isolate* isolate);
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
       Isolate* isolate) const;
@@ -454,6 +457,8 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
                                 SeqCstAccessTag tag);
+  inline void SetEmbedderField(int index, Tagged<Object> value);
+  inline void SetEmbedderField(int index, Tagged<Smi> value);
 
  public:
   TaggedMember<FixedArrayBase> elements_;
@@ -476,19 +481,21 @@ V8_OBJECT class JSObjectWithEmbedderSlotsLayout : public JSObjectLayout {
 inline constexpr int JSObjectWithEmbedderSlotsLayout::kHeaderSize =
     sizeof(JSObjectWithEmbedderSlotsLayout);
 
-// Stubs for the other two abstract layout bases that can introduce
-// embedder slots. Intentionally empty for now: the cpp_heap_wrappable
-// field they conceptually carry requires a CppHeapPointerMember type
-// that doesn't exist yet.
-//
-// TODO(jgruber): once CppHeapPointerMember lands, add
-//   CppHeapPointerMember cpp_heap_wrappable_;
-// to JSAPIObjectWithEmbedderSlotsLayout and JSSpecialObjectLayout.
+// Temporary mirror of JSAPIObjectWithEmbedderSlots for subclasses with the
+// new layout. Carries the cpp_heap_wrappable field; the [embedder fields]
+// + [in-object properties] tail is managed by the Map + BodyDescriptor.
 V8_OBJECT class JSAPIObjectWithEmbedderSlotsLayout : public JSObjectLayout {
  public:
+  static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
+
+ public:
+  CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
+inline constexpr int
+    JSAPIObjectWithEmbedderSlotsLayout::kCppHeapWrappableOffset =
+        offsetof(JSAPIObjectWithEmbedderSlotsLayout, cpp_heap_wrappable_);
 inline constexpr int JSAPIObjectWithEmbedderSlotsLayout::kHeaderSize =
     sizeof(JSAPIObjectWithEmbedderSlotsLayout);
 
@@ -500,11 +507,21 @@ V8_OBJECT class JSCustomElementsObjectLayout : public JSObjectLayout {
 inline constexpr int JSCustomElementsObjectLayout::kHeaderSize =
     sizeof(JSCustomElementsObjectLayout);
 
+// Temporary mirror of JSSpecialObject for subclasses with the new layout.
+// Mirrors the JSAPIObjectWithEmbedderSlotsLayout cpp_heap_wrappable field so
+// CppHeapObjectWrapper can access both sibling hierarchies at the same
+// offset (see the static_assert in cpp-heap-object-wrapper.h).
 V8_OBJECT class JSSpecialObjectLayout : public JSCustomElementsObjectLayout {
  public:
+  static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
+
+ public:
+  CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
+inline constexpr int JSSpecialObjectLayout::kCppHeapWrappableOffset =
+    offsetof(JSSpecialObjectLayout, cpp_heap_wrappable_);
 inline constexpr int JSSpecialObjectLayout::kHeaderSize =
     sizeof(JSSpecialObjectLayout);
 
@@ -1252,6 +1269,11 @@ class JSCustomElementsObject
   TQ_OBJECT_CONSTRUCTORS(JSCustomElementsObject)
 };
 
+static_assert(JSAPIObjectWithEmbedderSlotsLayout::kCppHeapWrappableOffset ==
+              JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset);
+static_assert(JSAPIObjectWithEmbedderSlotsLayout::kHeaderSize ==
+              JSAPIObjectWithEmbedderSlots::kHeaderSize);
+
 // An abstract superclass for JSObjects that require non-standard element
 // access. It doesn't carry any functionality but allows function classes to be
 // identified in the type system.
@@ -1263,6 +1285,11 @@ class JSSpecialObject
  public:
   TQ_OBJECT_CONSTRUCTORS(JSSpecialObject)
 };
+
+static_assert(JSSpecialObjectLayout::kCppHeapWrappableOffset ==
+              JSSpecialObject::kCppHeapWrappableOffset);
+static_assert(JSSpecialObjectLayout::kHeaderSize ==
+              JSSpecialObject::kHeaderSize);
 
 // JSAccessorPropertyDescriptor is just a JSObject with a specific initial
 // map. This initial map adds in-object properties for "get", "set",
@@ -1341,8 +1368,7 @@ class JSIteratorResult : public JSObject {
 //
 // Accessing a JSGlobalProxy requires security check.
 
-class JSGlobalProxy
-    : public TorqueGeneratedJSGlobalProxy<JSGlobalProxy, JSSpecialObject> {
+V8_OBJECT class JSGlobalProxy : public JSSpecialObjectLayout {
  public:
   inline bool IsDetachedFrom(Tagged<JSGlobalObject> global) const;
   inline bool IsDetached() const;
@@ -1353,8 +1379,11 @@ class JSGlobalProxy
   DECL_PRINTER(JSGlobalProxy)
   DECL_VERIFIER(JSGlobalProxy)
 
-  TQ_OBJECT_CONSTRUCTORS(JSGlobalProxy)
-};
+  // Back-compat.
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSGlobalProxy::kHeaderSize = sizeof(JSGlobalProxy);
 
 // JavaScript global object.
 class JSGlobalObject

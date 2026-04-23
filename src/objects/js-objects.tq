@@ -115,6 +115,7 @@ macro AllocateFastOrSlowJSObjectFromMap(
       SlackTrackingMode::kWithSlackTracking);
 }
 
+@cppObjectLayoutDefinition
 extern class JSGlobalProxy extends JSSpecialObject {}
 
 extern class JSGlobalObject extends JSSpecialObject {

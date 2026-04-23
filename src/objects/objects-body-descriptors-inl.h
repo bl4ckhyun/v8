@@ -194,7 +194,8 @@ class CppHeapExternalObject::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    static_assert(CppHeapExternalObject::kCppHeapWrappableOffsetEnd + 1 ==
+    static_assert(CppHeapExternalObject::kCppHeapWrappableOffset +
+                      kCppHeapPointerSlotSize ==
                   CppHeapExternalObject::kHeaderSize);
     v->VisitCppHeapPointer(obj,
                            obj->RawCppHeapPointerField(
@@ -780,10 +781,10 @@ class JSArrayBuffer::BodyDescriptor final
                                  int object_size, ObjectVisitor* v) {
     // JSObject with wrapper field.
     IterateJSAPIObjectWithEmbedderSlotsHeader(map, obj, object_size, v);
-    static_assert(JSArrayBuffer::kStartOfStrongFieldsOffset ==
-                  JSArrayBuffer::kEndOfStrongFieldsOffset);
-    IterateMaybeWeakPointers(obj, JSArrayBuffer::kStartOfWeakFieldsOffset,
-                             JSArrayBuffer::kEndOfWeakFieldsOffset, v);
+    // Only weak field is views_or_detach_key_.
+    IterateMaybeWeakPointers(
+        obj, JSArrayBuffer::kViewsOrDetachKeyOffset,
+        JSArrayBuffer::kViewsOrDetachKeyOffset + kTaggedSize, v);
     v->VisitExternalPointer(
         obj, obj->RawExternalPointerField(JSArrayBuffer::kExtensionOffset,
                                           kArrayBufferExtensionTag));
@@ -812,9 +813,9 @@ class JSArrayBufferView::BodyDescriptor
                                  int object_size, ObjectVisitor* v) {
     // JSObject with wrapper field.
     IterateJSAPIObjectWithEmbedderSlotsHeader(map, obj, object_size, v);
-    // JSArrayBufferView.
-    IteratePointers(obj, JSArrayBufferView::kStartOfStrongFieldsOffset,
-                    JSArrayBufferView::kEndOfStrongFieldsOffset, v);
+    // buffer_ is the single strong tagged field.
+    IteratePointers(obj, JSArrayBufferView::kBufferOffset,
+                    JSArrayBufferView::kBufferOffset + kTaggedSize, v);
   }
 };
 
@@ -827,9 +828,10 @@ class JSTypedArray::BodyDescriptor : public JSArrayBufferView::BodyDescriptor {
                                  int object_size, ObjectVisitor* v) {
     // JSArrayBufferView (including JSObject).
     Base::IterateBody(map, obj, object_size, v);
-    // JSTypedArray.
-    IteratePointers(obj, JSTypedArray::kStartOfStrongFieldsOffset,
-                    JSTypedArray::kEndOfStrongFieldsOffset, v);
+    // JSTypedArray: base_pointer_ is the only tagged field (raw_length_ and
+    // external_pointer_ are raw).
+    IteratePointers(obj, JSTypedArray::kBasePointerOffset,
+                    JSTypedArray::kBasePointerOffset + kTaggedSize, v);
 
     // JSObject tail: possible embedder fields + in-object properties.
     if constexpr (JSTypedArray::kContainsEmbedderFields) {
@@ -856,10 +858,8 @@ class JSDataViewOrRabGsabDataView::BodyDescriptor final
                                  int object_size, ObjectVisitor* v) {
     // JSArrayBufferView (including JSObject).
     Base::IterateBody(map, obj, object_size, v);
-    // JSDataViewOrRabGsabDataView.
-    IteratePointers(obj,
-                    JSDataViewOrRabGsabDataView::kStartOfStrongFieldsOffset,
-                    JSDataViewOrRabGsabDataView::kEndOfStrongFieldsOffset, v);
+    // JSDataViewOrRabGsabDataView: data_pointer_ is raw, no tagged fields
+    // beyond what JSArrayBufferView already iterates.
     // JSObject tail: possible embedder fields + in-object properties.
     if constexpr (JSDataViewOrRabGsabDataView::kContainsEmbedderFields) {
       IterateJSAPIObjectWithEmbedderSlotsTail<JSDataViewOrRabGsabDataView>(

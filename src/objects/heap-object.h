@@ -133,6 +133,21 @@ V8_OBJECT class HeapObjectLayout {
   inline void WriteLazilyInitializedExternalPointerField(
       size_t offset, IsolateForSandbox isolate, Address value);
 
+  // SandboxedPointer_t field helpers mirroring the HeapObject API.
+  // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
+  inline Address ReadSandboxedPointerField(size_t offset,
+                                           PtrComprCageBase cage_base) const;
+  inline void WriteSandboxedPointerField(size_t offset,
+                                         PtrComprCageBase cage_base,
+                                         Address value);
+  inline void WriteSandboxedPointerField(size_t offset, Isolate* isolate,
+                                         Address value);
+
+  // BoundedSize field helpers mirroring the HeapObject API.
+  // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
+  inline size_t ReadBoundedSizeField(size_t offset) const;
+  inline void WriteBoundedSizeField(size_t offset, size_t value);
+
   template <class T>
   inline T ReadField(size_t offset) const
     requires(std::is_arithmetic_v<T> || std::is_enum_v<T> ||

@@ -186,13 +186,16 @@ using StrongTaggedBase = TaggedImpl<HeapObjectReferenceType::STRONG, Address>;
 using WeakTaggedBase = TaggedImpl<HeapObjectReferenceType::WEAK, Address>;
 
 // Types which provide both a legacy Foo as well as a new-style FooLayout class.
-#define LAYOUT_TYPES(V)   \
-  V(HeapObject)           \
-  V(ExposedTrustedObject) \
-  V(TrustedObject)        \
-  V(JSReceiver)           \
-  V(JSObject)             \
-  V(JSObjectWithEmbedderSlots)
+#define LAYOUT_TYPES(V)           \
+  V(HeapObject)                   \
+  V(ExposedTrustedObject)         \
+  V(TrustedObject)                \
+  V(JSReceiver)                   \
+  V(JSObject)                     \
+  V(JSObjectWithEmbedderSlots)    \
+  V(JSAPIObjectWithEmbedderSlots) \
+  V(JSCustomElementsObject)       \
+  V(JSSpecialObject)
 
 // Forward declarations for is_subtype.
 class Struct;
@@ -202,6 +205,12 @@ class JSObjectLayout;
 class JSObject;
 class JSObjectWithEmbedderSlotsLayout;
 class JSObjectWithEmbedderSlots;
+class JSAPIObjectWithEmbedderSlotsLayout;
+class JSAPIObjectWithEmbedderSlots;
+class JSCustomElementsObjectLayout;
+class JSCustomElementsObject;
+class JSSpecialObjectLayout;
+class JSSpecialObject;
 class JSFunctionOrBoundFunctionOrWrappedFunction;
 class FixedArrayBase;
 class FixedArray;

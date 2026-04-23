@@ -670,6 +670,18 @@ Tagged<NumberDictionary> JSObjectLayout::element_dictionary() const {
   return Cast<JSObject>(this)->element_dictionary();
 }
 
+void JSObjectLayout::SetEmbedderField(int index, Tagged<Object> value) {
+  Cast<JSObject>(this)->SetEmbedderField(index, value);
+}
+
+void JSObjectLayout::SetEmbedderField(int index, Tagged<Smi> value) {
+  Cast<JSObject>(this)->SetEmbedderField(index, value);
+}
+
+Tagged<Object> JSReceiverLayout::raw_properties_or_hash() const {
+  return Cast<JSReceiver>(this)->raw_properties_or_hash();
+}
+
 void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
                                                   WriteBarrierMode mode) {
   Cast<JSReceiver>(this)->set_raw_properties_or_hash(value, mode);
@@ -711,6 +723,10 @@ Maybe<bool> JSReceiverLayout::GetOwnPropertyDescriptor(
 
 bool JSReceiverLayout::HasFastProperties() const {
   return Cast<JSReceiver>(this)->HasFastProperties();
+}
+
+Tagged<Smi> JSReceiverLayout::GetOrCreateIdentityHash(Isolate* isolate) {
+  return Cast<JSReceiver>(this)->GetOrCreateIdentityHash(isolate);
 }
 
 Tagged<NameDictionary> JSReceiverLayout::property_dictionary() const {

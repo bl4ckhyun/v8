@@ -1795,7 +1795,8 @@ void InterpreterData::InterpreterDataVerify(Isolate* isolate) {
 }
 
 void JSGlobalProxy::JSGlobalProxyVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSGlobalProxyVerify(*this, isolate);
+  JSObjectVerify(isolate);
+  CHECK(IsJSGlobalProxy(this));
   CHECK(map()->is_access_check_needed());
   // Make sure that this object has no properties, elements.
   CHECK_EQ(0, Cast<FixedArray>(elements())->ulength().value());
@@ -2842,12 +2843,10 @@ void JSProxy::JSProxyVerify(Isolate* isolate) {
 }
 
 void JSArrayBuffer::JSArrayBufferVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSArrayBufferVerify(*this, isolate);
-  if (FIELD_SIZE(kOptionalPaddingOffset) != 0) {
-    CHECK_EQ(4, FIELD_SIZE(kOptionalPaddingOffset));
-    CHECK_EQ(0,
-             *reinterpret_cast<uint32_t*>(address() + kOptionalPaddingOffset));
-  }
+  JSObjectVerify(isolate);
+#if TAGGED_SIZE_8_BYTES
+  CHECK_EQ(0u, optional_padding_);
+#endif
   Tagged<MaybeObject> v = views_or_detach_key();
   if (is_shared() || !v8_flags.track_array_buffer_views) {
     CHECK(has_detach_key() || v == kNoView);
@@ -2860,13 +2859,16 @@ void JSArrayBuffer::JSArrayBufferVerify(Isolate* isolate) {
 }
 
 void JSArrayBufferView::JSArrayBufferViewVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSArrayBufferViewVerify(*this, isolate);
+  JSObjectVerify(isolate);
+  CHECK(IsJSArrayBufferView(this));
+  Object::VerifyPointer(isolate, buffer());
+  CHECK(IsJSArrayBuffer(buffer()));
   CHECK_LE(byte_length(), JSArrayBuffer::kMaxByteLength);
   CHECK_LE(byte_offset(), JSArrayBuffer::kMaxByteLength);
 }
 
 void JSDetachedTypedArray::JSDetachedTypedArrayVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSTypedArrayVerify(*this, isolate);
+  JSTypedArrayVerify(isolate);
   CHECK_LE(GetLength(), 0);
   CHECK(WasDetached());
 }
@@ -2875,10 +2877,10 @@ namespace {
 
 template <typename View>
 void CheckArrayBufferViewTrackingConsistency(Tagged<JSArrayBuffer> ab,
-                                             View view, Isolate* isolate) {
+                                             Tagged<View> view,
+                                             Isolate* isolate) {
   if (ab->is_shared()) return;
   Tagged<MaybeObject> views = ab->views_or_detach_key();
-  CHECK(!view.IsCleared());
   if (!IsUndefined(ab->DetachKey(isolate))) {
     CHECK_EQ(ab->views(), JSArrayBuffer::kManyViews);
     CHECK(!views.IsSmi() && views.IsStrong() && Is<Cell>(views));
@@ -2899,43 +2901,40 @@ void CheckArrayBufferViewTrackingConsistency(Tagged<JSArrayBuffer> ab,
 }  // namespace
 
 void JSTypedArray::JSTypedArrayVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSTypedArrayVerify(*this, isolate);
+  JSArrayBufferViewVerify(isolate);
+  Object::VerifyPointer(isolate, base_pointer());
+  CHECK(IsSmi(base_pointer()) || IsByteArray(base_pointer()));
   CHECK_LE(GetLength(), JSTypedArray::kMaxByteLength / element_size());
   if (IsJSArrayBuffer(buffer())) {
-    Tagged<JSArrayBuffer> ab = Cast<JSArrayBuffer>(buffer());
-    CheckArrayBufferViewTrackingConsistency(ab, *this, isolate);
+    CheckArrayBufferViewTrackingConsistency(buffer(), Tagged{this}, isolate);
   }
 }
 
 void JSDataView::JSDataViewVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSDataViewVerify(*this, isolate);
+  JSArrayBufferViewVerify(isolate);
   CHECK(!IsVariableLength());
   if (!WasDetached()) {
-    CHECK_EQ(reinterpret_cast<uint8_t*>(
-                 Cast<JSArrayBuffer>(buffer())->backing_store()) +
-                 byte_offset(),
-             data_pointer());
+    CHECK_EQ(
+        reinterpret_cast<uint8_t*>(buffer()->backing_store()) + byte_offset(),
+        data_pointer());
   }
 
   if (IsJSArrayBuffer(buffer())) {
-    Tagged<JSArrayBuffer> ab = Cast<JSArrayBuffer>(buffer());
-    CheckArrayBufferViewTrackingConsistency(ab, *this, isolate);
+    CheckArrayBufferViewTrackingConsistency(buffer(), Tagged{this}, isolate);
   }
 }
 
 void JSRabGsabDataView::JSRabGsabDataViewVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSRabGsabDataViewVerify(*this, isolate);
+  JSArrayBufferViewVerify(isolate);
   CHECK(IsVariableLength());
   if (!WasDetached()) {
-    CHECK_EQ(reinterpret_cast<uint8_t*>(
-                 Cast<JSArrayBuffer>(buffer())->backing_store()) +
-                 byte_offset(),
-             data_pointer());
+    CHECK_EQ(
+        reinterpret_cast<uint8_t*>(buffer()->backing_store()) + byte_offset(),
+        data_pointer());
   }
 
   if (IsJSArrayBuffer(buffer())) {
-    Tagged<JSArrayBuffer> ab = Cast<JSArrayBuffer>(buffer());
-    CheckArrayBufferViewTrackingConsistency(ab, *this, isolate);
+    CheckArrayBufferViewTrackingConsistency(buffer(), Tagged{this}, isolate);
   }
 }
 
@@ -2957,6 +2956,10 @@ void BigIntBase::BigIntBaseVerify(Isolate* isolate) {
 void CoverageInfo::CoverageInfoVerify(Isolate* isolate) {
   CHECK(IsCoverageInfo(this));
   CHECK_GE(slot_count(), 0);
+}
+
+void CppHeapExternalObject::CppHeapExternalObjectVerify(Isolate* isolate) {
+  CHECK(IsCppHeapExternalObject(this));
 }
 
 void AccessorInfo::AccessorInfoVerify(Isolate* isolate) {
@@ -3019,6 +3022,19 @@ void ModuleRequest::ModuleRequestVerify(Isolate* isolate) {
     CHECK(IsString(import_attributes()->get(i + 1)));  // Attribute value
     CHECK(IsSmi(import_attributes()->get(i + 2)));     // Attribute location
   }
+}
+
+void JSModuleNamespace::JSModuleNamespaceVerify(Isolate* isolate) {
+  JSObjectVerify(isolate);
+  CHECK(IsJSModuleNamespace(this));
+  Object::VerifyPointer(isolate, module());
+  CHECK(IsModule(module()));
+}
+
+void JSDeferredModuleNamespace::JSDeferredModuleNamespaceVerify(
+    Isolate* isolate) {
+  JSModuleNamespaceVerify(isolate);
+  CHECK(IsJSDeferredModuleNamespace(this));
 }
 
 void SourceTextModule::SourceTextModuleVerify(Isolate* isolate) {

@@ -1120,11 +1120,37 @@ void HeapObject::WriteSandboxedPointerField(size_t offset, Isolate* isolate,
                                 PtrComprCageBase(isolate), value);
 }
 
+Address HeapObjectLayout::ReadSandboxedPointerField(
+    size_t offset, PtrComprCageBase cage_base) const {
+  return i::ReadSandboxedPointerField(field_address(offset), cage_base);
+}
+
+void HeapObjectLayout::WriteSandboxedPointerField(size_t offset,
+                                                  PtrComprCageBase cage_base,
+                                                  Address value) {
+  i::WriteSandboxedPointerField(field_address(offset), cage_base, value);
+}
+
+void HeapObjectLayout::WriteSandboxedPointerField(size_t offset,
+                                                  Isolate* isolate,
+                                                  Address value) {
+  i::WriteSandboxedPointerField(field_address(offset),
+                                PtrComprCageBase(isolate), value);
+}
+
 size_t HeapObject::ReadBoundedSizeField(size_t offset) const {
   return i::ReadBoundedSizeField(field_address(offset));
 }
 
 void HeapObject::WriteBoundedSizeField(size_t offset, size_t value) {
+  i::WriteBoundedSizeField(field_address(offset), value);
+}
+
+size_t HeapObjectLayout::ReadBoundedSizeField(size_t offset) const {
+  return i::ReadBoundedSizeField(field_address(offset));
+}
+
+void HeapObjectLayout::WriteBoundedSizeField(size_t offset, size_t value) {
   i::WriteBoundedSizeField(field_address(offset), value);
 }
 

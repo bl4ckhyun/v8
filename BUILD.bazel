@@ -2109,7 +2109,6 @@ filegroup(
         "src/objects/contexts.h",
         "src/objects/contexts-inl.h",
         "src/objects/cpp-heap-external-object.h",
-        "src/objects/cpp-heap-external-object-inl.h",
         "src/objects/cpp-heap-object-wrapper.h",
         "src/objects/cpp-heap-object-wrapper-inl.h",
         "src/objects/data-handler.h",
