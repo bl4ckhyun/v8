@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython3
+#!/usr/bin/env python3
 # Copyright 2026 the V8 project authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -33,8 +33,9 @@ for item in agents_src.iterdir():
     # For other items, symlink directly
     if not dest_item.exists():
       try:
-        dest_item.symlink_to(item)
-        print(f"Symlinked {item} to {dest_item}")
+        symlink = item.relative_to(dest_item.parent, walk_up=True)
+        dest_item.symlink_to(symlink)
+        print(f"Symlinked {item.name} to {symlink}")
       except OSError as e:
         print(f"Failed to create symlink for {item.name}: {e}")
     continue
@@ -53,8 +54,9 @@ for item in agents_src.iterdir():
     dest_sub = dest_item / sub_item.name
     if not dest_sub.exists():
       try:
-        dest_sub.symlink_to(sub_item)
-        print(f"Symlinked {sub_item} to {dest_sub}")
+        symlink = sub_item.relative_to(dest_sub.parent, walk_up=True)
+        dest_sub.symlink_to(symlink)
+        print(f"Symlinked {sub_item.name} to {symlink}")
       except OSError as e:
         print(f"Failed to create symlink for {sub_item.name}: {e}")
 
