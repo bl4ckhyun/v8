@@ -372,13 +372,11 @@ bool HandleWatchpoint(struct user_regs_struct& regs) {
                         offsetof(struct user, u_debugreg[6]), 0);
   CHECK_EQ(0, errno);
   // Check if a watchpoint was hit. Return false if not.
+  // Note that more than one watchpoint may be hit for instructions that access
+  // more than 4 bytes of memory (e.g. `movaps`).
   if ((dr6 & 0xf) == 0) return false;
 
-  int hit_watchpoint = base::bits::CountTrailingZeros(dr6 & 0xf);
-  // Exactly one watchpoint (DR0-DR4) must have been hit.
-  CHECK_EQ(0x1 << hit_watchpoint, dr6 & 0xf);
-
-  // Reset first four bits (B0-B4) in DR6.
+  // Reset first four bits (B0-B3) in DR6.
   CHECK_EQ(0, ptrace(PTRACE_POKEUSER, g_support.d8_pid,
                      offsetof(struct user, u_debugreg[6]), dr6 & ~0xf));
 
