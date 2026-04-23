@@ -3574,7 +3574,7 @@ class V8_NODISCARD NullContextForSnapshotScope {
  public:
   explicit NullContextForSnapshotScope(Isolate* isolate)
       : isolate_(isolate), prev_(isolate->context()) {
-    isolate_->set_context(Context());
+    isolate_->set_context({});
   }
   ~NullContextForSnapshotScope() { isolate_->set_context(prev_); }
 

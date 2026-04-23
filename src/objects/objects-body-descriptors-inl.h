@@ -1667,12 +1667,25 @@ class DataHandler::BodyDescriptor final : public BodyDescriptorBase {
   }
 };
 
+// Covers the non-NativeContext leaves (Block / Script / Function / ...),
+// whose slots are all strong. NativeContext has its own descriptor below
+// to cover the weak tail slots that only exist past MIN_CONTEXT_EXTENDED_SLOTS.
+class Context::BodyDescriptor final
+    : public SuffixRangeBodyDescriptor<OFFSET_OF_DATA_START(Context)> {
+ public:
+  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
+    return UncheckedCast<Context>(raw_object)->AllocatedSize();
+  }
+};
+
 class NativeContext::BodyDescriptor final : public BodyDescriptorBase {
  public:
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, NativeContext::kStartOfStrongFieldsOffset,
+    // Strong fields start at elements[0]; length_ is a Smi before that and
+    // doesn't need visitation.
+    IteratePointers(obj, OFFSET_OF_DATA_START(Context),
                     NativeContext::kEndOfStrongFieldsOffset, v);
     IterateCustomWeakPointers(obj, NativeContext::kStartOfWeakFieldsOffset,
                               NativeContext::kEndOfWeakFieldsOffset, v);

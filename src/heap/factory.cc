@@ -1638,7 +1638,7 @@ Handle<NativeContext> Factory::NewNativeContext() {
   context_map->set_native_context(context);
   context->set_meta_map(*contextful_meta_map);
   context->set_scope_info(*native_scope_info());
-  context->set_previous(Context());
+  context->set_previous({});
   context->set_extension(*undefined_value());
   context->set_errors_thrown(Smi::zero());
   context->set_is_wasm_js_installed(Smi::zero());

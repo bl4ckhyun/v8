@@ -6132,7 +6132,7 @@ void Worker::ProcessMessage(std::unique_ptr<SerializationData> data) {
 
 void Worker::ProcessMessages() {
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(isolate_);
-  i::SaveAndSwitchContext saved_context(i_isolate, i::Context());
+  i::SaveAndSwitchContext saved_context(i_isolate, {});
   SealHandleScope shs(isolate_);
 
   TryCatch try_catch(isolate_);
@@ -6905,7 +6905,7 @@ bool ProcessMessages(
     Isolate* isolate,
     const std::function<platform::MessageLoopBehavior()>& behavior) {
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(isolate);
-  i::SaveAndSwitchContext saved_context(i_isolate, i::Context());
+  i::SaveAndSwitchContext saved_context(i_isolate, {});
   SealHandleScope shs(isolate);
 
   if (isolate->IsExecutionTerminating()) return true;

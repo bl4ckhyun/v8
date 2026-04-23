@@ -1191,9 +1191,10 @@ void FixedDoubleArray::FixedDoubleArrayVerify(Isolate* isolate) {
 
 void Context::ContextVerify(Isolate* isolate) {
   if (has_extension()) VerifyExtensionSlot(extension());
-  TorqueGeneratedClassVerifiers::ContextVerify(*this, isolate);
+  CHECK(IsContext(this, isolate));
+  CHECK(length_.load().IsSmi());
   for (int i = 0; i < length(); i++) {
-    VerifyObjectField(isolate, OffsetOfElementAt(i));
+    Object::VerifyPointer(isolate, elements()[i].load());
   }
 }
 

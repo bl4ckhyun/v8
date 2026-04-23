@@ -405,7 +405,7 @@ Tagged<FixedArray> AllocateFeedbackVector(
   DCHECK_EQ(trusted_instance_data->feedback_vectors()->get(declared_func_index),
             Smi::zero());
   trusted_instance_data->feedback_vectors()->set(declared_func_index, *vector);
-  isolate->set_context(Tagged<Context>());
+  isolate->set_context({});
   return *vector;
 }
 }  // namespace

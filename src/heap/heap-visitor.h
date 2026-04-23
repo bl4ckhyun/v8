@@ -57,6 +57,7 @@ class MaybeObjectSize final {
   V(Cell)                             \
   V(CodeWrapper)                      \
   V(ConsString)                       \
+  V(Context)                          \
   V(ContextCell)                      \
   V(CoverageInfo)                     \
   V(DataHandler)                      \
