@@ -87,8 +87,7 @@ TEST_PAIR(TestWrongStrongTypeInIndexedStructField) {
   // JSObject should cause a failure.
   TaggedField<Object>::store(*descriptors, offset, *o);
   if (should_fail) {
-    TorqueGeneratedClassVerifiers::DescriptorArrayVerify(*descriptors,
-                                                         i_isolate);
+    descriptors->DescriptorArrayEntryTypesVerify(i_isolate);
   }
 
   // Put back the original value in case verifiers run on test shutdown.
@@ -117,12 +116,11 @@ TEST_PAIR(TestWrongWeakTypeInIndexedStructField) {
   // Value can be JSAny, which includes JSObject, and it can be Weak<Map>, but
   // it can't be Weak<JSObject>.
   TaggedField<Object>::store(*descriptors, offset, *o);
-  TorqueGeneratedClassVerifiers::DescriptorArrayVerify(*descriptors, i_isolate);
+  descriptors->DescriptorArrayEntryTypesVerify(i_isolate);
   Tagged<MaybeObject> weak = MakeWeak(Cast<HeapObject>(*o));
   TaggedField<MaybeObject>::store(*descriptors, offset, weak);
   if (should_fail) {
-    TorqueGeneratedClassVerifiers::DescriptorArrayVerify(*descriptors,
-                                                         i_isolate);
+    descriptors->DescriptorArrayEntryTypesVerify(i_isolate);
   }
 
   // Put back the original value in case verifiers run on test shutdown.

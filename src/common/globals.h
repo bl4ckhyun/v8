@@ -1162,6 +1162,7 @@ class Debug;
 class DebugInfo;
 class Descriptor;
 class DescriptorArray;
+class StrongDescriptorArray;
 template <typename T>
 class DirectHandle;
 #ifdef V8_ENABLE_DIRECT_HANDLE

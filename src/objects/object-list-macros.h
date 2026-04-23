@@ -253,6 +253,7 @@ namespace internal {
   V(SourceTextModuleInfo)                       \
   V(StoreHandler)                               \
   V(String)                                     \
+  V(StrongDescriptorArray)                      \
   V(StringSet)                                  \
   V(RegisteredSymbolTable)                      \
   V(Struct)                                     \

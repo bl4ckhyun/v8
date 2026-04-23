@@ -1219,10 +1219,47 @@ void FeedbackMetadata::FeedbackMetadataVerify(Isolate* isolate) {
   }
 }
 
+void StrongDescriptorArray::StrongDescriptorArrayVerify(Isolate* isolate) {
+  CHECK(IsStrongDescriptorArray(this));
+  DescriptorArrayVerify(isolate);
+}
+
+void DescriptorArray::DescriptorArrayEntryTypesVerify(Isolate* isolate) {
+  // Header: enum_cache_ is strong.
+  Object::VerifyPointer(isolate, enum_cache());
+  CHECK(IsEnumCache(enum_cache()));
+  // Descriptors tail: verify each (key, details, value) triple. Key and
+  // details slots are always strong; only the value slot may be weak.
+  const int nof = number_of_all_descriptors();
+  for (int i = 0; i < nof; ++i) {
+    const DescriptorArray::Entry& entry = entries()[i];
+    Tagged<Object> key = entry.key.Relaxed_Load();
+    Object::VerifyPointer(isolate, key);
+    CHECK(IsName(key) || IsUndefined(key));
+    Tagged<Object> details = entry.details.Relaxed_Load();
+    Object::VerifyPointer(isolate, details);
+    CHECK(IsSmi(details) || IsUndefined(details));
+    Tagged<MaybeObject> value = entry.value.Relaxed_Load();
+    Object::VerifyMaybeObjectPointer(isolate, value);
+    if (value.IsCleared()) continue;
+    if (value.IsWeak()) {
+      CHECK(IsMap(value.GetHeapObjectAssumeWeak()));
+    } else {
+      Tagged<Object> strong = value.GetHeapObjectOrSmi();
+      CHECK(IsSmi(strong) || IsHeapNumber(strong) || IsBigInt(strong) ||
+            IsString(strong) || IsSymbol(strong) || IsBoolean(strong) ||
+            IsNull(strong) || IsUndefined(strong) || IsJSReceiver(strong) ||
+            IsNumberDictionary(strong) || IsAccessorInfo(strong) ||
+            IsAccessorPair(strong) || IsClassPositions(strong));
+    }
+  }
+}
+
 void DescriptorArray::DescriptorArrayVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::DescriptorArrayVerify(*this, isolate);
+  CHECK(IsDescriptorArray(this));
+  DescriptorArrayEntryTypesVerify(isolate);
   if (number_of_all_descriptors() == 0) {
-    CHECK_EQ(ReadOnlyRoots(isolate).empty_descriptor_array(), *this);
+    CHECK_EQ(ReadOnlyRoots(isolate).empty_descriptor_array(), this);
     CHECK_EQ(0, number_of_all_descriptors());
     CHECK_EQ(0, number_of_descriptors());
     CHECK_EQ(ReadOnlyRoots(isolate).empty_enum_cache(), enum_cache());
@@ -3882,12 +3919,12 @@ bool DescriptorArray::IsSortedNoDuplicates() {
     const bool has_hash = key->TryGetHash(&hash);
     CHECK(has_hash);
     if (key == current_key) {
-      Print(*this);
+      Print(this);
       return false;
     }
     current_key = key;
     if (hash < current) {
-      Print(*this);
+      Print(this);
       return false;
     }
     current = hash;

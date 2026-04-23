@@ -592,6 +592,37 @@ class ScopeInfo::BodyDescriptor final
   }
 };
 
+// DescriptorArray has a strong enum_cache_ header slot followed by a
+// variable-length tail of (key, details, value) triples. Within each entry
+// key and details are always strong; only the value slot may hold a weak
+// reference to a Map.
+// Note: the marking visitor (see MarkingVisitorBase::VisitDescriptorArray)
+// bypasses this BodyDescriptor's IterateBody for incremental marking; this
+// descriptor is still used by other paths (size queries, non-incremental
+// visitors).
+class DescriptorArray::BodyDescriptor final : public BodyDescriptorBase {
+ public:
+  template <typename ObjectVisitor>
+  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
+                                 int object_size, ObjectVisitor* v) {
+    IteratePointer(obj, DescriptorArray::kEnumCacheOffset, v);
+    const int nof_all_descriptors =
+        UncheckedCast<DescriptorArray>(obj)->number_of_all_descriptors();
+    for (int i = 0; i < nof_all_descriptors; ++i) {
+      const int entry_offset = DescriptorArray::OffsetOfDescriptorAt(i);
+      IteratePointers(obj, entry_offset + DescriptorArray::kEntryKeyOffset,
+                      entry_offset + DescriptorArray::kEntryValueOffset, v);
+      IterateMaybeWeakPointer(
+          obj, entry_offset + DescriptorArray::kEntryValueOffset, v);
+    }
+  }
+
+  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> obj) {
+    return DescriptorArray::SizeFor(
+        UncheckedCast<DescriptorArray>(obj)->number_of_all_descriptors());
+  }
+};
+
 class WeakCell::BodyDescriptor final : public BodyDescriptorBase {
  public:
   static constexpr int kTargetOffset = offsetof(WeakCell, target_);

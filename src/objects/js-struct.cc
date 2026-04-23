@@ -163,10 +163,9 @@ MaybeHandle<T> GetSpecialSlotValue(Isolate* isolate, Tagged<Map> instance_map,
         special_slot_name ==
             ReadOnlyRoots(isolate).shared_struct_map_registry_key_symbol(),
         entry.as_int() == 0);
-    result =
-        handle(Cast<T>(instance_map->instance_descriptors()->GetStrongValue(
-                   isolate, entry)),
-               isolate);
+    result = handle(
+        Cast<T>(instance_map->instance_descriptors()->GetStrongValue(entry)),
+        isolate);
   }
   return result;
 }
@@ -435,7 +434,7 @@ MaybeDirectHandle<Map> SharedStructTypeRegistry::CheckIfEntryMatches(
                                                      i)) {
       DirectHandle<NumberDictionary> elements_template(
           Cast<NumberDictionary>(
-              existing_map->instance_descriptors()->GetStrongValue(isolate, i)),
+              existing_map->instance_descriptors()->GetStrongValue(i)),
           isolate);
       if (element_names.size() != elements_template->NumberOfElements()) {
         return MaybeDirectHandle<Map>();

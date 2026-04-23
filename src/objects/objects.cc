@@ -4072,14 +4072,14 @@ void DescriptorArray::Initialize(Tagged<EnumCache> empty_enum_cache,
   DCHECK_GE(nof_descriptors, 0);
   DCHECK_GE(slack, 0);
   DCHECK_LE(nof_descriptors + slack, kMaxNumberOfDescriptors);
-  set_number_of_all_descriptors(nof_descriptors + slack);
+  set_number_of_all_descriptors(nof_descriptors + slack, kReleaseStore);
   set_number_of_descriptors(nof_descriptors);
   set_raw_gc_state(raw_gc_state, kRelaxedStore);
   set_enum_cache(empty_enum_cache, SKIP_WRITE_BARRIER);
   set_flags(FastIterableBits::encode(FastIterableState::kUnknown),
             kRelaxedStore);
 #if TAGGED_SIZE_8_BYTES
-  set_optional_padding(0);
+  optional_padding_ = 0;
 #endif
   MemsetTagged(GetDescriptorSlot(0), undefined_value,
                number_of_all_descriptors() * kEntrySize);

@@ -152,6 +152,12 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
     case SCOPE_INFO_TYPE:
       return kVisitScopeInfo;
 
+    case DESCRIPTOR_ARRAY_TYPE:
+      return kVisitDescriptorArray;
+
+    case STRONG_DESCRIPTOR_ARRAY_TYPE:
+      return kVisitStrongDescriptorArray;
+
     case FEEDBACK_CELL_TYPE:
       return kVisitFeedbackCell;
 

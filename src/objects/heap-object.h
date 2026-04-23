@@ -674,6 +674,7 @@ IS_TYPE_FUNCTION_DECL(SloppyArgumentsElements)
 IS_TYPE_FUNCTION_DECL(SmallOrderedHashTable)
 IS_TYPE_FUNCTION_DECL(PropertyDictionary)
 IS_TYPE_FUNCTION_DECL(AnyHole)
+IS_TYPE_FUNCTION_DECL(StrongDescriptorArray)
 #undef IS_TYPE_FUNCTION_DECL
 
 // Most calls to Is<Oddball> should go via the Tagged<Object> overloads, withst

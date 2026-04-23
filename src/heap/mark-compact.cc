@@ -4098,7 +4098,7 @@ void RightTrimDescriptorArray(Heap* heap, Tagged<DescriptorArray> array,
   if (heap::ShouldZapGarbage()) {
     heap::ZapBlock(start, aligned_start - start, kZapValue);
   }
-  array->set_number_of_all_descriptors(new_nof_all_descriptors);
+  array->set_number_of_all_descriptors(new_nof_all_descriptors, kReleaseStore);
 }
 
 void TrimEnumCache(Heap* heap, Tagged<Map> map,

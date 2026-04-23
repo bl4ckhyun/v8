@@ -1034,7 +1034,7 @@ DirectHandle<Object> LookupIterator::FetchValue(
   } else {
     result =
         holder_->map(isolate_)->instance_descriptors(isolate_)->GetStrongValue(
-            isolate_, descriptor_number());
+            descriptor_number());
   }
   return direct_handle(result, isolate_);
 }

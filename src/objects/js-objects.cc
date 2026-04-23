@@ -3310,8 +3310,8 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
         }
       } else {
         DCHECK_EQ(PropertyKind::kData, old_details.kind());
-        value = handle(Cast<JSAny>(old_descriptors->GetStrongValue(isolate, i)),
-                       isolate);
+        value =
+            handle(Cast<JSAny>(old_descriptors->GetStrongValue(i)), isolate);
         DCHECK(!old_representation.IsDouble() && !representation.IsDouble());
       }
     } else {
@@ -3429,7 +3429,7 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
                                       isolate);
   for (InternalIndex i : InternalIndex::Range(real_size)) {
     PropertyDetails details = descs->GetDetails(i);
-    DirectHandle<Name> key(descs->GetKey(isolate, i), isolate);
+    DirectHandle<Name> key(descs->GetKey(i), isolate);
     DirectHandle<Object> value;
     if (details.location() == PropertyLocation::kField) {
       FieldIndex index = FieldIndex::ForDetails(*map, details);
@@ -3449,7 +3449,7 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
 
     } else {
       DCHECK_EQ(PropertyLocation::kDescriptor, details.location());
-      value = direct_handle(descs->GetStrongValue(isolate, i), isolate);
+      value = direct_handle(descs->GetStrongValue(i), isolate);
     }
     DCHECK(!value.is_null());
     PropertyConstness constness = V8_DICT_PROPERTY_CONST_TRACKING_BOOL

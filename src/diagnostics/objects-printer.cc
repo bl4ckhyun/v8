@@ -1117,6 +1117,10 @@ void EnumCache::EnumCachePrint(std::ostream& os) {
   os << "\n";
 }
 
+void StrongDescriptorArray::StrongDescriptorArrayPrint(std::ostream& os) {
+  DescriptorArrayPrint(os);
+}
+
 void DescriptorArray::DescriptorArrayPrint(std::ostream& os) {
   PrintHeader(os, "DescriptorArray");
   os << "\n - enum_cache: ";
