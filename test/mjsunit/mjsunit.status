@@ -2835,6 +2835,9 @@
   'regress-398879933': [SKIP],
   'regress-399698534': [SKIP],
   'regress-414738826': [SKIP],
+
+  # TODO(dmercadier,505648716): fix LateLoadElimination's map tracking and re-enable this test.
+  'turbolev/load-elimination-backing-store-alias': [SKIP],
 }], # variant in (stress_maglev, stress_maglev_tracing, stress_maglev_non_eager_inlining, stress_maglev_future, stress_maglev_no_turbofan, maglev_no_turbofan, turbolev, turbolev_future, stress_turbolev_future)
 
 
