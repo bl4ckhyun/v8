@@ -152,37 +152,37 @@ QUIET = sys.argv[0] == "quietgm"  # Overridden by "quiet" keyword.
 build_dir_prefix = os.getenv("V8_GM_BUILD_DIR_PREFIX")
 
 V8_DIR = Path(__file__).resolve().parent.parent.parent
-RECLIENT_CERT_CACHE = V8_DIR / ".#gm_reclient_cert_cache"
 
-if (V8_DIR.parent / "chrome").exists():
-  CHROMIUM_DIR = V8_DIR.parent
+
+def v8_root_dir() -> Path:
+  git_dir = subprocess.check_output(["git", "rev-parse", "--git-common-dir"],
+                                    cwd=V8_DIR,
+                                    text=True,
+                                    stderr=subprocess.PIPE).strip()
+  if (V8_DIR / git_dir).exists():
+    return (V8_DIR / git_dir).parent.resolve()
+  return V8_DIR
+
+
+V8_ROOT_DIR = v8_root_dir()
+
+if V8_DIR != V8_ROOT_DIR:
+  subprocess.run([
+      sys.executable,
+      str(V8_DIR / "tools" / "dev" / "setup_worktree_build.py"),
+      str(V8_ROOT_DIR),
+      str(V8_DIR),
+  ])
+
+RECLIENT_CERT_CACHE = V8_ROOT_DIR / ".#gm_reclient_cert_cache"
+
+if (V8_ROOT_DIR.parent / "chrome").exists():
+  CHROMIUM_DIR = V8_ROOT_DIR.parent
 else:
   CHROMIUM_DIR = None
 
-
-# Useful when working with multiple git worktrees.
-def find_gclient(start_dir):
-  curr = start_dir.resolve()
-  while curr != curr.parent:
-    if (curr / ".gclient").exists():
-      return curr / ".gclient"
-
-    git_file = curr / ".git"
-    if git_file.is_file():
-      try:
-        content = git_file.read_text().strip()
-        if content.startswith("gitdir:"):
-          gitdir = Path(content.split()[1]).resolve()
-          res = find_gclient(gitdir)
-          if res:
-            return res
-      except Exception:
-        pass
-    curr = curr.parent
-  return None
-
-
-GCLIENT_FILE_PATH = find_gclient(V8_DIR)
+GCLIENT_FILE_PATH = (CHROMIUM_DIR.parent
+                     if CHROMIUM_DIR else V8_ROOT_DIR.parent) / ".gclient"
 
 out_dir_override = os.getenv("V8_GM_OUTDIR")
 if out_dir_override and Path(out_dir_override).is_dir:
