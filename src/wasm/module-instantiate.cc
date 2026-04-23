@@ -183,7 +183,7 @@ std::optional<CFunctionWithSignature> FindSupportedWasmFastApiFunction(
         if (v8_flags.trace_opt) {
           CodeTracer::Scope scope(isolate->GetCodeTracer());
           PrintF(scope.file(), "[disabled optimization for ");
-          ShortPrint(*shared, scope.file());
+          ShortPrint(shared, scope.file());
           PrintF(scope.file(),
                  " for C function %" PRIu32
                  ", reason: the signature of the imported function in the Wasm "

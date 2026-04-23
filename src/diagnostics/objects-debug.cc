@@ -1746,7 +1746,7 @@ void SharedFunctionInfo::SharedFunctionInfoVerify(LocalIsolate* isolate) {
              internal_formal_parameter_count_with_receiver());
   }
 
-  if (ShouldVerifySharedFunctionInfoFunctionIndex(*this)) {
+  if (ShouldVerifySharedFunctionInfoFunctionIndex(this)) {
     int expected_map_index =
         Context::FunctionMapIndex(language_mode(), kind(), HasSharedName());
     CHECK_EQ(expected_map_index, function_map_index());

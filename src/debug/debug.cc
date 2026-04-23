@@ -1709,11 +1709,11 @@ class DiscardBaselineCodeVisitor : public ThreadVisitor {
  public:
   explicit DiscardBaselineCodeVisitor(Tagged<SharedFunctionInfo> shared)
       : shared_(shared) {}
-  DiscardBaselineCodeVisitor() : shared_(SharedFunctionInfo()) {}
+  DiscardBaselineCodeVisitor() : shared_() {}
 
   void VisitThread(Isolate* isolate, ThreadLocalTop* top) override {
     DisallowGarbageCollection diallow_gc;
-    bool deopt_all = shared_ == SharedFunctionInfo();
+    bool deopt_all = shared_ == Tagged<SharedFunctionInfo>{};
     for (JavaScriptStackFrameIterator it(isolate, top); !it.done();
          it.Advance()) {
       if (!deopt_all && it.frame()->function()->shared() != shared_) continue;
@@ -1768,7 +1768,7 @@ void Debug::DiscardBaselineCode(Tagged<SharedFunctionInfo> shared) {
   DCHECK(shared->HasBaselineCode());
   if (v8_flags.trace_baseline) {
     PrintF("[Sparkplug] discarding baseline code for ");
-    ShortPrint(*shared);
+    ShortPrint(shared);
     PrintF("\n");
   }
   DiscardBaselineCodeVisitor visitor(shared);

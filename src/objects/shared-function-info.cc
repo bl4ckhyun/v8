@@ -26,8 +26,9 @@ V8_EXPORT_PRIVATE constexpr Tagged<Smi>
 
 Tagged<Union<Smi, TrustedObject>> SharedFunctionInfo::GetTrustedData(
     IsolateForSandbox isolate) const {
-  return ReadMaybeEmptyTrustedPointerField<kTrustedDataIndirectPointerRange>(
-      kTrustedFunctionDataOffset, isolate, kAcquireLoad);
+  return Tagged<HeapObject>(this)
+      ->ReadMaybeEmptyTrustedPointerField<kTrustedDataIndirectPointerRange>(
+          kTrustedFunctionDataOffset, isolate, kAcquireLoad);
 }
 
 uint32_t SharedFunctionInfo::Hash() {
@@ -170,7 +171,7 @@ Tagged<SharedFunctionInfo> SharedFunctionInfo::ScriptIterator::Next() {
     }
     return Cast<SharedFunctionInfo>(heap_object);
   }
-  return SharedFunctionInfo();
+  return {};
 }
 
 void SharedFunctionInfo::ScriptIterator::Reset(Isolate* isolate,
@@ -207,10 +208,10 @@ void SharedFunctionInfo::SetScript(IsolateForSandbox isolate,
     Tagged<MaybeObject> maybe_object = list->get(function_literal_id);
     Tagged<HeapObject> heap_object;
     if (maybe_object.GetHeapObjectIfWeak(&heap_object)) {
-      DCHECK_EQ(heap_object, *this);
+      DCHECK_EQ(heap_object, this);
     }
 #endif
-    list->set(function_literal_id, MakeWeak(Tagged(*this)));
+    list->set(function_literal_id, MakeWeak(Tagged<SharedFunctionInfo>(this)));
   } else {
     DCHECK(IsScript(script()));
 
@@ -223,7 +224,7 @@ void SharedFunctionInfo::SetScript(IsolateForSandbox isolate,
     if (static_cast<uint32_t>(function_literal_id) < infos->ulength().value()) {
       Tagged<MaybeObject> raw = old_script->infos()->get(function_literal_id);
       Tagged<HeapObject> heap_object;
-      if (raw.GetHeapObjectIfWeak(&heap_object) && heap_object == *this) {
+      if (raw.GetHeapObjectIfWeak(&heap_object) && heap_object == this) {
         old_script->infos()->set(function_literal_id, roots.undefined_value());
       }
     }
@@ -389,7 +390,7 @@ void SharedFunctionInfo::DiscardCompiledMetadata(
     if (v8_flags.trace_flush_code) {
       CodeTracer::Scope scope(isolate->GetCodeTracer());
       PrintF(scope.file(), "[discarding compiled metadata for ");
-      ShortPrint(*this, scope.file());
+      ShortPrint(Tagged<HeapObject>(this), scope.file());
       PrintF(scope.file(), "]\n");
     }
 
@@ -538,12 +539,13 @@ void SharedFunctionInfo::DisableOptimization(Isolate* isolate,
     CHECK(kind == CodeKind::INTERPRETED_FUNCTION || kind == CodeKind::BUILTIN);
   }
   PROFILE(isolate,
-          CodeDisableOptEvent(direct_handle(abstract_code(isolate), isolate),
-                              direct_handle(*this, isolate)));
+          CodeDisableOptEvent(
+              direct_handle(abstract_code(isolate), isolate),
+              direct_handle(Tagged<SharedFunctionInfo>(this), isolate)));
   if (v8_flags.trace_opt) {
     CodeTracer::Scope scope(isolate->GetCodeTracer());
     PrintF(scope.file(), "[disabled optimization for ");
-    ShortPrint(*this, scope.file());
+    ShortPrint(Tagged<HeapObject>(this), scope.file());
     PrintF(scope.file(), ", reason: %s]\n", GetBailoutReason(reason));
   }
 }

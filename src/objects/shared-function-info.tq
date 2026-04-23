@@ -60,6 +60,7 @@ bitfield struct SharedFunctionInfoFlags2 extends uint8 {
   function_context_independent_compiled: bool: 1 bit;
 }
 
+@cppObjectLayoutDefinition
 extern class SharedFunctionInfo extends HeapObject {
   // For the sandbox, the SFI's function data is split into a trusted and an
   // untrusted part.

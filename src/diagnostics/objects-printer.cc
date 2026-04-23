@@ -2808,7 +2808,7 @@ void SharedFunctionInfo::SharedFunctionInfoPrint(std::ostream& os) {
   os << "\n - untrusted_function_data: " << Brief(GetUntrustedData());
   os << "\n - code (from function_data): ";
   Isolate* isolate;
-  if (GetIsolateFromHeapObject(*this, &isolate)) {
+  if (GetIsolateFromHeapObject(Tagged<SharedFunctionInfo>(this), &isolate)) {
     os << Brief(GetCode(isolate));
   } else {
     os << kUnavailableString;

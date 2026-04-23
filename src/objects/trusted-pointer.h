@@ -161,6 +161,7 @@ class TrustedPointerMember
                                              Tagged<T> value);
 
   inline bool is_empty() const;
+  inline bool is_unpublished(IsolateForSandbox isolate) const;
   inline void clear(HeapObjectLayout* host);
 
  private:

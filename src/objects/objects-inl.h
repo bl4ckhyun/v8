@@ -418,6 +418,29 @@ void HeapObject::Relaxed_WriteField(size_t offset, T value)
 }
 
 template <class T>
+T HeapObjectLayout::Relaxed_ReadField(size_t offset) const
+  requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
+           !std::is_floating_point_v<T>)
+{
+  DCHECK_IMPLIES(COMPRESS_POINTERS_BOOL, sizeof(T) <= kTaggedSize);
+  using AtomicT = typename base::AtomicTypeFromByteWidth<sizeof(T)>::type;
+  return static_cast<T>(base::AsAtomicImpl<AtomicT>::Relaxed_Load(
+      reinterpret_cast<AtomicT*>(field_address(offset))));
+}
+
+template <class T>
+void HeapObjectLayout::Relaxed_WriteField(size_t offset, T value)
+  requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
+           !std::is_floating_point_v<T>)
+{
+  DCHECK_IMPLIES(COMPRESS_POINTERS_BOOL, sizeof(T) <= kTaggedSize);
+  using AtomicT = typename base::AtomicTypeFromByteWidth<sizeof(T)>::type;
+  base::AsAtomicImpl<AtomicT>::Relaxed_Store(
+      reinterpret_cast<AtomicT*>(field_address(offset)),
+      static_cast<AtomicT>(value));
+}
+
+template <class T>
 T HeapObject::Acquire_ReadField(size_t offset) const
   requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
            !std::is_floating_point_v<T>)
@@ -1389,6 +1412,15 @@ ObjectSlot HeapObject::RawField(int byte_offset) const {
 
 ObjectSlot HeapObjectLayout::RawField(int byte_offset) const {
   return ObjectSlot(field_address(byte_offset));
+}
+
+MaybeObjectSlot HeapObjectLayout::RawMaybeWeakField(int byte_offset) const {
+  return MaybeObjectSlot(field_address(byte_offset));
+}
+
+IndirectPointerSlot HeapObjectLayout::RawIndirectPointerField(
+    int byte_offset, IndirectPointerTagRange tag_range) const {
+  return IndirectPointerSlot(field_address(byte_offset), tag_range);
 }
 
 ExternalPointerSlot HeapObjectLayout::RawExternalPointerField(

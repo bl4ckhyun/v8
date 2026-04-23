@@ -106,6 +106,9 @@ V8_OBJECT class HeapObjectLayout {
     return address() + offset;
   }
   inline ObjectSlot RawField(int byte_offset) const;
+  inline MaybeObjectSlot RawMaybeWeakField(int byte_offset) const;
+  inline IndirectPointerSlot RawIndirectPointerField(
+      int byte_offset, IndirectPointerTagRange tag_range) const;
   inline ExternalPointerSlot RawExternalPointerField(
       int byte_offset, ExternalPointerTagRange tag_range) const;
   inline operator Tagged<HeapObject>() const;
@@ -145,6 +148,18 @@ V8_OBJECT class HeapObjectLayout {
   {
     return WriteMaybeUnalignedValue<T>(field_address(offset), value);
   }
+
+  // Atomic integral-field accessors mirroring the HeapObject API so call
+  // sites hold their shape across the migration.
+  template <class T>
+  inline T Relaxed_ReadField(size_t offset) const
+    requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
+             !std::is_floating_point_v<T>);
+
+  template <class T>
+  inline void Relaxed_WriteField(size_t offset, T value)
+    requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
+             !std::is_floating_point_v<T>);
 
   // This is slower that GetReadOnlyRoots, but safe to call during
   // bootstrapping.
