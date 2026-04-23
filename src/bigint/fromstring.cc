@@ -23,7 +23,7 @@ void ProcessorImpl::FromStringClassic(RWDigits Z,
   // few parts; if heap storage is used at all then all parts are copied there.
   uint32_t num_stack_parts = accumulator->stack_parts_used_;
   if (num_stack_parts == 1) return;
-  const std::vector<digit_t>& heap_parts = accumulator->heap_parts_;
+  const GrowableDigitsVector& heap_parts = accumulator->heap_parts_;
   uint32_t num_heap_parts = static_cast<uint32_t>(heap_parts.size());
   // All multipliers are the same, except possibly for the last.
   const digit_t max_multiplier = accumulator->max_multiplier_;
@@ -241,10 +241,9 @@ void ProcessorImpl::FromStringBasePowerOfTwo(
   const uint32_t num_parts = accumulator->ResultLength();
   DCHECK(num_parts >= 1);
   DCHECK(Z.len() >= num_parts);
-  Digits parts(accumulator->heap_parts_.empty()
-                   ? accumulator->stack_parts_
-                   : accumulator->heap_parts_.data(),
-               num_parts);
+  const digit_t* parts = accumulator->heap_parts_.empty()
+                             ? accumulator->stack_parts_
+                             : accumulator->heap_parts_.data();
   uint8_t radix = accumulator->radix_;
   DCHECK(radix == 2 || radix == 4 || radix == 8 || radix == 16 || radix == 32);
   const int char_bits = BitLength(radix - 1);
