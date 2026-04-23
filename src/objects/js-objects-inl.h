@@ -594,6 +594,11 @@ Tagged<Object> JSObjectLayout::InObjectPropertyAtOffset(int offset) const {
   return Cast<JSObject>(this)->InObjectPropertyAtOffset(offset);
 }
 
+Tagged<Object> JSObjectLayout::InObjectPropertyPutAtOffset(
+    int offset, Tagged<Object> value, WriteBarrierMode mode) {
+  return Cast<JSObject>(this)->InObjectPropertyPutAtOffset(offset, value, mode);
+}
+
 int JSObjectLayout::GetEmbedderFieldCount() const {
   return Cast<JSObject>(this)->GetEmbedderFieldCount();
 }
@@ -668,6 +673,12 @@ Tagged<NumberDictionary> JSObjectLayout::element_dictionary() const {
 void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
                                                   WriteBarrierMode mode) {
   Cast<JSReceiver>(this)->set_raw_properties_or_hash(value, mode);
+}
+
+void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
+                                                  RelaxedStoreTag tag,
+                                                  WriteBarrierMode mode) {
+  Cast<JSReceiver>(this)->set_raw_properties_or_hash(value, tag, mode);
 }
 
 void JSReceiverLayout::SetProperties(Tagged<HeapObject> properties) {

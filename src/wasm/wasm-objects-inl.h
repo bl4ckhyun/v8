@@ -61,23 +61,141 @@ namespace v8::internal {
   }
 
 // WasmModuleObject
+Tagged<Managed<wasm::NativeModule>> WasmModuleObject::managed_native_module()
+    const {
+  return managed_native_module_.load();
+}
+void WasmModuleObject::set_managed_native_module(
+    Tagged<Managed<wasm::NativeModule>> value, WriteBarrierMode mode) {
+  managed_native_module_.store(this, value, mode);
+}
+
+Tagged<Script> WasmModuleObject::script() const { return script_.load(); }
+void WasmModuleObject::set_script(Tagged<Script> value, WriteBarrierMode mode) {
+  script_.store(this, value, mode);
+}
+
 Managed<wasm::NativeModule>::Ptr WasmModuleObject::native_module() {
   return managed_native_module()->ptr();
 }
 
+// WasmMemoryMapDescriptor
+Tagged<Weak<HeapObject>> WasmMemoryMapDescriptor::memory() const {
+  return memory_.load();
+}
+void WasmMemoryMapDescriptor::set_memory(Tagged<Weak<HeapObject>> value,
+                                         WriteBarrierMode mode) {
+  memory_.store(this, value, mode);
+}
+
+int32_t WasmMemoryMapDescriptor::file_descriptor() const {
+  return file_descriptor_;
+}
+void WasmMemoryMapDescriptor::set_file_descriptor(int32_t value) {
+  file_descriptor_ = value;
+}
+
+uint32_t WasmMemoryMapDescriptor::offset() const { return offset_; }
+void WasmMemoryMapDescriptor::set_offset(uint32_t value) { offset_ = value; }
+
+uint32_t WasmMemoryMapDescriptor::size() const { return size_; }
+void WasmMemoryMapDescriptor::set_size(uint32_t value) { size_ = value; }
+
 // WasmMemoryObject
-ACCESSORS(WasmMemoryObject, instances, Tagged<WeakArrayList>, kInstancesOffset)
+Tagged<UnionOf<JSArrayBuffer, Undefined>> WasmMemoryObject::array_buffer()
+    const {
+  return array_buffer_.load();
+}
+void WasmMemoryObject::set_array_buffer(
+    Tagged<UnionOf<JSArrayBuffer, Undefined>> value, WriteBarrierMode mode) {
+  array_buffer_.store(this, value, mode);
+}
+
+Tagged<Managed<BackingStore>> WasmMemoryObject::managed_backing_store() const {
+  return managed_backing_store_.load();
+}
+void WasmMemoryObject::set_managed_backing_store(
+    Tagged<Managed<BackingStore>> value, WriteBarrierMode mode) {
+  managed_backing_store_.store(this, value, mode);
+}
+
+int WasmMemoryObject::maximum_pages() const {
+  return maximum_pages_.load().value();
+}
+void WasmMemoryObject::set_maximum_pages(int value) {
+  maximum_pages_.store(this, Smi::FromInt(value));
+}
+
+Tagged<WeakArrayList> WasmMemoryObject::instances() const {
+  return instances_.load();
+}
+void WasmMemoryObject::set_instances(Tagged<WeakArrayList> value,
+                                     WriteBarrierMode mode) {
+  instances_.store(this, value, mode);
+}
+
+wasm::AddressType WasmMemoryObject::address_type() const {
+  return static_cast<wasm::AddressType>(address_type_);
+}
+void WasmMemoryObject::set_address_type(wasm::AddressType value) {
+  address_type_ = static_cast<uint8_t>(value);
+}
 
 Managed<BackingStore>::Ptr WasmMemoryObject::backing_store() const {
   return managed_backing_store()->ptr();
 }
 
 // WasmGlobalObject
-ACCESSORS(WasmGlobalObject, buffer, Tagged<WasmGlobalObject::BufferType>,
-          kBufferOffset)
-TRUSTED_POINTER_ACCESSORS(WasmGlobalObject, trusted_data,
-                          WasmTrustedInstanceData, kTrustedDataOffset,
-                          kWasmTrustedInstanceDataIndirectPointerTag)
+Tagged<WasmGlobalObject::BufferType> WasmGlobalObject::buffer() const {
+  return buffer_.load();
+}
+void WasmGlobalObject::set_buffer(Tagged<WasmGlobalObject::BufferType> value,
+                                  WriteBarrierMode mode) {
+  buffer_.store(this, value, mode);
+}
+
+int WasmGlobalObject::raw_type() const { return raw_type_.load().value(); }
+void WasmGlobalObject::set_raw_type(int value) {
+  raw_type_.store(this, Smi::FromInt(value));
+}
+
+int WasmGlobalObject::offset() const { return offset_.load().value(); }
+void WasmGlobalObject::set_offset(int value) {
+  offset_.store(this, Smi::FromInt(value));
+}
+
+int WasmGlobalObject::is_mutable() const { return is_mutable_.load().value(); }
+void WasmGlobalObject::set_is_mutable(int value) {
+  is_mutable_.store(this, Smi::FromInt(value));
+}
+
+Tagged<WasmTrustedInstanceData> WasmGlobalObject::trusted_data(
+    IsolateForSandbox isolate) const {
+  return trusted_data_.load(isolate);
+}
+Tagged<WasmTrustedInstanceData> WasmGlobalObject::trusted_data(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_data_.Acquire_Load(isolate);
+}
+void WasmGlobalObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                        WriteBarrierMode mode) {
+  trusted_data_.store(this, value, mode);
+}
+void WasmGlobalObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                        ReleaseStoreTag,
+                                        WriteBarrierMode mode) {
+  trusted_data_.Release_Store(this, value, mode);
+}
+bool WasmGlobalObject::has_trusted_data() const {
+  return !trusted_data_.is_empty();
+}
+bool WasmGlobalObject::has_trusted_data_unpublished(
+    IsolateForSandbox isolate) const {
+  return TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      Tagged<HeapObject>(this), kTrustedDataOffset,
+      kWasmTrustedInstanceDataIndirectPointerTag, isolate);
+}
+void WasmGlobalObject::clear_trusted_data() { trusted_data_.clear(this); }
 
 wasm::ValueType WasmGlobalObject::unsafe_type() const {
   // Various consumers of ValueKind (e.g. ValueKind::name()) use the raw enum
@@ -284,9 +402,49 @@ Tagged<WasmDispatchTable> WasmTrustedInstanceData::dispatch_table(
 }
 
 // WasmInstanceObject
-TRUSTED_POINTER_ACCESSORS(WasmInstanceObject, trusted_data,
-                          WasmTrustedInstanceData, kTrustedDataOffset,
-                          kWasmTrustedInstanceDataIndirectPointerTag)
+Tagged<WasmTrustedInstanceData> WasmInstanceObject::trusted_data(
+    IsolateForSandbox isolate) const {
+  return trusted_data_.load(isolate);
+}
+Tagged<WasmTrustedInstanceData> WasmInstanceObject::trusted_data(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_data_.Acquire_Load(isolate);
+}
+void WasmInstanceObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                          WriteBarrierMode mode) {
+  trusted_data_.store(this, value, mode);
+}
+void WasmInstanceObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                          ReleaseStoreTag,
+                                          WriteBarrierMode mode) {
+  trusted_data_.Release_Store(this, value, mode);
+}
+bool WasmInstanceObject::has_trusted_data() const {
+  return !trusted_data_.is_empty();
+}
+bool WasmInstanceObject::has_trusted_data_unpublished(
+    IsolateForSandbox isolate) const {
+  return TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      Tagged<HeapObject>(this), kTrustedDataOffset,
+      kWasmTrustedInstanceDataIndirectPointerTag, isolate);
+}
+void WasmInstanceObject::clear_trusted_data() { trusted_data_.clear(this); }
+
+Tagged<WasmModuleObject> WasmInstanceObject::module_object() const {
+  return module_object_.load();
+}
+void WasmInstanceObject::set_module_object(Tagged<WasmModuleObject> value,
+                                           WriteBarrierMode mode) {
+  module_object_.store(this, value, mode);
+}
+
+Tagged<JSObject> WasmInstanceObject::exports_object() const {
+  return exports_object_.load();
+}
+void WasmInstanceObject::set_exports_object(Tagged<JSObject> value,
+                                            WriteBarrierMode mode) {
+  exports_object_.store(this, value, mode);
+}
 
 // Note: in case of existing in-sandbox corruption, this could return an
 // incorrect WasmModule! For security-relevant code, prefer reading
@@ -437,9 +595,24 @@ PROTECTED_POINTER_ACCESSORS(WasmInternalFunction, implicit_arg, TrustedObject,
                             kProtectedImplicitArgOffset)
 
 // WasmFuncRef
-TRUSTED_POINTER_ACCESSORS(WasmFuncRef, internal, WasmInternalFunction,
-                          kTrustedInternalOffset,
-                          kWasmInternalFunctionIndirectPointerTag)
+Tagged<WasmInternalFunction> WasmFuncRef::internal(
+    IsolateForSandbox isolate) const {
+  return trusted_internal_.load(isolate);
+}
+Tagged<WasmInternalFunction> WasmFuncRef::internal(IsolateForSandbox isolate,
+                                                   AcquireLoadTag) const {
+  return trusted_internal_.Acquire_Load(isolate);
+}
+void WasmFuncRef::set_internal(Tagged<WasmInternalFunction> value,
+                               WriteBarrierMode mode) {
+  trusted_internal_.store(this, value, mode);
+}
+void WasmFuncRef::set_internal(Tagged<WasmInternalFunction> value,
+                               ReleaseStoreTag, WriteBarrierMode mode) {
+  trusted_internal_.Release_Store(this, value, mode);
+}
+bool WasmFuncRef::has_internal() const { return !trusted_internal_.is_empty(); }
+void WasmFuncRef::clear_internal() { trusted_internal_.clear(this); }
 
 // WasmFunctionData
 CODE_POINTER_ACCESSORS(WasmFunctionData, wrapper_code, kWrapperCodeOffset)
@@ -496,6 +669,39 @@ Tagged<WasmFuncRef> WasmExternalFunction::func_ref() const {
 }
 
 // WasmTypeInfo
+uint32_t WasmTypeInfo::canonical_type() const { return canonical_type_; }
+void WasmTypeInfo::set_canonical_type(uint32_t value) {
+  canonical_type_ = value;
+}
+
+uint32_t WasmTypeInfo::canonical_element_type() const {
+  return canonical_element_type_;
+}
+void WasmTypeInfo::set_canonical_element_type(uint32_t value) {
+  canonical_element_type_ = value;
+}
+
+int WasmTypeInfo::supertypes_length() const {
+  return supertypes_length_.load().value();
+}
+void WasmTypeInfo::set_supertypes_length(int value) {
+  supertypes_length_.store(this, Smi::FromInt(value));
+}
+
+Tagged<Object> WasmTypeInfo::supertypes(int i) const {
+  DCHECK_GE(i, 0);
+  DCHECK_LT(i, supertypes_length());
+  return supertypes()[i].load();
+}
+void WasmTypeInfo::set_supertypes(int i, Tagged<Object> value,
+                                  WriteBarrierMode mode) {
+  DCHECK_GE(i, 0);
+  DCHECK_LT(i, supertypes_length());
+  supertypes()[i].store(this, value, mode);
+}
+
+int WasmTypeInfo::AllocatedSize() const { return SizeFor(supertypes_length()); }
+
 wasm::CanonicalValueType WasmTypeInfo::type() const {
   return wasm::CanonicalValueType::FromRawBitField(canonical_type());
 }
@@ -508,22 +714,141 @@ wasm::CanonicalValueType WasmTypeInfo::element_type() const {
   return wasm::CanonicalValueType::FromRawBitField(canonical_element_type());
 }
 
+// WasmContinuationObject
+Tagged<WasmStackObject> WasmContinuationObject::stack_obj() const {
+  return stack_obj_.load();
+}
+void WasmContinuationObject::set_stack_obj(Tagged<WasmStackObject> value,
+                                           WriteBarrierMode mode) {
+  stack_obj_.store(this, value, mode);
+}
+
 #undef OPTIONAL_ACCESSORS
 #undef READ_PRIMITIVE_FIELD
 #undef WRITE_PRIMITIVE_FIELD
 #undef PRIMITIVE_ACCESSORS
 
-TRUSTED_POINTER_ACCESSORS(WasmTableObject, trusted_data,
-                          WasmTrustedInstanceData, kTrustedDataOffset,
-                          kWasmTrustedInstanceDataIndirectPointerTag)
+// WasmTableObject
+Tagged<FixedArray> WasmTableObject::entries() const { return entries_.load(); }
+void WasmTableObject::set_entries(Tagged<FixedArray> value,
+                                  WriteBarrierMode mode) {
+  entries_.store(this, value, mode);
+}
 
-TRUSTED_POINTER_ACCESSORS(WasmTableObject, trusted_dispatch_table,
-                          WasmDispatchTable, kTrustedDispatchTableOffset,
-                          kWasmDispatchTableIndirectPointerTag)
+int WasmTableObject::current_length() const {
+  return current_length_.load().value();
+}
+void WasmTableObject::set_current_length(int value) {
+  current_length_.store(this, Smi::FromInt(value));
+}
 
-TRUSTED_POINTER_ACCESSORS(WasmResumeData, trusted_suspender,
-                          WasmSuspenderObject, kTrustedSuspenderOffset,
-                          kWasmSuspenderIndirectPointerTag)
+Tagged<UnionOf<Smi, HeapNumber, BigInt, Undefined>>
+WasmTableObject::maximum_length() const {
+  return maximum_length_.load();
+}
+void WasmTableObject::set_maximum_length(
+    Tagged<UnionOf<Smi, HeapNumber, BigInt, Undefined>> value,
+    WriteBarrierMode mode) {
+  maximum_length_.store(this, value, mode);
+}
+
+int WasmTableObject::raw_type() const { return raw_type_.load().value(); }
+void WasmTableObject::set_raw_type(int value) {
+  raw_type_.store(this, Smi::FromInt(value));
+}
+
+wasm::AddressType WasmTableObject::address_type() const {
+  return static_cast<wasm::AddressType>(address_type_);
+}
+void WasmTableObject::set_address_type(wasm::AddressType value) {
+  address_type_ = static_cast<uint8_t>(value);
+}
+
+Tagged<WasmTrustedInstanceData> WasmTableObject::trusted_data(
+    IsolateForSandbox isolate) const {
+  return trusted_data_.load(isolate);
+}
+Tagged<WasmTrustedInstanceData> WasmTableObject::trusted_data(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_data_.Acquire_Load(isolate);
+}
+void WasmTableObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                       WriteBarrierMode mode) {
+  trusted_data_.store(this, value, mode);
+}
+void WasmTableObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                       ReleaseStoreTag, WriteBarrierMode mode) {
+  trusted_data_.Release_Store(this, value, mode);
+}
+bool WasmTableObject::has_trusted_data() const {
+  return !trusted_data_.is_empty();
+}
+bool WasmTableObject::has_trusted_data_unpublished(
+    IsolateForSandbox isolate) const {
+  return TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      Tagged<HeapObject>(this), kTrustedDataOffset,
+      kWasmTrustedInstanceDataIndirectPointerTag, isolate);
+}
+void WasmTableObject::clear_trusted_data() { trusted_data_.clear(this); }
+
+Tagged<WasmDispatchTable> WasmTableObject::trusted_dispatch_table(
+    IsolateForSandbox isolate) const {
+  return trusted_dispatch_table_.load(isolate);
+}
+Tagged<WasmDispatchTable> WasmTableObject::trusted_dispatch_table(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_dispatch_table_.Acquire_Load(isolate);
+}
+void WasmTableObject::set_trusted_dispatch_table(
+    Tagged<WasmDispatchTable> value, WriteBarrierMode mode) {
+  trusted_dispatch_table_.store(this, value, mode);
+}
+void WasmTableObject::set_trusted_dispatch_table(
+    Tagged<WasmDispatchTable> value, ReleaseStoreTag, WriteBarrierMode mode) {
+  trusted_dispatch_table_.Release_Store(this, value, mode);
+}
+bool WasmTableObject::has_trusted_dispatch_table() const {
+  return !trusted_dispatch_table_.is_empty();
+}
+bool WasmTableObject::has_trusted_dispatch_table_unpublished(
+    IsolateForSandbox isolate) const {
+  return TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      Tagged<HeapObject>(this), kTrustedDispatchTableOffset,
+      kWasmDispatchTableIndirectPointerTag, isolate);
+}
+void WasmTableObject::clear_trusted_dispatch_table() {
+  trusted_dispatch_table_.clear(this);
+}
+
+// WasmResumeData
+Tagged<WasmSuspenderObject> WasmResumeData::trusted_suspender(
+    IsolateForSandbox isolate) const {
+  return trusted_suspender_.load(isolate);
+}
+Tagged<WasmSuspenderObject> WasmResumeData::trusted_suspender(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_suspender_.Acquire_Load(isolate);
+}
+void WasmResumeData::set_trusted_suspender(Tagged<WasmSuspenderObject> value,
+                                           WriteBarrierMode mode) {
+  trusted_suspender_.store(this, value, mode);
+}
+void WasmResumeData::set_trusted_suspender(Tagged<WasmSuspenderObject> value,
+                                           ReleaseStoreTag,
+                                           WriteBarrierMode mode) {
+  trusted_suspender_.Release_Store(this, value, mode);
+}
+bool WasmResumeData::has_trusted_suspender() const {
+  return !trusted_suspender_.is_empty();
+}
+void WasmResumeData::clear_trusted_suspender() {
+  trusted_suspender_.clear(this);
+}
+
+int WasmResumeData::on_resume() const { return on_resume_.load().value(); }
+void WasmResumeData::set_on_resume(int value) {
+  on_resume_.store(this, Smi::FromInt(value));
+}
 
 PROTECTED_POINTER_ACCESSORS(WasmSuspenderObject, parent, WasmSuspenderObject,
                             kParentOffset)
@@ -668,7 +993,7 @@ int WasmStruct::GcSafeSize(Tagged<Map> map) {
 
 Address WasmStruct::RawFieldAddress(int raw_offset) {
   int offset = WasmStruct::kHeaderSize + raw_offset;
-  return FIELD_ADDR(*this, offset);
+  return FIELD_ADDR(Tagged<WasmStruct>(this), offset);
 }
 
 ObjectSlot WasmStruct::RawField(int raw_offset) {
@@ -678,12 +1003,25 @@ ObjectSlot WasmStruct::RawField(int raw_offset) {
 void WasmStruct::SetTaggedFieldValue(int raw_offset, Tagged<Object> value,
                                      WriteBarrierMode mode) {
   int offset = WasmStruct::kHeaderSize + raw_offset;
-  TaggedField<Object>::store(*this, offset, value);
-  CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);
+  TaggedField<Object>::store(Tagged<WasmStruct>(this), offset, value);
+  CONDITIONAL_WRITE_BARRIER(Tagged<HeapObject>(this), offset, value, mode);
 }
 
-ACCESSORS_CHECKED(WasmStruct, described_rtt, Tagged<Map>, kHeaderSize,
-                  GcSafeType(map())->is_descriptor())
+Tagged<Map> WasmStruct::described_rtt() const {
+  Tagged<Map> value = TaggedField<Map, kHeaderSize>::load(
+      GetPtrComprCageBase(Tagged<WasmStruct>(this)), Tagged<WasmStruct>(this));
+  DCHECK(GcSafeType(map())->is_descriptor());
+  return value;
+}
+
+void WasmStruct::set_described_rtt(Tagged<Map> value, WriteBarrierMode mode) {
+  DCHECK(GcSafeType(map())->is_descriptor());
+  TaggedField<Map, kHeaderSize>::store(Tagged<WasmStruct>(this), value);
+  CONDITIONAL_WRITE_BARRIER(Tagged<HeapObject>(this), kHeaderSize, value, mode);
+}
+
+uint32_t WasmArray::length() const { return length_; }
+void WasmArray::set_length(uint32_t value) { length_ = value; }
 
 const wasm::CanonicalValueType WasmArray::GcSafeElementType(Tagged<Map> map) {
   DCHECK_EQ(WASM_ARRAY_TYPE, map->instance_type());
@@ -757,9 +1095,45 @@ EXTERNAL_POINTER_ACCESSORS(WasmSuspenderObject, stack, wasm::StackMemory*,
 EXTERNAL_POINTER_ACCESSORS(WasmStackObject, stack, wasm::StackMemory*,
                            kStackOffset, kWasmStackMemoryTag)
 
-TRUSTED_POINTER_ACCESSORS(WasmTagObject, trusted_data, WasmTrustedInstanceData,
-                          kTrustedDataOffset,
-                          kWasmTrustedInstanceDataIndirectPointerTag)
+// WasmTagObject
+Tagged<HeapObject> WasmTagObject::tag() const { return tag_.load(); }
+void WasmTagObject::set_tag(Tagged<HeapObject> value, WriteBarrierMode mode) {
+  tag_.store(this, value, mode);
+}
+
+int WasmTagObject::canonical_type_index() const {
+  return canonical_type_index_.load().value();
+}
+void WasmTagObject::set_canonical_type_index(int value) {
+  canonical_type_index_.store(this, Smi::FromInt(value));
+}
+
+Tagged<WasmTrustedInstanceData> WasmTagObject::trusted_data(
+    IsolateForSandbox isolate) const {
+  return trusted_data_.load(isolate);
+}
+Tagged<WasmTrustedInstanceData> WasmTagObject::trusted_data(
+    IsolateForSandbox isolate, AcquireLoadTag) const {
+  return trusted_data_.Acquire_Load(isolate);
+}
+void WasmTagObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                     WriteBarrierMode mode) {
+  trusted_data_.store(this, value, mode);
+}
+void WasmTagObject::set_trusted_data(Tagged<WasmTrustedInstanceData> value,
+                                     ReleaseStoreTag, WriteBarrierMode mode) {
+  trusted_data_.Release_Store(this, value, mode);
+}
+bool WasmTagObject::has_trusted_data() const {
+  return !trusted_data_.is_empty();
+}
+bool WasmTagObject::has_trusted_data_unpublished(
+    IsolateForSandbox isolate) const {
+  return TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      Tagged<HeapObject>(this), kTrustedDataOffset,
+      kWasmTrustedInstanceDataIndirectPointerTag, isolate);
+}
+void WasmTagObject::clear_trusted_data() { trusted_data_.clear(this); }
 
 int WasmExceptionTag::index() const { return index_.load().value(); }
 void WasmExceptionTag::set_index(int value) {
@@ -780,6 +1154,14 @@ Tagged<HeapNumber> AsmWasmData::uses_bitset() const {
 void AsmWasmData::set_uses_bitset(Tagged<HeapNumber> value,
                                   WriteBarrierMode mode) {
   uses_bitset_.store(this, value, mode);
+}
+
+Tagged<JSReceiver> WasmSuspendingObject::callable() const {
+  return callable_.load();
+}
+void WasmSuspendingObject::set_callable(Tagged<JSReceiver> value,
+                                        WriteBarrierMode mode) {
+  callable_.store(this, value, mode);
 }
 
 #include "src/objects/object-macros-undef.h"

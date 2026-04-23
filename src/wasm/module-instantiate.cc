@@ -2686,7 +2686,7 @@ V8_INLINE void SetFunctionTablePlaceholder(
   const WasmFunction* function = &module->functions[func_index];
   Tagged<WasmFuncRef> func_ref;
   if (trusted_instance_data->try_get_func_ref(func_index, &func_ref)) {
-    table_object->entries()->set(entry_index, *func_ref);
+    table_object->entries()->set(entry_index, func_ref);
   } else {
     WasmTableObject::SetFunctionTablePlaceholder(
         isolate, table_object, entry_index, trusted_instance_data, func_index);

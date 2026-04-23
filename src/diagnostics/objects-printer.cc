@@ -1499,6 +1499,58 @@ void DictionaryTemplateInfo::DictionaryTemplateInfoPrint(std::ostream& os) {
 
 #undef AS_PTR
 
+#if V8_ENABLE_WEBASSEMBLY
+void WasmTableObject::WasmTableObjectPrint(std::ostream& os) {
+  JSObjectPrintHeader(os, *this, "WasmTableObject");
+  os << "\n - entries: " << Brief(entries());
+  os << "\n - current_length: " << current_length();
+  os << "\n - maximum_length: " << Brief(maximum_length());
+  os << "\n - raw_type: " << raw_type();
+  IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
+  if (has_trusted_dispatch_table()) {
+    os << "\n - trusted_dispatch_table: "
+       << Brief(trusted_dispatch_table(isolate));
+  }
+  if (has_trusted_data()) {
+    os << "\n - trusted_data: " << Brief(trusted_data(isolate));
+  }
+  os << "\n - address_type: " << static_cast<int>(address_type());
+  JSObjectPrintBody(os, *this);
+}
+
+void WasmMemoryMapDescriptor::WasmMemoryMapDescriptorPrint(std::ostream& os) {
+  JSObjectPrintHeader(os, *this, "WasmMemoryMapDescriptor");
+  os << "\n - memory: " << Brief(memory());
+  os << "\n - file_descriptor: " << file_descriptor();
+  os << "\n - offset: " << offset();
+  os << "\n - size: " << size();
+  JSObjectPrintBody(os, *this);
+}
+
+void WasmMemoryObject::WasmMemoryObjectPrint(std::ostream& os) {
+  JSObjectPrintHeader(os, *this, "WasmMemoryObject");
+  os << "\n - array_buffer: " << Brief(array_buffer());
+  os << "\n - managed_backing_store: " << Brief(managed_backing_store());
+  os << "\n - maximum_pages: " << maximum_pages();
+  os << "\n - instances: " << Brief(instances());
+  os << "\n - address_type: " << static_cast<int>(address_type());
+  JSObjectPrintBody(os, *this);
+}
+
+void WasmTagObject::WasmTagObjectPrint(std::ostream& os) {
+  JSObjectPrintHeader(os, *this, "WasmTagObject");
+  os << "\n - tag: " << Brief(tag());
+  os << "\n - canonical_type_index: " << canonical_type_index();
+  IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
+  if (has_trusted_data()) {
+    os << "\n - trusted_data: " << Brief(trusted_data(isolate));
+  } else {
+    os << "\n - trusted_data: <empty>";
+  }
+  JSObjectPrintBody(os, *this);
+}
+#endif  // V8_ENABLE_WEBASSEMBLY
+
 void Context::PrintContextWithHeader(std::ostream& os, const char* type) {
   PrintHeader(os, type);
   os << "\n - type: " << map()->instance_type();

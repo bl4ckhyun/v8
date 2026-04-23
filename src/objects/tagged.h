@@ -784,6 +784,8 @@ class Tagged<HeapObject> : public StrongTaggedBase {
 #endif
   template <typename TFieldType, int kFieldOffset, typename CompressionScheme>
   friend class TaggedField;
+  template <typename TFieldType, typename CompressionScheme>
+  friend class TaggedMember;
   template <typename To, typename From>
   friend inline Tagged<To> UncheckedCast(Tagged<From> value);
 
@@ -844,6 +846,8 @@ class Tagged<Weak<HeapObject>> : public WeakTaggedBase {
 #endif
   template <typename TFieldType, int kFieldOffset, typename CompressionScheme>
   friend class TaggedField;
+  template <typename TFieldType, typename CompressionScheme>
+  friend class TaggedMember;
   template <typename To, typename From>
   friend inline Tagged<To> UncheckedCast(Tagged<From> value);
 

@@ -3199,7 +3199,10 @@ void WasmDispatchTableForImports::WasmDispatchTableForImportsVerify(
 }
 
 void WasmTableObject::WasmTableObjectVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::WasmTableObjectVerify(*this, isolate);
+  CHECK(IsWasmTableObject(this));
+  Object::VerifyPointer(isolate, entries());
+  CHECK(IsFixedArray(entries()));
+  Object::VerifyPointer(isolate, maximum_length());
   // If Wasm instantiation fails, trusted objects are unpublished.
   // Orphaned JS objects might still point to them though.
   if (has_trusted_dispatch_table_unpublished(isolate)) return;
@@ -3252,6 +3255,78 @@ void AsmWasmData::AsmWasmDataVerify(Isolate* isolate) {
   CHECK(IsForeign(managed_native_module_.load()));
   Object::VerifyPointer(isolate, uses_bitset_.load());
   CHECK(IsHeapNumber(uses_bitset_.load()));
+}
+
+void WasmFuncRef::WasmFuncRefVerify(Isolate* isolate) {
+  CHECK(IsWasmFuncRef(this));
+}
+
+void WasmTypeInfo::WasmTypeInfoVerify(Isolate* isolate) {
+  CHECK(IsWasmTypeInfo(this));
+  CHECK_GE(supertypes_length(), 0);
+  for (int i = 0; i < supertypes_length(); i++) {
+    Object::VerifyPointer(isolate, supertypes(i));
+  }
+}
+
+void WasmContinuationObject::WasmContinuationObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmContinuationObject(this));
+  Object::VerifyPointer(isolate, stack_obj());
+}
+
+void WasmStackObject::WasmStackObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmStackObject(this));
+}
+
+void WasmResumeData::WasmResumeDataVerify(Isolate* isolate) {
+  CHECK(IsWasmResumeData(this));
+  Object::VerifyPointer(isolate, on_resume_.load());
+  CHECK(IsSmi(on_resume_.load()));
+}
+
+void WasmSuspendingObject::WasmSuspendingObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmSuspendingObject(this));
+  Object::VerifyPointer(isolate, callable());
+}
+
+void WasmModuleObject::WasmModuleObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmModuleObject(this));
+  Object::VerifyPointer(isolate, managed_native_module());
+  Object::VerifyPointer(isolate, script());
+}
+
+void WasmInstanceObject::WasmInstanceObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmInstanceObject(this));
+  Object::VerifyPointer(isolate, module_object());
+  Object::VerifyPointer(isolate, exports_object());
+}
+
+void WasmTagObject::WasmTagObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmTagObject(this));
+  Object::VerifyPointer(isolate, tag());
+  CHECK(IsSmi(canonical_type_index_.load()));
+}
+
+void WasmStruct::WasmStructVerify(Isolate* isolate) {
+  CHECK(IsWasmStruct(this));
+}
+
+void WasmArray::WasmArrayVerify(Isolate* isolate) { CHECK(IsWasmArray(this)); }
+
+void WasmMemoryMapDescriptor::WasmMemoryMapDescriptorVerify(Isolate* isolate) {
+  CHECK(IsWasmMemoryMapDescriptor(this));
+}
+
+void WasmMemoryObject::WasmMemoryObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmMemoryObject(this));
+  Object::VerifyPointer(isolate, array_buffer());
+  Object::VerifyPointer(isolate, managed_backing_store());
+  Object::VerifyPointer(isolate, instances());
+}
+
+void WasmGlobalObject::WasmGlobalObjectVerify(Isolate* isolate) {
+  CHECK(IsWasmGlobalObject(this));
+  Object::VerifyPointer(isolate, buffer());
 }
 
 #endif  // V8_ENABLE_WEBASSEMBLY

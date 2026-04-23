@@ -26,7 +26,7 @@ class RegExpData;
 class RegExpData;
 
 // Regular expressions
-class JSRegExp : public TorqueGeneratedJSRegExp<JSRegExp, JSObject> {
+V8_OBJECT class JSRegExp : public JSObjectLayout {
  public:
   DEFINE_TORQUE_GENERATED_JS_REG_EXP_FLAGS()
 
@@ -49,6 +49,8 @@ class JSRegExp : public TorqueGeneratedJSRegExp<JSRegExp, JSObject> {
   // https://tc39.es/ecma262/#sec-escaperegexppattern.
   inline Tagged<String> source(IsolateForSandbox isolate) const;
   inline Flags flags() const;
+  inline void set_flags(Tagged<Object> value,
+                        WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   DECL_TRUSTED_POINTER_ACCESSORS(data, RegExpData)
 
@@ -107,15 +109,15 @@ class JSRegExp : public TorqueGeneratedJSRegExp<JSRegExp, JSObject> {
 
   /* This is already an in-object field. */
   // TODO(v8:8944): improve handling of in-object fields
-  static constexpr int kLastIndexOffset = kHeaderSize;
+  static const int kLastIndexOffset;
   static constexpr int kInObjectFieldCount = 1;
 
   // The initial value of the last_index field on a new JSRegExp instance.
   static constexpr int kInitialLastIndexValue = 0;
 
   // The actual object size including in-object fields.
-  static constexpr int kSize = kHeaderSize + kInObjectFieldCount * kTaggedSize;
-  static constexpr int Size() { return kSize; }
+  static const int kSize;
+  static int Size() { return kSize; }
 
   // Descriptor array index to important methods in the prototype.
   static constexpr int kExecFunctionDescriptorIndex = 1;
@@ -143,11 +145,26 @@ class JSRegExp : public TorqueGeneratedJSRegExp<JSRegExp, JSObject> {
 
   class BodyDescriptor;
 
+  // Back-compat offset / size constants.
+  static const int kDataOffset;
+  static const int kFlagsOffset;
+  static const int kHeaderSize;
+
  private:
   friend class RegExpData;
+  friend class TorqueGeneratedJSRegExpAsserts;
 
-  TQ_OBJECT_CONSTRUCTORS(JSRegExp)
-};
+ public:
+  TrustedPointerMember<RegExpData, kRegExpDataIndirectPointerTag> data_;
+  TaggedMember<Object> flags_;
+} V8_OBJECT_END;
+
+inline constexpr int JSRegExp::kDataOffset = offsetof(JSRegExp, data_);
+inline constexpr int JSRegExp::kFlagsOffset = offsetof(JSRegExp, flags_);
+inline constexpr int JSRegExp::kHeaderSize = sizeof(JSRegExp);
+inline constexpr int JSRegExp::kLastIndexOffset = kHeaderSize;
+inline constexpr int JSRegExp::kSize =
+    kHeaderSize + kInObjectFieldCount * kTaggedSize;
 
 DEFINE_OPERATORS_FOR_FLAGS(JSRegExp::Flags)
 

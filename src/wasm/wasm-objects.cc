@@ -919,7 +919,7 @@ void WasmMemoryObject::UpdateInstances(Isolate* isolate) {
     Tagged<FixedArray> memory_objects = trusted_data->memory_objects();
     uint32_t num_memories = memory_objects->ulength().value();
     for (uint32_t mem_idx = 0; mem_idx < num_memories; ++mem_idx) {
-      if (memory_objects->get(mem_idx) == *this) {
+      if (memory_objects->get(mem_idx) == Tagged<WasmMemoryObject>(this)) {
         SetInstanceMemory(trusted_data, array_buffer(),
                           backing_store().as_shared_ptr(), mem_idx);
       }
@@ -2135,7 +2135,7 @@ wasm::WasmValue WasmStruct::GetFieldValue(uint32_t index) {
           map()->wasm_type_info()->type_index());
   wasm::CanonicalValueType field_type = type->field(index);
   int field_offset = WasmStruct::kHeaderSize + type->field_offset(index);
-  Address field_address = GetFieldAddress(field_offset);
+  Address field_address = this->field_address(field_offset);
   switch (field_type.kind()) {
 #define CASE_TYPE(valuetype, ctype) \
   case wasm::valuetype:             \
@@ -2166,7 +2166,7 @@ wasm::WasmValue WasmArray::GetElement(uint32_t index) {
       map()->wasm_type_info()->element_type();
   int element_offset =
       WasmArray::kHeaderSize + index * element_type.value_kind_size();
-  Address element_address = GetFieldAddress(element_offset);
+  Address element_address = this->field_address(element_offset);
   switch (element_type.kind()) {
 #define CASE_TYPE(value_type, ctype) \
   case wasm::value_type:             \
@@ -2195,8 +2195,10 @@ wasm::WasmValue WasmArray::GetElement(uint32_t index) {
 void WasmArray::SetTaggedElement(uint32_t index, DirectHandle<Object> value,
                                  WriteBarrierMode mode) {
   DCHECK(map()->wasm_type_info()->element_type().is_ref());
-  TaggedField<Object>::store(*this, element_offset(index), *value);
-  CONDITIONAL_WRITE_BARRIER(*this, element_offset(index), *value, mode);
+  TaggedField<Object>::store(Tagged<WasmArray>(this), element_offset(index),
+                             *value);
+  CONDITIONAL_WRITE_BARRIER(Tagged<HeapObject>(this), element_offset(index),
+                            *value, mode);
 }
 
 // static

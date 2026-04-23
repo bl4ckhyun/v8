@@ -59,6 +59,9 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // threading Cast<JSReceiver>(...) through every callsite during migration.
   inline void set_raw_properties_or_hash(
       Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline void set_raw_properties_or_hash(
+      Tagged<Object> value, RelaxedStoreTag tag,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void SetProperties(Tagged<HeapObject> properties);
   inline bool HasFastProperties() const;
   DECL_GETTER(property_dictionary, Tagged<NameDictionary>)
@@ -428,6 +431,9 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   // StructLayout::StructVerify is the precedent for the verifier form.
   DECL_VERIFIER(JSObject)
   inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
+  inline Tagged<Object> InObjectPropertyPutAtOffset(
+      int offset, Tagged<Object> value,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline int GetEmbedderFieldCount() const;
   inline Tagged<PropertyArray> property_array() const;
   inline Tagged<FixedArrayBase> elements() const;

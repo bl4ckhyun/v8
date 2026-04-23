@@ -56,6 +56,7 @@ extern class RegExpDataWrapper extends Struct {
   data: TrustedPointer<RegExpData>;
 }
 
+@cppObjectLayoutDefinition
 extern class JSRegExp extends JSObject {
   data: TrustedPointer<RegExpData>;
   flags: SmiTagged<JSRegExpFlags>|Undefined;
