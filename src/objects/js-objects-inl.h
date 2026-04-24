@@ -44,26 +44,24 @@ namespace v8::internal {
 
 #include "torque-generated/src/objects/js-objects-tq-inl.inc"
 
-DEF_GETTER(JSObject, elements, Tagged<FixedArrayBase>) {
-  return TaggedField<FixedArrayBase, kElementsOffset>::load(cage_base, *this);
+Tagged<FixedArrayBase> JSObject::elements() const { return elements_.load(); }
+
+Tagged<FixedArrayBase> JSObject::elements(PtrComprCageBase) const {
+  return elements();
 }
 
-Tagged<FixedArrayBase> JSObject::elements(RelaxedLoadTag tag) const {
-  PtrComprCageBase cage_base = GetPtrComprCageBase(*this);
-  return elements(cage_base, tag);
+Tagged<FixedArrayBase> JSObject::elements(RelaxedLoadTag) const {
+  return elements_.Relaxed_Load();
 }
 
-Tagged<FixedArrayBase> JSObject::elements(PtrComprCageBase cage_base,
-                                          RelaxedLoadTag) const {
-  return TaggedField<FixedArrayBase, kElementsOffset>::Relaxed_Load(cage_base,
-                                                                    *this);
+Tagged<FixedArrayBase> JSObject::elements(PtrComprCageBase,
+                                          RelaxedLoadTag tag) const {
+  return elements(tag);
 }
 
 void JSObject::set_elements(Tagged<FixedArrayBase> value,
                             WriteBarrierMode mode) {
-  // Note the relaxed atomic store.
-  TaggedField<FixedArrayBase, kElementsOffset>::Relaxed_Store(*this, value);
-  CONDITIONAL_WRITE_BARRIER(*this, kElementsOffset, value, mode);
+  elements_.Relaxed_Store(this, value, mode);
 }
 
 MaybeHandle<Object> JSReceiver::GetProperty(Isolate* isolate,
@@ -590,104 +588,20 @@ Tagged<Object> JSObject::InObjectPropertyAtOffset(int offset) {
   return TaggedField<Object>::load(*this, offset);
 }
 
-Tagged<Object> JSObjectLayout::InObjectPropertyAtOffset(int offset) const {
-  return Cast<JSObject>(this)->InObjectPropertyAtOffset(offset);
-}
-
-Tagged<Object> JSObjectLayout::InObjectPropertyPutAtOffset(
-    int offset, Tagged<Object> value, WriteBarrierMode mode) {
-  return Cast<JSObject>(this)->InObjectPropertyPutAtOffset(offset, value, mode);
-}
-
-int JSObjectLayout::GetEmbedderFieldCount() const {
-  return Cast<JSObject>(this)->GetEmbedderFieldCount();
-}
-
-Tagged<InterceptorInfo> JSObjectLayout::GetNamedInterceptor() const {
-  return Cast<JSObject>(this)->GetNamedInterceptor();
-}
-
-Tagged<PropertyArray> JSObjectLayout::property_array() const {
-  return Cast<JSObject>(this)->property_array();
-}
-
-Tagged<FixedArrayBase> JSObjectLayout::elements() const {
-  return elements_.load();
-}
-
-Tagged<FixedArrayBase> JSObjectLayout::elements(RelaxedLoadTag) const {
-  return elements_.Relaxed_Load();
-}
-
-void JSObjectLayout::set_elements(Tagged<FixedArrayBase> value,
-                                  WriteBarrierMode mode) {
-  elements_.store(this, value, mode);
-}
-
-void JSObjectLayout::initialize_elements() {
-  Cast<JSObject>(this)->initialize_elements();
-}
-
-ElementsKind JSObjectLayout::GetElementsKind() const {
-  return Cast<JSObject>(this)->GetElementsKind();
-}
-
-bool JSObjectLayout::HasObjectElements() const {
-  return Cast<JSObject>(this)->HasObjectElements();
-}
-
-bool JSObjectLayout::HasFastElements() const {
-  return Cast<JSObject>(this)->HasFastElements();
-}
-
-bool JSObjectLayout::HasHoleyElements() const {
-  return Cast<JSObject>(this)->HasHoleyElements();
-}
-
-bool JSObjectLayout::HasSmiOrObjectElements() const {
-  return Cast<JSObject>(this)->HasSmiOrObjectElements();
-}
-
-bool JSObjectLayout::HasDictionaryElements() const {
-  return Cast<JSObject>(this)->HasDictionaryElements();
-}
-
-void JSObjectLayout::RequireSlowElements(Tagged<NumberDictionary> dictionary) {
-  Cast<JSObject>(this)->RequireSlowElements(dictionary);
-}
-
-void JSObjectLayout::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
-                                       WriteBarrierMode mode) {
-  Cast<JSObject>(this)->FastPropertyAtPut(index, value, mode);
-}
-
-void JSObjectLayout::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
-                                       SeqCstAccessTag tag) {
-  Cast<JSObject>(this)->FastPropertyAtPut(index, value, tag);
-}
-
-Tagged<JSAny> JSObjectLayout::RawFastPropertyAt(FieldIndex index) const {
-  return Cast<JSObject>(this)->RawFastPropertyAt(index);
-}
-
-ElementsAccessor* JSObjectLayout::GetElementsAccessor() const {
-  return Cast<JSObject>(this)->GetElementsAccessor();
-}
-
-Tagged<NumberDictionary> JSObjectLayout::element_dictionary() const {
-  return Cast<JSObject>(this)->element_dictionary();
-}
-
-void JSObjectLayout::SetEmbedderField(int index, Tagged<Object> value) {
-  Cast<JSObject>(this)->SetEmbedderField(index, value);
-}
-
-void JSObjectLayout::SetEmbedderField(int index, Tagged<Smi> value) {
-  Cast<JSObject>(this)->SetEmbedderField(index, value);
-}
-
 Tagged<Object> JSReceiverLayout::raw_properties_or_hash() const {
   return Cast<JSReceiver>(this)->raw_properties_or_hash();
+}
+Tagged<Object> JSReceiverLayout::raw_properties_or_hash(
+    PtrComprCageBase cage_base) const {
+  return Cast<JSReceiver>(this)->raw_properties_or_hash(cage_base);
+}
+Tagged<Object> JSReceiverLayout::raw_properties_or_hash(
+    RelaxedLoadTag tag) const {
+  return Cast<JSReceiver>(this)->raw_properties_or_hash(tag);
+}
+Tagged<Object> JSReceiverLayout::raw_properties_or_hash(
+    PtrComprCageBase cage_base, RelaxedLoadTag tag) const {
+  return Cast<JSReceiver>(this)->raw_properties_or_hash(cage_base, tag);
 }
 
 void JSReceiverLayout::set_raw_properties_or_hash(Tagged<Object> value,
@@ -732,9 +646,23 @@ Maybe<bool> JSReceiverLayout::GetOwnPropertyDescriptor(
 bool JSReceiverLayout::HasFastProperties() const {
   return Cast<JSReceiver>(this)->HasFastProperties();
 }
+bool JSReceiverLayout::HasFastProperties(PtrComprCageBase cage_base) const {
+  return Cast<JSReceiver>(this)->HasFastProperties(cage_base);
+}
 
+Tagged<Object> JSReceiverLayout::GetIdentityHash() {
+  return Cast<JSReceiver>(this)->GetIdentityHash();
+}
 Tagged<Smi> JSReceiverLayout::GetOrCreateIdentityHash(Isolate* isolate) {
   return Cast<JSReceiver>(this)->GetOrCreateIdentityHash(isolate);
+}
+
+Tagged<PropertyArray> JSReceiverLayout::property_array() const {
+  return Cast<JSReceiver>(this)->property_array();
+}
+Tagged<PropertyArray> JSReceiverLayout::property_array(
+    PtrComprCageBase cage_base) const {
+  return Cast<JSReceiver>(this)->property_array(cage_base);
 }
 
 Tagged<NameDictionary> JSReceiverLayout::property_dictionary() const {

@@ -21,7 +21,7 @@ class StructBodyDescriptor;
 #include "torque-generated/src/objects/arguments-tq.inc"
 
 // Superclass for all objects with instance type {JS_ARGUMENTS_OBJECT_TYPE}
-V8_OBJECT class JSArgumentsObject : public JSObjectLayout {
+V8_OBJECT class JSArgumentsObject : public JSObject {
  public:
   DECL_VERIFIER(JSArgumentsObject)
   DECL_PRINTER(JSArgumentsObject)

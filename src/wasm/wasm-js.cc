@@ -945,7 +945,7 @@ bool TransferPrototype(i::Isolate* isolate,
                        i::DirectHandle<i::JSObject> destination,
                        i::DirectHandle<i::JSReceiver> source) {
   i::MaybeDirectHandle<i::HeapObject> maybe_prototype =
-      i::JSObject::GetPrototype(isolate, source);
+      i::JSReceiver::GetPrototype(isolate, source);
   i::DirectHandle<i::HeapObject> prototype;
   if (maybe_prototype.ToHandle(&prototype)) {
     Maybe<bool> result =

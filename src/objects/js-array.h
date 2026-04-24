@@ -22,7 +22,7 @@ namespace internal {
 //    - fast, backing storage is a FixedArray and length <= elements.length();
 //       Please note: push and pop can be used to grow and shrink the array.
 //    - slow, backing storage is a HashTable with numbers as keys.
-V8_OBJECT class JSArray : public JSObjectLayout {
+V8_OBJECT class JSArray : public JSObject {
  public:
   // [length]: The length property.
   inline Tagged<Number> length() const;
@@ -172,7 +172,7 @@ inline constexpr int JSArray::kInitialMaxFastElementArray =
 
 // The JSArrayIterator describes JavaScript Array Iterators Objects, as
 // defined in https://tc39.es/ecma262/#sec-array-iterator-objects.
-V8_OBJECT class JSArrayIterator : public JSObjectLayout {
+V8_OBJECT class JSArrayIterator : public JSObject {
  public:
   inline Tagged<JSReceiver> iterated_object() const;
   inline void set_iterated_object(Tagged<JSReceiver> value,

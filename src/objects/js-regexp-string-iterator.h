@@ -16,7 +16,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-regexp-string-iterator-tq.inc"
 
-V8_OBJECT class JSRegExpStringIterator : public JSObjectLayout {
+V8_OBJECT class JSRegExpStringIterator : public JSObject {
  public:
   inline Tagged<JSReceiver> iterating_reg_exp() const;
   inline void set_iterating_reg_exp(

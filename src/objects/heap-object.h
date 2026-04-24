@@ -233,6 +233,20 @@ V8_OBJECT class HeapObjectLayout {
   void PrintHeader(std::ostream& os, const char* id);
 #endif
 
+  // Delegating trampolines into the legacy HeapObject class for rehashing
+  // support. Let HeapObjectLayout subclasses call these without threading
+  // Cast<HeapObject>(this) through every caller during the V8_OBJECT
+  // migration.
+  // TODO(jgruber): Remove once HeapObject is collapsed into HeapObjectLayout.
+  inline bool NeedsRehashing(InstanceType instance_type) const;
+  inline bool NeedsRehashing(PtrComprCageBase cage_base) const;
+  inline bool CanBeRehashed(PtrComprCageBase cage_base) const;
+  template <typename IsolateT>
+  inline void RehashBasedOnMap(IsolateT* isolate);
+#ifdef VERIFY_HEAP
+  inline void HeapObjectVerify(Isolate* isolate);
+#endif
+
  private:
   friend class HeapObject;
   friend class Heap;

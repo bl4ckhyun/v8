@@ -56,7 +56,7 @@ TEST_PAIR(TestWrongTypeInNormalField) {
   // JSObject should cause a failure.
   TaggedField<Object>::store(*o, JSObject::kElementsOffset, *o);
   if (should_fail) {
-    TorqueGeneratedClassVerifiers::JSObjectVerify(*o, i_isolate);
+    o->JSObjectVerify(i_isolate);
   }
 
   // Put back the original value in case verifiers run on test shutdown.

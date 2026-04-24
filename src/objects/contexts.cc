@@ -166,7 +166,7 @@ Tagged<JSObject> Context::extension_object() const {
   DCHECK(IsNativeContext(this) || IsFunctionContext() || IsBlockContext() ||
          IsEvalContext() || IsCatchContext());
   Tagged<HeapObject> object = extension();
-  if (IsUndefined(object)) return JSObject();
+  if (IsUndefined(object)) return {};
   DCHECK(IsJSContextExtensionObject(object) ||
          (IsNativeContext(this) && IsJSGlobalObject(object)));
   return Cast<JSObject>(object);

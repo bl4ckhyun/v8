@@ -31,7 +31,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-list-format-tq.inc"
 
-V8_OBJECT class JSListFormat : public JSObjectLayout {
+V8_OBJECT class JSListFormat : public JSObject {
  public:
   // Creates relative time format object with properties derived from input
   // locales and options.

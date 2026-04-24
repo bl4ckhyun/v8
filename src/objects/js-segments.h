@@ -30,7 +30,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-segments-tq.inc"
 
-V8_OBJECT class JSSegments : public JSObjectLayout {
+V8_OBJECT class JSSegments : public JSObject {
  public:
   // https://tc39.es/ecma402/#sec-createsegmentsobject
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSSegments> Create(

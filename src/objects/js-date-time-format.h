@@ -33,7 +33,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-date-time-format-tq.inc"
 
-V8_OBJECT class JSDateTimeFormat : public JSObjectLayout {
+V8_OBJECT class JSDateTimeFormat : public JSObject {
  public:
   // ecma-402/#sec-todatetimeoptions
   enum class RequiredOption { kDate, kTime, kAny };

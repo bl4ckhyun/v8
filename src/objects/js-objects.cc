@@ -2916,14 +2916,14 @@ void JSObject::SetNormalizedElement(DirectHandle<JSObject> object,
 void JSObject::JSObjectShortPrint(StringStream* accumulator) {
   switch (map()->instance_type()) {
     case JS_ARRAY_TYPE: {
-      double length = IsUndefined(Cast<JSArray>(*this)->length())
+      double length = IsUndefined(Cast<JSArray>(this)->length())
                           ? 0
-                          : Object::NumberValue(Cast<JSArray>(*this)->length());
+                          : Object::NumberValue(Cast<JSArray>(this)->length());
       accumulator->Add("<JSArray[%u]>", static_cast<uint32_t>(length));
       break;
     }
     case JS_BOUND_FUNCTION_TYPE: {
-      Tagged<JSBoundFunction> bound_function = Cast<JSBoundFunction>(*this);
+      Tagged<JSBoundFunction> bound_function = Cast<JSBoundFunction>(this);
       accumulator->Add("<JSBoundFunction");
       accumulator->Add(" (BoundTargetFunction %p)>",
                        reinterpret_cast<void*>(
@@ -2941,7 +2941,7 @@ void JSObject::JSObjectShortPrint(StringStream* accumulator) {
     case JS_REG_EXP_TYPE: {
       Isolate* isolate = Isolate::Current();
       accumulator->Add("<JSRegExp");
-      Tagged<JSRegExp> regexp = Cast<JSRegExp>(*this);
+      Tagged<JSRegExp> regexp = Cast<JSRegExp>(this);
       accumulator->Add(" ");
       Cast<String>(regexp->source(isolate))->StringShortPrint(accumulator);
       accumulator->Add(">");
@@ -2958,7 +2958,7 @@ void JSObject::JSObjectShortPrint(StringStream* accumulator) {
     case JS_CLASS_CONSTRUCTOR_TYPE:
     case JS_FUNCTION_WITHOUT_PROTOTYPE_TYPE:
     case JS_FUNCTION_TYPE: {
-      Tagged<JSFunction> function = Cast<JSFunction>(*this);
+      Tagged<JSFunction> function = Cast<JSFunction>(this);
       std::unique_ptr<char[]> fun_name = function->shared()->DebugNameCStr();
       if (fun_name[0] != '\0') {
         accumulator->Add("<JSFunction ");
@@ -3051,7 +3051,7 @@ void JSObject::JSObjectShortPrint(StringStream* accumulator) {
       }
       if (IsJSPrimitiveWrapper(*this)) {
         accumulator->Add(" value = ");
-        ShortPrint(Cast<JSPrimitiveWrapper>(*this)->value(), accumulator);
+        ShortPrint(Cast<JSPrimitiveWrapper>(this)->value(), accumulator);
       }
       accumulator->Put('>');
       break;
@@ -4460,7 +4460,7 @@ MaybeDirectHandle<Object> JSObject::ReadFromOptionsBag(
     Isolate* isolate) {
   if (IsJSReceiver(*options)) {
     DirectHandle<JSReceiver> js_options = Cast<JSReceiver>(options);
-    return JSObject::GetProperty(isolate, js_options, option_name);
+    return JSReceiver::GetProperty(isolate, js_options, option_name);
   }
   return MaybeDirectHandle<Object>(isolate->factory()->undefined_value());
 }
@@ -4979,7 +4979,7 @@ Tagged<Object> JSObject::SlowReverseLookup(Tagged<Object> value) {
     }
     return GetReadOnlyRoots().undefined_value();
   } else if (IsJSGlobalObject(*this)) {
-    return Cast<JSGlobalObject>(*this)
+    return Cast<JSGlobalObject>(this)
         ->global_dictionary(kAcquireLoad)
         ->SlowReverseLookup(value);
   } else if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
@@ -5729,7 +5729,7 @@ uint32_t JSObject::GetFastElementsUsage() {
     case PACKED_SEALED_ELEMENTS:
     case PACKED_NONEXTENSIBLE_ELEMENTS:
     case SHARED_ARRAY_ELEMENTS:
-      return IsJSArray(*this) ? Smi::ToUInt(Cast<JSArray>(*this)->length())
+      return IsJSArray(*this) ? Smi::ToUInt(Cast<JSArray>(this)->length())
                               : store->ulength().value();
     case FAST_SLOPPY_ARGUMENTS_ELEMENTS:
       store = Cast<SloppyArgumentsElements>(store)->arguments();

@@ -613,7 +613,7 @@ MaybeHandle<JSObject> ErrorUtils::Construct(
     if (IsJSReceiver(*options)) {
       DirectHandle<JSReceiver> js_options = Cast<JSReceiver>(options);
       Maybe<bool> has_cause =
-          JSObject::HasProperty(isolate, js_options, cause_string);
+          JSReceiver::HasProperty(isolate, js_options, cause_string);
       if (has_cause.IsNothing()) {
         DCHECK((isolate)->has_exception());
         return MaybeHandle<JSObject>();
@@ -622,7 +622,7 @@ MaybeHandle<JSObject> ErrorUtils::Construct(
         DirectHandle<Object> cause;
         ASSIGN_RETURN_ON_EXCEPTION(
             isolate, cause,
-            JSObject::GetProperty(isolate, js_options, cause_string));
+            JSReceiver::GetProperty(isolate, js_options, cause_string));
         RETURN_ON_EXCEPTION(isolate, JSObject::SetOwnPropertyIgnoreAttributes(
                                          err, cause_string, cause, DONT_ENUM));
       }
@@ -649,7 +649,7 @@ MaybeHandle<String> GetStringPropertyOrDefault(Isolate* isolate,
                                                Handle<String> default_str) {
   Handle<Object> obj;
   ASSIGN_RETURN_ON_EXCEPTION(isolate, obj,
-                             JSObject::GetProperty(isolate, recv, key));
+                             JSReceiver::GetProperty(isolate, recv, key));
 
   Handle<String> str;
   if (IsUndefined(*obj, isolate)) {

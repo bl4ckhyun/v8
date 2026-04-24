@@ -1618,6 +1618,29 @@ void HeapObjectLayout::VerifySmiField(int offset) {
 
 #endif
 
+bool HeapObjectLayout::NeedsRehashing(InstanceType instance_type) const {
+  return Cast<HeapObject>(this)->NeedsRehashing(instance_type);
+}
+
+bool HeapObjectLayout::NeedsRehashing(PtrComprCageBase cage_base) const {
+  return Cast<HeapObject>(this)->NeedsRehashing(cage_base);
+}
+
+bool HeapObjectLayout::CanBeRehashed(PtrComprCageBase cage_base) const {
+  return Cast<HeapObject>(this)->CanBeRehashed(cage_base);
+}
+
+template <typename IsolateT>
+void HeapObjectLayout::RehashBasedOnMap(IsolateT* isolate) {
+  Cast<HeapObject>(this)->RehashBasedOnMap(isolate);
+}
+
+#ifdef VERIFY_HEAP
+void HeapObjectLayout::HeapObjectVerify(Isolate* isolate) {
+  Cast<HeapObject>(this)->HeapObjectVerify(isolate);
+}
+#endif
+
 // static
 bool JSArray::MayHaveReadOnlyLength(Tagged<Map> js_array_map) {
   DCHECK(IsJSArrayMap(js_array_map));

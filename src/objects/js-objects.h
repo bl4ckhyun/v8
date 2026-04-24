@@ -58,17 +58,16 @@ V8_OBJECT class JSReceiverLayout : public HeapObjectLayout {
   // Delegate trampolines into the legacy JSReceiver class. These let ported
   // subclasses and their callers keep using method-call syntax without
   // threading Cast<JSReceiver>(...) through every callsite during migration.
-  inline Tagged<Object> raw_properties_or_hash() const;
-  inline void set_raw_properties_or_hash(
-      Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-  inline void set_raw_properties_or_hash(
-      Tagged<Object> value, RelaxedStoreTag tag,
-      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  // TODO(jgruber): Remove once JSReceiver is collapsed into JSReceiverLayout.
+  DECL_ACCESSORS(raw_properties_or_hash, Tagged<Object>)
+  DECL_RELAXED_ACCESSORS(raw_properties_or_hash, Tagged<Object>)
   inline void SetProperties(Tagged<HeapObject> properties);
-  inline bool HasFastProperties() const;
+  DECL_GETTER(HasFastProperties, bool)
+  DECL_GETTER(property_array, Tagged<PropertyArray>)
   DECL_GETTER(property_dictionary, Tagged<NameDictionary>)
   DECL_GETTER(property_dictionary_swiss, Tagged<SwissNameDictionary>)
   inline void initialize_properties(Isolate* isolate);
+  inline Tagged<Object> GetIdentityHash();
   inline Tagged<Smi> GetOrCreateIdentityHash(Isolate* isolate);
   inline std::optional<Tagged<NativeContext>> GetCreationContext() const;
   inline MaybeDirectHandle<NativeContext> GetCreationContext(
@@ -419,136 +418,72 @@ class JSReceiver : public TorqueGeneratedJSReceiver<JSReceiver, HeapObject> {
   TQ_OBJECT_CONSTRUCTORS(JSReceiver)
 };
 
-// Temporary mirror of JSObject for subclasses with the new layout. Adds the
-// single `elements` field on top of JSReceiverLayout. Byte-compatible with
-// the legacy JSObject. Will be renamed to JSObject at the final collapse.
-V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
- public:
-  static const int kElementsOffset;
-  static const int kHeaderSize;
-
-  // Delegate trampolines into the legacy JSObject class. These let ported
-  // subclasses (and their callers) keep using method-call syntax --
-  // `foo_layout->InObjectPropertyAtOffset(...)` etc. -- without threading
-  // `Cast<JSObject>(...)` through every callsite during the migration.
-  // StructLayout::StructVerify is the precedent for the verifier form.
-  DECL_VERIFIER(JSObject)
-  DECL_PRINTER(JSObject)
-  inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
-  inline Tagged<Object> InObjectPropertyPutAtOffset(
-      int offset, Tagged<Object> value,
-      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-  inline int GetEmbedderFieldCount() const;
-  inline Tagged<InterceptorInfo> GetNamedInterceptor() const;
-  inline Tagged<PropertyArray> property_array() const;
-  inline Tagged<FixedArrayBase> elements() const;
-  inline Tagged<FixedArrayBase> elements(RelaxedLoadTag) const;
-  inline void set_elements(Tagged<FixedArrayBase> value,
-                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-  inline void initialize_elements();
-  inline ElementsKind GetElementsKind() const;
-  inline bool HasObjectElements() const;
-  inline bool HasFastElements() const;
-  inline bool HasHoleyElements() const;
-  inline bool HasSmiOrObjectElements() const;
-  inline bool HasDictionaryElements() const;
-  inline void RequireSlowElements(Tagged<NumberDictionary> dictionary);
-  inline ElementsAccessor* GetElementsAccessor() const;
-  inline Tagged<NumberDictionary> element_dictionary() const;
-  inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
-                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-  inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
-                                SeqCstAccessTag tag);
-  inline Tagged<JSAny> RawFastPropertyAt(FieldIndex index) const;
-  inline void SetEmbedderField(int index, Tagged<Object> value);
-  inline void SetEmbedderField(int index, Tagged<Smi> value);
-
- public:
-  TaggedMember<FixedArrayBase> elements_;
-} V8_OBJECT_END;
-
-inline constexpr int JSObjectLayout::kElementsOffset =
-    offsetof(JSObjectLayout, elements_);
-inline constexpr int JSObjectLayout::kHeaderSize = sizeof(JSObjectLayout);
-
-// An abstract superclass for JSObjects that may contain EmbedderDataSlots.
-// Carries no fields itself; the in-instance tail ([embedder fields] followed
-// by [in-object properties]) is managed by the Map + BodyDescriptor and never
-// shows up as a C++ member.
-V8_OBJECT class JSObjectWithEmbedderSlots : public JSObjectLayout {
- public:
-  DECL_PRINTER(JSObjectWithEmbedderSlots)
-  DECL_VERIFIER(JSObjectWithEmbedderSlots)
-
-  static const int kHeaderSize;
-} V8_OBJECT_END;
-
-inline constexpr int JSObjectWithEmbedderSlots::kHeaderSize =
-    sizeof(JSObjectWithEmbedderSlots);
-
-static_assert(JSObjectWithEmbedderSlots::kHeaderSize ==
-              JSObjectLayout::kHeaderSize);
-
-// An abstract superclass for JSObjects that may contain EmbedderDataSlots and
-// are used as API wrapper objects. Carries the cpp_heap_wrappable field; the
-// [embedder fields] + [in-object properties] tail is managed by the Map +
-// BodyDescriptor.
-V8_OBJECT class JSAPIObjectWithEmbedderSlots : public JSObjectLayout {
- public:
-  class BodyDescriptor;
-
-  static const int kCppHeapWrappableOffset;
-  static const int kHeaderSize;
-
- public:
-  CppHeapPointerMember cpp_heap_wrappable_;
-} V8_OBJECT_END;
-
-inline constexpr int JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset =
-    offsetof(JSAPIObjectWithEmbedderSlots, cpp_heap_wrappable_);
-inline constexpr int JSAPIObjectWithEmbedderSlots::kHeaderSize =
-    sizeof(JSAPIObjectWithEmbedderSlots);
-
-// An abstract superclass for JSObjects that may have elements while having an
-// empty fixed array as elements backing store. It doesn't carry any
-// functionality but allows function classes to be identified in the type
-// system.
-V8_OBJECT class JSCustomElementsObject : public JSObjectLayout {
- public:
-  static const int kHeaderSize;
-} V8_OBJECT_END;
-
-inline constexpr int JSCustomElementsObject::kHeaderSize =
-    sizeof(JSCustomElementsObject);
-
-static_assert(JSCustomElementsObject::kHeaderSize ==
-              JSObjectLayout::kHeaderSize);
-
-// These may also contain EmbedderDataSlots but can't be a child class of
-// JSAPIObjectWithEmbedderSlots due to type id constraints. These objects are
-// also considered API wrapper objects. Mirrors the
-// JSAPIObjectWithEmbedderSlots cpp_heap_wrappable field so CppHeapObjectWrapper
-// can access both sibling hierarchies at the same offset (see the
-// static_assert in cpp-heap-object-wrapper.h).
-V8_OBJECT class JSSpecialObject : public JSCustomElementsObject {
- public:
-  static const int kCppHeapWrappableOffset;
-  static const int kHeaderSize;
-
- public:
-  CppHeapPointerMember cpp_heap_wrappable_;
-} V8_OBJECT_END;
-
-inline constexpr int JSSpecialObject::kCppHeapWrappableOffset =
-    offsetof(JSSpecialObject, cpp_heap_wrappable_);
-inline constexpr int JSSpecialObject::kHeaderSize = sizeof(JSSpecialObject);
-
 // The JSObject describes real heap allocated JavaScript objects with
 // properties.
 // Note that the map of JSObject changes during execution to enable inline
 // caching.
-class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
+V8_OBJECT class JSObject : public JSReceiverLayout {
  public:
+  // Back-compat offset/size constants. Defined out-of-line below so they
+  // can use sizeof(JSObject) / offsetof(JSObject, ...) once the class is
+  // complete (the in-class static_asserts against JSReceiver::kHeaderSize
+  // still work via the declarations here).
+  static const int kElementsOffset;
+  static const int kEndOfStrongFieldsOffset;
+  static const int kHeaderSize;
+  static constexpr int kMapOffset = HeapObject::kMapOffset;
+
+  // Mirror the JSReceiver::IntegrityLevel type alias so method signatures
+  // that take `IntegrityLevel` parameters can be declared on JSObject.
+  using IntegrityLevel = JSReceiver::IntegrityLevel;
+
+  // Static forwarders for JSReceiver-level APIs. `using JSReceiver::Foo` is
+  // not viable: JSReceiver is a sibling legacy class, not a base of the
+  // V8_OBJECT JSObject (which extends JSReceiverLayout). The forwarders keep
+  // existing JSObject::Foo(...) call sites compiling after the collapse.
+  // TODO(jgruber): Remove once JSReceiver is collapsed into JSReceiverLayout
+  // and JSObject inherits from the merged JSReceiver directly.
+  template <typename... Args>
+  static auto GetProperty(Args&&... args) {
+    return JSReceiver::GetProperty(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto GetElement(Args&&... args) {
+    return JSReceiver::GetElement(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto GetDataProperty(Args&&... args) {
+    return JSReceiver::GetDataProperty(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto GetPrototype(Args&&... args) {
+    return JSReceiver::GetPrototype(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto OwnPropertyKeys(Args&&... args) {
+    return JSReceiver::OwnPropertyKeys(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto HasProperty(Args&&... args) {
+    return JSReceiver::HasProperty(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto SetIntegrityLevel(Args&&... args) {
+    return JSReceiver::SetIntegrityLevel(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto GetOwnPropertyDescriptor(Args&&... args) {
+    return JSReceiver::GetOwnPropertyDescriptor(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto GetPropertyAttributes(Args&&... args) {
+    return JSReceiver::GetPropertyAttributes(std::forward<Args>(args)...);
+  }
+  template <typename... Args>
+  static auto DeleteProperty(Args&&... args) {
+    return JSReceiver::DeleteProperty(std::forward<Args>(args)...);
+  }
+
   static bool IsUnmodifiedApiObject(FullObjectSlot o);
 
   V8_EXPORT_PRIVATE static V8_WARN_UNUSED_RESULT MaybeHandle<JSObject> New(
@@ -1061,7 +996,7 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
   // Dispatched behavior.
   void JSObjectShortPrint(StringStream* accumulator);
   DECL_PRINTER(JSObject)
-  DECL_VERIFIER(JSObject)
+  EXPORT_DECL_VERIFIER(JSObject)
 #ifdef OBJECT_PRINT
   bool PrintProperties(std::ostream& os);
   void PrintElements(std::ostream& os);
@@ -1147,26 +1082,12 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
   static_assert(kMaxNumberOfDescriptors + kFieldsAdded <=
                 PropertyArray::kMaxLength);
 
-  static_assert(kHeaderSize == Internals::kJSObjectHeaderSize);
-  static const int kMaxInObjectProperties =
-      (kMaxInstanceSize - kHeaderSize) >> kTaggedSizeLog2;
-  static_assert(kMaxInObjectProperties <= kMaxNumberOfDescriptors);
-
+  static const int kMaxInObjectProperties;
   static const int kMaxFirstInobjectPropertyOffset =
       (1 << kFirstInobjectPropertyOffsetBitCount) - 1;
-  static const int kMaxEmbedderFields =
-      (kMaxFirstInobjectPropertyOffset - kHeaderSize) / kEmbedderDataSlotSize;
-  static_assert(kHeaderSize +
-                    kMaxEmbedderFields * kEmbedderDataSlotSizeInTaggedSlots <=
-                kMaxInstanceSize);
-
-  static constexpr int kMaxJSApiObjectInObjectProperties =
-      (kMaxInstanceSize - kHeaderSize - kCppHeapPointerSlotSize) >>
-      kTaggedSizeLog2;
-  static constexpr int kMaxJSApiObjectEmbedderFields =
-      (kMaxFirstInobjectPropertyOffset - kHeaderSize -
-       kCppHeapPointerSlotSize) /
-      kEmbedderDataSlotSize;
+  static const int kMaxEmbedderFields;
+  static const int kMaxJSApiObjectInObjectProperties;
+  static const int kMaxJSApiObjectEmbedderFields;
 
   class BodyDescriptor;
 
@@ -1209,17 +1130,112 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
       FieldIndex index, Tagged<Object> expected, Tagged<Object> value,
       SeqCstAccessTag tag);
 
-  TQ_OBJECT_CONSTRUCTORS(JSObject)
-};
+ public:
+  TaggedMember<FixedArrayBase> elements_;
+} V8_OBJECT_END;
 
-// Byte-for-byte layout compatibility between the legacy JSReceiver/JSObject
-// classes and their *Layout mirrors. The migration relies on subclasses
-// extending either hierarchy landing at the same physical offsets.
+inline constexpr int JSObject::kElementsOffset = offsetof(JSObject, elements_);
+inline constexpr int JSObject::kEndOfStrongFieldsOffset =
+    JSObject::kElementsOffset + kTaggedSize;
+inline constexpr int JSObject::kHeaderSize = sizeof(JSObject);
+
+inline constexpr int JSObject::kMaxInObjectProperties =
+    (JSObject::kMaxInstanceSize - JSObject::kHeaderSize) >> kTaggedSizeLog2;
+inline constexpr int JSObject::kMaxEmbedderFields =
+    (JSObject::kMaxFirstInobjectPropertyOffset - JSObject::kHeaderSize) /
+    kEmbedderDataSlotSize;
+inline constexpr int JSObject::kMaxJSApiObjectInObjectProperties =
+    (JSObject::kMaxInstanceSize - JSObject::kHeaderSize -
+     kCppHeapPointerSlotSize) >>
+    kTaggedSizeLog2;
+inline constexpr int JSObject::kMaxJSApiObjectEmbedderFields =
+    (JSObject::kMaxFirstInobjectPropertyOffset - JSObject::kHeaderSize -
+     kCppHeapPointerSlotSize) /
+    kEmbedderDataSlotSize;
+
+static_assert(JSObject::kElementsOffset == sizeof(JSReceiverLayout));
+static_assert(JSObject::kHeaderSize == Internals::kJSObjectHeaderSize);
+static_assert(JSObject::kMaxInObjectProperties <= kMaxNumberOfDescriptors);
+static_assert(JSObject::kHeaderSize + JSObject::kMaxEmbedderFields *
+                                          kEmbedderDataSlotSizeInTaggedSlots <=
+              JSObject::kMaxInstanceSize);
+
+// An abstract superclass for JSObjects that may contain EmbedderDataSlots.
+// Carries no fields itself; the in-instance tail ([embedder fields] followed
+// by [in-object properties]) is managed by the Map + BodyDescriptor and never
+// shows up as a C++ member.
+V8_OBJECT class JSObjectWithEmbedderSlots : public JSObject {
+ public:
+  DECL_PRINTER(JSObjectWithEmbedderSlots)
+  DECL_VERIFIER(JSObjectWithEmbedderSlots)
+
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSObjectWithEmbedderSlots::kHeaderSize =
+    sizeof(JSObjectWithEmbedderSlots);
+
+static_assert(JSObjectWithEmbedderSlots::kHeaderSize == JSObject::kHeaderSize);
+
+// An abstract superclass for JSObjects that may contain EmbedderDataSlots and
+// are used as API wrapper objects. Carries the cpp_heap_wrappable field; the
+// [embedder fields] + [in-object properties] tail is managed by the Map +
+// BodyDescriptor.
+V8_OBJECT class JSAPIObjectWithEmbedderSlots : public JSObject {
+ public:
+  class BodyDescriptor;
+
+  static const int kCppHeapWrappableOffset;
+  static const int kHeaderSize;
+
+ public:
+  CppHeapPointerMember cpp_heap_wrappable_;
+} V8_OBJECT_END;
+
+inline constexpr int JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset =
+    offsetof(JSAPIObjectWithEmbedderSlots, cpp_heap_wrappable_);
+inline constexpr int JSAPIObjectWithEmbedderSlots::kHeaderSize =
+    sizeof(JSAPIObjectWithEmbedderSlots);
+
+// An abstract superclass for JSObjects that may have elements while having an
+// empty fixed array as elements backing store. It doesn't carry any
+// functionality but allows function classes to be identified in the type
+// system.
+V8_OBJECT class JSCustomElementsObject : public JSObject {
+ public:
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSCustomElementsObject::kHeaderSize =
+    sizeof(JSCustomElementsObject);
+
+static_assert(JSCustomElementsObject::kHeaderSize == JSObject::kHeaderSize);
+
+// These may also contain EmbedderDataSlots but can't be a child class of
+// JSAPIObjectWithEmbedderSlots due to type id constraints. These objects are
+// also considered API wrapper objects. Mirrors the
+// JSAPIObjectWithEmbedderSlots cpp_heap_wrappable field so CppHeapObjectWrapper
+// can access both sibling hierarchies at the same offset (see the
+// static_assert in cpp-heap-object-wrapper.h).
+V8_OBJECT class JSSpecialObject : public JSCustomElementsObject {
+ public:
+  static const int kCppHeapWrappableOffset;
+  static const int kHeaderSize;
+
+ public:
+  CppHeapPointerMember cpp_heap_wrappable_;
+} V8_OBJECT_END;
+
+inline constexpr int JSSpecialObject::kCppHeapWrappableOffset =
+    offsetof(JSSpecialObject, cpp_heap_wrappable_);
+inline constexpr int JSSpecialObject::kHeaderSize = sizeof(JSSpecialObject);
+
+// Byte-for-byte layout compatibility between the legacy JSReceiver class and
+// its Layout mirror. The migration relies on subclasses extending either
+// hierarchy landing at the same physical offsets.
 static_assert(JSReceiverLayout::kPropertiesOrHashOffset ==
               JSReceiver::kPropertiesOrHashOffset);
 static_assert(JSReceiverLayout::kHeaderSize == JSReceiver::kHeaderSize);
-static_assert(JSObjectLayout::kElementsOffset == JSObject::kElementsOffset);
-static_assert(JSObjectLayout::kHeaderSize == JSObject::kHeaderSize);
 
 // The set of tags that a JSExternalObject's value may carry. Any user-
 // facing v8::External pointer maps to a tag in [kFirstExternalTypeTag,
@@ -1230,7 +1246,7 @@ inline constexpr ExternalPointerTagRange kExternalObjectValueTagRange{
 
 // A JSObject created through the public api which wraps an external pointer.
 // See v8::External.
-V8_OBJECT class JSExternalObject : public JSObjectLayout {
+V8_OBJECT class JSExternalObject : public JSObject {
  public:
   // [value]: field containing the pointer value.
   inline void* value(ExternalPointerTagRange tag_range) const;
@@ -1316,7 +1332,8 @@ class JSIteratorResult : public JSObject {
                                 JS_ITERATOR_RESULT_FIELDS)
 #undef JS_ITERATOR_RESULT_FIELDS
 
-  OBJECT_CONSTRUCTORS(JSIteratorResult, JSObject);
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JSIteratorResult);
 };
 
 // JSGlobalProxy's prototype must be a JSGlobalObject or null,
@@ -1409,7 +1426,7 @@ V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObject {
 class DateCache;
 
 // Representation for JS date objects.
-V8_OBJECT class JSDate : public JSObjectLayout {
+V8_OBJECT class JSDate : public JSObject {
  public:
   static V8_WARN_UNUSED_RESULT MaybeDirectHandle<JSDate> New(
       Isolate* isolate, DirectHandle<JSFunction> constructor,
@@ -1529,7 +1546,7 @@ V8_OBJECT class JSDate : public JSObjectLayout {
 // error messages are not directly accessible from JavaScript to
 // prevent leaking information to user code called during error
 // formatting.
-V8_OBJECT class JSMessageObject : public JSObjectLayout {
+V8_OBJECT class JSMessageObject : public JSObject {
  public:
   // [type]: the type of error message.
   inline MessageTemplate type() const;
@@ -1632,7 +1649,7 @@ V8_OBJECT class JSMessageObject : public JSObjectLayout {
 // An object which wraps an ordinary Iterator and converts it to behave
 // according to the Async Iterator protocol.
 // (See https://tc39.es/proposal-async-iteration/#sec-iteration)
-V8_OBJECT class JSAsyncFromSyncIterator : public JSObjectLayout {
+V8_OBJECT class JSAsyncFromSyncIterator : public JSObject {
  public:
   // Async-from-Sync Iterator instances are ordinary objects that inherit
   // properties from the %AsyncFromSyncIteratorPrototype% intrinsic object.
@@ -1657,7 +1674,7 @@ V8_OBJECT class JSAsyncFromSyncIterator : public JSObjectLayout {
   TaggedMember<Object> next_;
 } V8_OBJECT_END;
 
-V8_OBJECT class JSStringIterator : public JSObjectLayout {
+V8_OBJECT class JSStringIterator : public JSObject {
  public:
   inline Tagged<String> string() const;
   inline void set_string(Tagged<String> value,
@@ -1678,7 +1695,7 @@ V8_OBJECT class JSStringIterator : public JSObjectLayout {
 // The valid iterator wrapper is the wrapper object created by
 // Iterator.from(obj), which attempts to wrap iterator-like objects into an
 // actual iterator with %Iterator.prototype%.
-V8_OBJECT class JSValidIteratorWrapper : public JSObjectLayout {
+V8_OBJECT class JSValidIteratorWrapper : public JSObject {
  public:
   // The [[Iterated]] slot, modelled as the two fields of an
   // iterator::IteratorRecord struct (object + next).
@@ -1726,7 +1743,8 @@ class JSPromiseWithResolversResult : public JSObject {
   static const int kResolveIndex = 1;
   static const int kRejectIndex = 2;
 
-  OBJECT_CONSTRUCTORS(JSPromiseWithResolversResult, JSObject);
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JSPromiseWithResolversResult);
 };
 
 // JSUint8ArraySetFromResult is just a JSObject with a specific initial map.
@@ -1752,7 +1770,8 @@ class JSUint8ArraySetFromResult : public JSObject {
   static const int kReadIndex = 0;
   static const int kWrittenIndex = 1;
 
-  OBJECT_CONSTRUCTORS(JSUint8ArraySetFromResult, JSObject);
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(JSUint8ArraySetFromResult);
 };
 
 }  // namespace v8::internal

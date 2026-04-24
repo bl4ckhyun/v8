@@ -6404,8 +6404,8 @@ bool Genesis::InstallABunchOfRandomThings() {
         .ToChecked();
 
     // Freeze the {template_object} as well.
-    JSObject::SetIntegrityLevel(isolate(), template_object, FROZEN,
-                                kThrowOnError)
+    JSReceiver::SetIntegrityLevel(isolate(), template_object, FROZEN,
+                                  kThrowOnError)
         .ToChecked();
     {
       DisallowGarbageCollection no_gc;

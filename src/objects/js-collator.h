@@ -31,7 +31,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-collator-tq.inc"
 
-V8_OBJECT class JSCollator : public JSObjectLayout {
+V8_OBJECT class JSCollator : public JSObject {
  public:
   // https://tc39.es/ecma402/#sec-initializecollator
   V8_EXPORT_PRIVATE V8_WARN_UNUSED_RESULT static MaybeHandle<JSCollator> New(

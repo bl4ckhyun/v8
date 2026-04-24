@@ -1854,8 +1854,8 @@ V8_WARN_UNUSED_RESULT MaybeDirectHandle<Object> Object::SpeciesConstructor(
   DirectHandle<Object> ctor_obj;
   ASSIGN_RETURN_ON_EXCEPTION(
       isolate, ctor_obj,
-      JSObject::GetProperty(isolate, recv,
-                            isolate->factory()->constructor_string()));
+      JSReceiver::GetProperty(isolate, recv,
+                              isolate->factory()->constructor_string()));
 
   if (IsUndefined(*ctor_obj, isolate)) return default_ctor;
 
@@ -1869,8 +1869,8 @@ V8_WARN_UNUSED_RESULT MaybeDirectHandle<Object> Object::SpeciesConstructor(
   DirectHandle<Object> species;
   ASSIGN_RETURN_ON_EXCEPTION(
       isolate, species,
-      JSObject::GetProperty(isolate, ctor,
-                            isolate->factory()->species_symbol()));
+      JSReceiver::GetProperty(isolate, ctor,
+                              isolate->factory()->species_symbol()));
 
   if (IsNullOrUndefined(*species, isolate)) {
     return default_ctor;

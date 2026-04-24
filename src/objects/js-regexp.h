@@ -26,7 +26,7 @@ class RegExpData;
 class RegExpData;
 
 // Regular expressions
-V8_OBJECT class JSRegExp : public JSObjectLayout {
+V8_OBJECT class JSRegExp : public JSObject {
  public:
   DEFINE_TORQUE_GENERATED_JS_REG_EXP_FLAGS()
 

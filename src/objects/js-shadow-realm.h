@@ -19,7 +19,7 @@ class NativeContext;
 
 // ShadowRealm object from the JS ShadowRealm spec proposal:
 // https://github.com/tc39/proposal-shadowrealm
-V8_OBJECT class JSShadowRealm : public JSObjectLayout {
+V8_OBJECT class JSShadowRealm : public JSObject {
  public:
   inline Tagged<NativeContext> native_context() const;
   inline void set_native_context(Tagged<NativeContext> value,

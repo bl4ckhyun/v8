@@ -479,6 +479,10 @@ bool JSObject::ElementsAreSafeToExamine(PtrComprCageBase cage_base) const {
 
 namespace {
 
+void VerifyJSObjectElements(Isolate* isolate, Tagged<JSObject> object);
+void VerifyJSObjectElements(Isolate* isolate, const JSObject* object) {
+  VerifyJSObjectElements(isolate, Cast<JSObject>(object));
+}
 void VerifyJSObjectElements(Isolate* isolate, Tagged<JSObject> object) {
   // Only TypedArrays can have these specialized elements.
   if (IsJSTypedArray(object)) {
@@ -519,16 +523,9 @@ void VerifyJSObjectElements(Isolate* isolate, Tagged<JSObject> object) {
 }
 }  // namespace
 
-// Layout-side trampoline: subclasses that extend JSObjectLayout inherit a
-// JSObjectVerify method that delegates to the legacy JSObject verifier via
-// a Cast once. Mirrors StructLayout::StructVerify (objects-debug.cc).
-void JSObjectLayout::JSObjectVerify(Isolate* isolate) {
-  Cast<JSObject>(this)->JSObjectVerify(isolate);
-}
-
 void JSObjectWithEmbedderSlots::JSObjectWithEmbedderSlotsVerify(
     Isolate* isolate) {
-  Cast<JSObject>(this)->JSObjectVerify(isolate);
+  JSObjectVerify(isolate);
 }
 
 void JSRawJson::JSRawJsonVerify(Isolate* isolate) { JSObjectVerify(isolate); }
@@ -538,10 +535,10 @@ void JSExternalObject::JSExternalObjectVerify(Isolate* isolate) {
 }
 
 void JSObject::JSObjectVerify(Isolate* isolate) {
-  TorqueGeneratedClassVerifiers::JSObjectVerify(*this, isolate);
-  VerifyHeapPointer(isolate, elements());
+  Cast<JSReceiver>(this)->JSReceiverVerify(isolate);
+  HeapObject::VerifyHeapPointer(isolate, elements());
 
-  CHECK_IMPLIES(HasSloppyArgumentsElements(), IsJSArgumentsObject(*this));
+  CHECK_IMPLIES(HasSloppyArgumentsElements(), IsJSArgumentsObject(this));
   if (HasFastProperties()) {
     FieldStorageLocation offset = map()->NextFreeFieldStorageLocation();
     const uint32_t property_array_len = property_array()->length().value();
@@ -654,7 +651,7 @@ void JSObject::JSObjectVerify(Isolate* isolate) {
              (elements()->map() == GetReadOnlyRoots().fixed_array_map() ||
               elements()->map() == GetReadOnlyRoots().fixed_cow_array_map()));
     CHECK_EQ(map()->has_fast_object_elements(), HasObjectElements());
-    VerifyJSObjectElements(isolate, *this);
+    VerifyJSObjectElements(isolate, this);
   }
 }
 
@@ -3899,9 +3896,9 @@ void JSObject::IncrementSpillStatistics(Isolate* isolate,
     info->number_of_fast_used_fields_ +=
         map()->GetInObjectProperties() + property_array()->length().value();
     info->number_of_fast_unused_fields_ += map()->UnusedPropertyFields();
-  } else if (IsJSGlobalObject(*this)) {
+  } else if (IsJSGlobalObject(this)) {
     Tagged<GlobalDictionary> dict =
-        Cast<JSGlobalObject>(*this)->global_dictionary(kAcquireLoad);
+        Cast<JSGlobalObject>(this)->global_dictionary(kAcquireLoad);
     info->number_of_slow_used_properties_ += dict->NumberOfElements();
     info->number_of_slow_unused_properties_ +=
         dict->Capacity() - dict->NumberOfElements();

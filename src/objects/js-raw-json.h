@@ -16,7 +16,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-raw-json-tq.inc"
 
-V8_OBJECT class JSRawJson : public JSObjectLayout {
+V8_OBJECT class JSRawJson : public JSObject {
  public:
   // Returns whether this raw JSON object has the initial layout and the
   // "rawJSON" property can be directly accessed at sizeof(JSRawJson).

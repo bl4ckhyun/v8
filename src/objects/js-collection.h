@@ -17,7 +17,7 @@ namespace internal {
 class OrderedHashSet;
 class OrderedHashMap;
 
-V8_OBJECT class JSCollection : public JSObjectLayout {
+V8_OBJECT class JSCollection : public JSObject {
  public:
   // The backing hash table.
   inline Tagged<Object> table() const;
@@ -78,7 +78,7 @@ V8_OBJECT class JSMapIterator final
 } V8_OBJECT_END;
 
 // Base class for both JSWeakMap and JSWeakSet
-V8_OBJECT class JSWeakCollection : public JSObjectLayout {
+V8_OBJECT class JSWeakCollection : public JSObject {
  public:
   // The backing hash table mapping keys to values.
   inline Tagged<Object> table() const;

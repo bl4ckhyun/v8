@@ -29,7 +29,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-duration-format-tq.inc"
 
-V8_OBJECT class JSDurationFormat : public JSObjectLayout {
+V8_OBJECT class JSDurationFormat : public JSObject {
  public:
   // Creates duration format object with properties derived from input
   // locales and options.

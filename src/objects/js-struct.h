@@ -16,7 +16,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-struct-tq.inc"
 
-V8_OBJECT class AlwaysSharedSpaceJSObject : public JSObjectLayout {
+V8_OBJECT class AlwaysSharedSpaceJSObject : public JSObject {
  public:
   // Prepare a Map to be used as the instance map for shared JS objects.
   static void PrepareMapNoEnumerableProperties(Tagged<Map> map);
@@ -45,7 +45,7 @@ V8_OBJECT class AlwaysSharedSpaceJSObject : public JSObjectLayout {
 
 inline constexpr int AlwaysSharedSpaceJSObject::kHeaderSize =
     sizeof(AlwaysSharedSpaceJSObject);
-static_assert(sizeof(AlwaysSharedSpaceJSObject) == sizeof(JSObjectLayout));
+static_assert(sizeof(AlwaysSharedSpaceJSObject) == sizeof(JSObject));
 
 V8_OBJECT class JSSharedStruct : public AlwaysSharedSpaceJSObject {
  public:

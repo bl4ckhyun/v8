@@ -31,7 +31,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-segmenter-tq.inc"
 
-V8_OBJECT class JSSegmenter : public JSObjectLayout {
+V8_OBJECT class JSSegmenter : public JSObject {
  public:
   // Creates segmenter object with properties derived from input locales and
   // options.

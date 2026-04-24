@@ -142,7 +142,7 @@ class ImportedFunctionEntry {
 enum InternalizeString : bool { kInternalize = true, kNoInternalize = false };
 
 // Representation of a WebAssembly.Module JavaScript-level object.
-V8_OBJECT class WasmModuleObject : public JSObjectLayout {
+V8_OBJECT class WasmModuleObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -219,7 +219,7 @@ bool FunctionSigMatchesTable(wasm::CanonicalTypeIndex sig_id,
 #endif
 
 // Representation of a WebAssembly.Table JavaScript-level object.
-V8_OBJECT class WasmTableObject : public JSObjectLayout {
+V8_OBJECT class WasmTableObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -389,7 +389,7 @@ inline constexpr int WasmTableObject::kAddressTypeOffset =
     offsetof(WasmTableObject, address_type_);
 inline constexpr int WasmTableObject::kHeaderSize = sizeof(WasmTableObject);
 
-V8_OBJECT class WasmMemoryMapDescriptor : public JSObjectLayout {
+V8_OBJECT class WasmMemoryMapDescriptor : public JSObject {
  public:
   using Super = JSObject;
 
@@ -453,7 +453,7 @@ inline constexpr int WasmMemoryMapDescriptor::kHeaderSize =
     sizeof(WasmMemoryMapDescriptor);
 
 // Representation of a WebAssembly.Memory JavaScript-level object.
-V8_OBJECT class WasmMemoryObject : public JSObjectLayout {
+V8_OBJECT class WasmMemoryObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -603,7 +603,7 @@ inline constexpr int WasmMemoryObject::kAddressTypeOffset =
 inline constexpr int WasmMemoryObject::kHeaderSize = sizeof(WasmMemoryObject);
 
 // Representation of a WebAssembly.Global JavaScript-level object.
-V8_OBJECT class WasmGlobalObject : public JSObjectLayout {
+V8_OBJECT class WasmGlobalObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -955,7 +955,7 @@ V8_OBJECT class V8_EXPORT_PRIVATE WasmTrustedInstanceData
 // Representation of a WebAssembly.Instance JavaScript-level object.
 // This is mostly a wrapper around the WasmTrustedInstanceData, plus any
 // user-set properties.
-V8_OBJECT class WasmInstanceObject : public JSObjectLayout {
+V8_OBJECT class WasmInstanceObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -1007,7 +1007,7 @@ inline constexpr int WasmInstanceObject::kHeaderSize =
     sizeof(WasmInstanceObject);
 
 // Representation of WebAssembly.Exception JavaScript-level object.
-V8_OBJECT class WasmTagObject : public JSObjectLayout {
+V8_OBJECT class WasmTagObject : public JSObject {
  public:
   using Super = JSObject;
 
@@ -1339,7 +1339,9 @@ class V8_EXPORT_PRIVATE WasmExceptionPackage : public JSObject {
 
   DECL_PRINTER(WasmExceptionPackage)
   DECL_VERIFIER(WasmExceptionPackage)
-  OBJECT_CONSTRUCTORS(WasmExceptionPackage, JSObject);
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WasmExceptionPackage);
 };
 
 void V8_EXPORT_PRIVATE
@@ -2153,7 +2155,7 @@ inline constexpr int WasmSuspenderObject::kHeaderSize =
     sizeof(WasmSuspenderObject);
 inline constexpr int WasmSuspenderObject::kSize = sizeof(WasmSuspenderObject);
 
-V8_OBJECT class WasmSuspendingObject : public JSObjectLayout {
+V8_OBJECT class WasmSuspendingObject : public JSObject {
  public:
   inline Tagged<JSReceiver> callable() const;
   inline void set_callable(Tagged<JSReceiver> value,

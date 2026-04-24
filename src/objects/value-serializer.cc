@@ -1129,7 +1129,8 @@ Maybe<bool> ValueSerializer::WriteJSError(DirectHandle<JSObject> error) {
   WriteTag(SerializationTag::kError);
 
   DirectHandle<Object> name_object;
-  if (!JSObject::GetProperty(isolate_, error, "name").ToHandle(&name_object)) {
+  if (!JSReceiver::GetProperty(isolate_, error, "name")
+           .ToHandle(&name_object)) {
     return Nothing<bool>();
   }
   DirectHandle<String> name;

@@ -13,6 +13,7 @@ type Constructor extends JSReceiver;
 
 @apiExposedInstanceTypeValue(0x421)
 @highestInstanceTypeWithinParentClassRange
+@cppObjectLayoutDefinition
 extern class JSObject extends JSReceiver {
   // [elements]: The elements (properties with names that are integers).
   //

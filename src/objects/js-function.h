@@ -24,8 +24,7 @@ class ClosureFeedbackCellArray;
 // An abstract superclass for classes representing JavaScript function values.
 // It doesn't carry any functionality but allows function classes to be
 // identified in the type system.
-V8_OBJECT class JSFunctionOrBoundFunctionOrWrappedFunction
-    : public JSObjectLayout {
+V8_OBJECT class JSFunctionOrBoundFunctionOrWrappedFunction : public JSObject {
  public:
   static const int kLengthDescriptorIndex = 0;
   static const int kNameDescriptorIndex = 1;

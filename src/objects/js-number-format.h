@@ -39,7 +39,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-number-format-tq.inc"
 
-V8_OBJECT class JSNumberFormat : public JSObjectLayout {
+V8_OBJECT class JSNumberFormat : public JSObject {
  public:
   // https://tc39.es/ecma402/#sec-initializenumberformat
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSNumberFormat> New(

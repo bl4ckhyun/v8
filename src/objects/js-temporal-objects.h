@@ -73,7 +73,7 @@ class JSTemporalPlainDate;
 class JSTemporalPlainMonthDay;
 class JSTemporalPlainYearMonth;
 
-V8_OBJECT class JSTemporalDuration : public JSObjectLayout {
+V8_OBJECT class JSTemporalDuration : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal.duration
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalDuration>
@@ -158,7 +158,7 @@ V8_OBJECT class JSTemporalDuration : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(duration, temporal_rs::Duration)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalInstant : public JSObjectLayout {
+V8_OBJECT class JSTemporalInstant : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal-instant-constructor
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalInstant> Constructor(
@@ -246,7 +246,7 @@ V8_OBJECT class JSTemporalInstant : public JSObjectLayout {
   DECL_VERIFIER(JSTemporalInstant)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalPlainDate : public JSObjectLayout {
+V8_OBJECT class JSTemporalPlainDate : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal-createtemporaldate
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalPlainDate>
@@ -353,7 +353,7 @@ V8_OBJECT class JSTemporalPlainDate : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(date, temporal_rs::PlainDate)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalPlainDateTime : public JSObjectLayout {
+V8_OBJECT class JSTemporalPlainDateTime : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal-createtemporaldatetime
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalPlainDateTime>
@@ -471,7 +471,7 @@ V8_OBJECT class JSTemporalPlainDateTime : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(date_time, temporal_rs::PlainDateTime)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalPlainMonthDay : public JSObjectLayout {
+V8_OBJECT class JSTemporalPlainMonthDay : public JSObject {
  public:
   // ##sec-temporal.plainmonthday
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalPlainMonthDay>
@@ -532,7 +532,7 @@ V8_OBJECT class JSTemporalPlainMonthDay : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(month_day, temporal_rs::PlainMonthDay)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalPlainTime : public JSObjectLayout {
+V8_OBJECT class JSTemporalPlainTime : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal-plaintime-constructor
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalPlainTime>
@@ -623,7 +623,7 @@ V8_OBJECT class JSTemporalPlainTime : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(time, temporal_rs::PlainTime)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalPlainYearMonth : public JSObjectLayout {
+V8_OBJECT class JSTemporalPlainYearMonth : public JSObject {
  public:
   // ##sec-temporal.plainyearmonth
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalPlainYearMonth>
@@ -709,7 +709,7 @@ V8_OBJECT class JSTemporalPlainYearMonth : public JSObjectLayout {
   DECL_ACCESSORS_FOR_RUST_WRAPPER(year_month, temporal_rs::PlainYearMonth)
 } V8_OBJECT_END;
 
-V8_OBJECT class JSTemporalZonedDateTime : public JSObjectLayout {
+V8_OBJECT class JSTemporalZonedDateTime : public JSObject {
  public:
   // https://tc39.es/proposal-temporal/#sec-temporal.zoneddatetime
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSTemporalZonedDateTime>

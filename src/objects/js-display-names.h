@@ -27,7 +27,7 @@ class DisplayNamesInternal;
 
 #include "torque-generated/src/objects/js-display-names-tq.inc"
 
-V8_OBJECT class JSDisplayNames : public JSObjectLayout {
+V8_OBJECT class JSDisplayNames : public JSObject {
  public:
   // Creates display names object with properties derived from input
   // locales and options.

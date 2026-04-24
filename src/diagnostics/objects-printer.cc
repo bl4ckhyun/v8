@@ -560,7 +560,7 @@ bool JSObject::PrintProperties(std::ostream& os) {
     return map()->NumberOfOwnDescriptors() > 0;
   } else if (IsJSGlobalObject(*this)) {
     PrintDictionaryContents(
-        os, Cast<JSGlobalObject>(*this)->global_dictionary(kAcquireLoad));
+        os, Cast<JSGlobalObject>(this)->global_dictionary(kAcquireLoad));
   } else if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
     PrintDictionaryContents(os, property_dictionary_swiss());
   } else {
@@ -801,14 +801,14 @@ void JSObject::PrintElements(std::ostream& os) {
     // the ElementsKind. These kind of objects shouldn't be involved in
     // transitions where we might print inconsistent objects.
     switch (map()->elements_kind()) {
-#define PRINT_ELEMENTS(Type, type, TYPE, elementType)                          \
-  case TYPE##_ELEMENTS: {                                                      \
-    size_t length = Cast<JSTypedArray>(*this)->GetLength();                    \
-    bool is_on_heap = Cast<JSTypedArray>(*this)->is_on_heap();                 \
-    const elementType* data_ptr =                                              \
-        static_cast<const elementType*>(Cast<JSTypedArray>(*this)->DataPtr()); \
-    PrintTypedArrayElements<elementType>(os, data_ptr, length, is_on_heap);    \
-    break;                                                                     \
+#define PRINT_ELEMENTS(Type, type, TYPE, elementType)                         \
+  case TYPE##_ELEMENTS: {                                                     \
+    size_t length = Cast<JSTypedArray>(this)->GetLength();                    \
+    bool is_on_heap = Cast<JSTypedArray>(this)->is_on_heap();                 \
+    const elementType* data_ptr =                                             \
+        static_cast<const elementType*>(Cast<JSTypedArray>(this)->DataPtr()); \
+    PrintTypedArrayElements<elementType>(os, data_ptr, length, is_on_heap);   \
+    break;                                                                    \
   }
       TYPED_ARRAYS(PRINT_ELEMENTS)
       RAB_GSAB_TYPED_ARRAYS(PRINT_ELEMENTS)
@@ -893,17 +893,17 @@ void JSObjectPrintBody(std::ostream& os, Tagged<JSObject> obj,
   }
 }
 
-// Pointer-to-JSObjectLayout overloads. Let layout-based subclass printers
-// pass their `this` directly. Can't use `Tagged<JSObjectLayout>` here:
+// Pointer-to-JSObject overloads. Let layout-based subclass printers
+// pass their `this` directly. Can't use `Tagged<JSObject>` here:
 // normalize_type maps that back to Tagged<JSObject>, which makes the
 // overload match legacy callers too and creates ambiguity. A pointer
 // parameter is unambiguous because legacy JSObject doesn't inherit from
-// JSObjectLayout.
-void JSObjectPrintHeader(std::ostream& os, const JSObjectLayout* obj,
+// JSObject.
+void JSObjectPrintHeader(std::ostream& os, const JSObject* obj,
                          const char* id) {
   JSObjectPrintHeader(os, Cast<JSObject>(obj), id);
 }
-void JSObjectPrintBody(std::ostream& os, const JSObjectLayout* obj,
+void JSObjectPrintBody(std::ostream& os, const JSObject* obj,
                        bool print_elements = true) {
   JSObjectPrintBody(os, Cast<JSObject>(obj), print_elements);
 }
@@ -911,15 +911,8 @@ void JSObjectPrintBody(std::ostream& os, const JSObjectLayout* obj,
 }  // namespace
 
 void JSObject::JSObjectPrint(std::ostream& os) {
-  JSObjectPrintHeader(os, *this, nullptr);
-  JSObjectPrintBody(os, *this);
-}
-
-// Layout-side trampoline: subclasses that extend JSObjectLayout inherit a
-// JSObjectPrint method that delegates to the legacy JSObject printer via
-// a Cast once. Mirrors JSObjectLayout::JSObjectVerify (objects-debug.cc).
-void JSObjectLayout::JSObjectPrint(std::ostream& os) {
-  Cast<JSObject>(this)->JSObjectPrint(os);
+  JSObjectPrintHeader(os, this, nullptr);
+  JSObjectPrintBody(os, this);
 }
 
 void JSExternalObject::JSExternalObjectPrint(std::ostream& os) {

@@ -23,7 +23,7 @@ class WeakCell;
 
 // FinalizationRegistry object from the JS Weak Refs spec proposal:
 // https://github.com/tc39/proposal-weakrefs
-V8_OBJECT class JSFinalizationRegistry : public JSObjectLayout {
+V8_OBJECT class JSFinalizationRegistry : public JSObject {
  public:
   inline Tagged<NativeContext> native_context() const;
   inline void set_native_context(Tagged<NativeContext> value,
@@ -230,7 +230,7 @@ V8_OBJECT class WeakCell : public HeapObjectLayout {
   friend class V8HeapExplorer;
 } V8_OBJECT_END;
 
-V8_OBJECT class JSWeakRef : public JSObjectLayout {
+V8_OBJECT class JSWeakRef : public JSObject {
  public:
   inline Tagged<UnionOf<Symbol, JSReceiver, Undefined>> target() const;
   inline void set_target(Tagged<UnionOf<Symbol, JSReceiver, Undefined>> value,

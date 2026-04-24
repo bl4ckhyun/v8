@@ -28,7 +28,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-break-iterator-tq.inc"
 
-V8_OBJECT class JSV8BreakIterator : public JSObjectLayout {
+V8_OBJECT class JSV8BreakIterator : public JSObject {
  public:
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSV8BreakIterator> New(
       Isolate* isolate, DirectHandle<Map> map,

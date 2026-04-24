@@ -1053,8 +1053,8 @@ JsonStringifier::Result JsonStringifier::Serialize_(Handle<JSAny> object,
           // only change due to VM-internal operations like being optimized for
           // being used as a prototype.
           raw_json = Cast<String>(
-              JSObject::GetProperty(isolate_, raw_json_obj,
-                                    isolate_->factory()->raw_json_string())
+              JSReceiver::GetProperty(isolate_, raw_json_obj,
+                                      isolate_->factory()->raw_json_string())
                   .ToHandleChecked());
         }
         AppendString(raw_json);

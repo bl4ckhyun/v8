@@ -3828,7 +3828,7 @@ bool WalkPromiseTreeInternal(
     // If there is an outer promise, follow that to see if it is caught.
     DirectHandle<Symbol> key = isolate->factory()->promise_handled_by_symbol();
     DirectHandle<Object> outer_promise_obj =
-        JSObject::GetDataProperty(isolate, promise, key);
+        JSReceiver::GetDataProperty(isolate, promise, key);
     if (IsJSPromise(*outer_promise_obj)) {
       return WalkPromiseTreeInternal(
           isolate, Cast<JSPromise>(outer_promise_obj), callback);
@@ -4083,7 +4083,7 @@ bool Isolate::WalkCallStackAndPromiseTree(
     } else if (IsSmi(promise->reactions())) {
       // Also check that there is no outer promise
       DirectHandle<Symbol> key = factory()->promise_handled_by_symbol();
-      if (!IsJSPromise(*JSObject::GetDataProperty(this, promise, key))) {
+      if (!IsJSPromise(*JSReceiver::GetDataProperty(this, promise, key))) {
         // Ignore this promise; set to null
         rejected_promise = MaybeDirectHandle<JSPromise>();
       }

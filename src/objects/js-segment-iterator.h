@@ -26,7 +26,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-segment-iterator-tq.inc"
 
-V8_OBJECT class JSSegmentIterator : public JSObjectLayout {
+V8_OBJECT class JSSegmentIterator : public JSObject {
  public:
   // https://tc39.es/ecma402/#sec-CreateSegmentIterator
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSSegmentIterator> Create(
@@ -88,7 +88,7 @@ inline constexpr int JSSegmentIterator::kFlagsOffset =
     offsetof(JSSegmentIterator, flags_);
 inline constexpr int JSSegmentIterator::kHeaderSize = sizeof(JSSegmentIterator);
 
-V8_OBJECT class JSSegmentDataObject : public JSObjectLayout {
+V8_OBJECT class JSSegmentDataObject : public JSObject {
  public:
   inline Tagged<String> segment() const;
   inline void set_segment(Tagged<String> value,

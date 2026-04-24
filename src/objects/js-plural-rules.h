@@ -35,7 +35,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-plural-rules-tq.inc"
 
-V8_OBJECT class JSPluralRules : public JSObjectLayout {
+V8_OBJECT class JSPluralRules : public JSObject {
  public:
   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSPluralRules> New(
       Isolate* isolate, DirectHandle<Map> map, DirectHandle<Object> locales,

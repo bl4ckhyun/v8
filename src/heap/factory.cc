@@ -3664,7 +3664,7 @@ DirectHandle<JSArray> Factory::NewJSArrayForTemplateLiteralArray(
   const uint32_t raw_strings_len = raw_strings->ulength().value();
   DirectHandle<JSArray> raw_object = NewJSArrayWithElements(
       raw_strings, PACKED_ELEMENTS, raw_strings_len, AllocationType::kOld);
-  JSObject::SetIntegrityLevel(isolate(), raw_object, FROZEN, kThrowOnError)
+  JSReceiver::SetIntegrityLevel(isolate(), raw_object, FROZEN, kThrowOnError)
       .ToChecked();
 
   DirectHandle<NativeContext> native_context = isolate()->native_context();

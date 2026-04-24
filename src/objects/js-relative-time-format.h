@@ -32,7 +32,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/js-relative-time-format-tq.inc"
 
-V8_OBJECT class JSRelativeTimeFormat : public JSObjectLayout {
+V8_OBJECT class JSRelativeTimeFormat : public JSObject {
  public:
   // Creates relative time format object with properties derived from input
   // locales and options.

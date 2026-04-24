@@ -2402,7 +2402,7 @@ WASM_EXPORT own<Instance> Instance::make(Store* store_abs,
     i::DirectHandle<i::JSObject> module_obj;
     i::LookupIterator module_it(isolate, imports_obj, module_str,
                                 i::LookupIterator::OWN_SKIP_INTERCEPTOR);
-    if (i::JSObject::HasProperty(&module_it).ToChecked()) {
+    if (i::JSReceiver::HasProperty(&module_it).ToChecked()) {
       module_obj = i::Cast<i::JSObject>(
           i::Object::GetProperty(&module_it).ToHandleChecked());
     } else {

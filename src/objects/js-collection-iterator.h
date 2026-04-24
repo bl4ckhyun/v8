@@ -16,7 +16,7 @@
 namespace v8 {
 namespace internal {
 
-V8_OBJECT class JSCollectionIterator : public JSObjectLayout {
+V8_OBJECT class JSCollectionIterator : public JSObject {
  public:
   inline Tagged<Object> table() const;
   inline void set_table(Tagged<Object> value,

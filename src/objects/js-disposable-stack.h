@@ -42,7 +42,7 @@ using DisposeCallTypeBit =
     base::BitField<DisposeMethodCallType, 0, 1, uint32_t>;
 using DisposeHintBit = DisposeCallTypeBit::Next<DisposeMethodHint, 1>;
 
-V8_OBJECT class JSDisposableStackBase : public JSObjectLayout {
+V8_OBJECT class JSDisposableStackBase : public JSObject {
  public:
   inline Tagged<FixedArray> stack() const;
   inline void set_stack(Tagged<FixedArray> value,

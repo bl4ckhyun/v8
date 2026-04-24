@@ -69,7 +69,7 @@ V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream& os,
 // [1] https://tc39.es/ecma262/#sec-generatorresume
 
 // The superclass of all iterator helpers.
-V8_OBJECT class JSIteratorHelper : public JSObjectLayout {
+V8_OBJECT class JSIteratorHelper : public JSObject {
  public:
   inline JSIteratorHelperState state() const;
   inline void set_state(JSIteratorHelperState value);
