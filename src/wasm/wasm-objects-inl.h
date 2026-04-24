@@ -295,16 +295,82 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_start, uint8_t*,
                     kMemory0StartOffset)
 PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
                     kMemory0SizeOffset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, managed_native_module,
-                            TrustedManaged<wasm::NativeModule>,
-                            kProtectedManagedNativeModuleOffset)
-ACCESSORS(WasmTrustedInstanceData, imported_mutable_globals_buffers,
-          Tagged<FixedArray>, kImportedMutableGlobalsBuffersOffset)
-ACCESSORS(WasmTrustedInstanceData, imported_mutable_globals_offsets,
-          Tagged<FixedUInt32Array>, kImportedMutableGlobalsOffsetsOffset)
+// ACCESSORS/OPTIONAL_ACCESSORS/PROTECTED_POINTER_ACCESSORS all use
+// CONDITIONAL_*_WRITE_BARRIER(*this, ...) which expands to (object)->... —
+// arrow access that fails for HeapObjectLayout value types.  Spell out the
+// impls manually using *Tagged<WasmTrustedInstanceData>(this) instead.
+
+// Tagged field accessors (replaces ACCESSORS).
+#define WTI_TAGGED_ACCESSORS(name, type, offset)                             \
+  type WasmTrustedInstanceData::name() const {                               \
+    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                 \
+    return name(cage_base);                                                  \
+  }                                                                          \
+  type WasmTrustedInstanceData::name(PtrComprCageBase cage_base) const {     \
+    return TaggedField<type, offset>::load(cage_base, *this);                \
+  }                                                                          \
+  void WasmTrustedInstanceData::set_##name(type value,                       \
+                                           WriteBarrierMode mode) {          \
+    TaggedField<type, offset>::store(*this, value);                          \
+    CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset, \
+                              value, mode);                                  \
+  }
+
+// Optional tagged field accessors (replaces OPTIONAL_ACCESSORS).
+#define WTI_OPTIONAL_TAGGED_ACCESSORS(name, type, offset)                      \
+  bool WasmTrustedInstanceData::has_##name() const {                           \
+    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                   \
+    return has_##name(cage_base);                                              \
+  }                                                                            \
+  bool WasmTrustedInstanceData::has_##name(PtrComprCageBase cage_base) const { \
+    Tagged<Object> value =                                                     \
+        TaggedField<Object, offset>::load(cage_base, *this);                   \
+    return !IsUndefined(value);                                                \
+  }                                                                            \
+  type WasmTrustedInstanceData::name() const {                                 \
+    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                   \
+    return name(cage_base);                                                    \
+  }                                                                            \
+  type WasmTrustedInstanceData::name(PtrComprCageBase cage_base) const {       \
+    DCHECK(has_##name(cage_base));                                             \
+    return TaggedField<type, offset>::load(cage_base, *this);                  \
+  }                                                                            \
+  void WasmTrustedInstanceData::set_##name(type value,                         \
+                                           WriteBarrierMode mode) {            \
+    TaggedField<type, offset>::store(*this, value);                            \
+    CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset,   \
+                              value, mode);                                    \
+  }
+
+// Protected pointer accessors (replaces PROTECTED_POINTER_ACCESSORS).
+#define WTI_PROTECTED_POINTER_ACCESSORS(name, type, offset)           \
+  Tagged<type> WasmTrustedInstanceData::name() const {                \
+    DCHECK(has_##name());                                             \
+    return ReadProtectedPointerField<type>(offset);                   \
+  }                                                                   \
+  void WasmTrustedInstanceData::set_##name(Tagged<type> value,        \
+                                           WriteBarrierMode mode) {   \
+    WriteProtectedPointerField(offset, value);                        \
+    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(                      \
+        *Tagged<WasmTrustedInstanceData>(this), offset, value, mode); \
+  }                                                                   \
+  bool WasmTrustedInstanceData::has_##name() const {                  \
+    return !IsProtectedPointerFieldEmpty(offset);                     \
+  }                                                                   \
+  void WasmTrustedInstanceData::clear_##name() {                      \
+    ClearProtectedPointerField(offset);                               \
+  }
+
+WTI_PROTECTED_POINTER_ACCESSORS(managed_native_module,
+                                TrustedManaged<wasm::NativeModule>,
+                                kProtectedManagedNativeModuleOffset)
+WTI_TAGGED_ACCESSORS(imported_mutable_globals_buffers, Tagged<FixedArray>,
+                     kImportedMutableGlobalsBuffersOffset)
+WTI_TAGGED_ACCESSORS(imported_mutable_globals_offsets, Tagged<FixedUInt32Array>,
+                     kImportedMutableGlobalsOffsetsOffset)
 #if V8_ENABLE_DRUMBRAKE
-ACCESSORS(WasmTrustedInstanceData, imported_function_indices,
-          Tagged<FixedInt32Array>, kImportedFunctionIndicesOffset)
+WTI_TAGGED_ACCESSORS(imported_function_indices, Tagged<FixedInt32Array>,
+                     kImportedFunctionIndicesOffset)
 #endif  // V8_ENABLE_DRUMBRAKE
 PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, jump_table_start, Address,
                     kJumpTableStartOffset)
@@ -312,51 +378,51 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, hook_on_function_call_address,
                     Address, kHookOnFunctionCallAddressOffset)
 PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, tiering_budget_array,
                     std::atomic<uint32_t>*, kTieringBudgetArrayOffset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, memory_bases_and_sizes,
-                            TrustedFixedAddressArray,
-                            kProtectedMemoryBasesAndSizesOffset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, data_segments,
-                            TrustedPodArray<wasm::WireBytesRef>,
-                            kProtectedDataSegmentsOffset)
-ACCESSORS(WasmTrustedInstanceData, element_segments, Tagged<FixedArray>,
-          kElementSegmentsOffset)
+WTI_PROTECTED_POINTER_ACCESSORS(memory_bases_and_sizes,
+                                TrustedFixedAddressArray,
+                                kProtectedMemoryBasesAndSizesOffset)
+WTI_PROTECTED_POINTER_ACCESSORS(data_segments,
+                                TrustedPodArray<wasm::WireBytesRef>,
+                                kProtectedDataSegmentsOffset)
+WTI_TAGGED_ACCESSORS(element_segments, Tagged<FixedArray>,
+                     kElementSegmentsOffset)
 PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, break_on_entry, uint8_t,
                     kBreakOnEntryOffset)
 
-OPTIONAL_ACCESSORS(WasmTrustedInstanceData, instance_object,
-                   Tagged<WasmInstanceObject>, kInstanceObjectOffset)
-OPTIONAL_ACCESSORS(WasmTrustedInstanceData, native_context, Tagged<Context>,
-                   kNativeContextOffset)
-ACCESSORS(WasmTrustedInstanceData, memory_objects, Tagged<FixedArray>,
-          kMemoryObjectsOffset)
-ACCESSORS(WasmTrustedInstanceData, untagged_globals_buffer, Tagged<ByteArray>,
-          kUntaggedGlobalsBufferOffset)
-ACCESSORS(WasmTrustedInstanceData, tagged_globals_buffer, Tagged<FixedArray>,
-          kTaggedGlobalsBufferOffset)
-ACCESSORS(WasmTrustedInstanceData, tables, Tagged<FixedArray>, kTablesOffset)
+WTI_OPTIONAL_TAGGED_ACCESSORS(instance_object, Tagged<WasmInstanceObject>,
+                              kInstanceObjectOffset)
+WTI_OPTIONAL_TAGGED_ACCESSORS(native_context, Tagged<Context>,
+                              kNativeContextOffset)
+WTI_TAGGED_ACCESSORS(memory_objects, Tagged<FixedArray>, kMemoryObjectsOffset)
+WTI_TAGGED_ACCESSORS(untagged_globals_buffer, Tagged<ByteArray>,
+                     kUntaggedGlobalsBufferOffset)
+WTI_TAGGED_ACCESSORS(tagged_globals_buffer, Tagged<FixedArray>,
+                     kTaggedGlobalsBufferOffset)
+WTI_TAGGED_ACCESSORS(tables, Tagged<FixedArray>, kTablesOffset)
 #if V8_ENABLE_DRUMBRAKE
-OPTIONAL_ACCESSORS(WasmTrustedInstanceData, interpreter_object, Tagged<Tuple2>,
-                   kInterpreterObjectOffset)
+WTI_OPTIONAL_TAGGED_ACCESSORS(interpreter_object, Tagged<Tuple2>,
+                              kInterpreterObjectOffset)
 #endif  // V8_ENABLE_DRUMBRAKE
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, shared_part,
-                            WasmTrustedInstanceData, kProtectedSharedPartOffset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, dispatch_table0,
-                            WasmDispatchTable, kProtectedDispatchTable0Offset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, dispatch_tables,
-                            ProtectedFixedArray, kProtectedDispatchTablesOffset)
-PROTECTED_POINTER_ACCESSORS(WasmTrustedInstanceData, dispatch_table_for_imports,
-                            WasmDispatchTableForImports,
-                            kProtectedDispatchTableForImportsOffset)
-OPTIONAL_ACCESSORS(WasmTrustedInstanceData, tags_table, Tagged<FixedArray>,
-                   kTagsTableOffset)
-ACCESSORS(WasmTrustedInstanceData, func_refs, Tagged<FixedArray>,
-          kFuncRefsOffset)
-ACCESSORS(WasmTrustedInstanceData, managed_object_maps, Tagged<FixedArray>,
-          kManagedObjectMapsOffset)
-ACCESSORS(WasmTrustedInstanceData, feedback_vectors, Tagged<FixedArray>,
-          kFeedbackVectorsOffset)
-ACCESSORS(WasmTrustedInstanceData, well_known_imports, Tagged<FixedArray>,
-          kWellKnownImportsOffset)
+WTI_PROTECTED_POINTER_ACCESSORS(shared_part, WasmTrustedInstanceData,
+                                kProtectedSharedPartOffset)
+WTI_PROTECTED_POINTER_ACCESSORS(dispatch_table0, WasmDispatchTable,
+                                kProtectedDispatchTable0Offset)
+WTI_PROTECTED_POINTER_ACCESSORS(dispatch_tables, ProtectedFixedArray,
+                                kProtectedDispatchTablesOffset)
+WTI_PROTECTED_POINTER_ACCESSORS(dispatch_table_for_imports,
+                                WasmDispatchTableForImports,
+                                kProtectedDispatchTableForImportsOffset)
+#undef WTI_PROTECTED_POINTER_ACCESSORS
+WTI_OPTIONAL_TAGGED_ACCESSORS(tags_table, Tagged<FixedArray>, kTagsTableOffset)
+WTI_TAGGED_ACCESSORS(func_refs, Tagged<FixedArray>, kFuncRefsOffset)
+WTI_TAGGED_ACCESSORS(managed_object_maps, Tagged<FixedArray>,
+                     kManagedObjectMapsOffset)
+WTI_TAGGED_ACCESSORS(feedback_vectors, Tagged<FixedArray>,
+                     kFeedbackVectorsOffset)
+WTI_TAGGED_ACCESSORS(well_known_imports, Tagged<FixedArray>,
+                     kWellKnownImportsOffset)
+#undef WTI_TAGGED_ACCESSORS
+#undef WTI_OPTIONAL_TAGGED_ACCESSORS
 
 void WasmTrustedInstanceData::clear_padding() {
   constexpr int kPaddingBytes = FIELD_SIZE(kOptionalPaddingOffset);

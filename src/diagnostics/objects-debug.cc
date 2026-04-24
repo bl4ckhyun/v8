@@ -3214,6 +3214,8 @@ void RegExpBoilerplateDescription::RegExpBoilerplateDescriptionVerify(
 #if V8_ENABLE_WEBASSEMBLY
 
 void WasmTrustedInstanceData::WasmTrustedInstanceDataVerify(Isolate* isolate) {
+  ExposedTrustedObjectVerify(isolate);
+
   // Check all tagged fields.
   for (uint16_t offset : kTaggedFieldOffsets) {
     VerifyObjectField(isolate, offset);

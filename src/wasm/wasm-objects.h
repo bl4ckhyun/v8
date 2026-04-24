@@ -693,7 +693,8 @@ class FeedbackConstants {
 
 // The trusted part of a WebAssembly instance.
 // This object lives in trusted space and is never modified from user space.
-class V8_EXPORT_PRIVATE WasmTrustedInstanceData : public ExposedTrustedObject {
+V8_OBJECT class V8_EXPORT_PRIVATE WasmTrustedInstanceData
+    : public ExposedTrustedObjectLayout {
  public:
   DECL_OPTIONAL_ACCESSORS(instance_object, Tagged<WasmInstanceObject>)
   DECL_OPTIONAL_ACCESSORS(native_context, Tagged<Context>)
@@ -810,7 +811,7 @@ class V8_EXPORT_PRIVATE WasmTrustedInstanceData : public ExposedTrustedObject {
   V(kHeaderSize, 0)                                                       \
   V(kSize, 0)
 
-  DEFINE_FIELD_OFFSET_CONSTANTS(ExposedTrustedObject::kHeaderSize, FIELD_LIST)
+  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(ExposedTrustedObjectLayout), FIELD_LIST)
   static_assert(IsAligned(kHeaderSize, kTaggedSize));
   // TODO(ishell, v8:8875): When pointer compression is enabled 8-byte size
   // fields (external pointers, doubles and BigInt data) are only kTaggedSize
@@ -947,11 +948,9 @@ class V8_EXPORT_PRIVATE WasmTrustedInstanceData : public ExposedTrustedObject {
   // Get the value of a global.
   wasm::WasmValue GetGlobalValue(Isolate*, const wasm::WasmGlobal&);
 
-  OBJECT_CONSTRUCTORS(WasmTrustedInstanceData, ExposedTrustedObject);
-
  private:
   void InitDataSegmentArrays(const wasm::NativeModule*);
-};
+} V8_OBJECT_END;
 
 // Representation of a WebAssembly.Instance JavaScript-level object.
 // This is mostly a wrapper around the WasmTrustedInstanceData, plus any
