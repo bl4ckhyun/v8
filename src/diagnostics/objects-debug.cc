@@ -1963,7 +1963,7 @@ void Code::CodeVerify(Isolate* isolate) {
   CHECK(IsCode(*this));
   if (has_instruction_stream()) {
     Tagged<InstructionStream> istream = instruction_stream();
-    CHECK_EQ(istream->code(kAcquireLoad), *this);
+    CHECK_EQ(istream->code(kAcquireLoad), Tagged{this});
     CHECK_EQ(safepoint_table_offset(), 0);
     CHECK_LE(safepoint_table_offset(), handler_table_offset());
     CHECK_LE(handler_table_offset(), constant_pool_offset());
@@ -1987,7 +1987,7 @@ void Code::CodeVerify(Isolate* isolate) {
       // corresponds to this current Code object.
       Tagged<Code> lookup_result =
           isolate->heap()->FindCodeForInnerPointer(instruction_start());
-      CHECK_EQ(lookup_result, *this);
+      CHECK_EQ(lookup_result, Tagged{this});
     }
 #else
     CHECK_EQ(istream->instruction_start(), instruction_start());
@@ -1995,7 +1995,7 @@ void Code::CodeVerify(Isolate* isolate) {
   }
 
   // Our wrapper must point back to us.
-  CHECK_EQ(wrapper()->code(isolate), *this);
+  CHECK_EQ(wrapper()->code(isolate), Tagged{this});
 }
 
 void CodeWrapper::CodeWrapperVerify(Isolate* isolate) {

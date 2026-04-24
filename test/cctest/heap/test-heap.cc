@@ -4587,7 +4587,7 @@ TEST(ObjectsInEagerlyDeoptimizedCodeAreWeak) {
     code = handle(bar->code(isolate), isolate);
     CompileRun("%DeoptimizeFunction(bar);");
     CHECK(code->marked_for_deoptimization());
-    CHECK(!code->SafeEquals(bar->code(isolate)));
+    CHECK(!(*code).SafeEquals(bar->code(isolate)));
     code = scope.CloseAndEscape(code);
   }
 

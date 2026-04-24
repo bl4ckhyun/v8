@@ -215,6 +215,16 @@ V8_OBJECT class ExposedTrustedObjectLayout : public TrustedObjectLayout {
 
   DECL_VERIFIER(ExposedTrustedObject)
 
+  // Back-compat offset/size constants, mirroring the legacy
+  // `ExposedTrustedObject` class so ported subclasses (and unqualified
+  // references inside them, like `kSelfIndirectPointerOffset` in Code) keep
+  // resolving via inheritance. Defined after the member declarations using
+  // offsetof / sizeof.
+#ifdef V8_ENABLE_SANDBOX
+  static const int kSelfIndirectPointerOffset;
+#endif  // V8_ENABLE_SANDBOX
+  static const int kHeaderSize;
+
  private:
 #ifdef V8_ENABLE_SANDBOX
   // The 'self' indirect pointer is only available when the sandbox is enabled.
@@ -222,6 +232,13 @@ V8_OBJECT class ExposedTrustedObjectLayout : public TrustedObjectLayout {
   std::atomic<IndirectPointerHandle> self_indirect_pointer_;
 #endif  // V8_ENABLE_SANDBOX
 } V8_OBJECT_END;
+
+#ifdef V8_ENABLE_SANDBOX
+inline constexpr int ExposedTrustedObjectLayout::kSelfIndirectPointerOffset =
+    offsetof(ExposedTrustedObjectLayout, self_indirect_pointer_);
+#endif  // V8_ENABLE_SANDBOX
+inline constexpr int ExposedTrustedObjectLayout::kHeaderSize =
+    sizeof(ExposedTrustedObjectLayout);
 
 }  // namespace internal
 }  // namespace v8

@@ -485,7 +485,7 @@ void SandboxGetBuiltinCode(const v8::FunctionCallbackInfo<v8::Value>& info) {
   // function should probably return a CodeWrapper or whatever we'll be using
   // as IC handlers representing builtins. If we decide to encode those
   // builtins into Smi handlers, then this function should probably be removed.
-  CHECK(code->IsInMainCageBase());
+  CHECK(code.IsInMainCageBase());
 
   info.GetReturnValue().Set(V8HeapCompressionScheme::CompressAny(code.ptr()));
 }

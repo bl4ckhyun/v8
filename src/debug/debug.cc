@@ -1730,7 +1730,7 @@ class DiscardBaselineCodeVisitor : public ThreadVisitor {
         UnoptimizedJSFrame* frame = UnoptimizedJSFrame::cast(it.frame());
         if (v8_flags.trace_baseline) {
           PrintF("[Sparkplug] discarding on-stack ");
-          ShortPrint(*code);
+          ShortPrint(code);
           PrintF("\n");
         }
         int bytecode_offset = code->GetBytecodeOffsetForBaselinePC(

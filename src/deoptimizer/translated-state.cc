@@ -2031,7 +2031,7 @@ void TranslatedState::Prepare(Address stack_frame_pointer) {
 
   if (!feedback_vector_.is_null()) {
     feedback_vector_handle_ = handle(feedback_vector_, isolate());
-    feedback_vector_ = FeedbackVector();
+    feedback_vector_ = {};
   }
   stack_frame_pointer_ = stack_frame_pointer;
 

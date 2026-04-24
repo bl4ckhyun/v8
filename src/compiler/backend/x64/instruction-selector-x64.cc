@@ -137,7 +137,7 @@ bool CanBeImmediate(InstructionSelector* selector, OpIndex node) {
         const int64_t value = constant.smi().ptr();
         return ValueFitsIntoImmediate(value);
       } else {
-        const int32_t value = constant.smi().ptr();
+        const int32_t value = static_cast<int32_t>(constant.smi().ptr());
         // int32_t min will overflow if displacement mode is
         // kNegativeDisplacement.
         return value != std::numeric_limits<int32_t>::min();

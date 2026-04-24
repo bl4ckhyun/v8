@@ -83,8 +83,7 @@ void TrustedObject::VerifyProtectedPointerField(Isolate* isolate, int offset) {
 
 void TrustedObjectLayout::VerifyProtectedPointerField(Isolate* isolate,
                                                       int offset) {
-  UncheckedCast<TrustedObject>(Tagged(this))
-      ->VerifyProtectedPointerField(isolate, offset);
+  Object::VerifyPointer(isolate, ReadProtectedPointerField(offset));
 }
 #endif
 

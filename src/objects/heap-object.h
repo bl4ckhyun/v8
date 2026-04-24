@@ -39,9 +39,9 @@ using SafeHeapObjectSize = base::StrongAlias<class HeapObjectSizeTag, uint32_t>;
 
 V8_OBJECT class HeapObjectLayout {
  public:
-  // TODO(jgruber): Remove once V8_OBJECT migration is complete and no
-  // Torque-generated class inherits from a V8_OBJECT layout class.
-  HeapObjectLayout() V8_NOEXCEPT = default;
+  // Deleted so that `Foo()` on a V8_OBJECT subclass no longer silently
+  // constructs a real object on the caller's stack.
+  HeapObjectLayout() V8_NOEXCEPT = delete;
 
   // [map]: Contains a map which contains the object's reflective
   // information.
@@ -112,6 +112,16 @@ V8_OBJECT class HeapObjectLayout {
   inline ExternalPointerSlot RawExternalPointerField(
       int byte_offset, ExternalPointerTagRange tag_range) const;
   inline operator Tagged<HeapObject>() const;
+
+  // operator-> parity with legacy HeapObject. Needed so ACCESSORS /
+  // CONDITIONAL_WRITE_BARRIER / ... macros that expand to
+  // `(*this)->RawField(...)` still compile on HeapObjectLayout subclasses;
+  // `*this` is a reference, and references don't have a built-in operator->.
+  // Returning `this` narrows the lookup to HeapObjectLayout members, which
+  // covers all the Raw* / ptr() / address() helpers the macros reach for.
+  // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
+  HeapObjectLayout* operator->() { return this; }
+  const HeapObjectLayout* operator->() const { return this; }
 
   // External pointer field helpers mirroring the HeapObject API.
   // TODO(jgruber): Remove once the V8_OBJECT migration is complete.
