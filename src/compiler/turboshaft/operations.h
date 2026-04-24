@@ -7693,6 +7693,11 @@ struct AnyConvertExternOp : FixedArityOperationT<1, AnyConvertExternOp> {
                               bool is_nullable)
       : Base(object), is_shared(is_shared), is_nullable(is_nullable) {}
 
+  void PrintOptions(std::ostream& os) const {
+    os << "[" << (is_shared == SharedFlag::kYes ? "shared" : "non-shared")
+       << ", " << (is_nullable ? "nullable" : "non-nullable") << "]";
+  }
+
   V<Object> object() const { return Base::input<Object>(0); }
 
   base::Vector<const RegisterRepresentation> outputs_rep() const {
@@ -7714,6 +7719,10 @@ struct ExternConvertAnyOp : FixedArityOperationT<1, ExternConvertAnyOp> {
 
   explicit ExternConvertAnyOp(V<Object> object, bool is_nullable)
       : Base(object), is_nullable(is_nullable) {}
+
+  void PrintOptions(std::ostream& os) const {
+    os << "[" << (is_nullable ? "nullable" : "non-nullable") << "]";
+  }
 
   V<Object> object() const { return Base::input<Object>(0); }
 
