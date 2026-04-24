@@ -26,7 +26,7 @@ class Register;
 #include "torque-generated/src/objects/bytecode-array-tq.inc"
 
 // BytecodeArray represents a sequence of interpreter bytecodes.
-V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
+V8_OBJECT class BytecodeArray : public ExposedTrustedObject {
  public:
   // The length of this bytecode array, in bytes.
   inline int length() const;

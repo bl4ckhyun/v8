@@ -80,16 +80,11 @@ ProtectedMaybeObjectSlot TrustedObject::RawProtectedMaybeObjectField(
 void TrustedObject::VerifyProtectedPointerField(Isolate* isolate, int offset) {
   Object::VerifyPointer(isolate, ReadProtectedPointerField(offset));
 }
-
-void TrustedObjectLayout::VerifyProtectedPointerField(Isolate* isolate,
-                                                      int offset) {
-  Object::VerifyPointer(isolate, ReadProtectedPointerField(offset));
-}
 #endif
 
 void ExposedTrustedObject::InitAndPublish(Isolate* isolate) {
 #ifdef V8_ENABLE_SANDBOX
-  InitSelfIndirectPointerField(kSelfIndirectPointerOffset, isolate,
+  InitSelfIndirectPointerField(&self_indirect_pointer_, isolate,
                                isolate->trusted_pointer_publishing_scope());
 #endif
 }
@@ -98,21 +93,23 @@ void ExposedTrustedObject::InitAndPublish(LocalIsolate* isolate) {
 #ifdef V8_ENABLE_SANDBOX
   // Background threads using LocalIsolates don't use
   // TrustedPointerPublishingScopes.
-  InitSelfIndirectPointerField(kSelfIndirectPointerOffset, isolate, nullptr);
+  InitSelfIndirectPointerField(&self_indirect_pointer_, isolate, nullptr);
 #endif
 }
 
 void ExposedTrustedObject::InitDontPublish(Isolate* isolate) {
 #ifdef V8_ENABLE_SANDBOX
-  InitSelfIndirectPointerFieldWithoutPublishing(kSelfIndirectPointerOffset,
-                                                isolate);
+  i::InitSelfIndirectPointerField(
+      reinterpret_cast<Address>(&self_indirect_pointer_), isolate, this,
+      kUnpublishedIndirectPointerTag, nullptr);
 #endif
 }
 
 void ExposedTrustedObject::InitDontPublish(LocalIsolate* isolate) {
 #ifdef V8_ENABLE_SANDBOX
-  InitSelfIndirectPointerFieldWithoutPublishing(kSelfIndirectPointerOffset,
-                                                isolate);
+  i::InitSelfIndirectPointerField(
+      reinterpret_cast<Address>(&self_indirect_pointer_), isolate, this,
+      kUnpublishedIndirectPointerTag, nullptr);
 #endif
 }
 
@@ -127,7 +124,7 @@ void ExposedTrustedObject::Publish(IsolateForSandbox isolate) {
   IndirectPointerTag tag =
       IndirectPointerTagFromInstanceType(instance_type, SharedFlag::kNo);
   IndirectPointerHandle handle =
-      ACQUIRE_READ_UINT32_FIELD(*this, kSelfIndirectPointerOffset);
+      self_indirect_pointer_.load(std::memory_order::acquire);
   TrustedPointerTable& table = isolate.GetTrustedPointerTableFor(tag);
   return table.Publish(handle, tag);
 #endif
@@ -144,7 +141,7 @@ void ExposedTrustedObject::Unpublish(IsolateForSandbox isolate) {
   IndirectPointerTag tag =
       IndirectPointerTagFromInstanceType(instance_type, SharedFlag::kNo);
   IndirectPointerHandle handle =
-      ACQUIRE_READ_UINT32_FIELD(*this, kSelfIndirectPointerOffset);
+      self_indirect_pointer_.load(std::memory_order::acquire);
   TrustedPointerTable& table = isolate.GetTrustedPointerTableFor(tag);
   table.Unpublish(handle);
 #endif  // V8_ENABLE_SANDBOX
@@ -155,135 +152,14 @@ bool ExposedTrustedObject::IsPublished(IsolateForSandbox isolate) const {
   InstanceType instance_type = map()->instance_type();
   IndirectPointerTag tag =
       IndirectPointerTagFromInstanceType(instance_type, SharedFlag::kNo);
-  return !IsTrustedPointerFieldUnpublished(kSelfIndirectPointerOffset, tag,
-                                           isolate);
+  return !TrustedPointerField::IsTrustedPointerFieldUnpublished(
+      *this, kSelfIndirectPointerOffset, tag, isolate);
 #else
   return true;
 #endif
 }
 
 IndirectPointerHandle ExposedTrustedObject::self_indirect_pointer_handle()
-    const {
-#ifdef V8_ENABLE_SANDBOX
-  return Relaxed_ReadField<IndirectPointerHandle>(kSelfIndirectPointerOffset);
-#else
-  UNREACHABLE();
-#endif
-}
-
-template <typename T>
-Tagged<T> TrustedObjectLayout::ReadProtectedPointerField(int offset) const {
-  return UncheckedCast<TrustedObject>(Tagged(this))
-      ->template ReadProtectedPointerField<T>(offset);
-}
-
-template <typename T>
-Tagged<T> TrustedObjectLayout::ReadProtectedPointerField(int offset,
-                                                         AcquireLoadTag) const {
-  return UncheckedCast<TrustedObject>(Tagged(this))
-      ->template ReadProtectedPointerField<T>(offset, kAcquireLoad);
-}
-
-void TrustedObjectLayout::WriteProtectedPointerField(
-    int offset, Tagged<TrustedObject> value) {
-  UncheckedCast<TrustedObject>(Tagged(this))
-      ->WriteProtectedPointerField(offset, value);
-}
-
-void TrustedObjectLayout::WriteProtectedPointerField(
-    int offset, Tagged<TrustedObject> value, ReleaseStoreTag) {
-  UncheckedCast<TrustedObject>(Tagged(this))
-      ->WriteProtectedPointerField(offset, value, kReleaseStore);
-}
-
-bool TrustedObjectLayout::IsProtectedPointerFieldEmpty(int offset) const {
-  return UncheckedCast<TrustedObject>(
-             Tagged(const_cast<TrustedObjectLayout*>(this)))
-      ->IsProtectedPointerFieldEmpty(offset);
-}
-
-bool TrustedObjectLayout::IsProtectedPointerFieldEmpty(int offset,
-                                                       AcquireLoadTag) const {
-  return UncheckedCast<TrustedObject>(
-             Tagged(const_cast<TrustedObjectLayout*>(this)))
-      ->IsProtectedPointerFieldEmpty(offset, kAcquireLoad);
-}
-
-void TrustedObjectLayout::ClearProtectedPointerField(int offset) {
-  UncheckedCast<TrustedObject>(Tagged(this))
-      ->ClearProtectedPointerField(offset);
-}
-
-void TrustedObjectLayout::ClearProtectedPointerField(int offset,
-                                                     ReleaseStoreTag) {
-  UncheckedCast<TrustedObject>(Tagged(this))
-      ->ClearProtectedPointerField(offset, kReleaseStore);
-}
-
-ProtectedPointerSlot TrustedObjectLayout::RawProtectedPointerField(
-    int byte_offset) const {
-  return UncheckedCast<TrustedObject>(
-             Tagged(const_cast<TrustedObjectLayout*>(this)))
-      ->RawProtectedPointerField(byte_offset);
-}
-
-ProtectedMaybeObjectSlot TrustedObjectLayout::RawProtectedMaybeObjectField(
-    int byte_offset) const {
-  return UncheckedCast<TrustedObject>(
-             Tagged(const_cast<TrustedObjectLayout*>(this)))
-      ->RawProtectedMaybeObjectField(byte_offset);
-}
-
-void ExposedTrustedObjectLayout::InitAndPublish(Isolate* isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  InitSelfIndirectPointerField(&self_indirect_pointer_, isolate,
-                               isolate->trusted_pointer_publishing_scope());
-#endif
-}
-
-void ExposedTrustedObjectLayout::InitAndPublish(LocalIsolate* isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  // Background threads using LocalIsolates don't use
-  // TrustedPointerPublishingScopes.
-  InitSelfIndirectPointerField(&self_indirect_pointer_, isolate, nullptr);
-#endif
-}
-
-void ExposedTrustedObjectLayout::InitDontPublish(Isolate* isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  UncheckedCast<ExposedTrustedObject>(Tagged(this))->InitDontPublish(isolate);
-#endif
-}
-
-void ExposedTrustedObjectLayout::InitDontPublish(LocalIsolate* isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  UncheckedCast<ExposedTrustedObject>(Tagged(this))->InitDontPublish(isolate);
-#endif
-}
-
-void ExposedTrustedObjectLayout::Publish(IsolateForSandbox isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  UncheckedCast<ExposedTrustedObject>(Tagged(this))->Publish(isolate);
-#endif
-}
-
-void ExposedTrustedObjectLayout::Unpublish(IsolateForSandbox isolate) {
-#ifdef V8_ENABLE_SANDBOX
-  UncheckedCast<ExposedTrustedObject>(Tagged(this))->Unpublish(isolate);
-#endif
-}
-
-bool ExposedTrustedObjectLayout::IsPublished(IsolateForSandbox isolate) const {
-#ifdef V8_ENABLE_SANDBOX
-  return UncheckedCast<ExposedTrustedObject>(
-             Tagged(const_cast<ExposedTrustedObjectLayout*>(this)))
-      ->IsPublished(isolate);
-#else
-  return true;
-#endif
-}
-
-IndirectPointerHandle ExposedTrustedObjectLayout::self_indirect_pointer_handle()
     const {
 #ifdef V8_ENABLE_SANDBOX
   return self_indirect_pointer_.load(std::memory_order::relaxed);

@@ -327,9 +327,9 @@ class TrustedArrayShape final : public AllStatic {
 // pointers), use ProtectedFixedArray.
 V8_OBJECT class TrustedFixedArray
     : public TaggedArrayBase<TrustedFixedArray, TrustedArrayShape,
-                             TrustedObjectLayout> {
-  using Super = TaggedArrayBase<TrustedFixedArray, TrustedArrayShape,
-                                TrustedObjectLayout>;
+                             TrustedObject> {
+  using Super =
+      TaggedArrayBase<TrustedFixedArray, TrustedArrayShape, TrustedObject>;
 
  public:
   template <class IsolateT>
@@ -360,9 +360,9 @@ class ProtectedArrayShape final : public AllStatic {
 // ProtectedFixedArray has a unique instance type.
 V8_OBJECT class ProtectedFixedArray
     : public TaggedArrayBase<ProtectedFixedArray, ProtectedArrayShape,
-                             TrustedObjectLayout> {
-  using Super = TaggedArrayBase<ProtectedFixedArray, ProtectedArrayShape,
-                                TrustedObjectLayout>;
+                             TrustedObject> {
+  using Super =
+      TaggedArrayBase<ProtectedFixedArray, ProtectedArrayShape, TrustedObject>;
 
  public:
   // Allocate a new ProtectedFixedArray of the given capacity, initialized with
@@ -602,7 +602,7 @@ class TrustedWeakFixedArrayShape final : public AllStatic {
 // A WeakFixedArray in trusted space holding pointers into the main cage.
 V8_OBJECT class TrustedWeakFixedArray
     : public TaggedArrayBase<TrustedWeakFixedArray, TrustedWeakFixedArrayShape,
-                             TrustedObjectLayout> {
+                             TrustedObject> {
   using Super =
       TaggedArrayBase<TrustedWeakFixedArray, TrustedWeakFixedArrayShape>;
 
@@ -630,11 +630,9 @@ class ProtectedWeakFixedArrayShape final : public AllStatic {
 // trusted objects (or smis).
 V8_OBJECT class ProtectedWeakFixedArray
     : public TaggedArrayBase<ProtectedWeakFixedArray,
-                             ProtectedWeakFixedArrayShape,
-                             TrustedObjectLayout> {
-  using Super =
-      TaggedArrayBase<ProtectedWeakFixedArray, ProtectedWeakFixedArrayShape,
-                      TrustedObjectLayout>;
+                             ProtectedWeakFixedArrayShape, TrustedObject> {
+  using Super = TaggedArrayBase<ProtectedWeakFixedArray,
+                                ProtectedWeakFixedArrayShape, TrustedObject>;
 
  public:
   template <class IsolateT>
@@ -894,9 +892,9 @@ class TrustedByteArrayShape final : public AllStatic {
 V8_OBJECT
 class TrustedByteArray
     : public PrimitiveArrayBase<TrustedByteArray, TrustedByteArrayShape,
-                                TrustedObjectLayout> {
+                                TrustedObject> {
   using Super = PrimitiveArrayBase<TrustedByteArray, TrustedByteArrayShape,
-                                   TrustedObjectLayout>;
+                                   TrustedObject>;
 
  public:
   using Shape = TrustedByteArrayShape;

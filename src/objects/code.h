@@ -61,7 +61,7 @@ enum class LazyDeoptimizeReason : uint8_t;
 // When the sandbox is enabled, Code objects are allocated outside the sandbox
 // and referenced through indirect pointers, so they need to inherit from
 // ExposedTrustedObject.
-V8_OBJECT class Code : public ExposedTrustedObjectLayout {
+V8_OBJECT class Code : public ExposedTrustedObject {
  public:
   // When V8_EXTERNAL_CODE_SPACE is enabled, InstructionStream objects are
   // allocated in a separate pointer compression cage instead of the cage where
@@ -433,8 +433,7 @@ V8_OBJECT class Code : public ExposedTrustedObjectLayout {
   /* Total size. */                                                            \
   V(kSize, 0)
 
-  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(ExposedTrustedObjectLayout),
-                                CODE_DATA_FIELDS)
+  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(ExposedTrustedObject), CODE_DATA_FIELDS)
 
 #undef CODE_DATA_FIELDS
 

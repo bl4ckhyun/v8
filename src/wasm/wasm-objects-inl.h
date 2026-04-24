@@ -343,6 +343,9 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
   }
 
 // Protected pointer accessors (replaces PROTECTED_POINTER_ACCESSORS).
+// PROTECTED_POINTER_ACCESSORS requires a TrustedObject base; spell out
+// the impls manually now that WasmTrustedInstanceData derives from
+// ExposedTrustedObject.
 #define WTI_PROTECTED_POINTER_ACCESSORS(name, type, offset)           \
   Tagged<type> WasmTrustedInstanceData::name() const {                \
     DCHECK(has_##name());                                             \
@@ -528,9 +531,11 @@ ImportedFunctionEntry::ImportedFunctionEntry(
 
 // WasmDispatchTable
 
-// Spelled out (not PROTECTED_POINTER_ACCESSORS) because the macro's
-// static_assert requires a TrustedObject base; WasmDispatchTable now derives
-// from ExposedTrustedObjectLayout.
+// TODO(jgruber): Spelled out (not PROTECTED_POINTER_ACCESSORS) because the
+// macro expands to CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, ...),
+// which is not valid on a V8_OBJECT / HeapObjectLayout holder. The macro
+// needs a Tagged<T>-wrapped self; spell the accessors out until the barrier
+// macro is updated.
 Tagged<TrustedManaged<WasmDispatchTableData>>
 WasmDispatchTable::protected_offheap_data() const {
   DCHECK(has_protected_offheap_data());
@@ -551,10 +556,11 @@ bool WasmDispatchTable::has_protected_offheap_data() const {
 void WasmDispatchTable::clear_protected_offheap_data() {
   ClearProtectedPointerField(kProtectedOffheapDataOffset);
 }
-// PROTECTED_POINTER_ACCESSORS requires the holder to derive from the legacy
-// TrustedObject; WasmDispatchTableForImports now derives from
-// TrustedObjectLayout, so spell the accessors out against the Layout-side
-// ReadProtectedPointerField / WriteProtectedPointerField overloads.
+// TODO(jgruber): See the WasmDispatchTable block above:
+// PROTECTED_POINTER_ACCESSORS expands to
+// CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, ...) which does not
+// work on a V8_OBJECT holder; spell the accessors out until the barrier
+// macro is updated.
 Tagged<TrustedManaged<WasmDispatchTableData>>
 WasmDispatchTableForImports::protected_offheap_data() const {
   DCHECK(has_protected_offheap_data());

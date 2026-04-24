@@ -4123,9 +4123,8 @@ class ClassFieldOffsetGenerator : public FieldOffsetsGenerator {
       // TODO(leszeks): Hacked in support for some classes (e.g.
       // HeapObject) being mirrored by a *Layout class. Remove once
       // everything is ported to layout classes.
-      if (parent_name == "HeapObject" || parent_name == "TrustedObject" ||
-          parent_name == "ExposedTrustedObject" ||
-          parent_name == "JSReceiver" || parent_name == "JSObject" ||
+      if (parent_name == "HeapObject" || parent_name == "JSReceiver" ||
+          parent_name == "JSObject" ||
           parent_name == "JSObjectWithEmbedderSlots" ||
           parent_name == "JSAPIObjectWithEmbedderSlots" ||
           parent_name == "JSCustomElementsObject" ||

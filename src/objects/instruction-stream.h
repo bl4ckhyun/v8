@@ -33,7 +33,7 @@ class WritableJitAllocation;
 // An InstructionStream is a trusted object as it lives outside of the sandbox
 // and contains trusted content (machine code). However, it is special in that
 // it doesn't live in the trusted space but instead in the code space.
-V8_OBJECT class InstructionStream : public TrustedObjectLayout {
+V8_OBJECT class InstructionStream : public TrustedObject {
  public:
   // All InstructionStream objects have the following layout:
   //
@@ -135,7 +135,7 @@ V8_OBJECT class InstructionStream : public TrustedObjectLayout {
   V(kConstantPoolOffsetOffset, V8_EMBEDDED_CONSTANT_POOL_BOOL ? kIntSize : 0) \
   V(kUnalignedSize, OBJECT_POINTER_PADDING(kUnalignedSize))                   \
   V(kHeaderSize, 0)
-  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(TrustedObjectLayout), ISTREAM_FIELDS)
+  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(TrustedObject), ISTREAM_FIELDS)
 #undef ISTREAM_FIELDS
 
   static_assert(kCodeAlignment >= kHeaderSize);

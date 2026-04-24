@@ -694,7 +694,7 @@ class FeedbackConstants {
 // The trusted part of a WebAssembly instance.
 // This object lives in trusted space and is never modified from user space.
 V8_OBJECT class V8_EXPORT_PRIVATE WasmTrustedInstanceData
-    : public ExposedTrustedObjectLayout {
+    : public ExposedTrustedObject {
  public:
   DECL_OPTIONAL_ACCESSORS(instance_object, Tagged<WasmInstanceObject>)
   DECL_OPTIONAL_ACCESSORS(native_context, Tagged<Context>)
@@ -811,7 +811,7 @@ V8_OBJECT class V8_EXPORT_PRIVATE WasmTrustedInstanceData
   V(kHeaderSize, 0)                                                       \
   V(kSize, 0)
 
-  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(ExposedTrustedObjectLayout), FIELD_LIST)
+  DEFINE_FIELD_OFFSET_CONSTANTS(sizeof(ExposedTrustedObject), FIELD_LIST)
   static_assert(IsAligned(kHeaderSize, kTaggedSize));
   // TODO(ishell, v8:8875): When pointer compression is enabled 8-byte size
   // fields (external pointers, doubles and BigInt data) are only kTaggedSize
@@ -1082,7 +1082,7 @@ class WasmDispatchTableData {
 // The dispatch table is referenced from a WasmTableObject and from every
 // WasmTrustedInstanceData which uses the table. It is used from generated code
 // for executing indirect calls.
-V8_OBJECT class WasmDispatchTable : public ExposedTrustedObjectLayout {
+V8_OBJECT class WasmDispatchTable : public ExposedTrustedObject {
  public:
 #if V8_ENABLE_DRUMBRAKE
   static const uint32_t kInvalidFunctionIndex = UINT_MAX;
@@ -1095,7 +1095,7 @@ V8_OBJECT class WasmDispatchTable : public ExposedTrustedObjectLayout {
 
   class BodyDescriptor;
 
-  static constexpr size_t kLengthOffset = sizeof(ExposedTrustedObjectLayout);
+  static constexpr size_t kLengthOffset = sizeof(ExposedTrustedObject);
   static constexpr size_t kCapacityOffset = kLengthOffset + kUInt32Size;
   static constexpr size_t kProtectedOffheapDataOffset =
       kCapacityOffset + kUInt32Size;
@@ -1214,11 +1214,11 @@ V8_OBJECT class WasmDispatchTable : public ExposedTrustedObjectLayout {
   DECL_VERIFIER(WasmDispatchTable)
 } V8_OBJECT_END;
 
-V8_OBJECT class WasmDispatchTableForImports : public TrustedObjectLayout {
+V8_OBJECT class WasmDispatchTableForImports : public TrustedObject {
  public:
   class BodyDescriptor;
 
-  static constexpr size_t kLengthOffset = sizeof(TrustedObjectLayout);
+  static constexpr size_t kLengthOffset = sizeof(TrustedObject);
   static constexpr size_t kPaddingSize = TAGGED_SIZE_8_BYTES ? kUInt32Size : 0;
   static constexpr size_t kProtectedOffheapDataOffset =
       kLengthOffset + kUInt32Size + kPaddingSize;
@@ -1424,7 +1424,7 @@ class WasmExternalFunction : public JSFunction {
   inline Tagged<WasmFuncRef> func_ref() const;
 };
 
-V8_OBJECT class WasmFunctionData : public ExposedTrustedObjectLayout {
+V8_OBJECT class WasmFunctionData : public ExposedTrustedObject {
  public:
   DECL_CODE_POINTER_ACCESSORS(wrapper_code)
   DECL_PROTECTED_POINTER_ACCESSORS(internal, WasmInternalFunction)
@@ -1528,7 +1528,7 @@ inline constexpr int WasmExportedFunctionData::kHeaderSize =
 inline constexpr int WasmExportedFunctionData::kSize =
     sizeof(WasmExportedFunctionData);
 
-V8_OBJECT class WasmImportData : public TrustedObjectLayout {
+V8_OBJECT class WasmImportData : public TrustedObject {
  public:
   // Dispatched behavior.
   DECL_PRINTER(WasmImportData)
@@ -1620,7 +1620,7 @@ inline constexpr int WasmImportData::kBitFieldOffset =
 inline constexpr int WasmImportData::kHeaderSize = sizeof(WasmImportData);
 inline constexpr int WasmImportData::kSize = sizeof(WasmImportData);
 
-V8_OBJECT class WasmInternalFunction : public ExposedTrustedObjectLayout {
+V8_OBJECT class WasmInternalFunction : public ExposedTrustedObject {
  public:
   // Get the external function if it exists. Returns true and writes to the
   // output parameter if an external function exists. Returns false otherwise.
@@ -2099,7 +2099,7 @@ inline constexpr int WasmArray::kHeaderSize = sizeof(WasmArray);
 
 // The suspender object provides an API to suspend and resume wasm code using
 // promises. See: https://github.com/WebAssembly/js-promise-integration.
-V8_OBJECT class WasmSuspenderObject : public ExposedTrustedObjectLayout {
+V8_OBJECT class WasmSuspenderObject : public ExposedTrustedObject {
  public:
   enum State : int { kInactive = 0, kActive, kSuspended };
   DECL_EXTERNAL_POINTER_ACCESSORS(stack, wasm::StackMemory*)

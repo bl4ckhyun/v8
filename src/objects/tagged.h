@@ -21,9 +21,7 @@ class HeapObject;
 class HeapNumber;
 class HeapObjectLayout;
 class TrustedObject;
-class TrustedObjectLayout;
 class ExposedTrustedObject;
-class ExposedTrustedObjectLayout;
 class Object;
 class TaggedIndex;
 class Smi;
@@ -188,8 +186,6 @@ using WeakTaggedBase = TaggedImpl<HeapObjectReferenceType::WEAK, Address>;
 // Types which provide both a legacy Foo as well as a new-style FooLayout class.
 #define LAYOUT_TYPES(V)           \
   V(HeapObject)                   \
-  V(ExposedTrustedObject)         \
-  V(TrustedObject)                \
   V(JSReceiver)                   \
   V(JSObject)                     \
   V(JSObjectWithEmbedderSlots)    \
@@ -479,21 +475,6 @@ struct is_complex_subtype<Derived, HeapObject,
                           std::enable_if_t<std::disjunction_v<
                               std::is_base_of<HeapObject, Derived>,
                               std::is_base_of<HeapObjectLayout, Derived>>>>
-    : public std::true_type {};
-
-template <typename Derived>
-struct is_complex_subtype<Derived, TrustedObject,
-                          std::enable_if_t<std::disjunction_v<
-                              std::is_base_of<TrustedObject, Derived>,
-                              std::is_base_of<TrustedObjectLayout, Derived>>>>
-    : public std::true_type {};
-
-template <typename Derived>
-struct is_complex_subtype<
-    Derived, ExposedTrustedObject,
-    std::enable_if_t<std::disjunction_v<
-        std::is_base_of<ExposedTrustedObject, Derived>,
-        std::is_base_of<ExposedTrustedObjectLayout, Derived>>>>
     : public std::true_type {};
 
 class JSReceiverLayout;

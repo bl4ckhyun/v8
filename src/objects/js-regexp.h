@@ -170,7 +170,7 @@ DEFINE_OPERATORS_FOR_FLAGS(JSRegExp::Flags)
 
 class RegExpDataWrapper;
 
-V8_OBJECT class RegExpData : public ExposedTrustedObjectLayout {
+V8_OBJECT class RegExpData : public ExposedTrustedObject {
  public:
   enum class Type : uint8_t {
     ATOM,          // A simple string match.

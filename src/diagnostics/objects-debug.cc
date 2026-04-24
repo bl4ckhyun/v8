@@ -1914,15 +1914,6 @@ void TrustedObject::TrustedObjectVerify(Isolate* isolate) {
 #endif
 }
 
-void TrustedObjectLayout::TrustedObjectVerify(Isolate* isolate) {
-  UncheckedCast<TrustedObject>(this)->TrustedObjectVerify(isolate);
-}
-
-void ExposedTrustedObjectLayout::ExposedTrustedObjectVerify(Isolate* isolate) {
-  UncheckedCast<ExposedTrustedObject>(this)->ExposedTrustedObjectVerify(
-      isolate);
-}
-
 void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
   TrustedObjectVerify(isolate);
 #if defined(V8_ENABLE_SANDBOX)
@@ -1941,7 +1932,7 @@ void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
   IndirectPointerSlot slot =
       RawIndirectPointerField(kSelfIndirectPointerOffset, tag);
   Tagged<Object> self = slot.load(isolate);
-  CHECK_EQ(self, *this);
+  CHECK_EQ(self, this);
   // If the object is in the read-only space, the self indirect pointer entry
   // must be in the read-only segment, and vice versa.
   if (tag == kCodeIndirectPointerTag) {

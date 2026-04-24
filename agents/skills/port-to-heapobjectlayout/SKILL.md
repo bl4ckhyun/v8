@@ -40,7 +40,7 @@ Define the explicit memory layout in the C++ header.
 
 1. **Include Object Macros:** The file must end with `#include "src/objects/object-macros.h"`.
 2. **Class Definition & Macros:** Wrap the class in `V8_OBJECT` and `V8_OBJECT_END`.
-3. **Inheritance:** Change the base class to a Layout class (e.g., `StructLayout`, `HeapObjectLayout`, `TrustedObjectLayout`).
+3. **Inheritance:** Change the base class to a Layout class (e.g., `StructLayout`, `HeapObjectLayout`, `TrustedObject`).
 4. **Declare Fields (Publicly):** Define the fields matching the Torque definition, appending `_` to their names. Use `TaggedMember` combined with `UnionOf` or `Weak` where appropriate:
    * **Unions:** `TaggedMember<UnionOf<JSAny, Hole>> value_;` (Maps to `JSAny|TheHole`)
    * **Weak Unions:** `TaggedMember<UnionOf<Weak<Map>, Undefined>> weak_ref_;`

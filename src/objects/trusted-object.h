@@ -30,7 +30,7 @@ namespace internal {
 // would be unsafe: an attacker could corrupt any (direct) pointer to these
 // objects stored inside the sandbox. However, ExposedTrustedObject can be
 // referenced via indirect pointers, which guarantee memory-safe access.
-class TrustedObject : public HeapObject {
+V8_OBJECT class TrustedObject : public HeapObjectLayout {
  public:
   DECL_VERIFIER(TrustedObject)
 
@@ -64,39 +64,8 @@ class TrustedObject : public HeapObject {
   inline void VerifyProtectedPointerField(Isolate* isolate, int offset);
 #endif
 
-  static constexpr int kHeaderSize = HeapObject::kHeaderSize;
-
-  OBJECT_CONSTRUCTORS(TrustedObject, HeapObject);
-};
-
-V8_OBJECT class TrustedObjectLayout : public HeapObjectLayout {
- public:
-  // Protected pointer accessors, mirroring the legacy `TrustedObject` API
-  // so ported subclasses with variable-offset layouts (WasmDispatchTable,
-  // WasmDispatchTableForImports, etc.) keep using offset-based access.
-  template <typename T = TrustedObject>
-  inline Tagged<T> ReadProtectedPointerField(int offset) const;
-  template <typename T = TrustedObject>
-  inline Tagged<T> ReadProtectedPointerField(int offset, AcquireLoadTag) const;
-  inline void WriteProtectedPointerField(int offset,
-                                         Tagged<TrustedObject> value);
-  inline void WriteProtectedPointerField(int offset,
-                                         Tagged<TrustedObject> value,
-                                         ReleaseStoreTag);
-  inline bool IsProtectedPointerFieldEmpty(int offset) const;
-  inline bool IsProtectedPointerFieldEmpty(int offset, AcquireLoadTag) const;
-  inline void ClearProtectedPointerField(int offset);
-  inline void ClearProtectedPointerField(int offset, ReleaseStoreTag);
-
-  inline ProtectedPointerSlot RawProtectedPointerField(int byte_offset) const;
-  inline ProtectedMaybeObjectSlot RawProtectedMaybeObjectField(
-      int byte_offset) const;
-
-#ifdef VERIFY_HEAP
-  inline void VerifyProtectedPointerField(Isolate* isolate, int offset);
-#endif
-
-  DECL_VERIFIER(TrustedObject)
+  // Back-compat alias: TrustedObject adds no fields on top of HeapObject.
+  static constexpr int kHeaderSize = sizeof(HeapObjectLayout);
 } V8_OBJECT_END;
 
 // A trusted object that can safely be referenced from untrusted objects.
@@ -131,7 +100,7 @@ V8_OBJECT class TrustedObjectLayout : public HeapObjectLayout {
 // with a unique instance type. It is of course still possible to build new
 // utility objects on top of this class, but hopefully this comment serves to
 // document the potential pitfalls when doing so.
-class ExposedTrustedObject : public TrustedObject {
+V8_OBJECT class ExposedTrustedObject : public TrustedObject {
  public:
   // Initializes this object by allocating its pointer table entry. This
   // initializer function immediately makes the trusted object accessible from
@@ -175,57 +144,18 @@ class ExposedTrustedObject : public TrustedObject {
 
   DECL_VERIFIER(ExposedTrustedObject)
 
-#ifdef V8_ENABLE_SANDBOX
-  // The 'self' indirect pointer is only available when the sandbox is enabled.
-  // Otherwise, these objects are referenced through direct pointers.
-#define FIELD_LIST(V)                                                   \
-  V(kSelfIndirectPointerOffset, kIndirectPointerSize)                   \
-  V(kUnalignedHeaderSize, OBJECT_POINTER_PADDING(kUnalignedHeaderSize)) \
-  V(kHeaderSize, 0)                                                     \
-  V(kSize, 0)
-
-  DEFINE_FIELD_OFFSET_CONSTANTS(TrustedObject::kHeaderSize, FIELD_LIST)
-#undef FIELD_LIST
-#else   // V8_ENABLE_SANDBOX
-  static constexpr int kHeaderSize = TrustedObject::kHeaderSize;
-#endif  // V8_ENABLE_SANDBOX
-
-  OBJECT_CONSTRUCTORS(ExposedTrustedObject, TrustedObject);
-};
-
-V8_OBJECT class ExposedTrustedObjectLayout : public TrustedObjectLayout {
- public:
-  // Initializes this object by allocating its pointer table entry.
-  // This initializer function immediately makes the trusted object accessible
-  // from within the sandbox. If that is undesirable (e.g. because the object
-  // may be in an inconsistent state or require addition validation), use the
-  // InitDontPublish variant instead.
-  inline void InitAndPublish(Isolate* isolate);
-  inline void InitAndPublish(LocalIsolate* isolate);
-
-  inline void InitDontPublish(Isolate* isolate);
-  inline void InitDontPublish(LocalIsolate* isolate);
-
-  inline void Publish(IsolateForSandbox isolate);
-  inline void Unpublish(IsolateForSandbox isolate);
-
-  inline bool IsPublished(IsolateForSandbox isolate) const;
-
-  inline IndirectPointerHandle self_indirect_pointer_handle() const;
-
-  DECL_VERIFIER(ExposedTrustedObject)
-
-  // Back-compat offset/size constants, mirroring the legacy
-  // `ExposedTrustedObject` class so ported subclasses (and unqualified
-  // references inside them, like `kSelfIndirectPointerOffset` in Code) keep
-  // resolving via inheritance. Defined after the member declarations using
-  // offsetof / sizeof.
+  // Back-compat offset/size constants. Defined after the member declarations
+  // using offsetof / sizeof so the collapse doesn't churn call sites that
+  // reference e.g. `ExposedTrustedObject::kSelfIndirectPointerOffset` or
+  // `ExposedTrustedObject::kHeaderSize`.
 #ifdef V8_ENABLE_SANDBOX
   static const int kSelfIndirectPointerOffset;
 #endif  // V8_ENABLE_SANDBOX
   static const int kHeaderSize;
 
  private:
+  friend class TorqueGeneratedExposedTrustedObjectAsserts;
+
 #ifdef V8_ENABLE_SANDBOX
   // The 'self' indirect pointer is only available when the sandbox is enabled.
   // Otherwise, these objects are referenced through direct pointers.
@@ -234,11 +164,11 @@ V8_OBJECT class ExposedTrustedObjectLayout : public TrustedObjectLayout {
 } V8_OBJECT_END;
 
 #ifdef V8_ENABLE_SANDBOX
-inline constexpr int ExposedTrustedObjectLayout::kSelfIndirectPointerOffset =
-    offsetof(ExposedTrustedObjectLayout, self_indirect_pointer_);
+inline constexpr int ExposedTrustedObject::kSelfIndirectPointerOffset =
+    offsetof(ExposedTrustedObject, self_indirect_pointer_);
 #endif  // V8_ENABLE_SANDBOX
-inline constexpr int ExposedTrustedObjectLayout::kHeaderSize =
-    sizeof(ExposedTrustedObjectLayout);
+inline constexpr int ExposedTrustedObject::kHeaderSize =
+    sizeof(ExposedTrustedObject);
 
 }  // namespace internal
 }  // namespace v8

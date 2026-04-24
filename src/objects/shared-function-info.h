@@ -138,7 +138,7 @@ static_assert(IsAligned(OFFSET_OF_DATA_START(PreparseData),
 
 // Abstract class representing extra data for an uncompiled function, which is
 // not stored in the SharedFunctionInfo.
-V8_OBJECT class UncompiledData : public ExposedTrustedObjectLayout {
+V8_OBJECT class UncompiledData : public ExposedTrustedObject {
  public:
   inline Tagged<String> inferred_name() const;
   inline void set_inferred_name(Tagged<String> value,
@@ -227,7 +227,7 @@ V8_OBJECT class UncompiledDataWithPreparseDataAndJob
   Address job_;
 } V8_OBJECT_END;
 
-V8_OBJECT class InterpreterData : public ExposedTrustedObjectLayout {
+V8_OBJECT class InterpreterData : public ExposedTrustedObject {
  public:
   inline Tagged<BytecodeArray> bytecode_array() const;
   inline void set_bytecode_array(Tagged<BytecodeArray> value,
@@ -1022,7 +1022,7 @@ std::ostream& operator<<(std::ostream& os, SharedFunctionInfo::Inlineability i);
 // A SharedFunctionInfoWrapper wraps a SharedFunctionInfo from trusted space.
 // It can be useful when a protected pointer reference to a SharedFunctionInfo
 // is needed, for example for a ProtectedFixedArray.
-V8_OBJECT class SharedFunctionInfoWrapper : public TrustedObjectLayout {
+V8_OBJECT class SharedFunctionInfoWrapper : public TrustedObject {
  public:
   inline Tagged<SharedFunctionInfo> shared_info() const;
   inline void set_shared_info(Tagged<SharedFunctionInfo> value,
