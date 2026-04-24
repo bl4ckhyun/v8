@@ -1083,7 +1083,7 @@ class WasmDispatchTableData {
 // The dispatch table is referenced from a WasmTableObject and from every
 // WasmTrustedInstanceData which uses the table. It is used from generated code
 // for executing indirect calls.
-class WasmDispatchTable : public ExposedTrustedObject {
+V8_OBJECT class WasmDispatchTable : public ExposedTrustedObjectLayout {
  public:
 #if V8_ENABLE_DRUMBRAKE
   static const uint32_t kInvalidFunctionIndex = UINT_MAX;
@@ -1096,7 +1096,7 @@ class WasmDispatchTable : public ExposedTrustedObject {
 
   class BodyDescriptor;
 
-  static constexpr size_t kLengthOffset = kHeaderSize;
+  static constexpr size_t kLengthOffset = sizeof(ExposedTrustedObjectLayout);
   static constexpr size_t kCapacityOffset = kLengthOffset + kUInt32Size;
   static constexpr size_t kProtectedOffheapDataOffset =
       kCapacityOffset + kUInt32Size;
@@ -1106,6 +1106,7 @@ class WasmDispatchTable : public ExposedTrustedObject {
   static constexpr size_t kPaddingSize = TAGGED_SIZE_8_BYTES ? kUInt32Size : 0;
   static constexpr size_t kEntriesOffset =
       kTableTypeOffset + kUInt32Size + kPaddingSize;
+  static constexpr size_t kHeaderSize = kEntriesOffset;
 
   // Entries consist of
   // - target (WasmCodePointer == entry in WasmCodePointerTable),
@@ -1212,19 +1213,20 @@ class WasmDispatchTable : public ExposedTrustedObject {
 
   DECL_PRINTER(WasmDispatchTable)
   DECL_VERIFIER(WasmDispatchTable)
-  OBJECT_CONSTRUCTORS(WasmDispatchTable, ExposedTrustedObject);
-};
+} V8_OBJECT_END;
 
-class WasmDispatchTableForImports : public TrustedObject {
+V8_OBJECT class WasmDispatchTableForImports : public TrustedObjectLayout {
  public:
   class BodyDescriptor;
 
-  static constexpr size_t kLengthOffset = kHeaderSize;
+  static constexpr size_t kLengthOffset = sizeof(TrustedObjectLayout);
   static constexpr size_t kPaddingSize = TAGGED_SIZE_8_BYTES ? kUInt32Size : 0;
   static constexpr size_t kProtectedOffheapDataOffset =
       kLengthOffset + kUInt32Size + kPaddingSize;
   static constexpr size_t kEntriesOffset =
       kProtectedOffheapDataOffset + kTaggedSize;
+
+  static constexpr size_t kHeaderSize = kEntriesOffset;
 
   // Entries consist of
   // - target (WasmCodePointer == entry in WasmCodePointerTable),
@@ -1306,8 +1308,7 @@ class WasmDispatchTableForImports : public TrustedObject {
 
   DECL_PRINTER(WasmDispatchTableForImports)
   DECL_VERIFIER(WasmDispatchTableForImports)
-  OBJECT_CONSTRUCTORS(WasmDispatchTableForImports, TrustedObject);
-};
+} V8_OBJECT_END;
 
 // A Wasm exception that has been thrown out of Wasm code.
 class V8_EXPORT_PRIVATE WasmExceptionPackage : public JSObject {
