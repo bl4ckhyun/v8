@@ -198,6 +198,9 @@ class EmbeddedFileWriter : public EmbeddedFileWriterInterface {
   std::map<const char*, int> external_filenames_;
   std::vector<const char*> external_filenames_by_index_;
 
+  // Filename to use when source locations are missing.
+  int builtin_marker_sources_id_ = 0;
+
   // The file to generate or nullptr.
   const char* embedded_src_path_ = nullptr;
 

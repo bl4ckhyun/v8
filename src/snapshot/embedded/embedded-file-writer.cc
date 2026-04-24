@@ -69,6 +69,15 @@ void EmbeddedFileWriter::WriteBuiltin(PlatformEmbeddedFileWriterBase* w,
   // stream.
   w->DeclareFunctionBegin(builtin_symbol.begin(),
                           blob->InstructionSizeOf(builtin));
+
+  if (builtin_marker_sources_id_ != 0) {
+    // Depending on the kind of builtin we don't actually have line based source
+    // information. To avoid gdb bleeding the line of the previous builtin into
+    // this one we emit a marker <builtin> source line info.
+    w->SourceInfo(builtin_marker_sources_id_,
+                  GetExternallyCompiledFilename(builtin_marker_sources_id_), 1);
+  }
+
   const int builtin_id = static_cast<int>(builtin);
   const std::vector<uint8_t>& current_comments = code_comments_[builtin_id];
   const std::vector<uint8_t>& current_positions = source_positions_[builtin_id];
@@ -412,6 +421,7 @@ int EmbeddedFileWriter::GetExternallyCompiledFilenameCount() const {
 }
 
 void EmbeddedFileWriter::PrepareBuiltinSourcePositionMap(Builtins* builtins) {
+  bool any_source_positions = false;
   for (Builtin builtin = Builtins::kFirst; builtin <= Builtins::kLast;
        ++builtin) {
     // Retrieve the SourcePositionTable and copy it.
@@ -421,6 +431,9 @@ void EmbeddedFileWriter::PrepareBuiltinSourcePositionMap(Builtins* builtins) {
           code->source_position_table();
       std::vector<unsigned char> data(source_position_table->begin(),
                                       source_position_table->end());
+      if (!data.empty()) {
+        any_source_positions = true;
+      }
       source_positions_[static_cast<int>(builtin)] = data;
     }
     // Also copy code comments if present.
@@ -431,6 +444,10 @@ void EmbeddedFileWriter::PrepareBuiltinSourcePositionMap(Builtins* builtins) {
               code->code_comments_size());
       code_comments_[static_cast<int>(builtin)] = data;
     }
+  }
+  if (any_source_positions) {
+    builtin_marker_sources_id_ =
+        LookupOrAddExternallyCompiledFilename("<builtin>");
   }
 }
 
