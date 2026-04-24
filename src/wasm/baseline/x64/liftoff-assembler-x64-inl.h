@@ -1662,6 +1662,30 @@ void LiftoffAssembler::emit_i64_mul_wide_u() {
   liftoff::EmitI64MulWide<&Assembler::mulq>(this);
 }
 
+void LiftoffAssembler::emit_i64_add128(Register dst_low, Register dst_high,
+                                       Register al, Register ah, Register bl,
+                                       Register bh) {
+  DCHECK_NE(dst_low, ah);
+  DCHECK_NE(dst_low, bh);
+  DCHECK_NE(dst_low, dst_high);
+  if (dst_low == al) {
+    addq(dst_low, bl);
+  } else if (dst_low == bl) {
+    addq(dst_low, al);
+  } else {
+    movq(dst_low, al);
+    addq(dst_low, bl);
+  }
+  if (dst_high == ah) {
+    adcq(dst_high, bh);
+  } else if (dst_high == bh) {
+    adcq(dst_high, ah);
+  } else {
+    movq(dst_high, ah);
+    adcq(dst_high, bh);
+  }
+}
+
 void LiftoffAssembler::emit_i64_sub(LiftoffRegister dst, LiftoffRegister lhs,
                                     LiftoffRegister rhs) {
   if (lhs.gp() == rhs.gp()) {

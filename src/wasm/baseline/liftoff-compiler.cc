@@ -3035,7 +3035,41 @@ class LiftoffCompiler {
   void WideOp4(FullDecoder* decoder, WasmOpcode opcode, const Value& lhs_lo_val,
                const Value& lhs_hi_val, const Value& rhs_lo_val,
                const Value& rhs_hi_val, Value* result_low, Value* result_high) {
+#if V8_TARGET_ARCH_X64
+    static constexpr RegClass rc = reg_class_for(kI64);
+
+    LiftoffRegList pinned;
+    LiftoffRegister bh = pinned.set(__ PopToRegister(pinned));
+    LiftoffRegister bl = pinned.set(__ PopToRegister(pinned));
+    LiftoffRegister ah = pinned.set(__ PopToRegister(pinned));
+    LiftoffRegister al = pinned.set(__ PopToRegister(pinned));
+
+    LiftoffRegister dest_low =
+        __ GetUnusedRegister(rc, {al}, LiftoffRegList{ah, bh, bl});
+    LiftoffRegister dest_high =
+        __ GetUnusedRegister(rc, {ah}, LiftoffRegList{dest_low, bh});
+    switch (opcode) {
+      case kExprI64Add128: {
+        // TODO(491766259): Check if high sections are 0 constants and
+        // fall back to simpler add + set carry bit.
+        __ emit_i64_add128(dest_low.gp(), dest_high.gp(), al.gp(), ah.gp(),
+                           bl.gp(), bh.gp());
+        break;
+      }
+      case kExprI64Sub128: {
+        // TODO(ryandiaz): Implement sub128.
+        unsupported(decoder, kUnsupportedArchitecture, "wide arithmetic");
+        break;
+      }
+      default:
+        UNREACHABLE();
+    }
+
+    __ PushRegister(kI64, dest_low);
+    __ PushRegister(kI64, dest_high);
+#else
     unsupported(decoder, kUnsupportedArchitecture, "wide arithmetic");
+#endif
   }
 
   void TraceInstruction(FullDecoder* decoder, uint32_t markid) {
