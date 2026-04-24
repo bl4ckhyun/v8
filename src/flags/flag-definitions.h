@@ -3206,6 +3206,7 @@ DEFINE_BOOL(native_code_counters, DEBUG_BOOL,
 
 #ifdef V8_ENABLE_SPARKPLUG_PLUS
 DEFINE_BOOL(sparkplug_plus, false, "enable dynamic patching on baseline code")
+DEFINE_WEAK_IMPLICATION(future, sparkplug_plus)
 #else
 DEFINE_BOOL_READONLY(sparkplug_plus, false,
                      "enable dynamic patching on baseline code")
