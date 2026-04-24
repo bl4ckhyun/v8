@@ -498,8 +498,7 @@ int NativeRegExpMacroAssembler::CheckStackGuardState(
     // We are not using operator == here because it does a slow DCHECK
     // CheckObjectComparisonAllowed() which might crash when trying to access
     // the page header of the stale pointer.
-    if (!Tagged<InstructionStream>(*code_handle).SafeEquals(re_code)) {
-      // Return address no longer valid
+    if (!code_handle->SafeEquals(re_code)) {  // Return address no longer valid
       // Overwrite the return address on the stack.
       intptr_t delta = code_handle->address() - re_code.address();
       Address new_pc = old_pc + delta;

@@ -2003,18 +2003,17 @@ void InstructionStream::InstructionStreamVerify(Isolate* isolate) {
   CHECK(
       IsAligned(code->instruction_size(),
                 static_cast<unsigned>(InstructionStream::kMetadataAlignment)));
-  Tagged<InstructionStream> self(this);
 #if (!defined(_MSC_VER) || defined(__clang__)) && !defined(V8_OS_ZOS)
   // See also: PlatformEmbeddedFileWriterWin::AlignToCodeAlignment
   //      and: PlatformEmbeddedFileWriterZOS::AlignToCodeAlignment
-  CHECK_IMPLIES(!ReadOnlyHeap::Contains(self),
+  CHECK_IMPLIES(!ReadOnlyHeap::Contains(*this),
                 IsAligned(instruction_start(), kCodeAlignment));
 #endif  // (!defined(_MSC_VER) || defined(__clang__)) && !defined(V8_OS_ZOS)
-  CHECK_IMPLIES(!ReadOnlyHeap::Contains(self),
+  CHECK_IMPLIES(!ReadOnlyHeap::Contains(*this),
                 IsAligned(instruction_start(), kCodeAlignment));
-  CHECK_EQ(self, code->instruction_stream());
+  CHECK_EQ(*this, code->instruction_stream());
   CHECK(Size() <= MemoryChunkLayout::MaxRegularCodeObjectSize() ||
-        isolate->heap()->InSpace(self, CODE_LO_SPACE));
+        isolate->heap()->InSpace(*this, CODE_LO_SPACE));
   Address last_gc_pc = kNullAddress;
 
   Object::ObjectVerify(relocation_info(), isolate);

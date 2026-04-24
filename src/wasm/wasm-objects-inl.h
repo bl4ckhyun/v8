@@ -462,53 +462,12 @@ ImportedFunctionEntry::ImportedFunctionEntry(
 
 // WasmDispatchTable
 
-// Spelled out (not PROTECTED_POINTER_ACCESSORS) because the macro's
-// static_assert requires a TrustedObject base; WasmDispatchTable now derives
-// from ExposedTrustedObjectLayout.
-Tagged<TrustedManaged<WasmDispatchTableData>>
-WasmDispatchTable::protected_offheap_data() const {
-  DCHECK(has_protected_offheap_data());
-  return ReadProtectedPointerField<TrustedManaged<WasmDispatchTableData>>(
-      kProtectedOffheapDataOffset);
-}
-void WasmDispatchTable::set_protected_offheap_data(
-    Tagged<TrustedManaged<WasmDispatchTableData>> value,
-    WriteBarrierMode mode) {
-  WriteProtectedPointerField(kProtectedOffheapDataOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*Tagged<WasmDispatchTable>(this),
-                                              kProtectedOffheapDataOffset,
-                                              value, mode);
-}
-bool WasmDispatchTable::has_protected_offheap_data() const {
-  return !IsProtectedPointerFieldEmpty(kProtectedOffheapDataOffset);
-}
-void WasmDispatchTable::clear_protected_offheap_data() {
-  ClearProtectedPointerField(kProtectedOffheapDataOffset);
-}
-// PROTECTED_POINTER_ACCESSORS requires the holder to derive from the legacy
-// TrustedObject; WasmDispatchTableForImports now derives from
-// TrustedObjectLayout, so spell the accessors out against the Layout-side
-// ReadProtectedPointerField / WriteProtectedPointerField overloads.
-Tagged<TrustedManaged<WasmDispatchTableData>>
-WasmDispatchTableForImports::protected_offheap_data() const {
-  DCHECK(has_protected_offheap_data());
-  return ReadProtectedPointerField<TrustedManaged<WasmDispatchTableData>>(
-      kProtectedOffheapDataOffset);
-}
-void WasmDispatchTableForImports::set_protected_offheap_data(
-    Tagged<TrustedManaged<WasmDispatchTableData>> value,
-    WriteBarrierMode mode) {
-  WriteProtectedPointerField(kProtectedOffheapDataOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(
-      *Tagged<WasmDispatchTableForImports>(this), kProtectedOffheapDataOffset,
-      value, mode);
-}
-bool WasmDispatchTableForImports::has_protected_offheap_data() const {
-  return !IsProtectedPointerFieldEmpty(kProtectedOffheapDataOffset);
-}
-void WasmDispatchTableForImports::clear_protected_offheap_data() {
-  ClearProtectedPointerField(kProtectedOffheapDataOffset);
-}
+PROTECTED_POINTER_ACCESSORS(WasmDispatchTable, protected_offheap_data,
+                            TrustedManaged<WasmDispatchTableData>,
+                            kProtectedOffheapDataOffset)
+PROTECTED_POINTER_ACCESSORS(WasmDispatchTableForImports, protected_offheap_data,
+                            TrustedManaged<WasmDispatchTableData>,
+                            kProtectedOffheapDataOffset)
 
 WasmDispatchTableData* WasmDispatchTable::offheap_data() const {
   if (!has_protected_offheap_data()) return nullptr;
@@ -519,23 +478,8 @@ WasmDispatchTableData* WasmDispatchTableForImports::offheap_data() const {
   return protected_offheap_data()->get().get();
 }
 
-Tagged<ProtectedWeakFixedArray> WasmDispatchTable::protected_uses() const {
-  DCHECK(has_protected_uses());
-  return ReadProtectedPointerField<ProtectedWeakFixedArray>(
-      kProtectedUsesOffset);
-}
-void WasmDispatchTable::set_protected_uses(
-    Tagged<ProtectedWeakFixedArray> value, WriteBarrierMode mode) {
-  WriteProtectedPointerField(kProtectedUsesOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(
-      *Tagged<WasmDispatchTable>(this), kProtectedUsesOffset, value, mode);
-}
-bool WasmDispatchTable::has_protected_uses() const {
-  return !IsProtectedPointerFieldEmpty(kProtectedUsesOffset);
-}
-void WasmDispatchTable::clear_protected_uses() {
-  ClearProtectedPointerField(kProtectedUsesOffset);
-}
+PROTECTED_POINTER_ACCESSORS(WasmDispatchTable, protected_uses,
+                            ProtectedWeakFixedArray, kProtectedUsesOffset)
 
 wasm::CanonicalValueType WasmDispatchTable::table_type() const {
   return wasm::CanonicalValueType::FromRawBitField(

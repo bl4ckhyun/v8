@@ -3884,7 +3884,7 @@ FrameSummaries WasmInterpreterEntryFrame::Summarize(bool never_allocate) const {
 }
 
 Tagged<HeapObject> WasmInterpreterEntryFrame::unchecked_code() const {
-  return {};
+  return InstructionStream();
 }
 
 Tagged<WasmInstanceObject> WasmInterpreterEntryFrame::wasm_instance() const {
