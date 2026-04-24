@@ -972,11 +972,10 @@ class BytecodeArray::BodyDescriptor final : public BodyDescriptorBase {
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
     IterateSelfIndirectPointer(obj, kBytecodeArrayIndirectPointerTag, v);
-    IteratePointer(obj, offsetof(BytecodeArray, wrapper_), v);
-    IterateProtectedPointer(obj,
-                            offsetof(BytecodeArray, source_position_table_), v);
-    IterateProtectedPointer(obj, offsetof(BytecodeArray, handler_table_), v);
-    IterateProtectedPointer(obj, offsetof(BytecodeArray, constant_pool_), v);
+    IteratePointer(obj, kWrapperOffset, v);
+    IterateProtectedPointer(obj, kSourcePositionTableOffset, v);
+    IterateProtectedPointer(obj, kHandlerTableOffset, v);
+    IterateProtectedPointer(obj, kConstantPoolOffset, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<BytecodeArray> obj) {
@@ -1132,6 +1131,20 @@ class SharedFunctionInfo::BodyDescriptor final : public BodyDescriptorBase {
                           kTrustedDataIndirectPointerRange);
     IteratePointers(obj, kStartOfStrongFieldsOffset, kEndOfStrongFieldsOffset,
                     v);
+  }
+
+  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
+    return kSize;
+  }
+};
+
+class SharedFunctionInfoWrapper::BodyDescriptor final
+    : public BodyDescriptorBase {
+ public:
+  template <typename ObjectVisitor>
+  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
+                                 int object_size, ObjectVisitor* v) {
+    IteratePointer(obj, kSharedInfoOffset, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
@@ -1365,121 +1378,6 @@ class WasmMemoryMapDescriptor::BodyDescriptor final
   }
 };
 
-class WasmImportData::BodyDescriptor final : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    IterateProtectedPointer(
-        obj, offsetof(WasmImportData, protected_instance_data_), v);
-    IterateProtectedPointer(
-        obj, offsetof(WasmImportData, protected_call_origin_), v);
-    IteratePointer(obj, offsetof(WasmImportData, native_context_), v);
-    IteratePointer(obj, offsetof(WasmImportData, callable_), v);
-    IteratePointer(obj, offsetof(WasmImportData, wrapper_budget_), v);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmImportData);
-  }
-};
-
-class WasmInternalFunction::BodyDescriptor final : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    IterateSelfIndirectPointer(obj, kWasmInternalFunctionIndirectPointerTag, v);
-    IterateProtectedPointer(
-        obj, offsetof(WasmInternalFunction, protected_implicit_arg_), v);
-    IteratePointer(obj, offsetof(WasmInternalFunction, external_), v);
-    IteratePointer(obj, offsetof(WasmInternalFunction, function_index_), v);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmInternalFunction);
-  }
-};
-
-class WasmFunctionData::BodyDescriptor final : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    Tagged<WasmFunctionData> data = UncheckedCast<WasmFunctionData>(obj);
-    IterateSelfIndirectPointer(obj, kWasmFunctionDataIndirectPointerTagRange,
-                               v);
-    IterateCodePointer(obj, &data->wrapper_code_, v,
-                       IndirectPointerMode::kStrong);
-    IteratePointer(obj, offsetof(WasmFunctionData, func_ref_), v);
-    IteratePointer(obj, offsetof(WasmFunctionData, js_promise_flags_), v);
-    IterateProtectedPointer(obj,
-                            offsetof(WasmFunctionData, protected_internal_), v);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmFunctionData);
-  }
-};
-
-class WasmExportedFunctionData::BodyDescriptor final
-    : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    WasmFunctionData::BodyDescriptor::IterateBody(map, obj, object_size, v);
-    Tagged<WasmExportedFunctionData> data =
-        UncheckedCast<WasmExportedFunctionData>(obj);
-    IterateProtectedPointer(
-        obj, offsetof(WasmExportedFunctionData, protected_instance_data_), v);
-    IteratePointer(obj, offsetof(WasmExportedFunctionData, function_index_), v);
-    IteratePointer(obj, offsetof(WasmExportedFunctionData, wrapper_budget_), v);
-    IteratePointer(obj, offsetof(WasmExportedFunctionData, packed_args_size_),
-                   v);
-    IterateCodePointer(obj, &data->c_wrapper_code_, v,
-                       IndirectPointerMode::kStrong);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmExportedFunctionData);
-  }
-};
-
-class WasmCapiFunctionData::BodyDescriptor final : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    WasmFunctionData::BodyDescriptor::IterateBody(map, obj, object_size, v);
-    IteratePointer(obj, offsetof(WasmCapiFunctionData, embedder_data_), v);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmCapiFunctionData);
-  }
-};
-
-class WasmSuspenderObject::BodyDescriptor final : public BodyDescriptorBase {
- public:
-  template <typename ObjectVisitor>
-  static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
-                                 int object_size, ObjectVisitor* v) {
-    IterateSelfIndirectPointer(obj, kWasmSuspenderIndirectPointerTag, v);
-    v->VisitExternalPointer(
-        obj, obj->RawExternalPointerField(offsetof(WasmSuspenderObject, stack_),
-                                          kWasmStackMemoryTag));
-    IterateProtectedPointer(obj, offsetof(WasmSuspenderObject, parent_), v);
-    IteratePointer(obj, offsetof(WasmSuspenderObject, promise_), v);
-    IteratePointer(obj, offsetof(WasmSuspenderObject, resume_), v);
-    IteratePointer(obj, offsetof(WasmSuspenderObject, reject_), v);
-  }
-
-  static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
-    return sizeof(WasmSuspenderObject);
-  }
-};
-
 class WasmTrustedInstanceData::BodyDescriptor final
     : public BodyDescriptorBase {
  public:
@@ -1636,6 +1534,9 @@ class WasmStruct::BodyDescriptor final : public BodyDescriptorBase {
 
 class WasmNull::BodyDescriptor : public DataOnlyBodyDescriptor {
  public:
+  static_assert(WasmNull::kStartOfStrongFieldsOffset ==
+                WasmNull::kEndOfStrongFieldsOffset);
+
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> object) {
     return WasmNull::kSize;
   }

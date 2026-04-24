@@ -26,7 +26,7 @@ class Register;
 #include "torque-generated/src/objects/bytecode-array-tq.inc"
 
 // BytecodeArray represents a sequence of interpreter bytecodes.
-V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
+class BytecodeArray : public ExposedTrustedObject {
  public:
   // The length of this bytecode array, in bytes.
   inline int length() const;
@@ -45,9 +45,7 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
   // sandbox. As such, the wrapper object can be used in cases where a
   // BytecodeArray needs to be referenced alongside other tagged pointer
   // references (so for example inside a FixedArray).
-  inline Tagged<BytecodeWrapper> wrapper() const;
-  inline void set_wrapper(Tagged<BytecodeWrapper> value,
-                          WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  DECL_ACCESSORS(wrapper, Tagged<BytecodeWrapper>)
 
   // Source position table. Can contain:
   // * Smi::zero() (initial value, or if an error occurred while explicitly
@@ -92,17 +90,15 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
 
   // If source positions have not been collected or an exception has been thrown
   // this will return the empty_trusted_byte_array.
-  inline Tagged<TrustedByteArray> SourcePositionTable() const;
-  inline Tagged<TrustedByteArray> SourcePositionTable(
-      PtrComprCageBase cage_base) const;
+  DECL_GETTER(SourcePositionTable, Tagged<TrustedByteArray>)
 
   // Raw accessors to access these fields during code cache deserialization.
-  inline Tagged<Union<Smi, TrustedFixedArray>> raw_constant_pool() const;
-  inline Tagged<Union<Smi, TrustedByteArray>> raw_handler_table() const;
+  DECL_GETTER(raw_constant_pool, Tagged<Union<Smi, TrustedFixedArray>>)
+  DECL_GETTER(raw_handler_table, Tagged<Union<Smi, TrustedByteArray>>)
   // This accessor can also be used when it's not guaranteed that a source
   // position table exists, for example because it hasn't been collected. In
   // that case, Smi::zero() will be returned.
-  inline Tagged<Object> raw_source_position_table(AcquireLoadTag) const;
+  DECL_ACQUIRE_GETTER(raw_source_position_table, Tagged<Object>)
 
   // Indicates that an attempt was made to collect source positions, but that it
   // failed, most likely due to stack exhaustion. When in this state
@@ -113,7 +109,7 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
 
   // Returns the size of bytecode and its metadata. This includes the size of
   // bytecode, constant pool, source position table, and handler table.
-  inline int SizeIncludingMetadata() const;
+  DECL_GETTER(SizeIncludingMetadata, int)
 
   DECL_PRINTER(BytecodeArray)
   DECL_VERIFIER(BytecodeArray)
@@ -130,25 +126,32 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
   // is deterministic.
   inline void clear_padding();
 
-  class BodyDescriptor;
-
-  // Back-compat offset/size constants.
-  static const int kLengthOffset;
-  static const int kWrapperOffset;
-  static const int kSourcePositionTableOffset;
-  static const int kHandlerTableOffset;
-  static const int kConstantPoolOffset;
-  static const int kFrameSizeOffset;
-  static const int kParameterSizeOffset;
-  static const int kMaxArgumentsOffset;
-  static const int kIncomingNewTargetOrGeneratorRegisterOffset;
-  static const int kHeaderSize;
-  static const int kBytesOffset;
-
   // Maximal memory consumption for a single BytecodeArray.
   static const int kMaxSize = 512 * MB;
   // Maximal length of a single BytecodeArray.
-  static const int kMaxLength;
+  static const int kMaxLength = kMaxSize - kHeaderSize;
+
+#define FIELD_LIST(V)                                                   \
+  V(kLengthOffset, kTaggedSize)                                         \
+  V(kWrapperOffset, kTaggedSize)                                        \
+  V(kSourcePositionTableOffset, kTaggedSize)                            \
+  V(kHandlerTableOffset, kTaggedSize)                                   \
+  V(kConstantPoolOffset, kTaggedSize)                                   \
+  V(kFrameSizeOffset, kInt32Size)                                       \
+  V(kParameterSizeOffset, kUInt16Size)                                  \
+  V(kMaxArgumentsOffset, kUInt16Size)                                   \
+  V(kIncomingNewTargetOrGeneratorRegisterOffset, kInt32Size)            \
+  V(kOptionalPaddingOffset, 0)                                          \
+  V(kUnalignedHeaderSize, OBJECT_POINTER_PADDING(kUnalignedHeaderSize)) \
+  V(kHeaderSize, 0)                                                     \
+  V(kBytesOffset, 0)
+
+  DEFINE_FIELD_OFFSET_CONSTANTS(ExposedTrustedObject::kHeaderSize, FIELD_LIST)
+#undef FIELD_LIST
+
+  class BodyDescriptor;
+
+  OBJECT_CONSTRUCTORS(BytecodeArray, ExposedTrustedObject);
 
  private:
   friend class BytecodeVerifier;
@@ -160,48 +163,7 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObjectLayout {
   // accessible to the sandbox. As such, (only) after this step the
   // BytecodeArray can be executed in the interpreter.
   inline void MarkVerified(IsolateForSandbox isolate);
-
- public:
-  TaggedMember<Smi> length_;
-  TaggedMember<BytecodeWrapper> wrapper_;
-  ProtectedTaggedMember<TrustedByteArray> source_position_table_;
-  ProtectedTaggedMember<TrustedByteArray> handler_table_;
-  ProtectedTaggedMember<TrustedFixedArray> constant_pool_;
-  int32_t frame_size_;
-  uint16_t parameter_size_;
-  uint16_t max_arguments_;
-  int32_t incoming_new_target_or_generator_register_;
-#if TAGGED_SIZE_8_BYTES
-  uint32_t optional_padding_;
-#endif
-  FLEXIBLE_ARRAY_MEMBER(uint8_t, bytes);
-} V8_OBJECT_END;
-
-inline constexpr int BytecodeArray::kLengthOffset =
-    offsetof(BytecodeArray, length_);
-inline constexpr int BytecodeArray::kWrapperOffset =
-    offsetof(BytecodeArray, wrapper_);
-inline constexpr int BytecodeArray::kSourcePositionTableOffset =
-    offsetof(BytecodeArray, source_position_table_);
-inline constexpr int BytecodeArray::kHandlerTableOffset =
-    offsetof(BytecodeArray, handler_table_);
-inline constexpr int BytecodeArray::kConstantPoolOffset =
-    offsetof(BytecodeArray, constant_pool_);
-inline constexpr int BytecodeArray::kFrameSizeOffset =
-    offsetof(BytecodeArray, frame_size_);
-inline constexpr int BytecodeArray::kParameterSizeOffset =
-    offsetof(BytecodeArray, parameter_size_);
-inline constexpr int BytecodeArray::kMaxArgumentsOffset =
-    offsetof(BytecodeArray, max_arguments_);
-inline constexpr int
-    BytecodeArray::kIncomingNewTargetOrGeneratorRegisterOffset =
-        offsetof(BytecodeArray, incoming_new_target_or_generator_register_);
-inline constexpr int BytecodeArray::kHeaderSize =
-    OFFSET_OF_DATA_START(BytecodeArray);
-inline constexpr int BytecodeArray::kBytesOffset =
-    OFFSET_OF_DATA_START(BytecodeArray);
-inline constexpr int BytecodeArray::kMaxLength =
-    BytecodeArray::kMaxSize - BytecodeArray::kHeaderSize;
+};
 
 // A BytecodeWrapper wraps a BytecodeArray but lives inside the sandbox. This
 // can be useful for example when a reference to a BytecodeArray needs to be

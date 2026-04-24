@@ -168,21 +168,7 @@ void TaggedMember<T, CompressionScheme>::WriteBarrier(HeapObjectLayout* host,
     mode = UPDATE_WRITE_BARRIER;
 #endif
     DCHECK(TrustedHeapLayout::IsOwnedByAnyHeap(Tagged(host)));
-    if constexpr (std::is_same_v<CompressionScheme,
-                                 TrustedSpaceCompressionScheme>) {
-#if V8_ENABLE_SANDBOX
-      // In sandbox builds, trusted objects are always in trusted space (never
-      // young generation), so skip the generational remembered-set check.
-      WriteBarrier::ForProtectedPointer(host, this, value, mode);
-#else
-      // Without the sandbox, TrustedSpaceCompressionScheme ==
-      // V8HeapCompressionScheme and trusted objects live in regular heap space
-      // (can be young).
-      WriteBarrier::ForValue(host, this, value, mode);
-#endif
-    } else {
-      WriteBarrier::ForValue(host, this, value, mode);
-    }
+    WriteBarrier::ForValue(host, this, value, mode);
   }
 #endif
 }

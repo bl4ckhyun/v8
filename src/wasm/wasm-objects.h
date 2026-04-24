@@ -1425,69 +1425,36 @@ class WasmExternalFunction : public JSFunction {
   inline Tagged<WasmFuncRef> func_ref() const;
 };
 
-V8_OBJECT class WasmFunctionData : public ExposedTrustedObjectLayout {
+class WasmFunctionData
+    : public TorqueGeneratedWasmFunctionData<WasmFunctionData,
+                                             ExposedTrustedObject> {
  public:
   DECL_CODE_POINTER_ACCESSORS(wrapper_code)
   DECL_PROTECTED_POINTER_ACCESSORS(internal, WasmInternalFunction)
 
-  inline Tagged<WasmFuncRef> func_ref() const;
-  inline void set_func_ref(Tagged<WasmFuncRef> value,
-                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline int js_promise_flags() const;
-  inline void set_js_promise_flags(int value);
-
   DECL_PRINTER(WasmFunctionData)
-  DECL_VERIFIER(WasmFunctionData)
 
-  class BodyDescriptor;
+  using BodyDescriptor = StackedBodyDescriptor<
+      FixedExposedTrustedObjectBodyDescriptor<
+          WasmFunctionData, kWasmFunctionDataIndirectPointerTagRange>,
+      WithStrongCodePointer<kWrapperCodeOffset>,
+      WithProtectedPointer<kProtectedInternalOffset>>;
 
   using SuspendField = base::BitField<wasm::Suspend, 0, 1>;
   using PromiseField = SuspendField::Next<wasm::Promise, 1>;
 
-  // Back-compat offset/size constants.
-  static const int kWrapperCodeOffset;
-  static const int kFuncRefOffset;
-  static const int kJsPromiseFlagsOffset;
-  static const int kProtectedInternalOffset;
-  static const int kHeaderSize;
-  static const int kSize;
-
- public:
-  CodePointerMember wrapper_code_;
-  TaggedMember<WasmFuncRef> func_ref_;
-  TaggedMember<Smi> js_promise_flags_;
-  ProtectedTaggedMember<WasmInternalFunction> protected_internal_;
-} V8_OBJECT_END;
-
-inline constexpr int WasmFunctionData::kWrapperCodeOffset =
-    offsetof(WasmFunctionData, wrapper_code_);
-inline constexpr int WasmFunctionData::kFuncRefOffset =
-    offsetof(WasmFunctionData, func_ref_);
-inline constexpr int WasmFunctionData::kJsPromiseFlagsOffset =
-    offsetof(WasmFunctionData, js_promise_flags_);
-inline constexpr int WasmFunctionData::kProtectedInternalOffset =
-    offsetof(WasmFunctionData, protected_internal_);
-inline constexpr int WasmFunctionData::kHeaderSize = sizeof(WasmFunctionData);
-inline constexpr int WasmFunctionData::kSize = sizeof(WasmFunctionData);
+  TQ_OBJECT_CONSTRUCTORS(WasmFunctionData)
+};
 
 // Information for a WasmExportedFunction which is referenced as the function
 // data of the SharedFunctionInfo underlying the function. For details please
 // see the {SharedFunctionInfo::HasWasmExportedFunctionData} predicate.
-V8_OBJECT class WasmExportedFunctionData : public WasmFunctionData {
+class WasmExportedFunctionData
+    : public TorqueGeneratedWasmExportedFunctionData<WasmExportedFunctionData,
+                                                     WasmFunctionData> {
  public:
   DECL_PROTECTED_POINTER_ACCESSORS(instance_data, WasmTrustedInstanceData)
   DECL_CODE_POINTER_ACCESSORS(c_wrapper_code)
-
-  inline int function_index() const;
-  inline void set_function_index(int value);
-
-  inline Tagged<Cell> wrapper_budget() const;
-  inline void set_wrapper_budget(Tagged<Cell> value,
-                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline int packed_args_size() const;
-  inline void set_packed_args_size(int value);
 
   inline bool is_promising() const;
 
@@ -1495,71 +1462,26 @@ V8_OBJECT class WasmExportedFunctionData : public WasmFunctionData {
   DECL_PRINTER(WasmExportedFunctionData)
   DECL_VERIFIER(WasmExportedFunctionData)
 
-  class BodyDescriptor;
+  using BodyDescriptor = StackedBodyDescriptor<
+      SubclassBodyDescriptor<WasmFunctionData::BodyDescriptor,
+                             FixedBodyDescriptorFor<WasmExportedFunctionData>>,
+      WithProtectedPointer<kProtectedInstanceDataOffset>,
+      WithStrongCodePointer<kCWrapperCodeOffset>>;
 
-  // Back-compat offset/size constants.
-  static const int kProtectedInstanceDataOffset;
-  static const int kFunctionIndexOffset;
-  static const int kWrapperBudgetOffset;
-  static const int kPackedArgsSizeOffset;
-  static const int kCWrapperCodeOffset;
-  static const int kHeaderSize;
-  static const int kSize;
+  TQ_OBJECT_CONSTRUCTORS(WasmExportedFunctionData)
+};
 
- public:
-  ProtectedTaggedMember<WasmTrustedInstanceData> protected_instance_data_;
-  TaggedMember<Smi> function_index_;
-  TaggedMember<Cell> wrapper_budget_;
-  TaggedMember<Smi> packed_args_size_;
-  CodePointerMember c_wrapper_code_;
-} V8_OBJECT_END;
-
-inline constexpr int WasmExportedFunctionData::kProtectedInstanceDataOffset =
-    offsetof(WasmExportedFunctionData, protected_instance_data_);
-inline constexpr int WasmExportedFunctionData::kFunctionIndexOffset =
-    offsetof(WasmExportedFunctionData, function_index_);
-inline constexpr int WasmExportedFunctionData::kWrapperBudgetOffset =
-    offsetof(WasmExportedFunctionData, wrapper_budget_);
-inline constexpr int WasmExportedFunctionData::kPackedArgsSizeOffset =
-    offsetof(WasmExportedFunctionData, packed_args_size_);
-inline constexpr int WasmExportedFunctionData::kCWrapperCodeOffset =
-    offsetof(WasmExportedFunctionData, c_wrapper_code_);
-inline constexpr int WasmExportedFunctionData::kHeaderSize =
-    sizeof(WasmExportedFunctionData);
-inline constexpr int WasmExportedFunctionData::kSize =
-    sizeof(WasmExportedFunctionData);
-
-V8_OBJECT class WasmImportData : public TrustedObjectLayout {
+class WasmImportData
+    : public TorqueGeneratedWasmImportData<WasmImportData, TrustedObject> {
  public:
   // Dispatched behavior.
   DECL_PRINTER(WasmImportData)
-  DECL_VERIFIER(WasmImportData)
 
   DECL_PROTECTED_POINTER_ACCESSORS(instance_data, WasmTrustedInstanceData)
   DECL_PROTECTED_POINTER_ACCESSORS(call_origin, TrustedObject)
 
-  inline Tagged<NativeContext> native_context() const;
-  inline void set_native_context(Tagged<NativeContext> value,
-                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline Tagged<UnionOf<JSReceiver, Undefined>> callable() const;
-  inline void set_callable(Tagged<UnionOf<JSReceiver, Undefined>> value,
-                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline Tagged<Cell> wrapper_budget() const;
-  inline void set_wrapper_budget(Tagged<Cell> value,
-                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline const wasm::CanonicalSig* sig() const;
-  inline void set_sig(const wasm::CanonicalSig* value);
-
-  inline uint32_t bit_field() const;
-  inline void set_bit_field(uint32_t value);
-
   DECL_PRIMITIVE_ACCESSORS(suspend, wasm::Suspend)
   DECL_PRIMITIVE_ACCESSORS(table_slot, uint32_t)
-
-  inline void clear_padding();
 
   static constexpr int kInvalidCallOrigin = 0;
 
@@ -1569,7 +1491,10 @@ V8_OBJECT class WasmImportData : public TrustedObjectLayout {
                                    int entry_index);
   void SetFuncRefAsCallOrigin(Tagged<WasmInternalFunction> func);
 
-  class BodyDescriptor;
+  using BodyDescriptor =
+      StackedBodyDescriptor<FixedBodyDescriptorFor<WasmImportData>,
+                            WithProtectedPointer<kProtectedInstanceDataOffset>,
+                            WithProtectedPointer<kProtectedCallOriginOffset>>;
 
   // Usage of the {bit_field()}.
   // "Suspend" is always present.
@@ -1580,48 +1505,12 @@ V8_OBJECT class WasmImportData : public TrustedObjectLayout {
   static_assert(wasm::kV8MaxWasmTableSize < (1u << kTableSlotBits));
   using TableSlotField = SuspendField::Next<uint32_t, kTableSlotBits>;
 
-  // Back-compat offset/size constants.
-  static const int kProtectedInstanceDataOffset;
-  static const int kProtectedCallOriginOffset;
-  static const int kNativeContextOffset;
-  static const int kCallableOffset;
-  static const int kWrapperBudgetOffset;
-  static const int kSigOffset;
-  static const int kBitFieldOffset;
-  static const int kHeaderSize;
-  static const int kSize;
+  TQ_OBJECT_CONSTRUCTORS(WasmImportData)
+};
 
- public:
-  ProtectedTaggedMember<WasmTrustedInstanceData> protected_instance_data_;
-  ProtectedTaggedMember<TrustedObject> protected_call_origin_;
-  TaggedMember<NativeContext> native_context_;
-  TaggedMember<UnionOf<JSReceiver, Undefined>> callable_;
-  TaggedMember<Cell> wrapper_budget_;
-  UnalignedValueMember<Address> sig_;
-  uint32_t bit_field_;
-#if TAGGED_SIZE_8_BYTES
-  uint32_t optional_padding_;
-#endif
-} V8_OBJECT_END;
-
-inline constexpr int WasmImportData::kProtectedInstanceDataOffset =
-    offsetof(WasmImportData, protected_instance_data_);
-inline constexpr int WasmImportData::kProtectedCallOriginOffset =
-    offsetof(WasmImportData, protected_call_origin_);
-inline constexpr int WasmImportData::kNativeContextOffset =
-    offsetof(WasmImportData, native_context_);
-inline constexpr int WasmImportData::kCallableOffset =
-    offsetof(WasmImportData, callable_);
-inline constexpr int WasmImportData::kWrapperBudgetOffset =
-    offsetof(WasmImportData, wrapper_budget_);
-inline constexpr int WasmImportData::kSigOffset =
-    offsetof(WasmImportData, sig_);
-inline constexpr int WasmImportData::kBitFieldOffset =
-    offsetof(WasmImportData, bit_field_);
-inline constexpr int WasmImportData::kHeaderSize = sizeof(WasmImportData);
-inline constexpr int WasmImportData::kSize = sizeof(WasmImportData);
-
-V8_OBJECT class WasmInternalFunction : public ExposedTrustedObjectLayout {
+class WasmInternalFunction
+    : public TorqueGeneratedWasmInternalFunction<WasmInternalFunction,
+                                                 ExposedTrustedObject> {
  public:
   // Get the external function if it exists. Returns true and writes to the
   // output parameter if an external function exists. Returns false otherwise.
@@ -1632,61 +1521,19 @@ V8_OBJECT class WasmInternalFunction : public ExposedTrustedObjectLayout {
 
   DECL_PROTECTED_POINTER_ACCESSORS(implicit_arg, TrustedObject)
 
-  inline Tagged<UnionOf<JSFunction, Undefined>> external() const;
-  inline void set_external(Tagged<UnionOf<JSFunction, Undefined>> value,
-                           WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline int function_index() const;
-  inline void set_function_index(int value);
-
-  inline uint32_t raw_call_target() const;
-  inline void set_raw_call_target(uint32_t value);
-
-  inline const wasm::CanonicalSig* sig() const;
-  inline void set_sig(const wasm::CanonicalSig* value);
-
   V8_INLINE WasmCodePointer call_target();
   V8_INLINE void set_call_target(WasmCodePointer code_pointer);
 
   // Dispatched behavior.
   DECL_PRINTER(WasmInternalFunction)
-  DECL_VERIFIER(WasmInternalFunction)
 
-  class BodyDescriptor;
+  using BodyDescriptor = StackedBodyDescriptor<
+      FixedExposedTrustedObjectBodyDescriptor<
+          WasmInternalFunction, kWasmInternalFunctionIndirectPointerTag>,
+      WithProtectedPointer<kProtectedImplicitArgOffset>>;
 
-  // Back-compat offset/size constants.
-  static const int kProtectedImplicitArgOffset;
-  static const int kExternalOffset;
-  static const int kFunctionIndexOffset;
-  static const int kRawCallTargetOffset;
-  static const int kSigOffset;
-  static const int kHeaderSize;
-  static const int kSize;
-
- public:
-  ProtectedTaggedMember<TrustedObject> protected_implicit_arg_;
-  TaggedMember<UnionOf<JSFunction, Undefined>> external_;
-  TaggedMember<Smi> function_index_;
-  uint32_t raw_call_target_;
-#if TAGGED_SIZE_8_BYTES
-  uint32_t optional_padding_;
-#endif  // TAGGED_SIZE_8_BYTES
-  UnalignedValueMember<Address> sig_;
-} V8_OBJECT_END;
-
-inline constexpr int WasmInternalFunction::kProtectedImplicitArgOffset =
-    offsetof(WasmInternalFunction, protected_implicit_arg_);
-inline constexpr int WasmInternalFunction::kExternalOffset =
-    offsetof(WasmInternalFunction, external_);
-inline constexpr int WasmInternalFunction::kFunctionIndexOffset =
-    offsetof(WasmInternalFunction, function_index_);
-inline constexpr int WasmInternalFunction::kRawCallTargetOffset =
-    offsetof(WasmInternalFunction, raw_call_target_);
-inline constexpr int WasmInternalFunction::kSigOffset =
-    offsetof(WasmInternalFunction, sig_);
-inline constexpr int WasmInternalFunction::kHeaderSize =
-    sizeof(WasmInternalFunction);
-inline constexpr int WasmInternalFunction::kSize = sizeof(WasmInternalFunction);
+  TQ_OBJECT_CONSTRUCTORS(WasmInternalFunction)
+};
 
 V8_OBJECT class WasmFuncRef : public HeapObjectLayout {
  public:
@@ -1719,31 +1566,18 @@ inline constexpr int WasmFuncRef::kTrustedInternalOffset =
 inline constexpr int WasmFuncRef::kHeaderSize = sizeof(WasmFuncRef);
 inline constexpr int WasmFuncRef::kSize = sizeof(WasmFuncRef);
 
-V8_OBJECT class WasmCapiFunctionData : public WasmFunctionData {
+class WasmCapiFunctionData
+    : public TorqueGeneratedWasmCapiFunctionData<WasmCapiFunctionData,
+                                                 WasmFunctionData> {
  public:
-  inline Tagged<Foreign> embedder_data() const;
-  inline void set_embedder_data(Tagged<Foreign> value,
-                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
   DECL_PRINTER(WasmCapiFunctionData)
-  DECL_VERIFIER(WasmCapiFunctionData)
 
-  class BodyDescriptor;
+  using BodyDescriptor =
+      SubclassBodyDescriptor<WasmFunctionData::BodyDescriptor,
+                             FixedBodyDescriptorFor<WasmCapiFunctionData>>;
 
-  // Back-compat offset/size constants.
-  static const int kEmbedderDataOffset;
-  static const int kHeaderSize;
-  static const int kSize;
-
- public:
-  TaggedMember<Foreign> embedder_data_;
-} V8_OBJECT_END;
-
-inline constexpr int WasmCapiFunctionData::kEmbedderDataOffset =
-    offsetof(WasmCapiFunctionData, embedder_data_);
-inline constexpr int WasmCapiFunctionData::kHeaderSize =
-    sizeof(WasmCapiFunctionData);
-inline constexpr int WasmCapiFunctionData::kSize = sizeof(WasmCapiFunctionData);
+  TQ_OBJECT_CONSTRUCTORS(WasmCapiFunctionData)
+};
 
 V8_OBJECT class WasmResumeData : public HeapObjectLayout {
  public:
@@ -2100,59 +1934,21 @@ inline constexpr int WasmArray::kHeaderSize = sizeof(WasmArray);
 
 // The suspender object provides an API to suspend and resume wasm code using
 // promises. See: https://github.com/WebAssembly/js-promise-integration.
-V8_OBJECT class WasmSuspenderObject : public ExposedTrustedObjectLayout {
+class WasmSuspenderObject
+    : public TorqueGeneratedWasmSuspenderObject<WasmSuspenderObject,
+                                                ExposedTrustedObject> {
  public:
+  using BodyDescriptor = StackedBodyDescriptor<
+      FixedExposedTrustedObjectBodyDescriptor<WasmSuspenderObject,
+                                              kWasmSuspenderIndirectPointerTag>,
+      WithExternalPointer<kStackOffset, kWasmStackMemoryTag>,
+      WithProtectedPointer<kParentOffset>>;
   enum State : int { kInactive = 0, kActive, kSuspended };
   DECL_EXTERNAL_POINTER_ACCESSORS(stack, wasm::StackMemory*)
   DECL_PROTECTED_POINTER_ACCESSORS(parent, WasmSuspenderObject)
-
-  inline Tagged<UnionOf<JSPromise, Undefined>> promise() const;
-  inline void set_promise(Tagged<UnionOf<JSPromise, Undefined>> value,
-                          WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline Tagged<UnionOf<JSObject, Undefined>> resume() const;
-  inline void set_resume(Tagged<UnionOf<JSObject, Undefined>> value,
-                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline Tagged<UnionOf<JSObject, Undefined>> reject() const;
-  inline void set_reject(Tagged<UnionOf<JSObject, Undefined>> value,
-                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
   DECL_PRINTER(WasmSuspenderObject)
-  DECL_VERIFIER(WasmSuspenderObject)
-
-  class BodyDescriptor;
-
-  // Back-compat offset/size constants.
-  static const int kStackOffset;
-  static const int kParentOffset;
-  static const int kPromiseOffset;
-  static const int kResumeOffset;
-  static const int kRejectOffset;
-  static const int kHeaderSize;
-  static const int kSize;
-
- public:
-  ExternalPointerMember<kWasmStackMemoryTag> stack_;
-  ProtectedTaggedMember<WasmSuspenderObject> parent_;
-  TaggedMember<UnionOf<JSPromise, Undefined>> promise_;
-  TaggedMember<UnionOf<JSObject, Undefined>> resume_;
-  TaggedMember<UnionOf<JSObject, Undefined>> reject_;
-} V8_OBJECT_END;
-
-inline constexpr int WasmSuspenderObject::kStackOffset =
-    offsetof(WasmSuspenderObject, stack_);
-inline constexpr int WasmSuspenderObject::kParentOffset =
-    offsetof(WasmSuspenderObject, parent_);
-inline constexpr int WasmSuspenderObject::kPromiseOffset =
-    offsetof(WasmSuspenderObject, promise_);
-inline constexpr int WasmSuspenderObject::kResumeOffset =
-    offsetof(WasmSuspenderObject, resume_);
-inline constexpr int WasmSuspenderObject::kRejectOffset =
-    offsetof(WasmSuspenderObject, reject_);
-inline constexpr int WasmSuspenderObject::kHeaderSize =
-    sizeof(WasmSuspenderObject);
-inline constexpr int WasmSuspenderObject::kSize = sizeof(WasmSuspenderObject);
+  TQ_OBJECT_CONSTRUCTORS(WasmSuspenderObject)
+};
 
 V8_OBJECT class WasmSuspendingObject : public JSObjectLayout {
  public:
@@ -2226,7 +2022,7 @@ inline constexpr int WasmStackObject::kStackOffset =
 inline constexpr int WasmStackObject::kHeaderSize = sizeof(WasmStackObject);
 inline constexpr int WasmStackObject::kSize = sizeof(WasmStackObject);
 
-V8_OBJECT class WasmNull : public HeapObjectLayout {
+class WasmNull : public TorqueGeneratedWasmNull<WasmNull, HeapObject> {
  public:
 #if V8_STATIC_ROOTS_BOOL || V8_STATIC_ROOTS_GENERATION_BOOL
   // TODO(manoskouk): Make it smaller if able and needed.
@@ -2234,37 +2030,28 @@ V8_OBJECT class WasmNull : public HeapObjectLayout {
   // Payload should be a multiple of page size.
   static_assert(kPayloadSize % kMinimumOSPageSize == 0);
 
-  Address payload() { return reinterpret_cast<Address>(this) + kPayloadOffset; }
+  Address payload() { return field_address(kPayloadOffset); }
 
-  static const int kPayloadOffset;
-  static const int kSizeWithPayload;
+  static constexpr int kPayloadOffset = HeapObject::kHeaderSize;
+  static constexpr int kSizeWithPayload = kPayloadOffset + kPayloadSize;
+
+  static constexpr int kSize = kSizeWithPayload;
+
+  // Any wasm struct offset should fit in the object.
+  static_assert(kSizeWithPayload >=
+                WasmStruct::kHeaderSize +
+                    (wasm::kMaxStructFieldIndexForImplicitNullCheck + 1) *
+                        kSimd128Size);
+#else
+  static constexpr int kSize = HeapObject::kHeaderSize;
 #endif
-
-  static const int kHeaderSize;
-  static const int kSize;
-
-  DECL_PRINTER(WasmNull)
-  DECL_VERIFIER(WasmNull)
 
   // WasmNull cannot use `FixedBodyDescriptorFor()` as its map is variable size
   // (not fixed size) as kSize is too large for a fixed-size map.
   class BodyDescriptor;
-} V8_OBJECT_END;
 
-inline constexpr int WasmNull::kHeaderSize = sizeof(WasmNull);
-#if V8_STATIC_ROOTS_BOOL || V8_STATIC_ROOTS_GENERATION_BOOL
-inline constexpr int WasmNull::kPayloadOffset = WasmNull::kHeaderSize;
-inline constexpr int WasmNull::kSizeWithPayload =
-    WasmNull::kPayloadOffset + WasmNull::kPayloadSize;
-inline constexpr int WasmNull::kSize = WasmNull::kSizeWithPayload;
-// Any wasm struct offset should fit in the object.
-static_assert(WasmNull::kSizeWithPayload >=
-              WasmStruct::kHeaderSize +
-                  (wasm::kMaxStructFieldIndexForImplicitNullCheck + 1) *
-                      kSimd128Size);
-#else
-inline constexpr int WasmNull::kSize = WasmNull::kHeaderSize;
-#endif
+  TQ_OBJECT_CONSTRUCTORS(WasmNull)
+};
 
 #undef DECL_OPTIONAL_ACCESSORS
 

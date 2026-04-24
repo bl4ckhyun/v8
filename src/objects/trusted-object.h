@@ -203,14 +203,6 @@ V8_OBJECT class ExposedTrustedObjectLayout : public TrustedObjectLayout {
   inline void InitAndPublish(Isolate* isolate);
   inline void InitAndPublish(LocalIsolate* isolate);
 
-  inline void InitDontPublish(Isolate* isolate);
-  inline void InitDontPublish(LocalIsolate* isolate);
-
-  inline void Publish(IsolateForSandbox isolate);
-  inline void Unpublish(IsolateForSandbox isolate);
-
-  inline bool IsPublished(IsolateForSandbox isolate) const;
-
   inline IndirectPointerHandle self_indirect_pointer_handle() const;
 
   DECL_VERIFIER(ExposedTrustedObject)

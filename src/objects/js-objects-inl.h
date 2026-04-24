@@ -603,10 +603,6 @@ int JSObjectLayout::GetEmbedderFieldCount() const {
   return Cast<JSObject>(this)->GetEmbedderFieldCount();
 }
 
-Tagged<InterceptorInfo> JSObjectLayout::GetNamedInterceptor() const {
-  return Cast<JSObject>(this)->GetNamedInterceptor();
-}
-
 Tagged<PropertyArray> JSObjectLayout::property_array() const {
   return Cast<JSObject>(this)->property_array();
 }
@@ -1194,39 +1190,13 @@ DEF_GETTER(JSObject, HasIndexedInterceptor, bool) {
   return map(cage_base)->has_indexed_interceptor();
 }
 
-Tagged<JSGlobalProxy> JSGlobalObject::global_proxy() const {
-  return global_proxy_.load();
-}
-void JSGlobalObject::set_global_proxy(Tagged<JSGlobalProxy> value,
-                                      WriteBarrierMode mode) {
-  global_proxy_.store(this, value, mode);
-}
+RELEASE_ACQUIRE_ACCESSORS_CHECKED2(JSGlobalObject, global_dictionary,
+                                   Tagged<GlobalDictionary>,
+                                   kPropertiesOrHashOffset,
+                                   !HasFastProperties(cage_base), true)
 
-Tagged<JSGlobalProxy> JSGlobalObject::global_proxy_for_api() const {
-  return global_proxy_for_api_.load();
-}
-void JSGlobalObject::set_global_proxy_for_api(Tagged<JSGlobalProxy> value,
-                                              WriteBarrierMode mode) {
-  global_proxy_for_api_.store(this, value, mode);
-}
-
-Tagged<GlobalDictionary> JSGlobalObject::global_dictionary(
-    AcquireLoadTag) const {
-  DCHECK(!HasFastProperties());
-  return Cast<GlobalDictionary>(properties_or_hash_.Acquire_Load());
-}
-Tagged<GlobalDictionary> JSGlobalObject::global_dictionary(
-    PtrComprCageBase cage_base, AcquireLoadTag tag) const {
-  return global_dictionary(tag);
-}
-void JSGlobalObject::set_global_dictionary(Tagged<GlobalDictionary> value,
-                                           ReleaseStoreTag,
-                                           WriteBarrierMode mode) {
-  properties_or_hash_.Release_Store(this, Cast<FixedArrayBase>(value), mode);
-}
-
-Tagged<HeapObject> JSGlobalObject::raw_global_proxy() const {
-  return Cast<HeapObject>(global_proxy_.load());
+DEF_GETTER(JSGlobalObject, raw_global_proxy, Tagged<HeapObject>) {
+  return TaggedField<HeapObject, kGlobalProxyOffset>::load(cage_base, *this);
 }
 
 DEF_GETTER(JSObject, element_dictionary, Tagged<NumberDictionary>) {

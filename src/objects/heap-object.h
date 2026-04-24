@@ -210,15 +210,6 @@ V8_OBJECT class HeapObjectLayout {
       TrustedPointerPublishingScope* opt_publishing_scope);
 #endif  // V8_ENABLE_SANDBOX
 
-#ifdef VERIFY_HEAP
-  // Field-verifier trampolines mirroring the HeapObject API. Let
-  // HeapObjectLayout subclasses use unqualified VerifyObjectField / ... from
-  // their Verify methods during the V8_OBJECT migration.
-  inline void VerifyObjectField(Isolate* isolate, int offset);
-  inline void VerifySmiField(int offset);
-  inline void VerifyMaybeObjectField(Isolate* isolate, int offset);
-#endif  // VERIFY_HEAP
-
 #ifdef OBJECT_PRINT
   void PrintHeader(std::ostream& os, const char* id);
 #endif

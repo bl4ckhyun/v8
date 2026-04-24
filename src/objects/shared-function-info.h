@@ -17,7 +17,6 @@
 #include "src/objects/function-kind.h"
 #include "src/objects/function-syntax-kind.h"
 #include "src/objects/name.h"
-#include "src/objects/objects-body-descriptors.h"
 #include "src/objects/objects.h"
 #include "src/objects/script.h"
 #include "src/objects/slots.h"
@@ -1022,37 +1021,24 @@ std::ostream& operator<<(std::ostream& os, SharedFunctionInfo::Inlineability i);
 // A SharedFunctionInfoWrapper wraps a SharedFunctionInfo from trusted space.
 // It can be useful when a protected pointer reference to a SharedFunctionInfo
 // is needed, for example for a ProtectedFixedArray.
-V8_OBJECT class SharedFunctionInfoWrapper : public TrustedObjectLayout {
+class SharedFunctionInfoWrapper : public TrustedObject {
  public:
-  inline Tagged<SharedFunctionInfo> shared_info() const;
-  inline void set_shared_info(Tagged<SharedFunctionInfo> value,
-                              WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  DECL_ACCESSORS(shared_info, Tagged<SharedFunctionInfo>)
 
   DECL_PRINTER(SharedFunctionInfoWrapper)
   DECL_VERIFIER(SharedFunctionInfoWrapper)
 
-  // Back-compat offset/size constants.
-  static const int kSharedInfoOffset;
-  static const int kHeaderSize;
-  static const int kSize;
+#define FIELD_LIST(V)               \
+  V(kSharedInfoOffset, kTaggedSize) \
+  V(kHeaderSize, 0)                 \
+  V(kSize, 0)
 
- public:
-  TaggedMember<SharedFunctionInfo> shared_info_;
-} V8_OBJECT_END;
+  DEFINE_FIELD_OFFSET_CONSTANTS(TrustedObject::kHeaderSize, FIELD_LIST)
+#undef FIELD_LIST
 
-inline constexpr int SharedFunctionInfoWrapper::kSharedInfoOffset =
-    offsetof(SharedFunctionInfoWrapper, shared_info_);
-inline constexpr int SharedFunctionInfoWrapper::kHeaderSize =
-    sizeof(SharedFunctionInfoWrapper);
-inline constexpr int SharedFunctionInfoWrapper::kSize =
-    sizeof(SharedFunctionInfoWrapper);
+  class BodyDescriptor;
 
-template <>
-struct ObjectTraits<SharedFunctionInfoWrapper> {
-  using BodyDescriptor =
-      FixedBodyDescriptor<offsetof(SharedFunctionInfoWrapper, shared_info_),
-                          sizeof(SharedFunctionInfoWrapper),
-                          sizeof(SharedFunctionInfoWrapper)>;
+  OBJECT_CONSTRUCTORS(SharedFunctionInfoWrapper, TrustedObject);
 };
 
 static constexpr int kStaticRootsSFISize = 48;

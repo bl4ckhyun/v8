@@ -621,69 +621,12 @@ struct CastTraits<WasmExportedFunction> {
 
 // WasmImportData
 
-Tagged<WasmTrustedInstanceData> WasmImportData::instance_data() const {
-  DCHECK(has_instance_data());
-  return protected_instance_data_.load();
-}
-void WasmImportData::set_instance_data(Tagged<WasmTrustedInstanceData> value,
-                                       WriteBarrierMode mode) {
-  protected_instance_data_.store(this, value, mode);
-}
-bool WasmImportData::has_instance_data() const {
-  return !protected_instance_data_.load().is_null();
-}
-void WasmImportData::clear_instance_data() {
-  protected_instance_data_.store(this, {}, SKIP_WRITE_BARRIER);
-}
+PROTECTED_POINTER_ACCESSORS(WasmImportData, instance_data,
+                            WasmTrustedInstanceData,
+                            kProtectedInstanceDataOffset)
 
-Tagged<TrustedObject> WasmImportData::call_origin() const {
-  DCHECK(has_call_origin());
-  return protected_call_origin_.load();
-}
-void WasmImportData::set_call_origin(Tagged<TrustedObject> value,
-                                     WriteBarrierMode mode) {
-  protected_call_origin_.store(this, value, mode);
-}
-bool WasmImportData::has_call_origin() const {
-  return !protected_call_origin_.load().is_null();
-}
-void WasmImportData::clear_call_origin() {
-  protected_call_origin_.store(this, {}, SKIP_WRITE_BARRIER);
-}
-
-Tagged<NativeContext> WasmImportData::native_context() const {
-  return native_context_.load();
-}
-void WasmImportData::set_native_context(Tagged<NativeContext> value,
-                                        WriteBarrierMode mode) {
-  native_context_.store(this, value, mode);
-}
-
-Tagged<UnionOf<JSReceiver, Undefined>> WasmImportData::callable() const {
-  return callable_.load();
-}
-void WasmImportData::set_callable(Tagged<UnionOf<JSReceiver, Undefined>> value,
-                                  WriteBarrierMode mode) {
-  callable_.store(this, value, mode);
-}
-
-Tagged<Cell> WasmImportData::wrapper_budget() const {
-  return wrapper_budget_.load();
-}
-void WasmImportData::set_wrapper_budget(Tagged<Cell> value,
-                                        WriteBarrierMode mode) {
-  wrapper_budget_.store(this, value, mode);
-}
-
-const wasm::CanonicalSig* WasmImportData::sig() const {
-  return reinterpret_cast<const wasm::CanonicalSig*>(sig_.value());
-}
-void WasmImportData::set_sig(const wasm::CanonicalSig* value) {
-  sig_.set_value(reinterpret_cast<Address>(value));
-}
-
-uint32_t WasmImportData::bit_field() const { return bit_field_; }
-void WasmImportData::set_bit_field(uint32_t value) { bit_field_ = value; }
+PROTECTED_POINTER_ACCESSORS(WasmImportData, call_origin, TrustedObject,
+                            kProtectedCallOriginOffset)
 
 wasm::Suspend WasmImportData::suspend() const {
   return SuspendField::decode(bit_field());
@@ -701,58 +644,11 @@ void WasmImportData::set_table_slot(uint32_t value) {
   set_bit_field(TableSlotField::update(bit_field(), value));
 }
 
-void WasmImportData::clear_padding() {
-#if TAGGED_SIZE_8_BYTES
-  optional_padding_ = 0;
-#endif
-}
-
 // WasmInternalFunction
 
 // {implicit_arg} will be a WasmTrustedInstanceData or a WasmImportData.
-Tagged<TrustedObject> WasmInternalFunction::implicit_arg() const {
-  DCHECK(has_implicit_arg());
-  return protected_implicit_arg_.load();
-}
-void WasmInternalFunction::set_implicit_arg(Tagged<TrustedObject> value,
-                                            WriteBarrierMode mode) {
-  protected_implicit_arg_.store(this, value, mode);
-}
-bool WasmInternalFunction::has_implicit_arg() const {
-  return !protected_implicit_arg_.load().is_null();
-}
-void WasmInternalFunction::clear_implicit_arg() {
-  protected_implicit_arg_.store(this, {}, SKIP_WRITE_BARRIER);
-}
-
-Tagged<UnionOf<JSFunction, Undefined>> WasmInternalFunction::external() const {
-  return external_.load();
-}
-void WasmInternalFunction::set_external(
-    Tagged<UnionOf<JSFunction, Undefined>> value, WriteBarrierMode mode) {
-  external_.store(this, value, mode);
-}
-
-int WasmInternalFunction::function_index() const {
-  return function_index_.load().value();
-}
-void WasmInternalFunction::set_function_index(int value) {
-  function_index_.store_no_write_barrier(Smi::FromInt(value));
-}
-
-uint32_t WasmInternalFunction::raw_call_target() const {
-  return raw_call_target_;
-}
-void WasmInternalFunction::set_raw_call_target(uint32_t value) {
-  raw_call_target_ = value;
-}
-
-const wasm::CanonicalSig* WasmInternalFunction::sig() const {
-  return reinterpret_cast<const wasm::CanonicalSig*>(sig_.value());
-}
-void WasmInternalFunction::set_sig(const wasm::CanonicalSig* value) {
-  sig_.set_value(reinterpret_cast<Address>(value));
-}
+PROTECTED_POINTER_ACCESSORS(WasmInternalFunction, implicit_arg, TrustedObject,
+                            kProtectedImplicitArgOffset)
 
 // WasmFuncRef
 Tagged<WasmInternalFunction> WasmFuncRef::internal(
@@ -775,91 +671,18 @@ bool WasmFuncRef::has_internal() const { return !trusted_internal_.is_empty(); }
 void WasmFuncRef::clear_internal() { trusted_internal_.clear(this); }
 
 // WasmFunctionData
-Tagged<Code> WasmFunctionData::wrapper_code(IsolateForSandbox isolate) const {
-  return wrapper_code_.load(isolate);
-}
-void WasmFunctionData::set_wrapper_code(Tagged<Code> value,
-                                        WriteBarrierMode mode) {
-  wrapper_code_.store(this, value, mode);
-}
+CODE_POINTER_ACCESSORS(WasmFunctionData, wrapper_code, kWrapperCodeOffset)
 
-Tagged<WasmInternalFunction> WasmFunctionData::internal() const {
-  DCHECK(has_internal());
-  return protected_internal_.load();
-}
-void WasmFunctionData::set_internal(Tagged<WasmInternalFunction> value,
-                                    WriteBarrierMode mode) {
-  protected_internal_.store(this, value, mode);
-}
-bool WasmFunctionData::has_internal() const {
-  return !protected_internal_.load().is_null();
-}
-void WasmFunctionData::clear_internal() {
-  protected_internal_.store(this, {}, SKIP_WRITE_BARRIER);
-}
-
-Tagged<WasmFuncRef> WasmFunctionData::func_ref() const {
-  return func_ref_.load();
-}
-void WasmFunctionData::set_func_ref(Tagged<WasmFuncRef> value,
-                                    WriteBarrierMode mode) {
-  func_ref_.store(this, value, mode);
-}
-
-int WasmFunctionData::js_promise_flags() const {
-  return js_promise_flags_.load().value();
-}
-void WasmFunctionData::set_js_promise_flags(int value) {
-  js_promise_flags_.store_no_write_barrier(Smi::FromInt(value));
-}
+PROTECTED_POINTER_ACCESSORS(WasmFunctionData, internal, WasmInternalFunction,
+                            kProtectedInternalOffset)
 
 // WasmExportedFunctionData
-Tagged<WasmTrustedInstanceData> WasmExportedFunctionData::instance_data()
-    const {
-  DCHECK(has_instance_data());
-  return protected_instance_data_.load();
-}
-void WasmExportedFunctionData::set_instance_data(
-    Tagged<WasmTrustedInstanceData> value, WriteBarrierMode mode) {
-  protected_instance_data_.store(this, value, mode);
-}
-bool WasmExportedFunctionData::has_instance_data() const {
-  return !protected_instance_data_.load().is_null();
-}
-void WasmExportedFunctionData::clear_instance_data() {
-  protected_instance_data_.store(this, {}, SKIP_WRITE_BARRIER);
-}
+PROTECTED_POINTER_ACCESSORS(WasmExportedFunctionData, instance_data,
+                            WasmTrustedInstanceData,
+                            kProtectedInstanceDataOffset)
 
-Tagged<Code> WasmExportedFunctionData::c_wrapper_code(
-    IsolateForSandbox isolate) const {
-  return c_wrapper_code_.load(isolate);
-}
-void WasmExportedFunctionData::set_c_wrapper_code(Tagged<Code> value,
-                                                  WriteBarrierMode mode) {
-  c_wrapper_code_.store(this, value, mode);
-}
-
-int WasmExportedFunctionData::function_index() const {
-  return function_index_.load().value();
-}
-void WasmExportedFunctionData::set_function_index(int value) {
-  function_index_.store_no_write_barrier(Smi::FromInt(value));
-}
-
-Tagged<Cell> WasmExportedFunctionData::wrapper_budget() const {
-  return wrapper_budget_.load();
-}
-void WasmExportedFunctionData::set_wrapper_budget(Tagged<Cell> value,
-                                                  WriteBarrierMode mode) {
-  wrapper_budget_.store(this, value, mode);
-}
-
-int WasmExportedFunctionData::packed_args_size() const {
-  return packed_args_size_.load().value();
-}
-void WasmExportedFunctionData::set_packed_args_size(int value) {
-  packed_args_size_.store_no_write_barrier(Smi::FromInt(value));
-}
+CODE_POINTER_ACCESSORS(WasmExportedFunctionData, c_wrapper_code,
+                       kCWrapperCodeOffset)
 
 bool WasmExportedFunctionData::is_promising() const {
   return WasmFunctionData::PromiseField::decode(js_promise_flags()) ==
@@ -871,15 +694,6 @@ WasmCodePointer WasmInternalFunction::call_target() {
 }
 void WasmInternalFunction::set_call_target(WasmCodePointer code_pointer) {
   set_raw_call_target(code_pointer.value());
-}
-
-// WasmCapiFunctionData
-Tagged<Foreign> WasmCapiFunctionData::embedder_data() const {
-  return embedder_data_.load();
-}
-void WasmCapiFunctionData::set_embedder_data(Tagged<Foreign> value,
-                                             WriteBarrierMode mode) {
-  embedder_data_.store(this, value, mode);
 }
 
 // WasmCapiFunction
@@ -1092,44 +906,8 @@ void WasmResumeData::set_on_resume(int value) {
   on_resume_.store(this, Smi::FromInt(value));
 }
 
-Tagged<WasmSuspenderObject> WasmSuspenderObject::parent() const {
-  DCHECK(has_parent());
-  return parent_.load();
-}
-void WasmSuspenderObject::set_parent(Tagged<WasmSuspenderObject> value,
-                                     WriteBarrierMode mode) {
-  parent_.store(this, value, mode);
-}
-bool WasmSuspenderObject::has_parent() const {
-  return !parent_.load().is_null();
-}
-void WasmSuspenderObject::clear_parent() {
-  parent_.store(this, {}, SKIP_WRITE_BARRIER);
-}
-
-Tagged<UnionOf<JSPromise, Undefined>> WasmSuspenderObject::promise() const {
-  return promise_.load();
-}
-void WasmSuspenderObject::set_promise(
-    Tagged<UnionOf<JSPromise, Undefined>> value, WriteBarrierMode mode) {
-  promise_.store(this, value, mode);
-}
-
-Tagged<UnionOf<JSObject, Undefined>> WasmSuspenderObject::resume() const {
-  return resume_.load();
-}
-void WasmSuspenderObject::set_resume(Tagged<UnionOf<JSObject, Undefined>> value,
-                                     WriteBarrierMode mode) {
-  resume_.store(this, value, mode);
-}
-
-Tagged<UnionOf<JSObject, Undefined>> WasmSuspenderObject::reject() const {
-  return reject_.load();
-}
-void WasmSuspenderObject::set_reject(Tagged<UnionOf<JSObject, Undefined>> value,
-                                     WriteBarrierMode mode) {
-  reject_.store(this, value, mode);
-}
+PROTECTED_POINTER_ACCESSORS(WasmSuspenderObject, parent, WasmSuspenderObject,
+                            kParentOffset)
 
 wasm::ValueType WasmTableObject::type(const wasm::WasmModule* module) {
   wasm::ValueType type = unsafe_type();
@@ -1367,22 +1145,8 @@ int WasmArray::DecodeElementSizeFromMap(Tagged<Map> map) {
   return map->WasmByte1();
 }
 
-wasm::StackMemory* WasmSuspenderObject::stack(IsolateForSandbox isolate) const {
-  Address result = stack_.load<kWasmStackMemoryTag>(isolate);
-  return reinterpret_cast<wasm::StackMemory*>(result);
-}
-wasm::StackMemory* WasmSuspenderObject::stack() const {
-  return stack(GetCurrentIsolateForSandbox());
-}
-void WasmSuspenderObject::init_stack(IsolateForSandbox isolate,
-                                     const wasm::StackMemory* initial_value) {
-  stack_.Init<kWasmStackMemoryTag>(address(), isolate,
-                                   reinterpret_cast<Address>(initial_value));
-}
-void WasmSuspenderObject::set_stack(IsolateForSandbox isolate,
-                                    const wasm::StackMemory* value) {
-  stack_.store<kWasmStackMemoryTag>(isolate, reinterpret_cast<Address>(value));
-}
+EXTERNAL_POINTER_ACCESSORS(WasmSuspenderObject, stack, wasm::StackMemory*,
+                           kStackOffset, kWasmStackMemoryTag)
 
 EXTERNAL_POINTER_ACCESSORS(WasmStackObject, stack, wasm::StackMemory*,
                            kStackOffset, kWasmStackMemoryTag)

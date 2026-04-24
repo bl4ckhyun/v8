@@ -118,7 +118,6 @@ macro AllocateFastOrSlowJSObjectFromMap(
 @cppObjectLayoutDefinition
 extern class JSGlobalProxy extends JSSpecialObject {}
 
-@cppObjectLayoutDefinition
 extern class JSGlobalObject extends JSSpecialObject {
   // [global proxy]: the global proxy object of the current context.
   // This global proxy preserves identity of the JavaScript's global object

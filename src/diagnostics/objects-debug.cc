@@ -425,8 +425,7 @@ void BytecodeArray::BytecodeArrayVerify(Isolate* isolate) {
   ExposedTrustedObjectVerify(isolate);
 
   {
-    Object::VerifyPointer(isolate, length_.load());
-    CHECK(IsSmi(length_.load()));
+    CHECK(IsSmi(TaggedField<Object>::load(*this, kLengthOffset)));
     CHECK_LE(0, length());
     CHECK_LE(length(), kMaxLength);
   }
@@ -446,7 +445,7 @@ void BytecodeArray::BytecodeArrayVerify(Isolate* isolate) {
     CHECK(IsBytecodeWrapper(o));
     if (o->has_bytecode()) {
       // If the wrapper is fully initialized, it must point back to us.
-      CHECK_EQ(o->bytecode(isolate), Tagged(this));
+      CHECK_EQ(o->bytecode(isolate), *this);
     }
   }
   {
@@ -1444,12 +1443,10 @@ void SloppyArgumentsElementsVerify(Isolate* isolate,
 }  // namespace
 
 void JSArgumentsObject::JSArgumentsObjectVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
-  CHECK(IsJSArgumentsObject(this));
+  TorqueGeneratedClassVerifiers::JSArgumentsObjectVerify(*this, isolate);
   if (IsSloppyArgumentsElementsKind(GetElementsKind())) {
-    SloppyArgumentsElementsVerify(isolate,
-                                  Cast<SloppyArgumentsElements>(elements()),
-                                  Cast<JSObject>(Tagged<HeapObject>(this)));
+    SloppyArgumentsElementsVerify(
+        isolate, Cast<SloppyArgumentsElements>(elements()), *this);
   }
   Tagged<NativeContext> native_context = map()->map()->native_context();
   if (map() == native_context->GetNoCell(Context::SLOPPY_ARGUMENTS_MAP_INDEX) ||
@@ -1803,14 +1800,13 @@ void JSGlobalProxy::JSGlobalProxyVerify(Isolate* isolate) {
 }
 
 void JSGlobalObject::JSGlobalObjectVerify(Isolate* isolate) {
-  Tagged<JSGlobalObject> self(this);
-  CHECK(IsJSGlobalObject(self));
+  CHECK(IsJSGlobalObject(*this));
   // Do not check the dummy global object for the builtins.
   if (global_dictionary(kAcquireLoad)->NumberOfElements() == 0 &&
       elements()->ulength().value() == 0) {
     return;
   }
-  Cast<JSObject>(self)->JSObjectVerify(isolate);
+  JSObjectVerify(isolate);
 }
 
 void PrimitiveHeapObject::PrimitiveHeapObjectVerify(Isolate* isolate) {
@@ -1916,11 +1912,6 @@ void TrustedObject::TrustedObjectVerify(Isolate* isolate) {
 
 void TrustedObjectLayout::TrustedObjectVerify(Isolate* isolate) {
   UncheckedCast<TrustedObject>(this)->TrustedObjectVerify(isolate);
-}
-
-void ExposedTrustedObjectLayout::ExposedTrustedObjectVerify(Isolate* isolate) {
-  UncheckedCast<ExposedTrustedObject>(this)->ExposedTrustedObjectVerify(
-      isolate);
 }
 
 void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
@@ -2100,24 +2091,15 @@ void JSMap::JSMapVerify(Isolate* isolate) {
   // TODO(arv): Verify OrderedHashTable too.
 }
 
-void JSCollectionIterator::JSCollectionIteratorVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
-  CHECK(IsJSCollectionIterator(Tagged<JSCollectionIterator>(this), isolate));
-  VerifyObjectField(isolate, kTableOffset);
-  VerifyObjectField(isolate, kIndexOffset);
-}
-
 void JSSetIterator::JSSetIteratorVerify(Isolate* isolate) {
-  Tagged<JSSetIterator> self(this);
-  CHECK(IsJSSetIterator(self));
+  CHECK(IsJSSetIterator(*this));
   JSCollectionIteratorVerify(isolate);
   CHECK(IsOrderedHashSet(table()));
   CHECK(IsSmi(index()));
 }
 
 void JSMapIterator::JSMapIteratorVerify(Isolate* isolate) {
-  Tagged<JSMapIterator> self(this);
-  CHECK(IsJSMapIterator(self));
+  CHECK(IsJSMapIterator(*this));
   JSCollectionIteratorVerify(isolate);
   CHECK(IsOrderedHashMap(table()));
   CHECK(IsSmi(index()));
@@ -3313,6 +3295,22 @@ void WasmExceptionPackage::WasmExceptionPackageVerify(Isolate* isolate) {
   CHECK(IsWasmExceptionPackage(*this));
 }
 
+void WasmExportedFunctionData::WasmExportedFunctionDataVerify(
+    Isolate* isolate) {
+  TorqueGeneratedClassVerifiers::WasmExportedFunctionDataVerify(*this, isolate);
+  Tagged<Code> wrapper = wrapper_code(isolate);
+  CHECK(wrapper->kind() == CodeKind::JS_TO_WASM_FUNCTION ||
+        wrapper->kind() == CodeKind::C_WASM_ENTRY ||
+        (wrapper->is_builtin() &&
+         (wrapper->builtin_id() == Builtin::kJSToWasmWrapper ||
+#if V8_ENABLE_DRUMBRAKE
+          wrapper->builtin_id() == Builtin::kJSToWasmInterpreterWrapper ||
+          wrapper->builtin_id() == Builtin::kJSToWasmInterpreterWrapperAsm ||
+#endif  // V8_ENABLE_DRUMBRAKE
+          wrapper->builtin_id() == Builtin::kWasmPromising ||
+          wrapper->builtin_id() == Builtin::kWasmStressSwitch)));
+}
+
 void WasmExceptionTag::WasmExceptionTagVerify(Isolate* isolate) {
   CHECK(IsStruct(this));
   CHECK(IsWasmExceptionTag(this));
@@ -3330,74 +3328,6 @@ void AsmWasmData::AsmWasmDataVerify(Isolate* isolate) {
 
 void WasmFuncRef::WasmFuncRefVerify(Isolate* isolate) {
   CHECK(IsWasmFuncRef(this));
-}
-
-void WasmNull::WasmNullVerify(Isolate* isolate) { CHECK(IsWasmNull(this)); }
-
-void WasmImportData::WasmImportDataVerify(Isolate* isolate) {
-  CHECK(IsWasmImportData(this));
-  Object::VerifyPointer(isolate, native_context_.load());
-  CHECK(IsNativeContext(native_context_.load()));
-  Object::VerifyPointer(isolate, callable_.load());
-  CHECK(IsUndefined(callable_.load()) || IsJSReceiver(callable_.load()));
-  Object::VerifyPointer(isolate, wrapper_budget_.load());
-  CHECK(IsCell(wrapper_budget_.load()));
-}
-
-void WasmInternalFunction::WasmInternalFunctionVerify(Isolate* isolate) {
-  CHECK(IsWasmInternalFunction(this));
-  Object::VerifyPointer(isolate, external_.load());
-  CHECK(IsUndefined(external_.load()) || IsJSFunction(external_.load()));
-  Object::VerifyPointer(isolate, function_index_.load());
-  CHECK(IsSmi(function_index_.load()));
-}
-
-void WasmFunctionData::WasmFunctionDataVerify(Isolate* isolate) {
-  CHECK(IsWasmFunctionData(this));
-  Object::VerifyPointer(isolate, func_ref_.load());
-  CHECK(IsWasmFuncRef(func_ref_.load()));
-  Object::VerifyPointer(isolate, js_promise_flags_.load());
-  CHECK(IsSmi(js_promise_flags_.load()));
-}
-
-void WasmExportedFunctionData::WasmExportedFunctionDataVerify(
-    Isolate* isolate) {
-  CHECK(IsWasmExportedFunctionData(this));
-  WasmFunctionDataVerify(isolate);
-  Object::VerifyPointer(isolate, function_index_.load());
-  CHECK(IsSmi(function_index_.load()));
-  Object::VerifyPointer(isolate, wrapper_budget_.load());
-  CHECK(IsCell(wrapper_budget_.load()));
-  Object::VerifyPointer(isolate, packed_args_size_.load());
-  CHECK(IsSmi(packed_args_size_.load()));
-  Tagged<Code> wrapper = wrapper_code(isolate);
-  CHECK(wrapper->kind() == CodeKind::JS_TO_WASM_FUNCTION ||
-        wrapper->kind() == CodeKind::C_WASM_ENTRY ||
-        (wrapper->is_builtin() &&
-         (wrapper->builtin_id() == Builtin::kJSToWasmWrapper ||
-#if V8_ENABLE_DRUMBRAKE
-          wrapper->builtin_id() == Builtin::kJSToWasmInterpreterWrapper ||
-          wrapper->builtin_id() == Builtin::kJSToWasmInterpreterWrapperAsm ||
-#endif  // V8_ENABLE_DRUMBRAKE
-          wrapper->builtin_id() == Builtin::kWasmPromising ||
-          wrapper->builtin_id() == Builtin::kWasmStressSwitch)));
-}
-
-void WasmCapiFunctionData::WasmCapiFunctionDataVerify(Isolate* isolate) {
-  CHECK(IsWasmCapiFunctionData(this));
-  WasmFunctionDataVerify(isolate);
-  Object::VerifyPointer(isolate, embedder_data_.load());
-  CHECK(IsForeign(embedder_data_.load()));
-}
-
-void WasmSuspenderObject::WasmSuspenderObjectVerify(Isolate* isolate) {
-  CHECK(IsWasmSuspenderObject(this));
-  Object::VerifyPointer(isolate, promise_.load());
-  CHECK(IsUndefined(promise_.load()) || IsJSPromise(promise_.load()));
-  Object::VerifyPointer(isolate, resume_.load());
-  CHECK(IsUndefined(resume_.load()) || IsJSObject(resume_.load()));
-  Object::VerifyPointer(isolate, reject_.load());
-  CHECK(IsUndefined(reject_.load()) || IsJSObject(reject_.load()));
 }
 
 void WasmTypeInfo::WasmTypeInfoVerify(Isolate* isolate) {
