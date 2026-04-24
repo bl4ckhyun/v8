@@ -155,12 +155,15 @@ V8_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def v8_root_dir() -> Path:
-  git_dir = subprocess.check_output(["git", "rev-parse", "--git-common-dir"],
-                                    cwd=V8_DIR,
-                                    text=True,
-                                    stderr=subprocess.PIPE).strip()
-  if (V8_DIR / git_dir).exists():
-    return (V8_DIR / git_dir).parent.resolve()
+  try:
+    git_dir = subprocess.check_output(["git", "rev-parse", "--git-common-dir"],
+                                      cwd=V8_DIR,
+                                      text=True,
+                                      stderr=subprocess.PIPE).strip()
+    if (V8_DIR / git_dir).exists():
+      return (V8_DIR / git_dir).parent.resolve()
+  except (subprocess.CalledProcessError, FileNotFoundError):
+    pass
   return V8_DIR
 
 
