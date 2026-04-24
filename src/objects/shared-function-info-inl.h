@@ -1319,8 +1319,13 @@ bool SharedFunctionInfo::are_properties_final() const {
   return bit && is_class_constructor();
 }
 
-ACCESSORS(SharedFunctionInfoWrapper, shared_info, Tagged<SharedFunctionInfo>,
-          kSharedInfoOffset)
+Tagged<SharedFunctionInfo> SharedFunctionInfoWrapper::shared_info() const {
+  return shared_info_.load();
+}
+void SharedFunctionInfoWrapper::set_shared_info(
+    Tagged<SharedFunctionInfo> value, WriteBarrierMode mode) {
+  shared_info_.store(this, value, mode);
+}
 
 }  // namespace v8::internal
 

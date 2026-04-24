@@ -918,6 +918,13 @@ void JSObject::JSObjectPrint(std::ostream& os) {
   JSObjectPrintBody(os, *this);
 }
 
+// Layout-side trampoline: subclasses that extend JSObjectLayout inherit a
+// JSObjectPrint method that delegates to the legacy JSObject printer via
+// a Cast once. Mirrors JSObjectLayout::JSObjectVerify (objects-debug.cc).
+void JSObjectLayout::JSObjectPrint(std::ostream& os) {
+  Cast<JSObject>(this)->JSObjectPrint(os);
+}
+
 void JSExternalObject::JSExternalObjectPrint(std::ostream& os) {
   JSObjectPrintHeader(os, this, nullptr);
   os << "\n - external value: " << value(kExternalObjectValueTagRange);
@@ -2346,10 +2353,10 @@ void JSMap::JSMapPrint(std::ostream& os) {
 
 void JSCollectionIterator::JSCollectionIteratorPrint(std::ostream& os,
                                                      const char* name) {
-  JSObjectPrintHeader(os, *this, name);
+  JSObjectPrintHeader(os, this, name);
   os << "\n - table: " << Brief(table());
   os << "\n - index: " << Brief(index());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, this);
 }
 
 void JSSetIterator::JSSetIteratorPrint(std::ostream& os) {
@@ -2863,10 +2870,12 @@ void JSGlobalProxy::JSGlobalProxyPrint(std::ostream& os) {
 }
 
 void JSGlobalObject::JSGlobalObjectPrint(std::ostream& os) {
-  JSAPIObjectWithEmbedderSlotsPrintHeader(os, *this, "JSGlobalObject");
+  Tagged<JSGlobalObject> self(this);
+  JSAPIObjectWithEmbedderSlotsPrintHeader(os, Cast<JSObject>(self),
+                                          "JSGlobalObject");
   os << "\n - global_proxy: " << Brief(global_proxy());
   os << "\n - global_proxy_for_api: " << Brief(global_proxy_for_api());
-  JSObjectPrintBody(os, *this);
+  JSObjectPrintBody(os, Cast<JSObject>(self));
 }
 
 void Cell::CellPrint(std::ostream& os) {
@@ -3535,6 +3544,11 @@ void WasmFuncRef::WasmFuncRefPrint(std::ostream& os) {
   PrintHeader(os, "WasmFuncRef");
   IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
   os << "\n - internal: " << Brief(internal(isolate));
+  os << "\n";
+}
+
+void WasmNull::WasmNullPrint(std::ostream& os) {
+  PrintHeader(os, "WasmNull");
   os << "\n";
 }
 

@@ -2147,9 +2147,7 @@ DirectHandle<WasmImportData> Factory::NewWasmImportData(
   result->set_wrapper_budget(*wrapper_budget_cell);
   result->clear_call_origin();
   result->set_sig(sig);
-#if TAGGED_SIZE_8_BYTES
-  result->set_optional_padding(0);
-#endif
+  result->clear_padding();
   return direct_handle(result, isolate());
 }
 

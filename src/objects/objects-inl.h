@@ -1604,6 +1604,18 @@ void HeapObject::VerifySmiField(int offset) {
   static_assert(!COMPRESS_POINTERS_BOOL || kTaggedSize == kInt32Size);
 }
 
+void HeapObjectLayout::VerifyObjectField(Isolate* isolate, int offset) {
+  Cast<HeapObject>(this)->VerifyObjectField(isolate, offset);
+}
+
+void HeapObjectLayout::VerifyMaybeObjectField(Isolate* isolate, int offset) {
+  Cast<HeapObject>(this)->VerifyMaybeObjectField(isolate, offset);
+}
+
+void HeapObjectLayout::VerifySmiField(int offset) {
+  Cast<HeapObject>(this)->VerifySmiField(offset);
+}
+
 #endif
 
 // static

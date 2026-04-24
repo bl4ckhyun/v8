@@ -181,6 +181,40 @@ void ExposedTrustedObjectLayout::InitAndPublish(LocalIsolate* isolate) {
 #endif
 }
 
+void ExposedTrustedObjectLayout::InitDontPublish(Isolate* isolate) {
+#ifdef V8_ENABLE_SANDBOX
+  UncheckedCast<ExposedTrustedObject>(Tagged(this))->InitDontPublish(isolate);
+#endif
+}
+
+void ExposedTrustedObjectLayout::InitDontPublish(LocalIsolate* isolate) {
+#ifdef V8_ENABLE_SANDBOX
+  UncheckedCast<ExposedTrustedObject>(Tagged(this))->InitDontPublish(isolate);
+#endif
+}
+
+void ExposedTrustedObjectLayout::Publish(IsolateForSandbox isolate) {
+#ifdef V8_ENABLE_SANDBOX
+  UncheckedCast<ExposedTrustedObject>(Tagged(this))->Publish(isolate);
+#endif
+}
+
+void ExposedTrustedObjectLayout::Unpublish(IsolateForSandbox isolate) {
+#ifdef V8_ENABLE_SANDBOX
+  UncheckedCast<ExposedTrustedObject>(Tagged(this))->Unpublish(isolate);
+#endif
+}
+
+bool ExposedTrustedObjectLayout::IsPublished(IsolateForSandbox isolate) const {
+#ifdef V8_ENABLE_SANDBOX
+  return UncheckedCast<ExposedTrustedObject>(
+             Tagged(const_cast<ExposedTrustedObjectLayout*>(this)))
+      ->IsPublished(isolate);
+#else
+  return true;
+#endif
+}
+
 IndirectPointerHandle ExposedTrustedObjectLayout::self_indirect_pointer_handle()
     const {
 #ifdef V8_ENABLE_SANDBOX
