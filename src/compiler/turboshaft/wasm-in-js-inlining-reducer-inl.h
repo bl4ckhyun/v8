@@ -352,9 +352,10 @@ class WasmInJsInliningInterface {
         // ref.is_null. See `function-body-decoder-impl.h`
         return __ Word32Equal(__ IsNull(arg, input_type), 0);
       case wasm::kExprAnyConvertExtern:
-        return __ AnyConvertExtern(arg, input_type.is_shared());
+        return __ AnyConvertExtern(arg, input_type.is_shared(),
+                                   input_type.is_nullable());
       case wasm::kExprExternConvertAny:
-        return __ ExternConvertAny(arg);
+        return __ ExternConvertAny(arg, input_type.is_nullable());
 
       // We currently don't support operations that:
       // - could trap,

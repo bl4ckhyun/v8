@@ -126,7 +126,8 @@ class WasmLoweringReducer : public Next {
     }
   }
 
-  V<Object> REDUCE(AnyConvertExtern)(V<Object> object, SharedFlag is_shared) {
+  V<Object> REDUCE(AnyConvertExtern)(V<Object> object, SharedFlag is_shared,
+                                     bool is_nullable) {
     Label<Object> end_label(&Asm());
     Label<> null_label(&Asm());
     Label<> smi_label(&Asm());
@@ -136,14 +137,18 @@ class WasmLoweringReducer : public Next {
     constexpr int32_t kInt31MaxValue = 0x3fffffff;
     constexpr int32_t kInt31MinValue = -kInt31MaxValue - 1;
 
-    GOTO_IF(__ IsNull(object, wasm::kWasmExternRef), null_label);
+    if (is_nullable) {
+      GOTO_IF(__ IsNull(object, wasm::kWasmExternRef), null_label);
+    }
     GOTO_IF(__ IsSmi(object), smi_label);
     GOTO_IF(__ HasInstanceType(object, HEAP_NUMBER_TYPE), heap_number_label);
     // For anything else, just pass through the value.
     GOTO(end_label, object);
 
-    BIND(null_label);
-    GOTO(end_label, __ Null(wasm::kWasmAnyRef));
+    if (is_nullable) {
+      BIND(null_label);
+      GOTO(end_label, __ Null(wasm::kWasmAnyRef));
+    }
 
     // Canonicalize SMI.
     BIND(smi_label);
@@ -228,12 +233,15 @@ class WasmLoweringReducer : public Next {
     return result;
   }
 
-  V<Object> REDUCE(ExternConvertAny)(V<Object> object) {
-    Label<Object> end(&Asm());
-    GOTO_IF_NOT(__ IsNull(object, wasm::kWasmAnyRef), end, object);
-    GOTO(end, __ Null(wasm::kWasmExternRef));
-    BIND(end, result);
-    return result;
+  V<Object> REDUCE(ExternConvertAny)(V<Object> object, bool is_nullable) {
+    if (is_nullable) {
+      Label<Object> end(&Asm());
+      GOTO_IF_NOT(__ IsNull(object, wasm::kWasmAnyRef), end, object);
+      GOTO(end, __ Null(wasm::kWasmExternRef));
+      BIND(end, result);
+      return result;
+    }
+    return object;
   }
 
   V<Object> REDUCE(WasmTypeAnnotation)(V<Object> value, wasm::ValueType type) {

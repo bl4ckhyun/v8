@@ -7683,13 +7683,15 @@ struct ProcessWasmArgumentOp : FixedArityOperationT<2, ProcessWasmArgumentOp> {
 
 struct AnyConvertExternOp : FixedArityOperationT<1, AnyConvertExternOp> {
   SharedFlag is_shared;
+  bool is_nullable;
 
   static constexpr OpEffects effects =
       SmiValuesAre31Bits() ? OpEffects().CanReadMemory()
                            : OpEffects().CanReadMemory().CanAllocate();
 
-  explicit AnyConvertExternOp(V<Object> object, SharedFlag is_shared)
-      : Base(object), is_shared(is_shared) {}
+  explicit AnyConvertExternOp(V<Object> object, SharedFlag is_shared,
+                              bool is_nullable)
+      : Base(object), is_shared(is_shared), is_nullable(is_nullable) {}
 
   V<Object> object() const { return Base::input<Object>(0); }
 
@@ -7702,13 +7704,16 @@ struct AnyConvertExternOp : FixedArityOperationT<1, AnyConvertExternOp> {
     return MaybeRepVector<MaybeRegisterRepresentation::Tagged()>();
   }
 
-  auto options() const { return std::tuple(is_shared); }
+  auto options() const { return std::tuple(is_shared, is_nullable); }
 };
 
 struct ExternConvertAnyOp : FixedArityOperationT<1, ExternConvertAnyOp> {
+  bool is_nullable;
+
   static constexpr OpEffects effects = OpEffects();
 
-  explicit ExternConvertAnyOp(V<Object> object) : Base(object) {}
+  explicit ExternConvertAnyOp(V<Object> object, bool is_nullable)
+      : Base(object), is_nullable(is_nullable) {}
 
   V<Object> object() const { return Base::input<Object>(0); }
 
@@ -7721,8 +7726,7 @@ struct ExternConvertAnyOp : FixedArityOperationT<1, ExternConvertAnyOp> {
     return MaybeRepVector<MaybeRegisterRepresentation::Tagged()>();
   }
 
-
-  auto options() const { return std::tuple(); }
+  auto options() const { return std::tuple(is_nullable); }
 };
 
 struct StructGetOp : OperationT<StructGetOp> {

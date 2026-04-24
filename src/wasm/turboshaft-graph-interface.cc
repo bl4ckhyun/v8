@@ -7753,9 +7753,10 @@ class TurboshaftGraphBuildingInterface
         // as a sentinel for the negation of ref.is_null.
         return __ Word32Equal(__ IsNull(arg, input_type), 0);
       case kExprAnyConvertExtern:
-        return __ AnyConvertExtern(arg, input_type.is_shared());
+        return __ AnyConvertExtern(arg, input_type.is_shared(),
+                                   input_type.is_nullable());
       case kExprExternConvertAny:
-        return __ ExternConvertAny(arg);
+        return __ ExternConvertAny(arg, input_type.is_nullable());
       default:
         UNREACHABLE();
     }
