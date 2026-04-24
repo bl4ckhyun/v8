@@ -5204,9 +5204,9 @@ ValueNode* MaglevGraphBuilder::BuildLoadFixedArrayLength(
   // cannot end up with an empty type for it.
   DCHECK(!IsEmptyNodeType(GetType(fixed_array)));
   ValueNode* length;
-  GET_VALUE(length,
-            BuildLoadTaggedField(fixed_array, offsetof(FixedArray, length_),
-                                 LoadType::kSmi));
+  GET_VALUE(length, AddNewNode<LoadInt32>(
+                        {fixed_array},
+                        static_cast<int>(offsetof(FixedArray, length_))));
   return length;
 }
 
@@ -14676,17 +14676,27 @@ VirtualObject* MaglevGraphBuilder::CreateFixedArray(
   DCHECK_NE(length, 0);  // Use kEmptyFixedArray instead.
   DCHECK_EQ(FixedArray::SizeFor(length) % FieldSizeOf(Shape::kBodyFieldType),
             0);
-  DCHECK_EQ(Shape::header_slot_count + length,
-            FixedArray::SizeFor(length) / FieldSizeOf(Shape::kBodyFieldType));
+#if TAGGED_SIZE_8_BYTES
+  // FixedArray header fields are: map, length, optional_padding
+  DCHECK_EQ(Shape::header_slot_count, 3);
+#else
+  // FixedArray header fields are: map, length
+  DCHECK_EQ(Shape::header_slot_count, 2);
+#endif  // TAGGED_SIZE_8_BYTES
+  DCHECK_EQ(length,
+            (FixedArray::SizeFor(length) - FixedArrayBase::kHeaderSize) /
+                FieldSizeOf(Shape::kBodyFieldType));
 
   int slot_count = Shape::header_slot_count + length;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
+  DCHECK_EQ(vobj->size(), FixedArray::SizeFor(length));
 
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  // TODO(jgruber): This is a smi field. Is there some advantage to creating an
-  // int32 constant first?
   vobj->set(FixedArrayBase::kLengthOffset, GetInt32Constant(length));
+#if TAGGED_SIZE_8_BYTES
+  vobj->set(FixedArrayBase::kPaddingOffset, GetInt32Constant(0));
+#endif  // TAGGED_SIZE_8_BYTES
   for (int i = 0; i < length; i++) {
     DCHECK_NOT_NULL(values[i]);
     vobj->set(FixedArray::OffsetOfElementAt(i), values[i]);
@@ -14709,9 +14719,16 @@ VirtualObject* MaglevGraphBuilder::CreateFixedDoubleArray(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
   DCHECK_EQ(vobj->size(), T::SizeFor(length));
 
+#if TAGGED_SIZE_8_BYTES
+  DCHECK_EQ(Shape::header_slot_count, 3);
+#else
   DCHECK_EQ(Shape::header_slot_count, 2);
+#endif  // TAGGED_SIZE_8_BYTES
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
   vobj->set(FixedArrayBase::kLengthOffset, GetInt32Constant(length));
+#if TAGGED_SIZE_8_BYTES
+  vobj->set(FixedArrayBase::kPaddingOffset, GetInt32Constant(0));
+#endif  // TAGGED_SIZE_8_BYTES
   for (uint32_t i = 0; i < length; i++) {
     vobj->set(T::OffsetOfElementAt(i), values[i]);
   }
@@ -14721,19 +14738,18 @@ VirtualObject* MaglevGraphBuilder::CreateFixedDoubleArray(
 VirtualObject* MaglevGraphBuilder::CreateContext(
     compiler::MapRef map, int length, compiler::ScopeInfoRef scope_info,
     ValueNode* previous_context, std::optional<ValueNode*> extension) {
-  using Shape = VirtualFixedArrayShape;
+  using Shape = ContextShape;
   SBXCHECK_GE(length, Context::MIN_CONTEXT_SLOTS);
-  DCHECK_EQ(FixedArray::SizeFor(length) % FieldSizeOf(Shape::kBodyFieldType),
-            0);
+  DCHECK_EQ(Context::SizeFor(length) % FieldSizeOf(Shape::kBodyFieldType), 0);
   DCHECK_EQ(Shape::header_slot_count + length,
-            FixedArray::SizeFor(length) / FieldSizeOf(Shape::kBodyFieldType));
+            Context::SizeFor(length) / FieldSizeOf(Shape::kBodyFieldType));
 
   int slot_count = Shape::header_slot_count + length;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
 
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
-  vobj->set(Context::kLengthOffset, GetInt32Constant(length));
+  vobj->set(Context::kLengthOffset, GetSmiConstant(length));
   vobj->set(Context::OffsetOfElementAt(Context::SCOPE_INFO_INDEX),
             GetConstant(scope_info));
   vobj->set(Context::OffsetOfElementAt(Context::PREVIOUS_INDEX),
@@ -14781,12 +14797,21 @@ VirtualObject* MaglevGraphBuilder::CreateMappedArgumentsElements(
     compiler::MapRef map, int mapped_count, ValueNode* context,
     ValueNode* unmapped_elements) {
   using Shape = VirtualSloppyArgumentsElementsShape;
-  int slot_count = SloppyArgumentsElements::SizeFor(mapped_count) / kTaggedSize;
+  int slot_count = Shape::header_slot_count + mapped_count;
+#if TAGGED_SIZE_8_BYTES
+  DCHECK_EQ(Shape::header_slot_count, 5);
+#else
+  DCHECK_EQ(Shape::header_slot_count, 4);
+#endif  // TAGGED_SIZE_8_BYTES
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
   vobj->set(HeapObject::kMapOffset, GetConstant(map));
   vobj->set(offsetof(SloppyArgumentsElements, length_),
             GetInt32Constant(mapped_count));
+#if TAGGED_SIZE_8_BYTES
+  vobj->set(offsetof(SloppyArgumentsElements, optional_padding_),
+            GetInt32Constant(0));
+#endif  // TAGGED_SIZE_8_BYTES
   vobj->set(offsetof(SloppyArgumentsElements, context_), context);
   vobj->set(offsetof(SloppyArgumentsElements, arguments_), unmapped_elements);
   return vobj;

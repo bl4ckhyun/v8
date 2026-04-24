@@ -1400,12 +1400,17 @@ void AllocateElementsArray::GenerateCode(MaglevAssembler* masm,
     __ SetMapAsRoot(elements, map_index);
   }
   {
-    Register smi_length = scratch;
-    __ UncheckedSmiTagInt32(smi_length, length);
     static_assert(offsetof(FixedArray, length_) ==
                   offsetof(FixedDoubleArray, length_));
-    __ StoreTaggedFieldNoWriteBarrier(elements, offsetof(FixedArray, length_),
-                                      smi_length);
+    __ StoreInt32(FieldMemOperand(elements, offsetof(FixedArray, length_)),
+                  length);
+#if TAGGED_SIZE_8_BYTES
+    Register zero = scratch;
+    __ Move(zero, 0u);
+    __ StoreInt32(
+        FieldMemOperand(elements, offsetof(FixedArray, optional_padding_)),
+        zero);
+#endif  // TAGGED_SIZE_8_BYTES
   }
 
   // Initialize the array with holes.

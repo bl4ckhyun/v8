@@ -6021,16 +6021,31 @@ class GraphBuildingNodeProcessor {
     // TODO(olivf): Support elided maglev cons strings in turbolev.
     DCHECK_NE(vobj->object_type(), maglev::vobj::ObjectType::kConsString);
 
-    builder.AddDematerializedObject(dup_id.id, vobj->slot_count());
+    int fields = vobj->slot_count();
+#if TAGGED_SIZE_8_BYTES
+    // To keep the deoptimization data in sync with TF (which represents length
+    // and padding in a single Uint64), we skip the padding.
+    if (vobj->object_type() == maglev::vobj::ObjectType::kFixedArray) {
+      fields--;
+    }
+#endif  // TAGGED_SIZE_8_BYTES
+    builder.AddDematerializedObject(dup_id.id, fields);
+
     vobj->ForEachSlot(
         [&](maglev::ValueNode* value_node, maglev::vobj::Field desc) -> bool {
+#if TAGGED_SIZE_8_BYTES
+          if (vobj->object_type() == maglev::vobj::ObjectType::kFixedArray &&
+              desc.offset == FixedArrayBase::kPaddingOffset) {
+            return true;
+          }
+#endif  // TAGGED_SIZE_8_BYTES
           switch (desc.type) {
             case maglev::vobj::FieldType::kTagged:
             case maglev::vobj::FieldType::kTrustedPointer:
             case maglev::vobj::FieldType::kFloat64:
+            case maglev::vobj::FieldType::kInt32:
               AddVirtualObjectNestedValue(builder, virtual_objects, value_node);
               break;
-            case maglev::vobj::FieldType::kInt32:
             case maglev::vobj::FieldType::kNone:
               UNREACHABLE();
           }

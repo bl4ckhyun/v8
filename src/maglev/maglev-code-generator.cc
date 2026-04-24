@@ -1602,7 +1602,15 @@ class MaglevFrameTranslationBuilder {
     if (object_type == vobj::ObjectType::kConsString) {
       translation_array_builder_->StringConcat();
     } else {
-      translation_array_builder_->BeginCapturedObject(object->slot_count());
+      int fields = object->slot_count();
+#if TAGGED_SIZE_8_BYTES
+      // To keep the deoptimization data in sync with TF (which represents
+      // length and padding in a single Uint64), we skip the padding.
+      if (object_type == vobj::ObjectType::kFixedArray) {
+        fields--;
+      }
+#endif  // TAGGED_SIZE_8_BYTES
+      translation_array_builder_->BeginCapturedObject(fields);
     }
     auto callback = [&](ValueNode* node, const vobj::Field& desc) -> bool {
       BuildNestedValue(node, input_location, virtual_objects);

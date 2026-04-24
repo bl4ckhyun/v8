@@ -2568,7 +2568,7 @@ void Builtins::Generate_CallBoundFunctionImpl(MacroAssembler* masm) {
 
   // Load [[BoundArguments]] into a2 and length of that into a4.
   __ Ld(a2, FieldMemOperand(a1, JSBoundFunction::kBoundArgumentsOffset));
-  __ SmiUntag(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
+  __ Lwu(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
 
   // ----------- S t a t e -------------
   //  -- a0 : the number of arguments
@@ -2601,7 +2601,7 @@ void Builtins::Generate_CallBoundFunctionImpl(MacroAssembler* masm) {
   // Push [[BoundArguments]].
   {
     Label loop, done_loop;
-    __ SmiUntag(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
+    __ Lwu(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
     __ Daddu(a0, a0, Operand(a4));
     __ Daddu(a2, a2,
              Operand(OFFSET_OF_DATA_START(FixedArray) - kHeapObjectTag));
@@ -2672,7 +2672,7 @@ void Builtins::Generate_ConstructBoundFunction(MacroAssembler* masm) {
 
   // Load [[BoundArguments]] into a2 and length of that into a4.
   __ Ld(a2, FieldMemOperand(a1, JSBoundFunction::kBoundArgumentsOffset));
-  __ SmiUntag(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
+  __ Lwu(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
 
   // ----------- S t a t e -------------
   //  -- a0 : the number of arguments
@@ -2706,7 +2706,7 @@ void Builtins::Generate_ConstructBoundFunction(MacroAssembler* masm) {
   // Push [[BoundArguments]].
   {
     Label loop, done_loop;
-    __ SmiUntag(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
+    __ Lwu(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
     __ Daddu(a0, a0, Operand(a4));
     __ Daddu(a2, a2,
              Operand(OFFSET_OF_DATA_START(FixedArray) - kHeapObjectTag));

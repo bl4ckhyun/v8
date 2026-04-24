@@ -6437,8 +6437,9 @@ TEST(RememberedSet_RemoveStaleOnScavenge) {
   arr->set(1, ReadOnlyRoots(CcTest::heap()).undefined_value());
   DirectHandle<FixedArrayBase> tail(heap->LeftTrimFixedArray(*arr, 1), isolate);
 
-  // None of the actions above should have updated the remembered set.
-  CHECK_EQ(3, GetRememberedSetSize<OLD_TO_NEW>(*tail));
+  // The first slot should be removed from the remembered set since the length
+  // is now in that place and represented as a uint32_t.
+  CHECK_EQ(2, GetRememberedSetSize<OLD_TO_NEW>(*tail));
 
   // Run GC to promote the remaining young object and fixup the stale entries in
   // the remembered set.

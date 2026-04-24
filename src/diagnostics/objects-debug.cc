@@ -899,11 +899,11 @@ void EmbedderDataArray::EmbedderDataArrayVerify(Isolate* isolate) {
 }
 
 void FixedArrayBase::FixedArrayBaseVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, FixedArrayBase::kMaxLength);
 }
 
 void FixedArray::FixedArrayVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, FixedArray::kMaxLength);
 
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
@@ -918,7 +918,7 @@ void FixedArray::FixedArrayVerify(Isolate* isolate) {
 
 void TrustedFixedArray::TrustedFixedArrayVerify(Isolate* isolate) {
   TrustedObjectVerify(isolate);
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, TrustedFixedArray::kMaxLength);
 
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
@@ -929,7 +929,7 @@ void TrustedFixedArray::TrustedFixedArrayVerify(Isolate* isolate) {
 void ProtectedFixedArray::ProtectedFixedArrayVerify(Isolate* isolate) {
   TrustedObjectVerify(isolate);
 
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, ProtectedFixedArray::kMaxLength);
 
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
@@ -940,7 +940,6 @@ void ProtectedFixedArray::ProtectedFixedArrayVerify(Isolate* isolate) {
 }
 
 void RegExpMatchInfo::RegExpMatchInfoVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
   const uint32_t cap = capacity().value();
   const uint32_t capture_registers =
       static_cast<uint32_t>(number_of_capture_registers());
@@ -973,7 +972,7 @@ void FeedbackCell::FeedbackCellVerify(Isolate* isolate) {
 
 void ClosureFeedbackCellArray::ClosureFeedbackCellArrayVerify(
     Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
     Object::VerifyPointer(isolate, get(i));
@@ -998,7 +997,7 @@ void FeedbackVector::FeedbackVectorVerify(Isolate* isolate) {
 }
 
 void WeakFixedArray::WeakFixedArrayVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
     Object::VerifyMaybeObjectPointer(isolate, get(i));
@@ -1007,7 +1006,7 @@ void WeakFixedArray::WeakFixedArrayVerify(Isolate* isolate) {
 
 void WeakHomomorphicFixedArray::WeakHomomorphicFixedArrayVerify(
     Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
     Object::VerifyMaybeObjectPointer(isolate, get(i));
@@ -1015,7 +1014,7 @@ void WeakHomomorphicFixedArray::WeakHomomorphicFixedArrayVerify(
 }
 
 void TrustedWeakFixedArray::TrustedWeakFixedArrayVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
     Object::VerifyMaybeObjectPointer(isolate, get(i));
@@ -1024,7 +1023,7 @@ void TrustedWeakFixedArray::TrustedWeakFixedArrayVerify(Isolate* isolate) {
 
 void ProtectedWeakFixedArray::ProtectedWeakFixedArrayVerify(Isolate* isolate) {
   TrustedObjectVerify(isolate);
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   uint32_t len = ulength().value();
   for (uint32_t i = 0; i < len; ++i) {
     Tagged<UnionOf<MaybeWeak<TrustedObject>, Smi>> p = get(i);
@@ -1042,10 +1041,9 @@ void ProtectedWeakFixedArray::ProtectedWeakFixedArrayVerify(Isolate* isolate) {
 }
 
 void ScriptContextTable::ScriptContextTableVerify(Isolate* isolate) {
-  CHECK(IsSmi(capacity_.load()));
-  CHECK(IsSmi(length_.load()));
   const uint32_t len = length(kAcquireLoad).value();
   CHECK_LE(len, capacity().value());
+  CHECK_LE(capacity_, kMaxCapacity);
   CHECK(IsNameToIndexHashTable(names_to_context_index()));
   for (uint32_t i = 0; i < len; ++i) {
     Tagged<Context> o = get(i);
@@ -1056,6 +1054,7 @@ void ScriptContextTable::ScriptContextTableVerify(Isolate* isolate) {
 }
 
 void ArrayList::ArrayListVerify(Isolate* isolate) {
+  CHECK_LE(capacity_, kMaxCapacity);
   const uint32_t len = ulength().value();
   const uint32_t cap = capacity().value();
   CHECK_LE(len, cap);
@@ -1066,8 +1065,7 @@ void ArrayList::ArrayListVerify(Isolate* isolate) {
 }
 
 void WeakArrayList::WeakArrayListVerify(Isolate* isolate) {
-  CHECK(IsSmi(capacity_.load()));
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(capacity_, kMaxCapacity);
   const uint32_t len = length().value();
   const uint32_t cap = capacity().value();
   CHECK_LE(len, cap);
@@ -3148,7 +3146,7 @@ void EnumCache::EnumCacheVerify(Isolate* isolate) {
 
 void ObjectBoilerplateDescription::ObjectBoilerplateDescriptionVerify(
     Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   CHECK(IsSmi(backing_store_size_.load()));
   CHECK(IsSmi(flags_.load()));
   // The keys of the boilerplate should either be internalized strings, or
@@ -3824,7 +3822,7 @@ void ErrorStackData::ErrorStackDataVerify(Isolate* isolate) {
 }
 
 void SloppyArgumentsElements::SloppyArgumentsElementsVerify(Isolate* isolate) {
-  CHECK(IsSmi(length_.load()));
+  CHECK_LE(length_, kMaxCapacity);
   {
     auto o = context();
     Object::VerifyPointer(isolate, o);

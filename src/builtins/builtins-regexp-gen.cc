@@ -288,7 +288,7 @@ TNode<JSRegExpResult> RegExpBuiltinsAssembler::ConstructNewResultFromMatchInfo(
     // One or more named captures exist, add a property for each one.
     TNode<TrustedFixedArray> names =
         TrustedCast<TrustedFixedArray>(maybe_names, "from RegExpData");
-    TNode<IntPtrT> names_length = SmiUntag(LoadTrustedFixedArrayLength(names));
+    TNode<IntPtrT> names_length = LoadWordArrayLength(names);
     CSA_DCHECK(this, IntPtrGreaterThan(names_length, IntPtrZero()));
 
     // Allocate a new object to store the named capture properties.
@@ -506,9 +506,10 @@ RegExpBuiltinsAssembler::InitializeMatchInfoFromRegisters(
   // Check that the last match info has space for the capture registers.
   {
     Label next(this);
-    TNode<Smi> available_slots = LoadSmiArrayLength(var_match_info.value());
-    GotoIf(SmiLessThanOrEqual(register_count, available_slots), &next,
-           GotoHint::kLabel);
+    TNode<IntPtrT> available_slots =
+        LoadWordArrayLength(var_match_info.value());
+    GotoIf(IntPtrLessThanOrEqual(SmiUntag(register_count), available_slots),
+           &next, GotoHint::kLabel);
 
     // Grow.
     var_match_info =

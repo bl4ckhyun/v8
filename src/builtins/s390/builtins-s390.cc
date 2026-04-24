@@ -2779,7 +2779,7 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
   Label no_bound_arguments;
   __ LoadTaggedField(
       r4, FieldMemOperand(r3, JSBoundFunction::kBoundArgumentsOffset));
-  __ SmiUntagField(r6, FieldMemOperand(r4, offsetof(FixedArray, length_)));
+  __ LoadU32(r6, FieldMemOperand(r4, offsetof(FixedArray, length_)));
   __ LoadAndTestP(r6, r6);
   __ beq(&no_bound_arguments);
   {

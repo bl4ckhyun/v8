@@ -5367,6 +5367,8 @@ enum class ObjectType {
   kDefault,
   kConsString,
   kHeapNumber,
+  // TODO(375937549): only needed for TF compatibility.
+  kFixedArray,
 };
 
 // The type of a VirtualObject field. Extend as needed.
@@ -5663,7 +5665,17 @@ class VirtualObject : public FixedInputValueNodeT<0, VirtualObject> {
       }
     }
     for (int i = 0; i < slot_count(); i++) {
-      if (!callback(slots_[i], FieldForSlot(i))) {
+      vobj::Field field = FieldForSlot(i);
+#if TAGGED_SIZE_8_BYTES
+      // To keep the deoptimization data in sync with TF (which represents
+      // length and padding in a single Uint64), we skip the padding.
+      if (mode == ForEachSlotIterationMode::kForDeopt &&
+          object_type() == vobj::ObjectType::kFixedArray &&
+          field.offset == FixedArrayBase::kPaddingOffset) {
+        continue;
+      }
+#endif  // TAGGED_SIZE_8_BYTES
+      if (!callback(slots_[i], field)) {
         return false;
       }
     }
@@ -5929,10 +5941,30 @@ struct VirtualFixedArrayShape : VirtualHeapObjectShape {
   // The instance size is determined by array length, and array elements are
   // tagged.
   static constexpr bool kInstancesHaveStaticSize = false;
+  static constexpr vobj::ObjectType kObjectType = vobj::ObjectType::kFixedArray;
+  static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kTagged;
+#if TAGGED_SIZE_8_BYTES
+#define OPTIONAL_PADDING(V) \
+  V(optional_padding, FixedArrayBase::kPaddingOffset, vobj::FieldType::kInt32)
+#else
+#define OPTIONAL_PADDING(V)
+#endif  // TAGGED_SIZE_8_BYTES
+#define FIELD_LIST(V)                                               \
+  V(length, FixedArrayBase::kLengthOffset, vobj::FieldType::kInt32) \
+  OPTIONAL_PADDING(V)
+  DEF_SHAPE(VirtualHeapObjectShape, FIELD_LIST);
+#undef OPTIONAL_PADDING
+#undef FIELD_LIST
+};
+
+struct ContextShape : VirtualHeapObjectShape {
+  // The instance size is determined by context length, and context elements are
+  // tagged.
+  static constexpr bool kInstancesHaveStaticSize = false;
   static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kTagged;
 
 #define FIELD_LIST(V) \
-  V(length, FixedArrayBase::kLengthOffset, vobj::FieldType::kTagged)
+  V(length, Context::kLengthOffset, vobj::FieldType::kTagged)
 
   DEF_SHAPE(VirtualHeapObjectShape, FIELD_LIST);
 #undef FIELD_LIST
@@ -5990,10 +6022,19 @@ struct VirtualConsStringShape : VirtualNameShape {
 
 struct VirtualFixedDoubleArrayShape : VirtualHeapObjectShape {
   static constexpr bool kInstancesHaveStaticSize = false;
+  static constexpr vobj::ObjectType kObjectType = vobj::ObjectType::kFixedArray;
   static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kFloat64;
-#define FIELD_LIST(V) \
-  V(length, FixedArrayBase::kLengthOffset, vobj::FieldType::kTagged)
+#if TAGGED_SIZE_8_BYTES
+#define OPTIONAL_PADDING(V) \
+  V(optional_padding, FixedArrayBase::kPaddingOffset, vobj::FieldType::kInt32)
+#else
+#define OPTIONAL_PADDING(V)
+#endif  // TAGGED_SIZE_8_BYTES
+#define FIELD_LIST(V)                                               \
+  V(length, FixedArrayBase::kLengthOffset, vobj::FieldType::kInt32) \
+  OPTIONAL_PADDING(V)
   DEF_SHAPE(VirtualHeapObjectShape, FIELD_LIST);
+#undef OPTIONAL_PADDING
 #undef FIELD_LIST
 };
 

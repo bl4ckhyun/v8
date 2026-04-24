@@ -222,6 +222,9 @@ class V8_EXPORT_PRIVATE AccessBuilder final
   // Provides access to FixedArray::length() field.
   static FieldAccess ForFixedArrayLength();
 
+  // Provides access to Context::length() field.
+  static FieldAccess ForContextLength();
+
   // Provides access to WeakFixedArray::length() field.
   static FieldAccess ForWeakFixedArrayLength();
 

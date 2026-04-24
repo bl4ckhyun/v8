@@ -2680,9 +2680,9 @@ const TNode<OrderedHashMap> CollectionsBuiltinsAssembler::AddValueToKeyedGroup(
   ApplyAtEntry<OrderedHashMap> store_at_new_entry =
       [this, &key, value](const TNode<OrderedHashMap> table,
                           const TNode<IntPtrT> entry_start) {
-        TNode<ArrayList> array = AllocateArrayList(SmiConstant(1));
-        ArrayListSet(array, SmiConstant(0), value);
-        ArrayListSetLength(array, SmiConstant(1));
+        TNode<ArrayList> array = AllocateArrayList(Uint32Constant(1));
+        ArrayListSet(array, Uint32Constant(0), value);
+        ArrayListSetLength(array, Uint32Constant(1));
         StoreKeyValueInOrderedHashMapEntry(table, key.value(), array,
                                            entry_start);
       };

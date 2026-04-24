@@ -870,7 +870,7 @@ class ScriptContextTableShape final : public AllStatic {
   static constexpr bool kLengthEqualsCapacity = false;
 
   V8_ARRAY_EXTRA_FIELDS({
-    TaggedMember<Smi> length_;
+    uint32_t length_;
     TaggedMember<NameToIndexHashTable> names_to_context_index_;
   });
 };
@@ -916,6 +916,10 @@ class ScriptContextTable
   DECL_VERIFIER(ScriptContextTable)
 
   class BodyDescriptor;
+
+  static constexpr uint32_t kCapacityOffset = HeapObject::kHeaderSize;
+  static constexpr uint32_t kLengthOffset = kCapacityOffset + kApiInt32Size;
+  static constexpr uint32_t kHeaderSize = kLengthOffset + kApiInt32Size;
 };
 
 using ContextField = Context::Field;

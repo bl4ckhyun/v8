@@ -698,7 +698,8 @@ TF_BUILTIN(ObjectKeys, ObjectBuiltinsAssembler) {
     // Let the runtime compute the elements.
     TNode<FixedArray> elements =
         CAST(CallRuntime(Runtime::kObjectKeys, context, object));
-    var_length = LoadObjectField<Smi>(elements, offsetof(FixedArray, length_));
+    var_length = Convert<Smi>(
+        LoadObjectField<Uint32T>(elements, offsetof(FixedArray, length_)));
     var_elements = elements;
     Goto(&if_join);
   }
@@ -820,7 +821,8 @@ TF_BUILTIN(ObjectGetOwnPropertyNames, ObjectBuiltinsAssembler) {
     // Let the runtime compute the elements and try initializing enum cache.
     TNode<FixedArray> elements = CAST(CallRuntime(
         Runtime::kObjectGetOwnPropertyNamesTryFast, context, object));
-    var_length = LoadObjectField<Smi>(elements, offsetof(FixedArray, length_));
+    var_length = Convert<Smi>(
+        LoadObjectField<Uint32T>(elements, offsetof(FixedArray, length_)));
     var_elements = elements;
     Goto(&if_join);
   }
@@ -838,7 +840,8 @@ TF_BUILTIN(ObjectGetOwnPropertyNames, ObjectBuiltinsAssembler) {
     // Let the runtime compute the elements.
     TNode<FixedArray> elements =
         CAST(CallRuntime(Runtime::kObjectGetOwnPropertyNames, context, object));
-    var_length = LoadObjectField<Smi>(elements, offsetof(FixedArray, length_));
+    var_length = Convert<Smi>(
+        LoadObjectField<Uint32T>(elements, offsetof(FixedArray, length_)));
     var_elements = elements;
     Goto(&if_join);
   }

@@ -508,15 +508,15 @@ macro PushRun(
 macro GetTempArray(
     implicit context: Context)(sortState: SortState,
     requestedSize: Smi): FixedArray {
-  const minSize: Smi = SmiMax(kSortStateTempSize, requestedSize);
+  const minSize: intptr =
+      Convert<intptr>(SmiMax(kSortStateTempSize, requestedSize));
 
-  const currentSize: Smi = sortState.tempArray.length;
+  const currentSize: intptr = sortState.tempArray.length_intptr;
   if (currentSize >= minSize) {
     return sortState.tempArray;
   }
 
-  const tempArray: FixedArray =
-      AllocateZeroedFixedArray(Convert<intptr>(minSize));
+  const tempArray: FixedArray = AllocateZeroedFixedArray(minSize);
 
   sortState.tempArray = tempArray;
   return tempArray;
@@ -527,8 +527,12 @@ transitioning builtin Copy(
     target: FixedArray, dstPos: Smi, length: Smi): JSAny {
   dcheck(srcPos >= 0);
   dcheck(dstPos >= 0);
-  dcheck(srcPos <= source.length - length);
-  dcheck(dstPos <= target.length - length);
+  dcheck(
+      Convert<intptr>(srcPos) <=
+      source.length_intptr - Convert<intptr>(length));
+  dcheck(
+      Convert<intptr>(dstPos) <=
+      target.length_intptr - Convert<intptr>(length));
 
   // TODO(szuend): Investigate whether this builtin should be replaced
   //               by CopyElements/MoveElements for perfomance.
@@ -1458,7 +1462,7 @@ transitioning macro CopyWorkArrayToReceiver(
 
   const workArray = sortState.workArray;
 
-  dcheck(numberOfNonUndefined <= workArray.length);
+  dcheck(Convert<intptr>(numberOfNonUndefined) <= workArray.length_intptr);
   dcheck(
       numberOfNonUndefined + sortState.numberOfUndefined <=
       sortState.sortLength);

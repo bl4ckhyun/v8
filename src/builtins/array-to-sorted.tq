@@ -67,7 +67,7 @@ transitioning builtin ArrayPowerSortIntoCopy(
       if (sortState.numberOfUndefined != 0) goto FastObject;
 
       const workArray = sortState.workArray;
-      dcheck(numberOfNonUndefined <= workArray.length);
+      dcheck(Convert<intptr>(numberOfNonUndefined) <= workArray.length_intptr);
       for (let i: Smi = 0; i < numberOfNonUndefined; ++i) {
         const e = UnsafeCast<JSAny>(workArray.objects[i]);
         // TODO(v8:12764): ArrayPowerSortImpl already boxed doubles. Support

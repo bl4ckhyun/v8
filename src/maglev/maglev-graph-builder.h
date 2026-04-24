@@ -150,7 +150,7 @@ class MaglevGraphBuilder {
   IntPtrConstant* GetIntPtrConstant(intptr_t constant) {
     return graph()->GetIntPtrConstant(constant);
   }
-  Uint32Constant* GetUint32Constant(int constant) {
+  Uint32Constant* GetUint32Constant(uint32_t constant) {
     return graph()->GetUint32Constant(constant);
   }
   Float64Constant* GetFloat64Constant(double constant) {

@@ -740,28 +740,50 @@ FieldAccess AccessBuilder::ForJSRegExpLastIndex() {
 
 // static
 FieldAccess AccessBuilder::ForFixedArrayLength() {
+  FieldAccess access = {
+      kTaggedBase, offsetof(FixedArray, length_), MaybeHandle<Name>(),
+      OptionalMapRef(), TypeCache::Get()->kFixedArrayLengthType,
+#if TAGGED_SIZE_8_BYTES
+      // TF escape analysis expects all slots to be aligned to kTaggedSize,
+      // therefore we store length+padding as a single 64-bit value when pointer
+      // compression is disabled on 64-bit architectures.
+      MachineType::Uint64(),
+#else
+      MachineType::Uint32(),
+#endif  // TAGGED_SIZE_8_BYTES
+      kNoWriteBarrier, "FixedArrayLength"};
+  access.is_immutable = true;
+  return access;
+}
+
+// static
+FieldAccess AccessBuilder::ForContextLength() {
   FieldAccess access = {kTaggedBase,
-                        offsetof(FixedArray, length_),
+                        Context::kLengthOffset,
                         MaybeHandle<Name>(),
                         OptionalMapRef(),
-                        TypeCache::Get()->kFixedArrayLengthType,
+                        TypeCache::Get()->kContextLengthType,
                         MachineType::TaggedSigned(),
                         kNoWriteBarrier,
-                        "FixedArrayLength"};
+                        "ContextLength"};
   access.is_immutable = true;
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForWeakFixedArrayLength() {
-  FieldAccess access = {kTaggedBase,
-                        offsetof(WeakFixedArray, length_),
-                        MaybeHandle<Name>(),
-                        OptionalMapRef(),
-                        TypeCache::Get()->kWeakFixedArrayLengthType,
-                        MachineType::TaggedSigned(),
-                        kNoWriteBarrier,
-                        "WeakFixedArrayLength"};
+  FieldAccess access = {
+      kTaggedBase, offsetof(WeakFixedArray, length_), MaybeHandle<Name>(),
+      OptionalMapRef(), TypeCache::Get()->kWeakFixedArrayLengthType,
+#if TAGGED_SIZE_8_BYTES
+      // TF escape analysis expects all slots to be aligned to kTaggedSize,
+      // therefore we store length+padding as a single 64-bit value when pointer
+      // compression is disabled on 64-bit architectures.
+      MachineType::Uint64(),
+#else
+      MachineType::Uint32(),
+#endif  // TAGGED_SIZE_8_BYTES
+      kNoWriteBarrier, "WeakFixedArrayLength"};
   access.is_immutable = true;
   return access;
 }

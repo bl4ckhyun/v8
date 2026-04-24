@@ -534,6 +534,9 @@ bool Heap::CreateEarlyReadOnlyMapsAndObjects() {
     obj->set_map_after_allocation(isolate(), roots.fixed_array_map(),
                                   SKIP_WRITE_BARRIER);
     Cast<FixedArray>(obj)->set_length(0);
+#if TAGGED_SIZE_8_BYTES
+    Cast<FixedArray>(obj)->clear_optional_padding();
+#endif  // TAGGED_SIZE_8_BYTES
   }
   set_empty_fixed_array(Cast<FixedArray>(obj));
 
@@ -544,6 +547,9 @@ bool Heap::CreateEarlyReadOnlyMapsAndObjects() {
     obj->set_map_after_allocation(isolate(), roots.weak_fixed_array_map(),
                                   SKIP_WRITE_BARRIER);
     Cast<WeakFixedArray>(obj)->set_length(0);
+#if TAGGED_SIZE_8_BYTES
+    Cast<WeakFixedArray>(obj)->clear_optional_padding();
+#endif  // TAGGED_SIZE_8_BYTES
   }
   set_empty_weak_fixed_array(Cast<WeakFixedArray>(obj));
 

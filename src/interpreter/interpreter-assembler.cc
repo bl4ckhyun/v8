@@ -1609,7 +1609,7 @@ void InterpreterAssembler::AbortIfRegisterCountInvalid(
     TNode<FixedArray> parameters_and_registers, TNode<IntPtrT> parameter_count,
     TNode<UintPtrT> register_count) {
   TNode<IntPtrT> array_size =
-      LoadAndUntagFixedArrayBaseLength(parameters_and_registers);
+      LoadFixedArrayBaseLength(parameters_and_registers);
 
   Label ok(this), abort(this, Label::kDeferred);
   Branch(UintPtrLessThanOrEqual(IntPtrAdd(parameter_count, register_count),

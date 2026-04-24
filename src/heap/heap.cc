@@ -3218,23 +3218,51 @@ Tagged<FixedArrayBase> Heap::LeftTrimFixedArray(Tagged<FixedArrayBase> object,
   Address old_start = object.address();
   Address new_start = old_start + bytes_to_trim;
 
+  auto clear_recorded_slots = MayContainRecordedSlots(object)
+                                  ? ClearRecordedSlots::kYes
+                                  : ClearRecordedSlots::kNo;
+
   // Technically in new space this write might be omitted (except for
   // debug mode which iterates through the heap), but to play safer
   // we still do it.
   CreateFillerObjectAtRaw(
       WritableFreeSpace::ForNonExecutableMemory(old_start, bytes_to_trim),
-      ClearFreedMemoryMode::kClearFreedMemory,
-      MayContainRecordedSlots(object) ? ClearRecordedSlots::kYes
-                                      : ClearRecordedSlots::kNo,
+      ClearFreedMemoryMode::kClearFreedMemory, clear_recorded_slots,
       VerifyNoSlotsRecorded::kYes);
+
+  // The length field of FixedArray is a uint32, therefore we need to ensure
+  // that its new location is not in any of the remembered sets.
+  Address new_header_end = new_start + 2 * kTaggedSize;
+  if (clear_recorded_slots == ClearRecordedSlots::kYes) {
+    MutablePage* page = MutablePage::FromHeapObject(isolate(), object);
+#if DEBUG
+    // Left trimming cannot happen during incremental marking
+    RememberedSet<OLD_TO_OLD>::CheckNoneInRange(page, new_start,
+                                                new_header_end);
+#endif  // DEBUG
+    RememberedSet<OLD_TO_NEW>::RemoveRange(page, new_start, new_header_end,
+                                           SlotSet::KEEP_EMPTY_BUCKETS);
+    RememberedSet<OLD_TO_NEW_BACKGROUND>::RemoveRange(
+        page, new_start, new_header_end, SlotSet::KEEP_EMPTY_BUCKETS);
+    RememberedSet<OLD_TO_SHARED>::RemoveRange(page, new_start, new_header_end,
+                                              SlotSet::KEEP_EMPTY_BUCKETS);
+  } else {
+    VerifyNoNeedToClearSlots(new_start, new_header_end);
+  }
 
   // Initialize header of the trimmed array. Since left trimming is only
   // performed on pages which are not concurrently swept creating a filler
   // object does not require synchronization.
   RELAXED_WRITE_FIELD(object, bytes_to_trim,
                       Tagged<Object>(MapWord::FromMap(map).ptr()));
-  RELAXED_WRITE_FIELD(object, bytes_to_trim + kTaggedSize,
-                      Smi::FromUInt(len - elements_to_trim));
+  RELAXED_WRITE_UINT32_FIELD(object, bytes_to_trim + kTaggedSize,
+                             len - elements_to_trim);
+#if TAGGED_SIZE_8_BYTES
+  static_assert(offsetof(FixedArrayBase, optional_padding_) ==
+                kTaggedSize + kApiInt32Size);
+  RELAXED_WRITE_UINT32_FIELD(object,
+                             bytes_to_trim + kTaggedSize + kApiInt32Size, 0);
+#endif  // TAGGED_SIZE_8_BYTES
 
   Tagged<FixedArrayBase> new_object =
       Cast<FixedArrayBase>(HeapObject::FromAddress(new_start));

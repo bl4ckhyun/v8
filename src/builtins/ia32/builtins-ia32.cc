@@ -2734,7 +2734,6 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
   Label no_bound_arguments;
   __ mov(ecx, FieldOperand(edi, JSBoundFunction::kBoundArgumentsOffset));
   __ mov(edx, FieldOperand(ecx, offsetof(FixedArray, length_)));
-  __ SmiUntag(edx);
   __ test(edx, edx);
   __ j(zero, &no_bound_arguments);
   {
@@ -2775,7 +2774,6 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
       Label loop;
       __ mov(ecx, FieldOperand(edi, JSBoundFunction::kBoundArgumentsOffset));
       __ mov(edx, FieldOperand(ecx, offsetof(FixedArray, length_)));
-      __ SmiUntag(edx);
       // Adjust effective number of arguments (eax contains the number of
       // arguments from the call not including receiver plus the number of
       // [[BoundArguments]]).

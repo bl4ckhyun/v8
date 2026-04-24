@@ -2907,8 +2907,8 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
   Label no_bound_arguments;
   __ LoadTaggedField(
       bound_argv, FieldMemOperand(a1, JSBoundFunction::kBoundArgumentsOffset));
-  __ SmiUntagField(bound_argc,
-                   FieldMemOperand(bound_argv, offsetof(FixedArray, length_)));
+  __ Lwu(bound_argc,
+         FieldMemOperand(bound_argv, offsetof(FixedArray, length_)));
   __ Branch(&no_bound_arguments, eq, bound_argc, Operand(zero_reg));
   {
     // ----------- S t a t e -------------
@@ -2942,7 +2942,7 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
     // Push [[BoundArguments]].
     {
       Label loop, done_loop;
-      __ SmiUntag(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
+      __ Lwu(a4, FieldMemOperand(a2, offsetof(FixedArray, length_)));
       __ AddWord(a0, a0, Operand(a4));
       __ AddWord(a2, a2,
                  Operand(OFFSET_OF_DATA_START(FixedArray) - kHeapObjectTag));

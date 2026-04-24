@@ -1990,7 +1990,7 @@ class FunctionTemplateInfo::BodyDescriptor final : public BodyDescriptorBase {
 
 // TODO(jgruber): Combine these into generic Suffix descriptors.
 class FixedArray::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<FixedArrayBase::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<FixedArray>(raw_object)->AllocatedSize();
@@ -1998,7 +1998,7 @@ class FixedArray::BodyDescriptor final
 };
 
 class TrustedFixedArray::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<TrustedObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<TrustedFixedArray::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<TrustedFixedArray>(raw_object)->AllocatedSize();
@@ -2022,7 +2022,7 @@ class ProtectedFixedArray::BodyDescriptor final : public BodyDescriptorBase {
 };
 
 class SloppyArgumentsElements::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<SloppyArgumentsElements::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<SloppyArgumentsElements>(raw_object)->AllocatedSize();
@@ -2030,7 +2030,7 @@ class SloppyArgumentsElements::BodyDescriptor final
 };
 
 class RegExpMatchInfo::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<RegExpMatchInfo::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<RegExpMatchInfo>(raw_object)->AllocatedSize();
@@ -2038,7 +2038,7 @@ class RegExpMatchInfo::BodyDescriptor final
 };
 
 class ArrayList::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<ArrayList::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<ArrayList>(raw_object)->AllocatedSize();
@@ -2046,7 +2046,7 @@ class ArrayList::BodyDescriptor final
 };
 
 class WeakArrayList::BodyDescriptor final
-    : public SuffixRangeWeakBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeWeakBodyDescriptor<WeakArrayList::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<WeakArrayList>(raw_object)->AllocatedSize();
@@ -2054,7 +2054,8 @@ class WeakArrayList::BodyDescriptor final
 };
 
 class ObjectBoilerplateDescription::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<
+          ObjectBoilerplateDescription::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<ObjectBoilerplateDescription>(raw_object)
@@ -2078,7 +2079,7 @@ class FeedbackCell::BodyDescriptor final : public BodyDescriptorBase {
 };
 
 class ClosureFeedbackCellArray::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<ClosureFeedbackCellArray::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<ClosureFeedbackCellArray>(raw_object)->AllocatedSize();
@@ -2086,7 +2087,7 @@ class ClosureFeedbackCellArray::BodyDescriptor final
 };
 
 class ScriptContextTable::BodyDescriptor final
-    : public SuffixRangeBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeBodyDescriptor<ScriptContextTable::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<ScriptContextTable>(raw_object)->AllocatedSize();
@@ -2094,7 +2095,7 @@ class ScriptContextTable::BodyDescriptor final
 };
 
 class WeakFixedArray::BodyDescriptor final
-    : public SuffixRangeWeakBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeWeakBodyDescriptor<WeakFixedArray::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<WeakFixedArray>(raw_object)->AllocatedSize();
@@ -2102,7 +2103,8 @@ class WeakFixedArray::BodyDescriptor final
 };
 
 class WeakHomomorphicFixedArray::BodyDescriptor final
-    : public SuffixRangeWeakBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeWeakBodyDescriptor<
+          WeakHomomorphicFixedArray::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<WeakHomomorphicFixedArray>(raw_object)
@@ -2111,7 +2113,7 @@ class WeakHomomorphicFixedArray::BodyDescriptor final
 };
 
 class TrustedWeakFixedArray::BodyDescriptor final
-    : public SuffixRangeWeakBodyDescriptor<HeapObject::kHeaderSize> {
+    : public SuffixRangeWeakBodyDescriptor<TrustedWeakFixedArray::kHeaderSize> {
  public:
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> raw_object) {
     return UncheckedCast<TrustedWeakFixedArray>(raw_object)->AllocatedSize();

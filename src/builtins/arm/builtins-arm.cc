@@ -2555,7 +2555,6 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
   Label no_bound_arguments;
   __ ldr(r2, FieldMemOperand(r1, JSBoundFunction::kBoundArgumentsOffset));
   __ ldr(r4, FieldMemOperand(r2, offsetof(FixedArray, length_)));
-  __ SmiUntag(r4);
   __ cmp(r4, Operand(0));
   __ b(eq, &no_bound_arguments);
   {

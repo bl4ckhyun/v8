@@ -2017,9 +2017,17 @@ class MachineLoweringReducer : public Next {
         size, allocation_type, kTaggedAligned);
     __ InitializeField(uninitialized_array, AccessBuilder::ForMap(),
                        __ HeapConstant(array_map));
+#if TAGGED_SIZE_8_BYTES
+#if V8_TARGET_BIG_ENDIAN
+#error "TODO(375937549): Implement storing length+padding on big endian arch"
+#endif  // V8_TARGET_BIG_ENDIAN
+    __ InitializeField(uninitialized_array,
+                       AccessBuilder::ForFixedArrayLength(), length);
+#else
     __ InitializeField(uninitialized_array,
                        AccessBuilder::ForFixedArrayLength(),
-                       __ TagSmi(__ TruncateWordPtrToWord32(length)));
+                       __ TruncateWordPtrToWord32(length));
+#endif  // TAGGED_SIZE_8_BYTES
     // TODO(nicohartmann@): Should finish initialization only after all elements
     // have been initialized.
     auto array = __ FinishInitialization(std::move(uninitialized_array));

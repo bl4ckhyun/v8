@@ -31,10 +31,10 @@ namespace internal {
 #include "torque-generated/src/objects/contexts-tq-inl.inc"
 
 SafeHeapObjectSize ScriptContextTable::length(AcquireLoadTag) const {
-  return SafeHeapObjectSize(Smi::ToUInt(length_.Acquire_Load()));
+  return SafeHeapObjectSize(base::AsAtomic32::Acquire_Load(&length_));
 }
 void ScriptContextTable::set_length(uint32_t value, ReleaseStoreTag) {
-  length_.Release_Store(this, Smi::FromUInt(value));
+  base::AsAtomic32::Release_Store(&length_, value);
 }
 
 Tagged<NameToIndexHashTable> ScriptContextTable::names_to_context_index()

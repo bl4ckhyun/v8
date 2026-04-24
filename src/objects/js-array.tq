@@ -86,7 +86,7 @@ macro NewJSArray(
     map,
     properties_or_hash: kEmptyFixedArray,
     elements,
-    length: elements.length
+    length: Convert<Smi>(elements.length)
   };
 }
 

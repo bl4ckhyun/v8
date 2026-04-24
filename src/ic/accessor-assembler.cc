@@ -111,8 +111,7 @@ void AccessorAssembler::HandlePolymorphicCase(
   const int kEntrySize = 2;
 
   // Load the {feedback} array length.
-  TNode<Int32T> length =
-      Signed(LoadAndUntagWeakFixedArrayLengthAsUint32(feedback));
+  TNode<Int32T> length = Signed(LoadWeakFixedArrayLengthAsUint32(feedback));
   CSA_DCHECK(this, Int32LessThanOrEqual(Int32Constant(kEntrySize), length));
 
   // This is a hand-crafted loop that iterates backwards and only compares
@@ -163,7 +162,7 @@ void AccessorAssembler::TryHomomorphicCase(TNode<Object> lookup_start_object,
   // Look up in map cache.
   // TODO(leszeks): Could avoid this lookup by fixing the length at build time.
   TNode<IntPtrT> length =
-      LoadAndUntagWeakFixedArrayLength(ReinterpretCast<WeakFixedArray>(array));
+      LoadWeakFixedArrayLength(ReinterpretCast<WeakFixedArray>(array));
 
   // Hash: (map_ptr >> kTaggedSizeLog2) % length
   // We assume length is power of 2.
@@ -906,7 +905,7 @@ void AccessorAssembler::HandleLoadICSmiHandlerLoadNamedCase(
       } else {
         TNode<IntPtrT> element_index = EntryToIndex<NameDictionary>(index_ptr);
         TNode<IntPtrT> properties_length =
-            LoadAndUntagFixedArrayBaseLength(CAST(properties));
+            LoadFixedArrayBaseLength(CAST(properties));
         GotoIf(UintPtrGreaterThanOrEqual(element_index, properties_length),
                &lookup);
         static_assert(NameDictionary::kEntryKeyIndex == 0);
@@ -2636,7 +2635,7 @@ void AccessorAssembler::EmitFastElementsBoundsCheck(
   Label if_array(this), length_loaded(this, &var_length);
   GotoIf(is_jsarray_condition, &if_array);
   {
-    var_length = LoadAndUntagFixedArrayBaseLength(elements);
+    var_length = LoadFixedArrayBaseLength(elements);
     Goto(&length_loaded);
   }
   BIND(&if_array);
@@ -3875,8 +3874,9 @@ void AccessorAssembler::ScriptContextTableLookup(
                                     Context::SCRIPT_CONTEXT_TABLE_INDEX));
   TVARIABLE(IntPtrT, context_index, IntPtrConstant(-1));
   Label loop(this, &context_index);
-  TNode<IntPtrT> num_script_contexts = PositiveSmiUntag(CAST(LoadObjectField(
-      script_context_table, offsetof(ScriptContextTable, length_))));
+  TNode<IntPtrT> num_script_contexts =
+      Signed(ChangeUint32ToWord(LoadObjectField<Uint32T>(
+          script_context_table, offsetof(ScriptContextTable, length_))));
   Goto(&loop);
 
   BIND(&loop);
