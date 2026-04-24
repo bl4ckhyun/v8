@@ -80,6 +80,12 @@ ProtectedMaybeObjectSlot TrustedObject::RawProtectedMaybeObjectField(
 void TrustedObject::VerifyProtectedPointerField(Isolate* isolate, int offset) {
   Object::VerifyPointer(isolate, ReadProtectedPointerField(offset));
 }
+
+void TrustedObjectLayout::VerifyProtectedPointerField(Isolate* isolate,
+                                                      int offset) {
+  UncheckedCast<TrustedObject>(Tagged(this))
+      ->VerifyProtectedPointerField(isolate, offset);
+}
 #endif
 
 void ExposedTrustedObject::InitAndPublish(Isolate* isolate) {
@@ -164,6 +170,69 @@ IndirectPointerHandle ExposedTrustedObject::self_indirect_pointer_handle()
 #else
   UNREACHABLE();
 #endif
+}
+
+template <typename T>
+Tagged<T> TrustedObjectLayout::ReadProtectedPointerField(int offset) const {
+  return UncheckedCast<TrustedObject>(Tagged(this))
+      ->template ReadProtectedPointerField<T>(offset);
+}
+
+template <typename T>
+Tagged<T> TrustedObjectLayout::ReadProtectedPointerField(int offset,
+                                                         AcquireLoadTag) const {
+  return UncheckedCast<TrustedObject>(Tagged(this))
+      ->template ReadProtectedPointerField<T>(offset, kAcquireLoad);
+}
+
+void TrustedObjectLayout::WriteProtectedPointerField(
+    int offset, Tagged<TrustedObject> value) {
+  UncheckedCast<TrustedObject>(Tagged(this))
+      ->WriteProtectedPointerField(offset, value);
+}
+
+void TrustedObjectLayout::WriteProtectedPointerField(
+    int offset, Tagged<TrustedObject> value, ReleaseStoreTag) {
+  UncheckedCast<TrustedObject>(Tagged(this))
+      ->WriteProtectedPointerField(offset, value, kReleaseStore);
+}
+
+bool TrustedObjectLayout::IsProtectedPointerFieldEmpty(int offset) const {
+  return UncheckedCast<TrustedObject>(
+             Tagged(const_cast<TrustedObjectLayout*>(this)))
+      ->IsProtectedPointerFieldEmpty(offset);
+}
+
+bool TrustedObjectLayout::IsProtectedPointerFieldEmpty(int offset,
+                                                       AcquireLoadTag) const {
+  return UncheckedCast<TrustedObject>(
+             Tagged(const_cast<TrustedObjectLayout*>(this)))
+      ->IsProtectedPointerFieldEmpty(offset, kAcquireLoad);
+}
+
+void TrustedObjectLayout::ClearProtectedPointerField(int offset) {
+  UncheckedCast<TrustedObject>(Tagged(this))
+      ->ClearProtectedPointerField(offset);
+}
+
+void TrustedObjectLayout::ClearProtectedPointerField(int offset,
+                                                     ReleaseStoreTag) {
+  UncheckedCast<TrustedObject>(Tagged(this))
+      ->ClearProtectedPointerField(offset, kReleaseStore);
+}
+
+ProtectedPointerSlot TrustedObjectLayout::RawProtectedPointerField(
+    int byte_offset) const {
+  return UncheckedCast<TrustedObject>(
+             Tagged(const_cast<TrustedObjectLayout*>(this)))
+      ->RawProtectedPointerField(byte_offset);
+}
+
+ProtectedMaybeObjectSlot TrustedObjectLayout::RawProtectedMaybeObjectField(
+    int byte_offset) const {
+  return UncheckedCast<TrustedObject>(
+             Tagged(const_cast<TrustedObjectLayout*>(this)))
+      ->RawProtectedMaybeObjectField(byte_offset);
 }
 
 void ExposedTrustedObjectLayout::InitAndPublish(Isolate* isolate) {

@@ -71,6 +71,31 @@ class TrustedObject : public HeapObject {
 
 V8_OBJECT class TrustedObjectLayout : public HeapObjectLayout {
  public:
+  // Protected pointer accessors, mirroring the legacy `TrustedObject` API
+  // so ported subclasses with variable-offset layouts (WasmDispatchTable,
+  // WasmDispatchTableForImports, etc.) keep using offset-based access.
+  template <typename T = TrustedObject>
+  inline Tagged<T> ReadProtectedPointerField(int offset) const;
+  template <typename T = TrustedObject>
+  inline Tagged<T> ReadProtectedPointerField(int offset, AcquireLoadTag) const;
+  inline void WriteProtectedPointerField(int offset,
+                                         Tagged<TrustedObject> value);
+  inline void WriteProtectedPointerField(int offset,
+                                         Tagged<TrustedObject> value,
+                                         ReleaseStoreTag);
+  inline bool IsProtectedPointerFieldEmpty(int offset) const;
+  inline bool IsProtectedPointerFieldEmpty(int offset, AcquireLoadTag) const;
+  inline void ClearProtectedPointerField(int offset);
+  inline void ClearProtectedPointerField(int offset, ReleaseStoreTag);
+
+  inline ProtectedPointerSlot RawProtectedPointerField(int byte_offset) const;
+  inline ProtectedMaybeObjectSlot RawProtectedMaybeObjectField(
+      int byte_offset) const;
+
+#ifdef VERIFY_HEAP
+  inline void VerifyProtectedPointerField(Isolate* isolate, int offset);
+#endif
+
   DECL_VERIFIER(TrustedObject)
 } V8_OBJECT_END;
 
