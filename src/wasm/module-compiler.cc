@@ -2131,7 +2131,9 @@ void CompileNativeModule(ErrorThrower* thrower,
   }
 
   if (compilation_state->failed()) {
-    DCHECK_IMPLIES(IsLazyModule(module), !v8_flags.wasm_lazy_validation);
+    DCHECK(!IsLazyModule(module) || !v8_flags.wasm_lazy_validation ||
+           (v8_flags.experimental_wasm_compilation_hints &&
+            !module->compilation_priorities.empty()));
     WasmError validation_error =
         ValidateFunctions(*native_module, kAllFunctions);
     CHECK(validation_error.has_error());
