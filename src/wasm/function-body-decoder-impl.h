@@ -7871,7 +7871,7 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
       case kExprI64MulWideU: {
         CHECK_PROTOTYPE_OPCODE(wide_arithmetic);
 #if V8_TARGET_ARCH_X64 || V8_TARGET_ARCH_ARM64 || V8_TARGET_ARCH_IA32 || \
-    V8_TARGET_ARCH_LOONG64
+    V8_TARGET_ARCH_LOONG64 || V8_TARGET_ARCH_RISCV64
 
         auto [a, b] = Pop(kWasmI64, kWasmI64);
         Value* result_l = Push(kWasmI64);
