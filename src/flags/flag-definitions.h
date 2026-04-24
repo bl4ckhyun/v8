@@ -1157,9 +1157,6 @@ DEFINE_INT(minimum_invocations_before_optimization, 2,
 // they otherwise would is probably not unreasonable.
 DEFINE_BOOL(jit_fuzzing, false,
             "Set JIT tiering thresholds suitable for JIT fuzzing")
-// Tier up to Sparkplug should happen after a handful o executions in ignition.
-DEFINE_NEG_IMPLICATION(jit_fuzzing, lazy_feedback_allocation)
-DEFINE_NEG_IMPLICATION(jit_fuzzing, baseline_batch_compilation)
 // Tier up to Maglev should happen soon afterwards.
 DEFINE_VALUE_IMPLICATION(jit_fuzzing, invocation_count_for_maglev, 10)
 // And tier up to Turbofan should happen after a couple dozen or so executions.
@@ -1189,6 +1186,9 @@ DEFINE_BOOL(use_std_math_pow, true,
 
 // Flags for inline caching and feedback vectors.
 DEFINE_BOOL(use_ic, true, "use inline caching")
+// Note: when fuzzing, it's typically desired to disable it as that allows
+// reaching higher JIT tiers faster (although a hard implication isn't used, to
+// avoid having production path untested).
 DEFINE_BOOL(lazy_feedback_allocation, true, "Allocate feedback vectors lazily")
 DEFINE_BOOL(stress_ic, false, "exercise interesting paths in ICs more often")
 
@@ -1208,6 +1208,9 @@ DEFINE_BOOL(print_bytecode, false,
 DEFINE_BOOL(enable_lazy_source_positions, V8_LAZY_SOURCE_POSITIONS_BOOL,
             "skip generating source positions during initial compile but "
             "regenerate when actually required")
+// Note: when fuzzing, it's typically desired to enable it (except for sandbox
+// fuzzers since it might trigger benign CHECKs that could mask actual sandbox
+// violations).
 DEFINE_BOOL(stress_lazy_source_positions, false,
             "collect lazy source positions immediately after lazy compile")
 DEFINE_BOOL(stress_lazy, false, "stress lazy compilation")
@@ -1253,6 +1256,9 @@ DEFINE_BOOL(sparkplug, ENABLE_SPARKPLUG_BY_DEFAULT,
 DEFINE_BOOL(always_sparkplug, false, "directly tier up to Sparkplug code")
 #if V8_ENABLE_SPARKPLUG
 DEFINE_IMPLICATION(always_sparkplug, sparkplug)
+// Note: when fuzzing, it's typically desired to disable it as that allows
+// reaching higher JIT tiers faster (although a hard implication isn't used, to
+// avoid having production path untested).
 DEFINE_BOOL(baseline_batch_compilation, true, "batch compile Sparkplug code")
 #if defined(V8_OS_DARWIN) && defined(V8_HOST_ARCH_ARM64) && \
     !V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT &&               \
@@ -3527,7 +3533,6 @@ DEFINE_BOOL(
 // avoids the need for bytecode aging to kick in to trigger the recomplication.
 // We use stress-lazy to still test the preparse / lazy compilation pipeline.
 DEFINE_WEAK_IMPLICATION(fuzzing, stress_lazy)
-DEFINE_WEAK_IMPLICATION(fuzzing, stress_lazy_source_positions)
 
 DEFINE_BOOL(
     hole_fuzzing, false,
