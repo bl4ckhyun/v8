@@ -183,7 +183,11 @@ MemoryAccessInformation GetMemoryAccessInformationFromPreviousInstruction(
     return {.kind = MemoryAccessInformation::kCmp};
   }
   // TODO(clemensb): Implement more instructions if necessary.
-  if (memcmp(insn_pos, "mov", 3) != 0) FATAL("Not a mov: %s\n", buffer);
+  if (memcmp(insn_pos, "mov", 3) != 0 && memcmp(insn_pos, "sub", 3) != 0 &&
+      memcmp(insn_pos, "add", 3) != 0) {
+    FATAL("Not a mov/sub/add: %s\n", buffer);
+  }
+
   // Find the position of the comma to figure out if the memory operand is
   // on the LHS (read) or RHS (write).
   char* space_pos = strchr(insn_pos + 3, ' ');
