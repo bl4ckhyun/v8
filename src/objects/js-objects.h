@@ -433,11 +433,13 @@ V8_OBJECT class JSObjectLayout : public JSReceiverLayout {
   // `Cast<JSObject>(...)` through every callsite during the migration.
   // StructLayout::StructVerify is the precedent for the verifier form.
   DECL_VERIFIER(JSObject)
+  DECL_PRINTER(JSObject)
   inline Tagged<Object> InObjectPropertyAtOffset(int offset) const;
   inline Tagged<Object> InObjectPropertyPutAtOffset(
       int offset, Tagged<Object> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline int GetEmbedderFieldCount() const;
+  inline Tagged<InterceptorInfo> GetNamedInterceptor() const;
   inline Tagged<PropertyArray> property_array() const;
   inline Tagged<FixedArrayBase> elements() const;
   inline Tagged<FixedArrayBase> elements(RelaxedLoadTag) const;
@@ -1387,11 +1389,25 @@ V8_OBJECT class JSGlobalProxy : public JSSpecialObjectLayout {
 inline constexpr int JSGlobalProxy::kHeaderSize = sizeof(JSGlobalProxy);
 
 // JavaScript global object.
-class JSGlobalObject
-    : public TorqueGeneratedJSGlobalObject<JSGlobalObject, JSSpecialObject> {
+V8_OBJECT class JSGlobalObject : public JSSpecialObjectLayout {
  public:
-  DECL_RELEASE_ACQUIRE_ACCESSORS(global_dictionary, Tagged<GlobalDictionary>)
-  DECL_GETTER(raw_global_proxy, Tagged<HeapObject>)
+  inline Tagged<JSGlobalProxy> global_proxy() const;
+  inline void set_global_proxy(Tagged<JSGlobalProxy> value,
+                               WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<JSGlobalProxy> global_proxy_for_api() const;
+  inline void set_global_proxy_for_api(
+      Tagged<JSGlobalProxy> value,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<GlobalDictionary> global_dictionary(AcquireLoadTag) const;
+  inline Tagged<GlobalDictionary> global_dictionary(PtrComprCageBase cage_base,
+                                                    AcquireLoadTag) const;
+  inline void set_global_dictionary(
+      Tagged<GlobalDictionary> value, ReleaseStoreTag,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<HeapObject> raw_global_proxy() const;
 
   static void InvalidatePropertyCell(DirectHandle<JSGlobalObject> object,
                                      DirectHandle<Name> name);
@@ -1403,8 +1419,21 @@ class JSGlobalObject
   DECL_PRINTER(JSGlobalObject)
   DECL_VERIFIER(JSGlobalObject)
 
-  TQ_OBJECT_CONSTRUCTORS(JSGlobalObject)
-};
+  // Back-compat offset/size constants.
+  static const int kGlobalProxyOffset;
+  static const int kGlobalProxyForApiOffset;
+  static const int kHeaderSize;
+
+ public:
+  TaggedMember<JSGlobalProxy> global_proxy_;
+  TaggedMember<JSGlobalProxy> global_proxy_for_api_;
+} V8_OBJECT_END;
+
+inline constexpr int JSGlobalObject::kGlobalProxyOffset =
+    offsetof(JSGlobalObject, global_proxy_);
+inline constexpr int JSGlobalObject::kGlobalProxyForApiOffset =
+    offsetof(JSGlobalObject, global_proxy_for_api_);
+inline constexpr int JSGlobalObject::kHeaderSize = sizeof(JSGlobalObject);
 
 // Representation for JS Wrapper objects, String, Number, Boolean, etc.
 V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObjectLayout {

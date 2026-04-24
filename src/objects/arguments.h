@@ -21,13 +21,17 @@ class StructBodyDescriptor;
 #include "torque-generated/src/objects/arguments-tq.inc"
 
 // Superclass for all objects with instance type {JS_ARGUMENTS_OBJECT_TYPE}
-class JSArgumentsObject
-    : public TorqueGeneratedJSArgumentsObject<JSArgumentsObject, JSObject> {
+V8_OBJECT class JSArgumentsObject : public JSObjectLayout {
  public:
   DECL_VERIFIER(JSArgumentsObject)
   DECL_PRINTER(JSArgumentsObject)
-  TQ_OBJECT_CONSTRUCTORS(JSArgumentsObject)
-};
+
+  // Defined out-of-line below the class so `sizeof` on the still-incomplete
+  // type can appear in an initializer.
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSArgumentsObject::kHeaderSize = sizeof(JSArgumentsObject);
 
 // JSSloppyArgumentsObject is just a JSArgumentsObject with specific initial
 // map. This initial map adds in-object properties for "length" and "callee".

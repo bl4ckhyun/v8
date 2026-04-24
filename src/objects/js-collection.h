@@ -45,16 +45,13 @@ V8_OBJECT class JSSet final : public JSCollection {
   DECL_VERIFIER(JSSet)
 } V8_OBJECT_END;
 
-class JSSetIterator
+V8_OBJECT class JSSetIterator final
     : public OrderedHashTableIterator<JSSetIterator, OrderedHashSet> {
  public:
   // Dispatched behavior.
   DECL_PRINTER(JSSetIterator)
   DECL_VERIFIER(JSSetIterator)
-
-  OBJECT_CONSTRUCTORS(JSSetIterator,
-                      OrderedHashTableIterator<JSSetIterator, OrderedHashSet>);
-};
+} V8_OBJECT_END;
 
 // The JSMap describes ECMAScript Harmony maps
 V8_OBJECT class JSMap final : public JSCollection {
@@ -68,7 +65,7 @@ V8_OBJECT class JSMap final : public JSCollection {
   DECL_VERIFIER(JSMap)
 } V8_OBJECT_END;
 
-class JSMapIterator
+V8_OBJECT class JSMapIterator final
     : public OrderedHashTableIterator<JSMapIterator, OrderedHashMap> {
  public:
   // Dispatched behavior.
@@ -78,10 +75,7 @@ class JSMapIterator
   // Returns the current value of the iterator. This should only be called when
   // |HasMore| returns true.
   inline Tagged<Object> CurrentValue();
-
-  OBJECT_CONSTRUCTORS(JSMapIterator,
-                      OrderedHashTableIterator<JSMapIterator, OrderedHashMap>);
-};
+} V8_OBJECT_END;
 
 // Base class for both JSWeakMap and JSWeakSet
 V8_OBJECT class JSWeakCollection : public JSObjectLayout {
