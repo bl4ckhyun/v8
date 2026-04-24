@@ -29,11 +29,6 @@ namespace v8::internal {
 
 #include "torque-generated/src/objects/feedback-vector-tq-inl.inc"
 
-INT32_ACCESSORS(FeedbackMetadata, slot_count, kSlotCountOffset)
-
-INT32_ACCESSORS(FeedbackMetadata, create_closure_slot_count,
-                kCreateClosureSlotCountOffset)
-
 #define ASSERT_BUILTIN_ID_CONSECUTIVE(V, Location, Representation, Kind, \
                                       Index)                             \
   static_assert(                                                         \
@@ -44,23 +39,25 @@ INT32_ACCESSORS(FeedbackMetadata, create_closure_slot_count,
           Builtin::kLoadIC##Location##Representation##Kind##Index##Baseline));
 
 int32_t FeedbackMetadata::slot_count(AcquireLoadTag) const {
-  return ACQUIRE_READ_INT32_FIELD(*this, kSlotCountOffset);
+  return base::AsAtomic32::Acquire_Load(&slot_count_);
 }
 
 int32_t FeedbackMetadata::create_closure_slot_count(AcquireLoadTag) const {
-  return ACQUIRE_READ_INT32_FIELD(*this, kCreateClosureSlotCountOffset);
+  return base::AsAtomic32::Acquire_Load(&create_closure_slot_count_);
 }
 
 int32_t FeedbackMetadata::get(int index) const {
   CHECK_LT(static_cast<unsigned>(index), static_cast<unsigned>(word_count()));
   int offset = kHeaderSize + index * kInt32Size;
-  return ReadField<int32_t>(offset);
+  return base::ReadUnalignedValue<int32_t>(reinterpret_cast<Address>(this) +
+                                           offset);
 }
 
 void FeedbackMetadata::set(int index, int32_t value) {
   DCHECK_LT(static_cast<unsigned>(index), static_cast<unsigned>(word_count()));
   int offset = kHeaderSize + index * kInt32Size;
-  WriteField<int32_t>(offset, value);
+  base::WriteUnalignedValue<int32_t>(reinterpret_cast<Address>(this) + offset,
+                                     value);
 }
 
 bool FeedbackMetadata::is_empty() const {

@@ -255,9 +255,6 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
     case NATIVE_CONTEXT_TYPE:
       Cast<NativeContext>(*this)->NativeContextVerify(isolate);
       break;
-    case FEEDBACK_METADATA_TYPE:
-      Cast<FeedbackMetadata>(*this)->FeedbackMetadataVerify(isolate);
-      break;
     case TRANSITION_ARRAY_TYPE:
       Cast<TransitionArray>(*this)->TransitionArrayVerify(isolate);
       break;
@@ -1225,10 +1222,10 @@ void DoubleStringCache::DoubleStringCacheVerify(Isolate* isolate) {
 
 void FeedbackMetadata::FeedbackMetadataVerify(Isolate* isolate) {
   if (slot_count() == 0 && create_closure_slot_count() == 0) {
-    CHECK_EQ(ReadOnlyRoots(isolate).empty_feedback_metadata(), *this);
+    CHECK_EQ(ReadOnlyRoots(isolate).empty_feedback_metadata(), this);
   } else {
     DisallowGarbageCollection no_gc;
-    FeedbackMetadataIterator iter(*this, no_gc);
+    FeedbackMetadataIterator iter(Tagged<FeedbackMetadata>(this), no_gc);
     while (iter.HasNext()) {
       iter.Next();
       FeedbackSlotKind kind = iter.kind();

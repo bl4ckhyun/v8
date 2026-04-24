@@ -443,9 +443,6 @@ void HeapObject::HeapObjectPrint(std::ostream& os) {
     case STORE_HANDLER_TYPE:
       Cast<StoreHandler>(*this)->StoreHandlerPrint(os);
       break;
-    case FEEDBACK_METADATA_TYPE:
-      Cast<FeedbackMetadata>(*this)->FeedbackMetadataPrint(os);
-      break;
     case BIG_INT_BASE_TYPE:
       Cast<BigIntBase>(*this)->BigIntBasePrint(os);
       break;
@@ -1991,7 +1988,7 @@ void FeedbackMetadata::FeedbackMetadataPrint(std::ostream& os) {
   os << "\n - create_closure_slot_count: " << create_closure_slot_count();
 
   DisallowGarbageCollection no_gc;
-  FeedbackMetadataIterator iter(*this, no_gc);
+  FeedbackMetadataIterator iter(Tagged<FeedbackMetadata>(this), no_gc);
   while (iter.HasNext()) {
     FeedbackSlot slot = iter.Next();
     FeedbackSlotKind kind = iter.kind();

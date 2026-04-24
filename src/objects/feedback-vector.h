@@ -774,16 +774,22 @@ class SharedFeedbackSlot {
 // this object (it could, for example, also be stored on the Bytecode), but
 // keeping it here is somewhat efficient as the uint16s can just be stored
 // after the int32s of the slots.
-class FeedbackMetadata : public HeapObject {
+V8_OBJECT class FeedbackMetadata : public HeapObjectLayout {
  public:
   // The number of slots that this metadata contains. Stored as an int32.
-  DECL_INT32_ACCESSORS(slot_count)
+  inline int32_t slot_count() const { return slot_count_; }
+  inline void set_slot_count(int32_t value) { slot_count_ = value; }
 
   // The number of feedback cells required for create closures. Stored as an
   // int32.
   // TODO(mythria): Consider using 16 bits for this and slot_count so that we
   // can save 4 bytes.
-  DECL_INT32_ACCESSORS(create_closure_slot_count)
+  inline int32_t create_closure_slot_count() const {
+    return create_closure_slot_count_;
+  }
+  inline void set_create_closure_slot_count(int32_t value) {
+    create_closure_slot_count_ = value;
+  }
 
   // Get slot_count using an acquire load.
   inline int32_t slot_count(AcquireLoadTag) const;
@@ -826,13 +832,10 @@ class FeedbackMetadata : public HeapObject {
                                 create_closure_slot_count * kUInt16Size);
   }
 
-#define FIELDS(V)                              \
-  V(kSlotCountOffset, kInt32Size)              \
-  V(kCreateClosureSlotCountOffset, kInt32Size) \
-  V(kHeaderSize, 0)
-
-  DEFINE_FIELD_OFFSET_CONSTANTS(HeapObject::kHeaderSize, FIELDS)
-#undef FIELDS
+  // Back-compat offset/size constants.
+  static const int kSlotCountOffset;
+  static const int kCreateClosureSlotCountOffset;
+  static const int kHeaderSize;
 
   class BodyDescriptor;
 
@@ -861,8 +864,16 @@ class FeedbackMetadata : public HeapObject {
       base::BitSetComputer<FeedbackSlotKind, kFeedbackSlotKindBits,
                            kInt32Size * kBitsPerByte, uint32_t>;
 
-  OBJECT_CONSTRUCTORS(FeedbackMetadata, HeapObject);
-};
+ public:
+  int32_t slot_count_;
+  int32_t create_closure_slot_count_;
+} V8_OBJECT_END;
+
+inline constexpr int FeedbackMetadata::kSlotCountOffset =
+    offsetof(FeedbackMetadata, slot_count_);
+inline constexpr int FeedbackMetadata::kCreateClosureSlotCountOffset =
+    offsetof(FeedbackMetadata, create_closure_slot_count_);
+inline constexpr int FeedbackMetadata::kHeaderSize = sizeof(FeedbackMetadata);
 
 // Verify that an empty hash field looks like a tagged object, but can't
 // possibly be confused with a pointer.

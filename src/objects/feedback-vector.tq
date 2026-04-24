@@ -44,4 +44,8 @@ extern class FeedbackVector extends HeapObject {
   @cppRelaxedLoad @cppRelaxedStore raw_feedback_slots[length]: MaybeObject;
 }
 
-extern class FeedbackMetadata extends HeapObject;
+@cppObjectLayoutDefinition
+extern class FeedbackMetadata extends HeapObject {
+  slot_count: int32;
+  create_closure_slot_count: int32;
+}
