@@ -29,7 +29,7 @@ namespace internal {
 // We also overlay the result and reactions fields on the JSPromise, since
 // the reactions are only necessary for pending promises, whereas the result
 // is only meaningful for settled promises.
-V8_OBJECT class JSPromise : public JSObjectWithEmbedderSlotsLayout {
+V8_OBJECT class JSPromise : public JSObjectWithEmbedderSlots {
  public:
   static constexpr uint32_t kInvalidAsyncTaskId = 0;
 

@@ -170,7 +170,7 @@ struct ObjectTraits<Module> {
 // When importing a module namespace (import * as foo from "bar"), a
 // JSModuleNamespace object (representing module "bar") is created and bound to
 // the declared variable (foo).  A module can have at most one namespace object.
-V8_OBJECT class JSModuleNamespace : public JSSpecialObjectLayout {
+V8_OBJECT class JSModuleNamespace : public JSSpecialObject {
  public:
   inline Tagged<Module> module() const;
   inline void set_module(Tagged<Module> value,

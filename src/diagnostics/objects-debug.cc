@@ -526,6 +526,11 @@ void JSObjectLayout::JSObjectVerify(Isolate* isolate) {
   Cast<JSObject>(this)->JSObjectVerify(isolate);
 }
 
+void JSObjectWithEmbedderSlots::JSObjectWithEmbedderSlotsVerify(
+    Isolate* isolate) {
+  Cast<JSObject>(this)->JSObjectVerify(isolate);
+}
+
 void JSRawJson::JSRawJsonVerify(Isolate* isolate) { JSObjectVerify(isolate); }
 
 void JSExternalObject::JSExternalObjectVerify(Isolate* isolate) {

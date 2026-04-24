@@ -471,23 +471,66 @@ inline constexpr int JSObjectLayout::kElementsOffset =
     offsetof(JSObjectLayout, elements_);
 inline constexpr int JSObjectLayout::kHeaderSize = sizeof(JSObjectLayout);
 
-// Temporary mirror of JSObjectWithEmbedderSlots for subclasses with the new
-// layout. Carries no fields itself; the in-instance tail ([embedder fields]
-// followed by [in-object properties]) is managed by the Map + BodyDescriptor
-// and never shows up as a C++ member. Will be renamed to
-// JSObjectWithEmbedderSlots at the final collapse.
-V8_OBJECT class JSObjectWithEmbedderSlotsLayout : public JSObjectLayout {
+// An abstract superclass for JSObjects that may contain EmbedderDataSlots.
+// Carries no fields itself; the in-instance tail ([embedder fields] followed
+// by [in-object properties]) is managed by the Map + BodyDescriptor and never
+// shows up as a C++ member.
+V8_OBJECT class JSObjectWithEmbedderSlots : public JSObjectLayout {
+ public:
+  DECL_PRINTER(JSObjectWithEmbedderSlots)
+  DECL_VERIFIER(JSObjectWithEmbedderSlots)
+
+  static const int kHeaderSize;
+} V8_OBJECT_END;
+
+inline constexpr int JSObjectWithEmbedderSlots::kHeaderSize =
+    sizeof(JSObjectWithEmbedderSlots);
+
+static_assert(JSObjectWithEmbedderSlots::kHeaderSize ==
+              JSObjectLayout::kHeaderSize);
+
+// An abstract superclass for JSObjects that may contain EmbedderDataSlots and
+// are used as API wrapper objects. Carries the cpp_heap_wrappable field; the
+// [embedder fields] + [in-object properties] tail is managed by the Map +
+// BodyDescriptor.
+V8_OBJECT class JSAPIObjectWithEmbedderSlots : public JSObjectLayout {
+ public:
+  class BodyDescriptor;
+
+  static const int kCppHeapWrappableOffset;
+  static const int kHeaderSize;
+
+ public:
+  CppHeapPointerMember cpp_heap_wrappable_;
+} V8_OBJECT_END;
+
+inline constexpr int JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset =
+    offsetof(JSAPIObjectWithEmbedderSlots, cpp_heap_wrappable_);
+inline constexpr int JSAPIObjectWithEmbedderSlots::kHeaderSize =
+    sizeof(JSAPIObjectWithEmbedderSlots);
+
+// An abstract superclass for JSObjects that may have elements while having an
+// empty fixed array as elements backing store. It doesn't carry any
+// functionality but allows function classes to be identified in the type
+// system.
+V8_OBJECT class JSCustomElementsObject : public JSObjectLayout {
  public:
   static const int kHeaderSize;
 } V8_OBJECT_END;
 
-inline constexpr int JSObjectWithEmbedderSlotsLayout::kHeaderSize =
-    sizeof(JSObjectWithEmbedderSlotsLayout);
+inline constexpr int JSCustomElementsObject::kHeaderSize =
+    sizeof(JSCustomElementsObject);
 
-// Temporary mirror of JSAPIObjectWithEmbedderSlots for subclasses with the
-// new layout. Carries the cpp_heap_wrappable field; the [embedder fields]
-// + [in-object properties] tail is managed by the Map + BodyDescriptor.
-V8_OBJECT class JSAPIObjectWithEmbedderSlotsLayout : public JSObjectLayout {
+static_assert(JSCustomElementsObject::kHeaderSize ==
+              JSObjectLayout::kHeaderSize);
+
+// These may also contain EmbedderDataSlots but can't be a child class of
+// JSAPIObjectWithEmbedderSlots due to type id constraints. These objects are
+// also considered API wrapper objects. Mirrors the
+// JSAPIObjectWithEmbedderSlots cpp_heap_wrappable field so CppHeapObjectWrapper
+// can access both sibling hierarchies at the same offset (see the
+// static_assert in cpp-heap-object-wrapper.h).
+V8_OBJECT class JSSpecialObject : public JSCustomElementsObject {
  public:
   static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
@@ -496,37 +539,9 @@ V8_OBJECT class JSAPIObjectWithEmbedderSlotsLayout : public JSObjectLayout {
   CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
-inline constexpr int
-    JSAPIObjectWithEmbedderSlotsLayout::kCppHeapWrappableOffset =
-        offsetof(JSAPIObjectWithEmbedderSlotsLayout, cpp_heap_wrappable_);
-inline constexpr int JSAPIObjectWithEmbedderSlotsLayout::kHeaderSize =
-    sizeof(JSAPIObjectWithEmbedderSlotsLayout);
-
-V8_OBJECT class JSCustomElementsObjectLayout : public JSObjectLayout {
- public:
-  static const int kHeaderSize;
-} V8_OBJECT_END;
-
-inline constexpr int JSCustomElementsObjectLayout::kHeaderSize =
-    sizeof(JSCustomElementsObjectLayout);
-
-// Temporary mirror of JSSpecialObject for subclasses with the new layout.
-// Mirrors the JSAPIObjectWithEmbedderSlotsLayout cpp_heap_wrappable field so
-// CppHeapObjectWrapper can access both sibling hierarchies at the same
-// offset (see the static_assert in cpp-heap-object-wrapper.h).
-V8_OBJECT class JSSpecialObjectLayout : public JSCustomElementsObjectLayout {
- public:
-  static const int kCppHeapWrappableOffset;
-  static const int kHeaderSize;
-
- public:
-  CppHeapPointerMember cpp_heap_wrappable_;
-} V8_OBJECT_END;
-
-inline constexpr int JSSpecialObjectLayout::kCppHeapWrappableOffset =
-    offsetof(JSSpecialObjectLayout, cpp_heap_wrappable_);
-inline constexpr int JSSpecialObjectLayout::kHeaderSize =
-    sizeof(JSSpecialObjectLayout);
+inline constexpr int JSSpecialObject::kCppHeapWrappableOffset =
+    offsetof(JSSpecialObject, cpp_heap_wrappable_);
+inline constexpr int JSSpecialObject::kHeaderSize = sizeof(JSSpecialObject);
 
 // The JSObject describes real heap allocated JavaScript objects with
 // properties.
@@ -1235,65 +1250,6 @@ V8_OBJECT class JSExternalObject : public JSObjectLayout {
   ExternalPointerMember<kExternalObjectValueTagRange> value_;
 } V8_OBJECT_END;
 
-// An abstract superclass for JSObjects that may contain EmbedderDataSlots.
-class JSObjectWithEmbedderSlots
-    : public TorqueGeneratedJSObjectWithEmbedderSlots<JSObjectWithEmbedderSlots,
-                                                      JSObject> {
- public:
-  static_assert(kHeaderSize == JSObject::kHeaderSize);
-  TQ_OBJECT_CONSTRUCTORS(JSObjectWithEmbedderSlots)
-};
-
-// Byte-compat static_asserts live here to postpone until both legacy and
-// *Layout classes are complete.
-static_assert(JSObjectWithEmbedderSlotsLayout::kHeaderSize ==
-              JSObjectWithEmbedderSlots::kHeaderSize);
-
-// An abstract superclass for JSObjects that may contain EmbedderDataSlots and
-// are used as API wrapper objects.
-class JSAPIObjectWithEmbedderSlots
-    : public TorqueGeneratedJSAPIObjectWithEmbedderSlots<
-          JSAPIObjectWithEmbedderSlots, JSObject> {
- public:
-  class BodyDescriptor;
-
-  TQ_OBJECT_CONSTRUCTORS(JSAPIObjectWithEmbedderSlots)
-};
-
-// An abstract superclass for JSObjects that may have elements while having an
-// empty fixed array as elements backing store. It doesn't carry any
-// functionality but allows function classes to be identified in the type
-// system.
-class JSCustomElementsObject
-    : public TorqueGeneratedJSCustomElementsObject<JSCustomElementsObject,
-                                                   JSObject> {
- public:
-  static_assert(kHeaderSize == JSObject::kHeaderSize);
-  TQ_OBJECT_CONSTRUCTORS(JSCustomElementsObject)
-};
-
-static_assert(JSAPIObjectWithEmbedderSlotsLayout::kCppHeapWrappableOffset ==
-              JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset);
-static_assert(JSAPIObjectWithEmbedderSlotsLayout::kHeaderSize ==
-              JSAPIObjectWithEmbedderSlots::kHeaderSize);
-
-// An abstract superclass for JSObjects that require non-standard element
-// access. It doesn't carry any functionality but allows function classes to be
-// identified in the type system.
-// These may also contain EmbedderDataSlots, but can't currently inherit from
-// JSAPIObjectWithEmbedderSlots due to instance_type constraints.
-class JSSpecialObject
-    : public TorqueGeneratedJSSpecialObject<JSSpecialObject,
-                                            JSCustomElementsObject> {
- public:
-  TQ_OBJECT_CONSTRUCTORS(JSSpecialObject)
-};
-
-static_assert(JSSpecialObjectLayout::kCppHeapWrappableOffset ==
-              JSSpecialObject::kCppHeapWrappableOffset);
-static_assert(JSSpecialObjectLayout::kHeaderSize ==
-              JSSpecialObject::kHeaderSize);
-
 // JSAccessorPropertyDescriptor is just a JSObject with a specific initial
 // map. This initial map adds in-object properties for "get", "set",
 // "enumerable" and "configurable" properties, as assigned by the
@@ -1371,7 +1327,7 @@ class JSIteratorResult : public JSObject {
 //
 // Accessing a JSGlobalProxy requires security check.
 
-V8_OBJECT class JSGlobalProxy : public JSSpecialObjectLayout {
+V8_OBJECT class JSGlobalProxy : public JSSpecialObject {
  public:
   inline bool IsDetachedFrom(Tagged<JSGlobalObject> global) const;
   inline bool IsDetached() const;
@@ -1389,7 +1345,7 @@ V8_OBJECT class JSGlobalProxy : public JSSpecialObjectLayout {
 inline constexpr int JSGlobalProxy::kHeaderSize = sizeof(JSGlobalProxy);
 
 // JavaScript global object.
-V8_OBJECT class JSGlobalObject : public JSSpecialObjectLayout {
+V8_OBJECT class JSGlobalObject : public JSSpecialObject {
  public:
   inline Tagged<JSGlobalProxy> global_proxy() const;
   inline void set_global_proxy(Tagged<JSGlobalProxy> value,
@@ -1436,7 +1392,7 @@ inline constexpr int JSGlobalObject::kGlobalProxyForApiOffset =
 inline constexpr int JSGlobalObject::kHeaderSize = sizeof(JSGlobalObject);
 
 // Representation for JS Wrapper objects, String, Number, Boolean, etc.
-V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObjectLayout {
+V8_OBJECT class JSPrimitiveWrapper : public JSCustomElementsObject {
  public:
   inline Tagged<JSAny> value() const;
   inline void set_value(Tagged<JSAny> value,

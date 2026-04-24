@@ -23,7 +23,7 @@ class ArrayBufferExtension;
 
 #include "torque-generated/src/objects/js-array-buffer-tq.inc"
 
-V8_OBJECT class JSArrayBuffer : public JSAPIObjectWithEmbedderSlotsLayout {
+V8_OBJECT class JSArrayBuffer : public JSAPIObjectWithEmbedderSlots {
  public:
 // The maximum length for JSArrayBuffer's supported by V8.
 // On 32-bit architectures we limit this to 2GiB, so that
@@ -409,7 +409,7 @@ class ArrayBufferExtension final
   std::atomic<GcState> young_gc_state_{GcState::Dead};
 };
 
-V8_OBJECT class JSArrayBufferView : public JSAPIObjectWithEmbedderSlotsLayout {
+V8_OBJECT class JSArrayBufferView : public JSAPIObjectWithEmbedderSlots {
  public:
   // [buffer]: the underlying ArrayBuffer.
   inline Tagged<JSArrayBuffer> buffer() const;

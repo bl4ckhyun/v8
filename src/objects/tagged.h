@@ -184,14 +184,10 @@ using StrongTaggedBase = TaggedImpl<HeapObjectReferenceType::STRONG, Address>;
 using WeakTaggedBase = TaggedImpl<HeapObjectReferenceType::WEAK, Address>;
 
 // Types which provide both a legacy Foo as well as a new-style FooLayout class.
-#define LAYOUT_TYPES(V)           \
-  V(HeapObject)                   \
-  V(JSReceiver)                   \
-  V(JSObject)                     \
-  V(JSObjectWithEmbedderSlots)    \
-  V(JSAPIObjectWithEmbedderSlots) \
-  V(JSCustomElementsObject)       \
-  V(JSSpecialObject)
+#define LAYOUT_TYPES(V) \
+  V(HeapObject)         \
+  V(JSReceiver)         \
+  V(JSObject)
 
 // Forward declarations for is_subtype.
 class Struct;
@@ -199,13 +195,9 @@ class JSReceiverLayout;
 class JSReceiver;
 class JSObjectLayout;
 class JSObject;
-class JSObjectWithEmbedderSlotsLayout;
 class JSObjectWithEmbedderSlots;
-class JSAPIObjectWithEmbedderSlotsLayout;
 class JSAPIObjectWithEmbedderSlots;
-class JSCustomElementsObjectLayout;
 class JSCustomElementsObject;
-class JSSpecialObjectLayout;
 class JSSpecialObject;
 class JSFunctionOrBoundFunctionOrWrappedFunction;
 class FixedArrayBase;
@@ -491,15 +483,6 @@ struct is_complex_subtype<Derived, JSObject,
                           std::enable_if_t<std::disjunction_v<
                               std::is_base_of<JSObject, Derived>,
                               std::is_base_of<JSObjectLayout, Derived>>>>
-    : public std::true_type {};
-
-class JSObjectWithEmbedderSlotsLayout;
-template <typename Derived>
-struct is_complex_subtype<
-    Derived, JSObjectWithEmbedderSlots,
-    std::enable_if_t<std::disjunction_v<
-        std::is_base_of<JSObjectWithEmbedderSlots, Derived>,
-        std::is_base_of<JSObjectWithEmbedderSlotsLayout, Derived>>>>
     : public std::true_type {};
 
 template <typename Derived, typename... BaseTs>

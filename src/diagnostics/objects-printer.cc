@@ -1011,6 +1011,12 @@ void JSProxy::JSProxyPrint(std::ostream& os) {
   os << '\n';
 }
 
+void JSObjectWithEmbedderSlots::JSObjectWithEmbedderSlotsPrint(
+    std::ostream& os) {
+  JSObjectPrintHeader(os, this, "JSObjectWithEmbedderSlots");
+  JSObjectPrintBody(os, this);
+}
+
 void JSPromise::JSPromisePrint(std::ostream& os) {
   JSObjectPrintHeader(os, this, "JSPromise");
   os << "\n - status: " << JSPromise::Status(status());

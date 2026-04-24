@@ -136,8 +136,8 @@ class JSAPIObjectWithEmbedderSlotsOrJSSpecialObjectBodyDescriptor
                   JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset);
     static_assert(JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset ==
                   JSSpecialObject::kCppHeapWrappableOffset);
-    static_assert(JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffsetEnd +
-                      1 ==
+    static_assert(JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset +
+                      kCppHeapPointerSlotSize ==
                   JSAPIObjectWithEmbedderSlots::kHeaderSize);
     v->VisitCppHeapPointer(
         obj, obj->RawCppHeapPointerField(
