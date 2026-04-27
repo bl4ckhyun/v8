@@ -7614,7 +7614,8 @@ int Shell::Main(int argc, char* argv[]) {
 #ifdef V8_SANDBOX_TRAP_FUZZER_AVAILABLE
       i::SandboxTrapFuzzer::Enable();
 #else
-      FATAL("Trap-based sandbox fuzzing is not available on this platform.");
+      printf("Trap-based sandbox fuzzing is not available on this platform.");
+      base::OS::ExitProcess(1);
 #endif
     }
 
