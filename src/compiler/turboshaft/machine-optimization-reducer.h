@@ -1384,6 +1384,12 @@ class MachineOptimizationReducer : public Next {
               if (k == i || k == j) continue;
               result = __ WordBinop(result, operands[k], kind, rep);
             }
+
+            // Combine remaining worklist items to preserve expression.
+            while (!worklist.empty()) {
+              result = __ WordBinop(result, worklist.back(), kind, rep);
+              worklist.pop_back();
+            }
             return result;
           }
         }
