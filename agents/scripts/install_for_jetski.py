@@ -5,6 +5,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os.path
+
+
+def create_symlink(src: Path, dest: Path):
+  try:
+    symlink = Path(os.path.relpath(src, dest.parent))
+    dest.symlink_to(symlink)
+    print(f"Symlinked {src.name} to {symlink}")
+  except OSError as e:
+    print(f"Failed to create symlink for {src.name}: {e}")
+
 
 FILE_PATH = Path(__file__).resolve()
 repo_root = FILE_PATH.parents[2]
@@ -32,12 +43,7 @@ for item in agents_src.iterdir():
   if item.name not in ["agents", "skills", "rules"]:
     # For other items, symlink directly
     if not dest_item.exists():
-      try:
-        symlink = item.relative_to(dest_item.parent, walk_up=True)
-        dest_item.symlink_to(symlink)
-        print(f"Symlinked {item.name} to {symlink}")
-      except OSError as e:
-        print(f"Failed to create symlink for {item.name}: {e}")
+      create_symlink(item, dest_item)
     continue
 
   # Create real directory in .agents/
@@ -53,17 +59,12 @@ for item in agents_src.iterdir():
   for sub_item in item.iterdir():
     dest_sub = dest_item / sub_item.name
     if not dest_sub.exists():
-      try:
-        symlink = sub_item.relative_to(dest_sub.parent, walk_up=True)
-        dest_sub.symlink_to(symlink)
-        print(f"Symlinked {sub_item.name} to {symlink}")
-      except OSError as e:
-        print(f"Failed to create symlink for {sub_item.name}: {e}")
+      create_symlink(sub_item, dest_sub)
 
 gemini_md_path = repo_root / "GEMINI.md"
 if not gemini_md_path.exists():
   with gemini_md_path.open("w") as f:
     f.write("@agents/prompts/templates/modular.md\n")
-  print("Created GEMINI.md in the repository root.")
+  print(f"Created {gemini_md_path}")
 else:
-  print("Skipping GEMINI.md creation since it already exists.")
+  print(f"Skipping {gemini_md_path} creation since it already exists.")
