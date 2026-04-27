@@ -445,6 +445,8 @@ class ShellOptions {
   };
   DisallowReassignment<bool> can_block = {"can_block", true};
   DisallowReassignment<const char*> d8_path = {"d8-path", ""};
+  DisallowReassignment<std::string> cwd = {"C", ""};
+  int post_filtering_cwd_index = -1;
   DisallowReassignment<bool> fuzzilli_coverage_statistics = {
       "fuzzilli-coverage-statistics", false};
   DisallowReassignment<bool> fuzzilli_enable_builtins_coverage = {
@@ -695,6 +697,11 @@ class Shell : public i::AllStatic {
   static void ReadLine(const v8::FunctionCallbackInfo<v8::Value>& info);
   static void WriteChars(const char* name, uint8_t* buffer, size_t buffer_size);
   static void ExecuteFile(const v8::FunctionCallbackInfo<v8::Value>& info);
+  static void FileExists(const v8::FunctionCallbackInfo<v8::Value>& info);
+#if defined(V8_OS_WIN)
+  static void PreProcessUnicodeFilenameArg(char* argv[], int i);
+  static void FreeUnicodeFilenameArgs();
+#endif
   static void SetTimeout(const v8::FunctionCallbackInfo<v8::Value>& info);
   static void ReadCodeTypeAndArguments(
       const v8::FunctionCallbackInfo<v8::Value>& info, int index,
@@ -734,7 +741,8 @@ class Shell : public i::AllStatic {
 
   // os.chdir(dir) changes directory to the given directory.  Throws an
   // exception/ on error.
-  static void ChangeDirectory(const v8::FunctionCallbackInfo<v8::Value>& info);
+  static void ChangeDirectoryCallback(
+      const v8::FunctionCallbackInfo<v8::Value>& info);
 
   // os.setenv(variable, value) sets an environment variable.  Repeated calls to
   // this method leak memory due to the API of setenv in the standard C library.
@@ -798,6 +806,8 @@ class Shell : public i::AllStatic {
   static base::OwnedVector<char> ReadCharsFromTcpPort(const char* name);
 
   static void set_script_executed() { script_executed_.store(true); }
+  static bool ChangeWorkingDirectory(const std::string& path,
+                                     bool print_error = true);
   static bool use_interactive_shell() {
     return (options.interactive_shell || !script_executed_.load()) &&
            !options.test_shell;
