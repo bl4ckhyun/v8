@@ -628,6 +628,10 @@ class WasmInJsInliningInterface {
     result->op = __ Word32Constant(value);
   }
 
+  void I64Const(FullDecoder* decoder, Value* result, int64_t value) {
+    result->op = __ Word64Constant(value);
+  }
+
   void F32Const(FullDecoder* decoder, Value* result, float value) {
     result->op = __ Float32Constant(value);
   }
@@ -636,11 +640,18 @@ class WasmInJsInliningInterface {
     result->op = __ Float64Constant(value);
   }
 
-  // TODO(dlehmann,353475584): Support more of these simple constants.
-  BAILOUT_WASM_OP(I64Const)
-  BAILOUT_WASM_OP(RefNull)
-  BAILOUT_WASM_OP(RefFunc)
-  BAILOUT_WASM_OP(RefAsNonNull)
+  void RefNull(FullDecoder* decoder, ValueType type, Value* result) {
+    result->op = __ Null(type);
+  }
+
+  void RefFunc(FullDecoder* decoder, uint32_t function_index, Value* result) {
+    result->op = __ WasmRefFunc(trusted_instance_data_, function_index);
+  }
+
+  void RefAsNonNull(FullDecoder* decoder, const Value& arg, Value* result) {
+    result->op = __ AssertNotNull(arg.get<Object>(), frame_state_, arg.type,
+                                  TrapId::kTrapNullDereference);
+  }
 
   void Drop(FullDecoder* decoder) {}
 
