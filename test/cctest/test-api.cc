@@ -17361,6 +17361,7 @@ TEST(PromiseHook) {
   CHECK_EQ(promise_hook_data->promise_hook_count, 5);
 
   delete promise_hook_data;
+  promise_hook_data = nullptr;
   isolate->SetPromiseHook(nullptr);
 }
 
