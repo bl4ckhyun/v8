@@ -2754,8 +2754,9 @@ void Generate_PushBoundArguments(MacroAssembler* masm) {
   Label no_bound_arguments;
   __ LoadTaggedField(
       r5, FieldMemOperand(r4, JSBoundFunction::kBoundArgumentsOffset), r0);
-  __ Lwz(r7, FieldMemOperand(r5, offsetof(FixedArray, length_)), SetRC, r0);
-  __ beq(&no_bound_arguments, cr0);
+  __ LoadU32(r7, FieldMemOperand(r5, offsetof(FixedArray, length_)), r0);
+  __ CmpU32(r7, Operand(0), r0);
+  __ beq(&no_bound_arguments);
   {
     // ----------- S t a t e -------------
     //  -- r3 : the number of arguments
