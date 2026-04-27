@@ -6912,6 +6912,39 @@ TEST(RunWasmTurbofan_I64x4Splat) {
   }
 }
 
+TEST(RunWasmTurbofan_F16x16Splat) {
+  EXPERIMENTAL_FLAG_SCOPE(revectorize);
+  EXPERIMENTAL_FLAG_SCOPE(fp16);
+  if (!CpuFeatures::IsSupported(AVX2) || !CpuFeatures::IsSupported(F16C))
+    return;
+  WasmRunner<int32_t, float> r(TestExecutionTier::kTurbofan);
+  uint16_t* memory = r.builder().AddMemoryElems<uint16_t>(16);
+  float param1 = 0;
+  {
+    TSSimd256VerifyScope ts_scope(
+        r.zone(), TSSimd256VerifyScope::VerifyHaveOpWithKind<
+                      compiler::turboshaft::Simd256SplatOp,
+                      compiler::turboshaft::Simd256SplatOp::Kind::kF16x16>);
+    r.Build({WASM_SIMD_STORE_MEM(WASM_ZERO,
+                                 WASM_SIMD_F16x8_SPLAT(WASM_LOCAL_GET(param1))),
+             WASM_SIMD_STORE_MEM_OFFSET(
+                 16, WASM_ZERO, WASM_SIMD_F16x8_SPLAT(WASM_LOCAL_GET(param1))),
+             WASM_ONE});
+  }
+
+  FOR_FLOAT32_INPUTS(x) {
+    r.Call(x);
+    uint16_t expected = fp16_ieee_from_fp32_value(x);
+    for (int i = 0; i < 16; ++i) {
+      if (std::isnan(x)) {
+        CHECK(isnan(r.builder().ReadMemory(&memory[i])));
+      } else {
+        CHECK_EQ(expected, r.builder().ReadMemory(&memory[i]));
+      }
+    }
+  }
+}
+
 TEST(RunWasmTurbofan_F32x8Splat) {
   EXPERIMENTAL_FLAG_SCOPE(revectorize);
   if (!CpuFeatures::IsSupported(AVX2)) return;

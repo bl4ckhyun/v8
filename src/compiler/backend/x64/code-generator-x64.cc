@@ -3749,6 +3749,16 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
 
       } else if (vec_len == kV256) {
         switch (lane_size) {
+          case LaneSize::kL16: {
+            // F16x16Splat
+            CpuFeatureScope f16c_scope(masm(), F16C);
+            CpuFeatureScope avx2_scope(masm(), AVX2);
+            __ vcvtps2ph(i.OutputDoubleRegister(0), i.InputDoubleRegister(0),
+                         0);
+            __ vpbroadcastw(i.OutputSimd256Register(),
+                            i.OutputDoubleRegister(0));
+            break;
+          }
           case LaneSize::kL32: {
             // F32x8Splat
             __ F32x8Splat(i.OutputSimd256Register(), i.InputFloatRegister(0));

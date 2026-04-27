@@ -1330,6 +1330,7 @@
   V(F64x4Pmax)                     \
   V(F64x4Splat)                    \
   V(F32x8Splat)                    \
+  V(F16x16Splat)                   \
   V(I8x32Shuffle)                  \
   V(F32x8Qfma)                     \
   V(F32x8Qfms)                     \

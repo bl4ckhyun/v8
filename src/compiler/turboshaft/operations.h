@@ -9933,6 +9933,7 @@ std::ostream& operator<<(std::ostream& os, Simd256TernaryOp::Kind kind);
   V(I16x16)                              \
   V(I32x8)                               \
   V(I64x4)                               \
+  V(F16x16)                              \
   V(F32x8)                               \
   V(F64x4)
 
@@ -9960,6 +9961,7 @@ struct Simd256SplatOp : FixedArityOperationT<1, Simd256SplatOp> {
         return MaybeRepVector<RegisterRepresentation::Word32()>();
       case Kind::kI64x4:
         return MaybeRepVector<RegisterRepresentation::Word64()>();
+      case Kind::kF16x16:
       case Kind::kF32x8:
         return MaybeRepVector<RegisterRepresentation::Float32()>();
       case Kind::kF64x4:
