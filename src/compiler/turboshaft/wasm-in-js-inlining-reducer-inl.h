@@ -16,15 +16,12 @@
 #include "src/compiler/turboshaft/operations.h"
 #include "src/compiler/turboshaft/wasm-assembler-helpers.h"
 #include "src/compiler/turboshaft/wasm-wrappers-inl.h"
-#include "src/heap/factory-inl.h"
-#include "src/objects/instance-type-inl.h"
 #include "src/wasm/compilation-environment-inl.h"
 #include "src/wasm/decoder.h"
 #include "src/wasm/function-body-decoder-impl.h"
 #include "src/wasm/turboshaft-graph-interface-inl.h"
 #include "src/wasm/wasm-module.h"
 #include "src/wasm/wasm-opcodes-inl.h"
-#include "src/wasm/wasm-subtyping.h"
 
 namespace v8::internal::compiler::turboshaft {
 
@@ -196,25 +193,6 @@ class WasmInJSInliningReducer : public Next {
   SourcePosition current_wasm_source_position_ = SourcePosition::Unknown();
 };
 
-using wasm::ArrayIndexImmediate;
-using wasm::BranchTableImmediate;
-using wasm::CallFunctionImmediate;
-using wasm::CallIndirectImmediate;
-using wasm::FieldImmediate;
-using wasm::GlobalIndexImmediate;
-using wasm::IndexImmediate;
-using wasm::MemoryAccessImmediate;
-using wasm::MemoryCopyImmediate;
-using wasm::MemoryIndexImmediate;
-using wasm::MemoryInitImmediate;
-using wasm::Simd128Immediate;
-using wasm::SimdLaneImmediate;
-using wasm::StringConstImmediate;
-using wasm::StructIndexImmediate;
-using wasm::TableCopyImmediate;
-using wasm::TableIndexImmediate;
-using wasm::TableInitImmediate;
-using wasm::TagIndexImmediate;
 using wasm::ValueType;
 using wasm::WasmOpcode;
 
@@ -666,22 +644,22 @@ class WasmInJsInliningInterface {
   void Drop(FullDecoder* decoder) {}
 
   void LocalGet(FullDecoder* decoder, Value* result,
-                const IndexImmediate& imm) {
+                const wasm::IndexImmediate& imm) {
     result->op = locals_[imm.index];
   }
 
   void LocalSet(FullDecoder* decoder, const Value& value,
-                const IndexImmediate& imm) {
+                const wasm::IndexImmediate& imm) {
     locals_[imm.index] = value.op;
   }
 
   void LocalTee(FullDecoder* decoder, const Value& value, Value* result,
-                const IndexImmediate& imm) {
+                const wasm::IndexImmediate& imm) {
     locals_[imm.index] = result->op = value.op;
   }
 
   void GlobalGet(FullDecoder* decoder, Value* result,
-                 const GlobalIndexImmediate& imm) {
+                 const wasm::GlobalIndexImmediate& imm) {
     SharedFlag shared = decoder->module_->globals[imm.index].shared;
     if (shared == SharedFlag::kYes) {
       return Bailout(decoder);
@@ -690,7 +668,7 @@ class WasmInJsInliningInterface {
   }
 
   void GlobalSet(FullDecoder* decoder, const Value& value,
-                 const GlobalIndexImmediate& imm) {
+                 const wasm::GlobalIndexImmediate& imm) {
     SharedFlag shared = decoder->module_->globals[imm.index].shared;
     if (shared == SharedFlag::kYes) {
       return Bailout(decoder);
@@ -747,7 +725,8 @@ class WasmInJsInliningInterface {
   }
 
   void StructGet(FullDecoder* decoder, const Value& struct_object,
-                 const FieldImmediate& field, bool is_signed, Value* result) {
+                 const wasm::FieldImmediate& field, bool is_signed,
+                 Value* result) {
     result->op = __ StructGet(
         struct_object.get<WasmStructNullable>(), frame_state_,
         field.struct_imm.struct_type, field.struct_imm.index,
@@ -757,7 +736,7 @@ class WasmInJsInliningInterface {
   }
 
   void StructSet(FullDecoder* decoder, const Value& struct_object,
-                 const FieldImmediate& field, const Value& field_value) {
+                 const wasm::FieldImmediate& field, const Value& field_value) {
     __ StructSet(
         struct_object.get<WasmStructNullable>(), frame_state_, field_value.op,
         field.struct_imm.struct_type, field.struct_imm.index,
@@ -767,7 +746,7 @@ class WasmInJsInliningInterface {
   }
 
   void ArrayGet(FullDecoder* decoder, const Value& array_obj,
-                const ArrayIndexImmediate& imm, const Value& index,
+                const wasm::ArrayIndexImmediate& imm, const Value& index,
                 bool is_signed, Value* result) {
     auto array_value = array_obj.get<WasmArrayNullable>();
     __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type,
@@ -777,7 +756,7 @@ class WasmInJsInliningInterface {
   }
 
   void ArraySet(FullDecoder* decoder, const Value& array_obj,
-                const ArrayIndexImmediate& imm, const Value& index,
+                const wasm::ArrayIndexImmediate& imm, const Value& index,
                 const Value& value) {
     auto array_value = array_obj.get<WasmArrayNullable>();
     __ WasmBoundsCheckArray(array_value, index.get<Word32>(), array_obj.type,
@@ -1202,9 +1181,8 @@ WasmInJSInliningReducer<Next>::CreateWasmInlinedIntoJSFrameState(
   FrameStateData::Builder builder;
   builder.AddParentFrameState(outer_frame_state);
   // Closure.
-  builder.AddInput(
-      MachineType::AnyTagged(),
-      __ HeapConstant(__ data()->isolate()->factory()->undefined_value()));
+  builder.AddInput(MachineType::AnyTagged(),
+                   __ template LoadRoot<RootIndex::kUndefinedValue>());
   builder.AddInput(MachineType::AnyTagged(), js_context);
   // Dummy param, probably for accumulator in Ignition.
   builder.AddUnusedRegister();
@@ -1237,9 +1215,8 @@ WasmInJSInliningReducer<Next>::CreateJSWasmCallBuiltinContinuationFrameState(
   FrameStateData::Builder builder;
   builder.AddParentFrameState(outer_frame_state);
   // Closure
-  builder.AddInput(
-      MachineType::AnyTagged(),
-      __ HeapConstant(__ data()->isolate()->factory()->undefined_value()));
+  builder.AddInput(MachineType::AnyTagged(),
+                   __ template LoadRoot<RootIndex::kUndefinedValue>());
   builder.AddInput(MachineType::AnyTagged(), js_context);
 
   constexpr bool kInlined = true;
