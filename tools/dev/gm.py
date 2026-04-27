@@ -10,7 +10,10 @@ Uses reclient by default if it is detected (at output directory setup time).
 Expects to be run from the root of a V8 checkout.
 
 Usage:
-    gm.py [<arch>].[<mode>[-<suffix>]].[<target>] [testname...] [--flag]
+    gm.py [--sync=<normal|force>] [<arch>].[<mode>[-<suffix>]].[<target>] [testname...] [--flag]
+
+ --sync:        Runs 'gclient sync -D'
+ --sync=force:  Runs 'gclient sync -D --force' before building.
 
 All arguments are optional. Most combinations should work, e.g.:
     gm.py ia32.debug x64.release x64.release-my-custom-opts d8
@@ -27,7 +30,7 @@ not contain spaces.
 # See HELP below for additional documentation.
 
 from __future__ import print_function
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from pathlib import Path
 import errno
 import os
@@ -113,6 +116,13 @@ ACTIONS = {
     },
 }
 
+
+class GclientSyncMode(StrEnum):
+  NONE = "none"
+  NORMAL = "normal"
+  FORCE = "force"
+
+
 HELP = """<arch> can be any of: %(arches)s
 <mode> can be any of: %(modes)s
 <target> can be any of:
@@ -124,7 +134,7 @@ HELP = """<arch> can be any of: %(arches)s
 """ % {
     "arches": " ".join(ARCHES),
     "modes": " ".join(MODES.keys()),
-    "targets": ", ".join(TARGETS)
+    "targets": ", ".join(TARGETS),
 }
 
 TESTSUITES_TARGETS = {
@@ -207,7 +217,6 @@ class Reclient(IntEnum):
   NONE = 0
   GOOGLE = 1
   CUSTOM = 2
-
 
 def get_gclient_solution(solutions):
   for solution in solutions:
@@ -701,6 +710,7 @@ class ArgumentParser(object):
     self.global_actions = set()
     self.configs = {}
     self.testrunner_args = []
+    self.sync_mode = GclientSyncMode.NONE
 
   def populate_configs(self, arches, modes, targets, tests, clean):
     for a in arches:
@@ -766,11 +776,28 @@ class ArgumentParser(object):
       self.configs[path].extend(targets, tests, clean)
     return True
 
+  def _parse_sync_arg(self, argstring):
+    if argstring == "--sync":
+      self.sync_mode = GclientSyncMode.NORMAL
+    elif argstring.startswith("--sync="):
+      mode = argstring[len("--sync="):]
+      try:
+        self.sync_mode = GclientSyncMode(mode)
+      except ValueError:
+        print(f"Unknown sync mode: {mode}")
+        sys.exit(1)
+    else:
+      print(f"Didn't understand: {argstring}")
+      sys.exit(1)
+
   def parse_arg(self, argstring):
     if argstring in ("-h", "--help", "help"):
       print_help_and_exit()
     if argstring == "--print-completions":
       print_completions_and_exit()
+    if argstring.startswith("--sync"):
+      self._parse_sync_arg(argstring)
+      return
     if argstring == "quiet":
       global QUIET
       QUIET = True
@@ -866,6 +893,16 @@ class ArgumentParser(object):
 def main(argv):
   parser = ArgumentParser()
   configs = parser.parse_arguments(argv[1:])
+
+  if parser.sync_mode == GclientSyncMode.NORMAL:
+    sync_code = _call("gclient sync -D")
+    if sync_code != 0:
+      return sync_code
+  elif parser.sync_mode == GclientSyncMode.FORCE:
+    sync_code = _call("gclient sync -D --force")
+    if sync_code != 0:
+      return sync_code
+
   return_code = 0
   # If we have Reclient with the Google configuration, check for current
   # certificate.
