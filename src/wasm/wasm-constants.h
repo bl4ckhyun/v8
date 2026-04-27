@@ -260,6 +260,15 @@ constexpr int kOptimizationPriorityNotSpecifiedSentinel = -1;
 constexpr int32_t kOSRTargetOffset = 4 * kSystemPointerSize;
 #endif
 
+enum CWasmEntryParameters {
+  kCodeEntry,
+  kObjectRef,
+  kArgumentsBuffer,
+  kCEntryFp,
+  // marker:
+  kNumParameters
+};
+
 }  // namespace wasm
 }  // namespace internal
 }  // namespace v8

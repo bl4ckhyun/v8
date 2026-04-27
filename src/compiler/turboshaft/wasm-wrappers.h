@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef V8_WASM_WRAPPERS_H_
-#define V8_WASM_WRAPPERS_H_
+#ifndef V8_COMPILER_TURBOSHAFT_WASM_WRAPPERS_H_
+#define V8_COMPILER_TURBOSHAFT_WASM_WRAPPERS_H_
 
 #if !V8_ENABLE_WEBASSEMBLY
 #error This header should only be included if WebAssembly is enabled.
@@ -13,6 +13,7 @@
 #include "src/compiler/turboshaft/operations.h"
 #include "src/compiler/turboshaft/wasm-assembler-helpers.h"
 #include "src/wasm/turboshaft-graph-interface.h"
+#include "src/wasm/wasm-constants.h"
 #include "src/wasm/wasm-engine.h"
 
 namespace v8::internal::compiler::turboshaft {
@@ -31,65 +32,34 @@ struct WasmBodyInliningResult {
   static WasmBodyInliningResult Failed() { return {}; }
 };
 
-}  // namespace v8::internal::compiler::turboshaft
-
-namespace v8::internal::wasm {
-
-enum CWasmEntryParameters {
-  kCodeEntry,
-  kObjectRef,
-  kArgumentsBuffer,
-  kCEntryFp,
-  // marker:
-  kNumParameters
-};
-
 #include "src/compiler/turboshaft/define-assembler-macros.inc"
 
 const compiler::turboshaft::TSCallDescriptor* GetBuiltinCallDescriptor(
     Builtin name, Zone* zone);
 
 template <typename Assembler>
-class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
-  using typename WasmGraphBuilderBase<Assembler>::Any;
+class WasmWrapperTSGraphBuilder : public wasm::WasmGraphBuilderBase<Assembler> {
+  using typename wasm::WasmGraphBuilderBase<Assembler>::Any;
 
   using CallDescriptor = compiler::CallDescriptor;
   using Operator = compiler::Operator;
-  using Float32 = compiler::turboshaft::Float32;
-  using Float64 = compiler::turboshaft::Float64;
-  using FrameState = compiler::turboshaft::FrameState;
-  template <typename... Ts>
-  using Label = v8::internal::compiler::turboshaft::Label<Ts...>;
-  using LoadOp = compiler::turboshaft::LoadOp;
-  using MemoryRepresentation = compiler::turboshaft::MemoryRepresentation;
-  using TSBlock = compiler::turboshaft::Block;
-  using OpEffects = compiler::turboshaft::OpEffects;
-  using OpIndex = compiler::turboshaft::OpIndex;
-  using OptionalOpIndex = compiler::turboshaft::OptionalOpIndex;
-  template <typename T>
-  using OptionalV = compiler::turboshaft::OptionalV<T>;
-  using RegisterRepresentation = compiler::turboshaft::RegisterRepresentation;
+
   template <typename T>
   using ScopedVar = compiler::turboshaft::ScopedVar<T, Assembler>;
-  using StoreOp = compiler::turboshaft::StoreOp;
-  using TSCallDescriptor = compiler::turboshaft::TSCallDescriptor;
-  template <typename... Ts>
-  using Tuple = compiler::turboshaft::Tuple<Ts...>;
-  template <typename T>
-  using V = compiler::turboshaft::V<T>;
-  using Variable = compiler::turboshaft::Variable;
-  using Word32 = compiler::turboshaft::Word32;
-  using WordPtr = compiler::turboshaft::WordPtr;
+
+  using CanonicalValueType = wasm::CanonicalValueType;
+  using NumericKind = wasm::NumericKind;
+  using GenericKind = wasm::GenericKind;
 
  public:
-  using WasmGraphBuilderBase<Assembler>::Asm;
+  using wasm::WasmGraphBuilderBase<Assembler>::Asm;
 
   WasmWrapperTSGraphBuilder(
-      Zone* zone, Assembler& assembler, const CanonicalSig* sig,
+      Zone* zone, Assembler& assembler, const wasm::CanonicalSig* sig,
       bool is_inlining_into_js,
       std::optional<compiler::turboshaft::WasmInlinedFunctionData>
           inlined_function_data = {})
-      : WasmGraphBuilderBase<Assembler>(zone, assembler),
+      : wasm::WasmGraphBuilderBase<Assembler>(zone, assembler),
         is_inlining_into_js_(is_inlining_into_js),
         sig_(sig),
         inlined_function_data_(std::move(inlined_function_data)) {
@@ -109,7 +79,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   }
 
   V<WordPtr> GetTargetForBuiltinCall(Builtin builtin) {
-    return WasmGraphBuilderBase<Assembler>::GetTargetForBuiltinCall(
+    return wasm::WasmGraphBuilderBase<Assembler>::GetTargetForBuiltinCall(
         builtin, StubCallMode::kCallBuiltinPointer);
   }
 
@@ -169,14 +139,14 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
                                       V<Object> context) {
     // Since we don't check that args will fit in an array,
     // we make sure this is true based on statically known limits.
-    static_assert(kV8MaxWasmFunctionReturns <=
+    static_assert(wasm::kV8MaxWasmFunctionReturns <=
                   JSArray::kInitialMaxFastElementArray);
     return CallBuiltin<WasmAllocateJSArrayDescriptor>(
         Builtin::kWasmAllocateJSArray, Operator::kEliminatable, array_length,
         context);
   }
 
-  void BuildCallWasmFromWrapper(Zone* zone, const CanonicalSig* sig,
+  void BuildCallWasmFromWrapper(Zone* zone, const wasm::CanonicalSig* sig,
                                 V<Word32> callee,
                                 const base::Vector<OpIndex> args,
                                 base::Vector<OpIndex> returns,
@@ -197,8 +167,8 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   // Overload for the "regular" non-inlined compiled JS-to-Wasm wrapper.
   void BuildJSToWasmWrapper();
 
-  void BuildWasmToJSWrapper(ImportCallKind kind, int expected_arity,
-                            Suspend suspend);
+  void BuildWasmToJSWrapper(wasm::ImportCallKind kind, int expected_arity,
+                            wasm::Suspend suspend);
 
   void BuildJSFastApiCallWrapper(DirectHandle<JSReceiver> callable);
 
@@ -380,7 +350,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
 
 #ifdef V8_ENABLE_TURBOFAN
   CallDescriptor* GetBigIntToI64CallDescriptor(bool needs_frame_state) {
-    return GetWasmEngine()->call_descriptors()->GetBigIntToI64Descriptor(
+    return wasm::GetWasmEngine()->call_descriptors()->GetBigIntToI64Descriptor(
         needs_frame_state);
   }
 
@@ -552,7 +522,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
     // Both indexed and allow-listed generic references get here.
 
     // Make sure ValueType fits in a Smi.
-    static_assert(ValueType::kLastUsedBit + 1 <= kSmiValueSize);
+    static_assert(wasm::ValueType::kLastUsedBit + 1 <= kSmiValueSize);
 
     std::initializer_list<const OpIndex> inputs = {
         input,
@@ -586,7 +556,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
   // Must be called in the first block to emit the Parameter ops.
   int AddArgumentNodes(base::Vector<OpIndex> args, int pos,
                        base::SmallVector<OpIndex, 16> wasm_params,
-                       const CanonicalSig* sig, V<Context> context) {
+                       const wasm::CanonicalSig* sig, V<Context> context) {
     // Convert wasm numbers to JS values.
     for (size_t i = 0; i < wasm_params.size(); ++i) {
       args[pos++] = ToJS(wasm_params[i], sig->GetParam(i), context);
@@ -722,7 +692,7 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
         internal, LoadOp::Kind::TaggedBase(), MemoryRepresentation::Uint32(),
         WasmInternalFunction::kRawCallTargetOffset);
     constexpr size_t entry_size_log2 =
-        std::bit_width(sizeof(WasmCodePointerTableEntry)) - 1;
+        std::bit_width(sizeof(wasm::WasmCodePointerTableEntry)) - 1;
     return __ Load(
         __ ExternalConstant(ExternalReference::wasm_code_pointer_table()),
         __ ChangeUint32ToUintPtr(code_pointer), LoadOp::Kind::RawAligned(),
@@ -748,13 +718,18 @@ class WasmWrapperTSGraphBuilder : public WasmGraphBuilderBase<Assembler> {
 
  private:
   bool is_inlining_into_js_;
-  const CanonicalSig* const sig_;
+  const wasm::CanonicalSig* const sig_;
   std::optional<compiler::turboshaft::WasmInlinedFunctionData>
       inlined_function_data_;
 };
 
 #include "src/compiler/turboshaft/undef-assembler-macros.inc"
 
-}  // namespace v8::internal::wasm
+void BuildWasmWrapper(PipelineData* data, Graph& graph,
+                      const wasm::CanonicalSig* sig,
+                      wasm::WrapperCompilationInfo wrapper_info,
+                      DirectHandle<JSReceiver> callable = {});
 
-#endif  // V8_WASM_WRAPPERS_H_
+}  // namespace v8::internal::compiler::turboshaft
+
+#endif  // V8_COMPILER_TURBOSHAFT_WASM_WRAPPERS_H_
