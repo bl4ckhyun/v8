@@ -1243,8 +1243,10 @@ using V8HeapCompressionScheme = V8HeapCompressionSchemeImpl<MainCage>;
 class TrustedCage;
 using TrustedSpaceCompressionScheme = V8HeapCompressionSchemeImpl<TrustedCage>;
 #else
-// The trusted cage does not exist in this case.
-using TrustedSpaceCompressionScheme = V8HeapCompressionScheme;
+// The trusted cage does not exist in this case; a distinct struct type (not
+// an alias of V8HeapCompressionScheme) keeps type-based dispatch working
+// identically across sandbox configs.
+struct TrustedSpaceCompressionScheme;
 #endif
 class ExternalCodeCompressionScheme;
 template <typename CompressionScheme>
