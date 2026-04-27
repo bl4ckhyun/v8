@@ -68,7 +68,6 @@ DirectHandleVector<Object> MakeDefaultArguments(Isolate* isolate,
       case kI8:
       case kI16:
       case kF16:
-      case kWaitQueue:
       case kVoid:
       case kTop:
       case kBottom:

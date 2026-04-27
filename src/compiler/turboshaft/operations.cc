@@ -1746,7 +1746,6 @@ const RegisterRepresentation& RepresentationFor(wasm::ValueType type) {
     case wasm::kI8:
     case wasm::kI16:
     case wasm::kI32:
-    case wasm::kWaitQueue:
       return kWord32;
     case wasm::kI64:
       return kWord64;

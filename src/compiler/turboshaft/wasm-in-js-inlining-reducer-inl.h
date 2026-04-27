@@ -884,7 +884,8 @@ class WasmInJsInliningInterface {
   BAILOUT_WASM_OP(StructAtomicRMW)
   BAILOUT_WASM_OP(StructAtomicCompareExchange)
   BAILOUT_WASM_OP(StructWait)
-  BAILOUT_WASM_OP(StructNotify)
+  BAILOUT_WASM_OP(WaitqueueNotify)
+  BAILOUT_WASM_OP(WaitqueueNew)
 
   BAILOUT_WASM_OP(ArrayAtomicRMW)
   BAILOUT_WASM_OP(ArrayAtomicCompareExchange)

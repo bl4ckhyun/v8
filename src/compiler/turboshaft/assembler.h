@@ -5264,7 +5264,6 @@ class AssemblerOpInterface : public Next {
       case wasm::kI8:
       case wasm::kI16:
       case wasm::kI32:
-      case wasm::kWaitQueue:
         return __ Word32Constant(int32_t{0});
       case wasm::kI64:
         return __ Word64Constant(int64_t{0});

@@ -1738,7 +1738,6 @@ void PushArgs(const i::wasm::CanonicalSig* sig, const vec<Val>& args,
       case i::wasm::kI8:
       case i::wasm::kI16:
       case i::wasm::kF16:
-      case i::wasm::kWaitQueue:
       case i::wasm::kVoid:
       case i::wasm::kTop:
       case i::wasm::kBottom:
@@ -1780,7 +1779,6 @@ void PopArgs(const i::wasm::CanonicalSig* sig, vec<Val>& results,
       case i::wasm::kI8:
       case i::wasm::kI16:
       case i::wasm::kF16:
-      case i::wasm::kWaitQueue:
       case i::wasm::kVoid:
       case i::wasm::kTop:
       case i::wasm::kBottom:
@@ -2082,7 +2080,6 @@ WASM_EXPORT auto Global::get() const -> Val {
     case i::wasm::kI8:
     case i::wasm::kI16:
     case i::wasm::kF16:
-    case i::wasm::kWaitQueue:
     case i::wasm::kVoid:
     case i::wasm::kTop:
     case i::wasm::kBottom:

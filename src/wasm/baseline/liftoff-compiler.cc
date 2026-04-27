@@ -5829,7 +5829,6 @@ class LiftoffCompiler {
       case wasm::kI8:
       case wasm::kI16:
       case wasm::kF16:
-      case wasm::kWaitQueue:
       case wasm::kVoid:
       case wasm::kTop:
       case wasm::kBottom:
@@ -5887,7 +5886,6 @@ class LiftoffCompiler {
       case wasm::kI8:
       case wasm::kI16:
       case wasm::kF16:
-      case wasm::kWaitQueue:
       case wasm::kVoid:
       case wasm::kTop:
       case wasm::kBottom:
@@ -6722,7 +6720,8 @@ class LiftoffCompiler {
   }
 
   void StructWait(FullDecoder* decoder, const Value& /* struct_obj */,
-                  const FieldImmediate& imm, const Value& /* expected_value */,
+                  const FieldImmediate& imm, const Value& /* waitqueue */,
+                  const Value& /* expected_value */,
                   const Value& /* timeout_ns */, Value* /* result */) {
     VarState timeout_ns_i64 = __ PopVarState();
 
@@ -6732,41 +6731,44 @@ class LiftoffCompiler {
         MakeSig::Returns(kRef).Params(kI64), {timeout_ns_i64},
         decoder->position());
 
-    // We need to pop these two values after the previous builtin call, because
-    // register VarStates will get spilled and registers will be overwritten by
-    // it.
+    // We need to pop these three values after the previous builtin call,
+    // because register VarStates will get spilled and registers will be
+    // overwritten by it.
     VarState expected_value = __ PopVarState();
+    VarState waitqueue = __ PopVarState();
     VarState struct_obj = __ PopVarState();
 
     int offset = WasmStruct::kHeaderSize +
                  imm.struct_imm.struct_type->field_offset(imm.field_imm.index);
     // Null check happens within the builtin.
-    CallBuiltin(Builtin::kWasmManagedObjectWait,
-                MakeSig::Params(kRef, kI32, kI32, kRef),
-                {struct_obj, VarState{kI32, offset, 0}, expected_value,
-                 VarState{kRef, LiftoffRegister{kReturnRegister0}, 0}},
-                decoder->position());
+    CallBuiltin(
+        Builtin::kWasmManagedObjectWait,
+        MakeSig::Params(kRef, kI32, kI32, kRef, kRef).Returns(kI32),
+        {struct_obj, VarState{kI32, offset, 0}, expected_value, waitqueue,
+         VarState{kRef, LiftoffRegister{kReturnRegister0}, 0}},
+        decoder->position());
     __ PushRegister(kI32, LiftoffRegister{kReturnRegister0});
   }
 
-  void StructNotify(FullDecoder* decoder, const Value& struct_obj,
-                    const FieldImmediate& imm, const Value& /* max_waiters */,
-                    Value* /* result */) {
+  void WaitqueueNotify(FullDecoder* decoder, const Value& waitqueue,
+                       const Value& /* max_waiters */, Value* /* result */) {
     LiftoffRegList pinned;
     LiftoffRegister max_waiters = pinned.set(__ PopToRegister(pinned));
-    LiftoffRegister struct_obj_reg = pinned.set(__ PopToRegister(pinned));
+    LiftoffRegister waitqueue_reg = pinned.set(__ PopToRegister(pinned));
 
-    MaybeEmitNullCheck(decoder, struct_obj_reg.gp(), pinned, struct_obj.type);
-
-    int offset = WasmStruct::kHeaderSize +
-                 imm.struct_imm.struct_type->field_offset(imm.field_imm.index);
+    MaybeEmitNullCheck(decoder, waitqueue_reg.gp(), pinned, waitqueue.type);
 
     LiftoffRegister result = GenerateCCall(
         kI32,
-        {VarState{kRefNull, struct_obj_reg, 0}, VarState{kI32, offset, 0},
-         VarState{kI32, max_waiters, 0}},
-        ExternalReference::wasm_managed_object_notify());
+        {VarState{kRefNull, waitqueue_reg, 0}, VarState{kI32, max_waiters, 0}},
+        ExternalReference::wasm_waitqueue_notify());
     __ PushRegister(kI32, result);
+  }
+
+  void WaitqueueNew(FullDecoder* decoder, Value* /* result */) {
+    CallBuiltin(Builtin::kWasmWaitqueueNew, MakeSig::Returns(kRef), {},
+                decoder->position());
+    __ PushRegister(kRef, LiftoffRegister{kReturnRegister0});
   }
 
   void ArrayAtomicRMW(FullDecoder* decoder, WasmOpcode opcode,
@@ -7637,28 +7639,6 @@ class LiftoffCompiler {
       StoreObjectField(decoder, obj.gp(), no_reg, offset, value, false, pinned,
                        field_type.kind(), write_barrier);
       pinned.clear(value);
-      if (field_type == kWasmWaitQueue) {
-        // We have to allocate the Managed part of waitqueue after finishing
-        // initialization of the fresh struct object. Therefore we initialize it
-        // with 0 here.
-        LiftoffRegister zero_reg =
-            pinned.set(__ GetUnusedRegister(reg_class_for(kRef), pinned));
-        LoadSmi(zero_reg, 0);
-        StoreObjectField(decoder, obj.gp(), no_reg,
-                         offset + kWaitQueueManagedOffset, zero_reg, false,
-                         pinned, kRef, compiler::kNoWriteBarrier);
-        pinned.clear(zero_reg);
-      }
-    }
-
-    for (uint32_t i = imm.struct_type->field_count(); i > 0;) {
-      i--;
-      if (imm.struct_type->field(i) != kWasmWaitQueue) continue;
-      int offset = imm.struct_type->field_offset(i);
-      // This will overwrite {kReturnRegister0} but it returns the {obj} back.
-      CallBuiltin(Builtin::kWasmAllocateWaitQueue, MakeSig::Params(kRef, kI32),
-                  {VarState{kRef, obj, 0}, VarState{kI32, offset, 0}},
-                  decoder->position());
     }
 
     // If this assert fails then initialization of padding field might be
@@ -8544,19 +8524,21 @@ class LiftoffCompiler {
       case GenericKind::kNoFunc:
       case GenericKind::kNoExn:
       case GenericKind::kNoCont:
+      case GenericKind::kNoWaitqueue:
         DCHECK(null_succeeds);
         return EmitIsNull(kExprRefIsNull, obj.type);
       case GenericKind::kAny:
-        // Any may never need a cast as it is either implicitly convertible or
-        // never convertible for any given type.
+      case GenericKind::kFunc:
+      case GenericKind::kExtern:
+      case GenericKind::kExn:
+      case GenericKind::kWaitqueue:
+        // These may never need a cast as they are either implicitly convertible
+        // or never convertible for any given type.
       case GenericKind::kVoid:
       case GenericKind::kTop:
       case GenericKind::kBottom:
       case GenericKind::kExternString:
         // Internal-only sentinels.
-      case GenericKind::kFunc:
-      case GenericKind::kExtern:
-      case GenericKind::kExn:
       case GenericKind::kCont:
       case GenericKind::kStringViewWtf8:
       case GenericKind::kStringViewWtf16:
@@ -8663,19 +8645,21 @@ class LiftoffCompiler {
       case GenericKind::kNoFunc:
       case GenericKind::kNoExn:
       case GenericKind::kNoCont:
+      case GenericKind::kNoWaitqueue:
         DCHECK(null_succeeds);
         return AssertNullTypecheck(decoder, obj, result_val);
       case GenericKind::kAny:
-        // Any may never need a cast as it is either implicitly convertible or
-        // never convertible for any given type.
+      case GenericKind::kFunc:
+      case GenericKind::kExtern:
+      case GenericKind::kExn:
+      case GenericKind::kWaitqueue:
+        // These may never need a cast as they are either implicitly convertible
+        // or never convertible for any given type.
       case GenericKind::kVoid:
       case GenericKind::kTop:
       case GenericKind::kBottom:
       case GenericKind::kExternString:
         // Internal-only sentinels.
-      case GenericKind::kFunc:
-      case GenericKind::kExtern:
-      case GenericKind::kExn:
       case GenericKind::kCont:
       case GenericKind::kStringViewWtf8:
       case GenericKind::kStringViewWtf16:
@@ -8853,20 +8837,22 @@ class LiftoffCompiler {
       case GenericKind::kNoFunc:
       case GenericKind::kNoExn:
       case GenericKind::kNoCont:
+      case GenericKind::kNoWaitqueue:
         DCHECK(null_succeeds);
         return BrOnNull(decoder, obj, depth, /*pass_null_along_branch*/ true,
                         nullptr);
       case GenericKind::kAny:
-        // Any may never need a cast as it is either implicitly convertible or
-        // never convertible for any given type.
+      case GenericKind::kFunc:
+      case GenericKind::kExtern:
+      case GenericKind::kExn:
+      case GenericKind::kWaitqueue:
+        // These may never need a cast as they are either implicitly convertible
+        // or never convertible for any given type.
       case GenericKind::kVoid:
       case GenericKind::kTop:
       case GenericKind::kBottom:
       case GenericKind::kExternString:
         // Internal sentinels.
-      case GenericKind::kFunc:
-      case GenericKind::kExtern:
-      case GenericKind::kExn:
       case GenericKind::kCont:
       case GenericKind::kStringViewWtf8:
       case GenericKind::kStringViewWtf16:
@@ -8921,20 +8907,22 @@ class LiftoffCompiler {
       case GenericKind::kNoFunc:
       case GenericKind::kNoExn:
       case GenericKind::kNoCont:
+      case GenericKind::kNoWaitqueue:
         DCHECK(null_succeeds);
         return BrOnNonNull(decoder, obj, nullptr, depth,
                            /*drop_null_on_fallthrough*/ false);
       case GenericKind::kAny:
-        // Any may never need a cast as it is either implicitly convertible or
-        // never convertible for any given type.
+      case GenericKind::kFunc:
+      case GenericKind::kExtern:
+      case GenericKind::kExn:
+      case GenericKind::kWaitqueue:
+        // These may never need a cast as they are either implicitly convertible
+        // or never convertible for any given type.
       case GenericKind::kVoid:
       case GenericKind::kTop:
       case GenericKind::kBottom:
       case GenericKind::kExternString:
         // Internal sentinels.
-      case GenericKind::kFunc:
-      case GenericKind::kExtern:
-      case GenericKind::kExn:
       case GenericKind::kCont:
       case GenericKind::kStringViewWtf8:
       case GenericKind::kStringViewWtf16:
@@ -10687,7 +10675,6 @@ class LiftoffCompiler {
       case kI8:
       case kI16:
       case kI32:
-      case kWaitQueue:
         return __ LoadConstant(reg, WasmValue(int32_t{0}));
       case kI64:
         return __ LoadConstant(reg, WasmValue(int64_t{0}));
@@ -10890,9 +10877,7 @@ class LiftoffCompiler {
       // MVP:
       kI32, kI64, kF32, kF64,
       // Extern ref:
-      kRef, kRefNull, kI8, kI16,
-      // Shared-everything
-      kWaitQueue};
+      kRef, kRefNull, kI8, kI16};
 
   LiftoffAssembler asm_;
   Label return_label_;

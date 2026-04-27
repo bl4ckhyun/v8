@@ -89,6 +89,9 @@ class WasmLoweringReducer : public Next {
           static_assert(WasmStruct::kHeaderSize > kTaggedSize);
           static_assert(WasmArray::kHeaderSize > kTaggedSize);
           static_assert(WasmInternalFunction::kHeaderSize > kTaggedSize);
+          // Waitqueues are represented as Managed.
+          static_assert(sizeof(Managed<FutexManagedObjectWaitList>) >
+                        kTaggedSize);
           __ Load(object, LoadOp::Kind::TrapOnNull().Immutable(),
                   MemoryRepresentation::Int32(), kTaggedSize);
         }
@@ -698,8 +701,6 @@ class WasmLoweringReducer : public Next {
         return MemoryRepresentation::Float64();
       case wasm::kS128:
         return MemoryRepresentation::Simd128();
-      case wasm::kWaitQueue:
-        return MemoryRepresentation::Int32();
       case wasm::kRef:
       case wasm::kRefNull:
         return MemoryRepresentation::AnyTagged();

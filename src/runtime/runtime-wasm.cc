@@ -19,7 +19,7 @@
 #include "src/heap/read-only-heap.h"
 #include "src/numbers/conversions.h"
 #include "src/objects/lookup-inl.h"
-#include "src/objects/managed.h"
+#include "src/objects/managed-inl.h"
 #include "src/objects/object-list-macros.h"
 #include "src/objects/objects-inl.h"
 #include "src/objects/property-descriptor.h"
@@ -785,14 +785,16 @@ RUNTIME_FUNCTION(Runtime_WasmI64AtomicWait) {
 
 RUNTIME_FUNCTION(Runtime_WasmManagedObjectWait) {
   HandleScope scope(isolate);
-  DCHECK_EQ(4, args.length());
+  DCHECK_EQ(5, args.length());
   Tagged<HeapObject> object = Cast<HeapObject>(args[0]);
   int field_offset = args.smi_value_at(1);
   int32_t expected_value = static_cast<int32_t>(args.number_value_at(2));
-  Tagged<BigInt> timeout_ns = Cast<BigInt>(args[3]);
+  Tagged<HeapObject> waitqueue = Cast<HeapObject>(args[3]);
+  Tagged<BigInt> timeout_ns = Cast<BigInt>(args[4]);
 
   if (!v8_flags.experimental_wasm_skip_null_checks &&
-      object == ReadOnlyRoots(isolate).wasm_null()) {
+      (object == ReadOnlyRoots(isolate).wasm_null() ||
+       waitqueue == ReadOnlyRoots(isolate).wasm_null())) {
     return ThrowWasmError(isolate, MessageTemplate::kWasmTrapNullDereference);
   }
 
@@ -803,17 +805,21 @@ RUNTIME_FUNCTION(Runtime_WasmManagedObjectWait) {
   }
 
   return FutexEmulation::WaitWasmManagedObject(
-      isolate, object, field_offset, expected_value, timeout_ns->AsInt64());
+      isolate, object, field_offset,
+      Cast<Managed<FutexManagedObjectWaitList>>(waitqueue), expected_value,
+      timeout_ns->AsInt64());
 }
 
-RUNTIME_FUNCTION(Runtime_WasmAllocateWaitQueue) {
+RUNTIME_FUNCTION(Runtime_WasmWaitqueueNew) {
   HandleScope scope(isolate);
-  DCHECK_EQ(2, args.length());
-  DirectHandle<WasmStruct> struct_value(Cast<WasmStruct>(args[0]), isolate);
-  int raw_field_offset = args.smi_value_at(1);
+  DCHECK_EQ(0, args.length());
 
-  WasmStruct::AllocateWaitQueue(isolate, struct_value, raw_field_offset);
-  return Smi::FromInt(0);
+  auto ptr = std::make_shared<FutexManagedObjectWaitList>();
+  DirectHandle<Managed<FutexManagedObjectWaitList>> managed =
+      Managed<FutexManagedObjectWaitList>::From(
+          isolate, sizeof(FutexManagedObjectWaitList), ptr,
+          AllocationType::kSharedOld);
+  return *managed;
 }
 
 namespace {

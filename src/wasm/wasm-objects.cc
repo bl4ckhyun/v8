@@ -408,6 +408,8 @@ void WasmTableObject::Set(Isolate* isolate, DirectHandle<WasmTableObject> table,
     case wasm::GenericKind::kNoExn:
     case wasm::GenericKind::kCont:
     case wasm::GenericKind::kNoCont:
+    case wasm::GenericKind::kWaitqueue:
+    case wasm::GenericKind::kNoWaitqueue:
       entries->set(entry_index, *entry);
       return;
     case wasm::GenericKind::kFunc:
@@ -468,6 +470,8 @@ DirectHandle<Object> WasmTableObject::Get(Isolate* isolate,
       case wasm::GenericKind::kNoExn:
       case wasm::GenericKind::kCont:
       case wasm::GenericKind::kNoCont:
+      case wasm::GenericKind::kWaitqueue:
+      case wasm::GenericKind::kNoWaitqueue:
         return entry;
       case wasm::GenericKind::kFunc:
         // Placeholder; handled below.
@@ -2115,20 +2119,6 @@ DirectHandle<WasmStruct> WasmStruct::AllocateDescriptorUninitialized(
   return descriptor;
 }
 
-void WasmStruct::AllocateWaitQueue(Isolate* isolate,
-                                   DirectHandle<WasmStruct> struct_value,
-                                   int32_t raw_field_offset) {
-  std::shared_ptr<FutexManagedObjectWaitList> ptr(
-      new FutexManagedObjectWaitList());
-  DirectHandle<Managed<FutexManagedObjectWaitList>> managed =
-      Managed<FutexManagedObjectWaitList>::From(
-          isolate, sizeof(FutexManagedObjectWaitList), ptr,
-          AllocationType::kSharedOld);
-  struct_value->SetTaggedFieldValue(
-      raw_field_offset + wasm::kWaitQueueManagedOffset, *managed,
-      UPDATE_WRITE_BARRIER);
-}
-
 wasm::WasmValue WasmStruct::GetFieldValue(uint32_t index) {
   const wasm::CanonicalStructType* type =
       wasm::GetTypeCanonicalizer()->LookupStruct(
@@ -2142,7 +2132,6 @@ wasm::WasmValue WasmStruct::GetFieldValue(uint32_t index) {
     return wasm::WasmValue(base::ReadUnalignedValue<ctype>(field_address));
     CASE_TYPE(kI8, int8_t)
     CASE_TYPE(kI16, int16_t)
-    CASE_TYPE(kWaitQueue, int32_t)
     FOREACH_WASMVALUE_CTYPES(CASE_TYPE)
 #undef CASE_TYPE
     case wasm::kF16:
@@ -2173,7 +2162,6 @@ wasm::WasmValue WasmArray::GetElement(uint32_t index) {
     return wasm::WasmValue(base::ReadUnalignedValue<ctype>(element_address));
     CASE_TYPE(kI8, int8_t)
     CASE_TYPE(kI16, int16_t)
-    CASE_TYPE(kWaitQueue, int32_t)
     FOREACH_WASMVALUE_CTYPES(CASE_TYPE)
 #undef CASE_TYPE
     case wasm::kF16:
@@ -2846,7 +2834,6 @@ uint32_t WasmExceptionPackage::GetEncodedSize(const wasm::CanonicalSig* sig) {
       case wasm::kI8:
       case wasm::kI16:
       case wasm::kF16:
-      case wasm::kWaitQueue:
         UNREACHABLE();
     }
   }
@@ -3283,6 +3270,9 @@ MaybeDirectHandle<Object> JSToWasmObject(Isolate* isolate,
         case GenericKind::kCont:
           *error_message = "invalid type (ref null cont)";
           return {};
+        case GenericKind::kWaitqueue:
+          *error_message = "waitqueue has no JS representation";
+          return {};
         default:
           break;
       }
@@ -3446,10 +3436,14 @@ MaybeDirectHandle<Object> JSToWasmObject(Isolate* isolate,
     case GenericKind::kStringViewIter:
       *error_message = "stringview_iter has no JS representation";
       return {};
+    case GenericKind::kWaitqueue:
+      *error_message = "waitqueue has no JS representation";
+      return {};
     case GenericKind::kNoFunc:
     case GenericKind::kNoExtern:
     case GenericKind::kNoExn:
     case GenericKind::kNoCont:
+    case GenericKind::kNoWaitqueue:
     case GenericKind::kNone: {
       *error_message = "only null allowed for null types";
       return {};

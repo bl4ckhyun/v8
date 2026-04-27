@@ -58,11 +58,13 @@ enum ValueTypeCode : uint8_t {
   kStringViewWtf8Code = 0x66,   // -0x1a
   kStringViewWtf16Code = 0x60,  // -0x20
   kStringViewIterCode = 0x61,   // -0x1f
-  kWaitQueueCode = 0x5c,        // -0x24, packed type.
+  // The following two are tentative, waiting for spec finalization.
+  kWaitqueueRefCode = 0x5c,  // -0x24
+  kNoWaitqueueCode = 0x5b,   // -0x25
 
   // For decoding, we build an array for all heap types with these bounds:
-  kFirstHeapTypeCode = kStringViewWtf16Code,  // Lowest assigned code.
-  kLastHeapTypeCode = kNoContCode,            // Highest assigned code.
+  kFirstHeapTypeCode = kNoWaitqueueCode,  // Lowest assigned code.
+  kLastHeapTypeCode = kNoContCode,        // Highest assigned code.
 };
 
 // Binary encoding of type definitions.

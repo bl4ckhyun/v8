@@ -76,7 +76,6 @@ inline void Load(LiftoffAssembler* assm, LiftoffRegister dst, Register base,
     case kBottom:
     case kI8:
     case kF16:
-    case kWaitQueue:
       UNREACHABLE();
   }
 }
@@ -111,7 +110,6 @@ inline void Store(LiftoffAssembler* assm, Register base, int32_t offset,
     case kBottom:
     case kI8:
     case kF16:
-    case kWaitQueue:
       UNREACHABLE();
   }
 }
@@ -148,7 +146,6 @@ inline void push(LiftoffAssembler* assm, LiftoffRegister reg, ValueKind kind,
     case kI8:
     case kI16:
     case kF16:
-    case kWaitQueue:
       UNREACHABLE();
   }
 }

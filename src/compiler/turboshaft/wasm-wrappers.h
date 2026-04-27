@@ -426,7 +426,6 @@ class WasmWrapperTSGraphBuilder : public wasm::WasmGraphBuilderBase<Assembler> {
         case NumericKind::kI8:
         case NumericKind::kI16:
         case NumericKind::kF16:
-        case NumericKind::kWaitQueue:
           UNREACHABLE();
       }
     }
@@ -511,6 +510,8 @@ class WasmWrapperTSGraphBuilder : public wasm::WasmGraphBuilderBase<Assembler> {
         case GenericKind::kNoExn:
         case GenericKind::kNoCont:
         case GenericKind::kCont:
+        case GenericKind::kWaitqueue:
+        case GenericKind::kNoWaitqueue:
         case GenericKind::kStringViewWtf8:
         case GenericKind::kStringViewWtf16:
         case GenericKind::kStringViewIter:

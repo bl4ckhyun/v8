@@ -3201,18 +3201,6 @@ void WasmStruct::WasmStructPrint(std::ostream& os) {
       case wasm::kI32:
         os << base::ReadUnalignedValue<int32_t>(field_address);
         break;
-      case wasm::kWaitQueue: {
-        os << base::ReadUnalignedValue<int32_t>(field_address) << ", ";
-        Tagged_t raw = base::ReadUnalignedValue<Tagged_t>(
-            field_address + wasm::kWaitQueueManagedOffset);
-#if V8_COMPRESS_POINTERS
-        Address obj = V8HeapCompressionScheme::DecompressTagged(raw);
-#else
-        Address obj = raw;
-#endif
-        os << Brief(Tagged<Object>(obj));
-        break;
-      }
       case wasm::kI64:
         os << base::ReadUnalignedValue<int64_t>(field_address);
         break;
@@ -3274,7 +3262,6 @@ void WasmArray::WasmArrayPrint(std::ostream& os) {
   Address data_ptr = ptr() + WasmArray::kHeaderSize - kHeapObjectTag;
   switch (element_type.kind()) {
     case wasm::kI32:
-    case wasm::kWaitQueue:
       PrintTypedArrayElements(os, reinterpret_cast<int32_t*>(data_ptr), len,
                               true);
       break;

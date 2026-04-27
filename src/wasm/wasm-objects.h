@@ -2004,12 +2004,6 @@ V8_OBJECT class WasmStruct : public WasmObject {
   inline void SetTaggedFieldValue(int raw_offset, Tagged<Object> value,
                                   WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
-  // {raw_field_offset} does not include {WasmStruct::kHeaderSize},
-  // {wasm::kWaitQueueManagedOffset}, or {kHeapObjectTag}.
-  static void AllocateWaitQueue(Isolate* isolate,
-                                DirectHandle<WasmStruct> struct_value,
-                                int32_t raw_field_offset);
-
   DECL_PRINTER(WasmStruct)
   DECL_VERIFIER(WasmStruct)
 
