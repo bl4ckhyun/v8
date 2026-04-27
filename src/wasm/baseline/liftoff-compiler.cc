@@ -3131,6 +3131,7 @@ class LiftoffCompiler {
     LiftoffRegister obj = pinned.set(__ PopToRegister(pinned));
     if (null_check_strategy_ == compiler::NullCheckStrategy::kExplicit ||
         IsSubtypeOf(kWasmRefI31, arg.type.AsNonShared(), decoder->module_) ||
+        IsSubtypeOf(kWasmExnRef, arg.type.AsNonShared(), decoder->module_) ||
         !arg.type.use_wasm_null()) {
       // Use an explicit null check if
       // (1) we cannot use trap handler or

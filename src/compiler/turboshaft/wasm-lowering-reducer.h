@@ -82,6 +82,8 @@ class WasmLoweringReducer : public Next {
         if (null_check_strategy_ == NullCheckStrategy::kExplicit ||
             wasm::IsSubtypeOf(wasm::kWasmI31Ref.AsNonNull(), type.AsNonShared(),
                               module_) ||
+            wasm::IsSubtypeOf(wasm::kWasmExnRef.AsNonNull(), type.AsNonShared(),
+                              module_) ||
             !type.use_wasm_null()) {
           __ TrapIf(__ IsNull(object, type), frame_state, trap_id);
         } else {
