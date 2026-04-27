@@ -743,14 +743,16 @@ FieldAccess AccessBuilder::ForFixedArrayLength() {
   FieldAccess access = {
       kTaggedBase, offsetof(FixedArray, length_), MaybeHandle<Name>(),
       OptionalMapRef(), TypeCache::Get()->kFixedArrayLengthType,
-#if TAGGED_SIZE_8_BYTES
+#if TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
       // TF escape analysis expects all slots to be aligned to kTaggedSize,
       // therefore we store length+padding as a single 64-bit value when pointer
-      // compression is disabled on 64-bit architectures.
+      // compression is disabled on 64-bit little-endian architectures.
+      // On big-endian, we use Uint32 to access the uint32_t
+      // length_ field directly.
       MachineType::Uint64(),
 #else
       MachineType::Uint32(),
-#endif  // TAGGED_SIZE_8_BYTES
+#endif  // TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
       kNoWriteBarrier, "FixedArrayLength"};
   access.is_immutable = true;
   return access;
@@ -775,14 +777,16 @@ FieldAccess AccessBuilder::ForWeakFixedArrayLength() {
   FieldAccess access = {
       kTaggedBase, offsetof(WeakFixedArray, length_), MaybeHandle<Name>(),
       OptionalMapRef(), TypeCache::Get()->kWeakFixedArrayLengthType,
-#if TAGGED_SIZE_8_BYTES
+#if TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
       // TF escape analysis expects all slots to be aligned to kTaggedSize,
       // therefore we store length+padding as a single 64-bit value when pointer
-      // compression is disabled on 64-bit architectures.
+      // compression is disabled on 64-bit little-endian architectures.
+      // On big-endian, we use Uint32 to access the uint32_t
+      // length_ field directly.
       MachineType::Uint64(),
 #else
       MachineType::Uint32(),
-#endif  // TAGGED_SIZE_8_BYTES
+#endif  // TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
       kNoWriteBarrier, "WeakFixedArrayLength"};
   access.is_immutable = true;
   return access;
