@@ -192,6 +192,13 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   Handle<TurbofanOtherNumberConstantType> NewTurbofanOtherNumberConstantType(
       double constant, AllocationType allocation);
 
+  Handle<OnHeapBasicBlockProfilerData> NewOnHeapBasicBlockProfilerData(
+      DirectHandle<FixedInt32Array> block_ids,
+      DirectHandle<FixedUInt32Array> counts,
+      DirectHandle<PodArray<std::pair<int32_t, int32_t>>> branches,
+      DirectHandle<String> name, DirectHandle<String> schedule,
+      DirectHandle<String> code, int hash, AllocationType allocation);
+
   // Allocate a new fixed double array with hole values.
   DirectHandle<FixedArrayBase> NewFixedDoubleArrayWithHoles(uint32_t size);
 

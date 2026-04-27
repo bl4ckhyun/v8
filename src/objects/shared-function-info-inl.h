@@ -1327,6 +1327,53 @@ void SharedFunctionInfoWrapper::set_shared_info(
   shared_info_.store(this, value, mode);
 }
 
+Tagged<ByteArray> OnHeapBasicBlockProfilerData::block_ids() const {
+  return block_ids_.load();
+}
+void OnHeapBasicBlockProfilerData::set_block_ids(Tagged<ByteArray> value,
+                                                 WriteBarrierMode mode) {
+  block_ids_.store(this, value, mode);
+}
+Tagged<ByteArray> OnHeapBasicBlockProfilerData::counts() const {
+  return counts_.load();
+}
+void OnHeapBasicBlockProfilerData::set_counts(Tagged<ByteArray> value,
+                                              WriteBarrierMode mode) {
+  counts_.store(this, value, mode);
+}
+Tagged<ByteArray> OnHeapBasicBlockProfilerData::branches() const {
+  return branches_.load();
+}
+void OnHeapBasicBlockProfilerData::set_branches(Tagged<ByteArray> value,
+                                                WriteBarrierMode mode) {
+  branches_.store(this, value, mode);
+}
+Tagged<String> OnHeapBasicBlockProfilerData::name() const {
+  return name_.load();
+}
+void OnHeapBasicBlockProfilerData::set_name(Tagged<String> value,
+                                            WriteBarrierMode mode) {
+  name_.store(this, value, mode);
+}
+Tagged<String> OnHeapBasicBlockProfilerData::schedule() const {
+  return schedule_.load();
+}
+void OnHeapBasicBlockProfilerData::set_schedule(Tagged<String> value,
+                                                WriteBarrierMode mode) {
+  schedule_.store(this, value, mode);
+}
+Tagged<String> OnHeapBasicBlockProfilerData::code() const {
+  return code_.load();
+}
+void OnHeapBasicBlockProfilerData::set_code(Tagged<String> value,
+                                            WriteBarrierMode mode) {
+  code_.store(this, value, mode);
+}
+Tagged<Smi> OnHeapBasicBlockProfilerData::hash() const { return hash_.load(); }
+void OnHeapBasicBlockProfilerData::set_hash(Tagged<Smi> value) {
+  hash_.store(this, value, SKIP_WRITE_BARRIER);
+}
+
 }  // namespace v8::internal
 
 #include "src/objects/object-macros-undef.h"

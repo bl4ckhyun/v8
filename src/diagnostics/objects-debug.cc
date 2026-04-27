@@ -91,6 +91,7 @@
 #include "src/objects/oddball-inl.h"
 #include "src/objects/promise-inl.h"
 #include "src/objects/property-descriptor-object-inl.h"
+#include "src/objects/sort-state.h"
 #include "src/objects/string-forwarding-table-inl.h"
 #include "src/objects/struct-inl.h"
 #include "src/objects/swiss-name-dictionary-inl.h"
@@ -3532,6 +3533,46 @@ void TurbofanOtherNumberConstantType::TurbofanOtherNumberConstantTypeVerify(
   CHECK(IsTurbofanType(this));
   CHECK(IsTurbofanOtherNumberConstantType(this));
 }
+
+void SortState::SortStateVerify(Isolate* isolate) {
+  CHECK(IsSortState(this));
+  Object::VerifyPointer(isolate, receiver_.load());
+  Object::VerifyPointer(isolate, initial_receiver_map_.load());
+  Object::VerifyPointer(isolate, initial_receiver_length_.load());
+  Object::VerifyPointer(isolate, user_cmp_fn_.load());
+  Object::VerifyPointer(isolate, is_reset_to_generic_.load());
+  Object::VerifyPointer(isolate, pending_runs_.load());
+  Object::VerifyPointer(isolate, pending_powers_.load());
+  Object::VerifyPointer(isolate, work_array_.load());
+  Object::VerifyPointer(isolate, temp_array_.load());
+}
+
+void OnHeapBasicBlockProfilerData::OnHeapBasicBlockProfilerDataVerify(
+    Isolate* isolate) {
+  CHECK(IsOnHeapBasicBlockProfilerData(this));
+  Object::VerifyPointer(isolate, block_ids());
+  Object::VerifyPointer(isolate, counts());
+  Object::VerifyPointer(isolate, branches());
+  Object::VerifyPointer(isolate, name());
+  Object::VerifyPointer(isolate, schedule());
+  Object::VerifyPointer(isolate, code());
+  CHECK(IsSmi(hash()));
+}
+
+#if V8_ENABLE_WEBASSEMBLY
+void WasmFastApiCallData::WasmFastApiCallDataVerify(Isolate* isolate) {
+  CHECK(IsWasmFastApiCallData(this));
+  Object::VerifyPointer(isolate, signature());
+  Object::VerifyPointer(isolate, callback_data());
+  Object::VerifyMaybeObjectPointer(isolate, cached_map());
+}
+
+void WasmStringViewIter::WasmStringViewIterVerify(Isolate* isolate) {
+  CHECK(IsWasmStringViewIter(this));
+  Object::VerifyPointer(isolate, string());
+  CHECK(IsString(string()));
+}
+#endif  // V8_ENABLE_WEBASSEMBLY
 
 void FunctionTemplateRareData::FunctionTemplateRareDataVerify(
     Isolate* isolate) {

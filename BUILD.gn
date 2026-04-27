@@ -4448,6 +4448,7 @@ v8_header_set("v8_internal_headers") {
     "src/objects/slots.h",
     "src/objects/smi-inl.h",
     "src/objects/smi.h",
+    "src/objects/sort-state.h",
     "src/objects/source-text-module-inl.h",
     "src/objects/source-text-module.h",
     "src/objects/string-comparator.h",

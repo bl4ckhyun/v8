@@ -81,6 +81,7 @@
 #include "src/objects/shared-function-info-inl.h"
 #include "src/objects/slots-atomic-inl.h"
 #include "src/objects/slots-inl.h"
+#include "src/objects/sort-state.h"
 #include "src/objects/string-forwarding-table-inl.h"
 #include "src/objects/string-inl.h"
 #include "src/objects/string-set-inl.h"

@@ -229,6 +229,7 @@ namespace internal {
   V(ObjectTemplateInfo)                         \
   V(ObjectTwoHashTable)                         \
   V(Oddball)                                    \
+  V(OnHeapBasicBlockProfilerData)               \
   V(Hole)                                       \
   V(OrderedHashMap)                             \
   V(OrderedHashSet)                             \
@@ -249,6 +250,7 @@ namespace internal {
   V(SmallOrderedHashMap)                        \
   V(SmallOrderedHashSet)                        \
   V(SmallOrderedNameDictionary)                 \
+  V(SortState)                                  \
   V(SourceTextModule)                           \
   V(SourceTextModuleInfo)                       \
   V(StoreHandler)                               \
@@ -283,6 +285,7 @@ namespace internal {
   V(TurboshaftWord64Type)                       \
   IF_WASM(V, WasmArray)                         \
   IF_WASM(V, WasmExceptionPackage)              \
+  IF_WASM(V, WasmFastApiCallData)               \
   IF_WASM(V, WasmFuncRef)                       \
   IF_WASM(V, WasmGlobalObject)                  \
   IF_WASM(V, WasmInstanceObject)                \
@@ -292,6 +295,7 @@ namespace internal {
   IF_WASM(V, WasmNull)                          \
   IF_WASM(V, WasmObject)                        \
   IF_WASM(V, WasmResumeData)                    \
+  IF_WASM(V, WasmStringViewIter)                \
   IF_WASM(V, WasmStruct)                        \
   IF_WASM(V, WasmSuspendingObject)              \
   IF_WASM(V, WasmContinuationObject)            \

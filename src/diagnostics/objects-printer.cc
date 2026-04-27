@@ -3158,7 +3158,54 @@ void TurbofanOtherNumberConstantType::TurbofanOtherNumberConstantTypePrint(
   os << "\n";
 }
 
+void SortState::SortStatePrint(std::ostream& os) {
+  PrintHeader(os, "SortState");
+  os << "\n - receiver: " << Brief(receiver_.load());
+  os << "\n - initial_receiver_map: " << Brief(initial_receiver_map_.load());
+  os << "\n - initial_receiver_length: "
+     << Brief(initial_receiver_length_.load());
+  os << "\n - user_cmp_fn: " << Brief(user_cmp_fn_.load());
+  os << "\n - is_reset_to_generic: " << Brief(is_reset_to_generic_.load());
+  os << "\n - min_gallop: " << Brief(min_gallop_.load());
+  os << "\n - pending_runs_size: " << Brief(pending_runs_size_.load());
+  os << "\n - pending_runs: " << Brief(pending_runs_.load());
+  os << "\n - pending_powers: " << Brief(pending_powers_.load());
+  os << "\n - work_array: " << Brief(work_array_.load());
+  os << "\n - temp_array: " << Brief(temp_array_.load());
+  os << "\n - sort_length: " << Brief(sort_length_.load());
+  os << "\n - number_of_undefined: " << Brief(number_of_undefined_.load());
+  os << "\n";
+}
+
+void OnHeapBasicBlockProfilerData::OnHeapBasicBlockProfilerDataPrint(
+    std::ostream& os) {
+  PrintHeader(os, "OnHeapBasicBlockProfilerData");
+  os << "\n - block_ids: " << Brief(block_ids());
+  os << "\n - counts: " << Brief(counts());
+  os << "\n - branches: " << Brief(branches());
+  os << "\n - name: " << Brief(name());
+  os << "\n - schedule: " << Brief(schedule());
+  os << "\n - code: " << Brief(code());
+  os << "\n - hash: " << Brief(hash());
+  os << "\n";
+}
+
 #if V8_ENABLE_WEBASSEMBLY
+void WasmFastApiCallData::WasmFastApiCallDataPrint(std::ostream& os) {
+  PrintHeader(os, "WasmFastApiCallData");
+  os << "\n - signature: " << Brief(signature());
+  os << "\n - callback_data: " << Brief(callback_data());
+  os << "\n - cached_map: " << Brief(cached_map());
+  os << "\n";
+}
+
+void WasmStringViewIter::WasmStringViewIterPrint(std::ostream& os) {
+  PrintHeader(os, "WasmStringViewIter");
+  os << "\n - string: " << Brief(string());
+  os << "\n - offset: " << offset();
+  os << "\n";
+}
+
 void AsmWasmData::AsmWasmDataPrint(std::ostream& os) {
   PrintHeader(os, "AsmWasmData");
   os << "\n - native module: " << Brief(managed_native_module());

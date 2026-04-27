@@ -653,6 +653,31 @@ Factory::NewTurbofanOtherNumberConstantType(double constant,
   return result;
 }
 
+Handle<OnHeapBasicBlockProfilerData> Factory::NewOnHeapBasicBlockProfilerData(
+    DirectHandle<FixedInt32Array> block_ids,
+    DirectHandle<FixedUInt32Array> counts,
+    DirectHandle<PodArray<std::pair<int32_t, int32_t>>> branches,
+    DirectHandle<String> name, DirectHandle<String> schedule,
+    DirectHandle<String> code, int hash, AllocationType allocation) {
+  Handle<OnHeapBasicBlockProfilerData> result(
+      Cast<OnHeapBasicBlockProfilerData>(AllocateRawWithImmortalMap(
+          sizeof(OnHeapBasicBlockProfilerData), allocation,
+          *on_heap_basic_block_profiler_data_map())),
+      isolate());
+  DisallowGarbageCollection no_gc;
+  WriteBarrierMode mode = allocation == AllocationType::kYoung
+                              ? SKIP_WRITE_BARRIER
+                              : UPDATE_WRITE_BARRIER;
+  result->set_block_ids(*block_ids, mode);
+  result->set_counts(*counts, mode);
+  result->set_branches(*branches, mode);
+  result->set_name(*name, mode);
+  result->set_schedule(*schedule, mode);
+  result->set_code(*code, mode);
+  result->set_hash(Smi::FromInt(hash));
+  return result;
+}
+
 DirectHandle<FixedArrayBase> Factory::NewFixedDoubleArrayWithHoles(
     uint32_t length) {
   DirectHandle<FixedArrayBase> array = NewFixedDoubleArray(length);

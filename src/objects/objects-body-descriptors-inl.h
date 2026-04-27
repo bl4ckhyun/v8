@@ -41,6 +41,7 @@
 #include "src/objects/ordered-hash-table-inl.h"
 #include "src/objects/property-descriptor-object.h"
 #include "src/objects/scope-info-inl.h"
+#include "src/objects/sort-state.h"
 #include "src/objects/source-text-module.h"
 #include "src/objects/swiss-name-dictionary-inl.h"
 #include "src/objects/synthetic-module.h"
@@ -415,6 +416,31 @@ class TurbofanHeapConstantType::BodyDescriptor final
     : public FixedBodyDescriptor<offsetof(TurbofanHeapConstantType, constant_),
                                  sizeof(TurbofanHeapConstantType),
                                  sizeof(TurbofanHeapConstantType)> {};
+
+class OnHeapBasicBlockProfilerData::BodyDescriptor final
+    : public FixedBodyDescriptor<offsetof(OnHeapBasicBlockProfilerData,
+                                          block_ids_),
+                                 sizeof(OnHeapBasicBlockProfilerData),
+                                 sizeof(OnHeapBasicBlockProfilerData)> {};
+
+class SortState::BodyDescriptor final
+    : public FixedBodyDescriptor<offsetof(SortState, receiver_),
+                                 sizeof(SortState), sizeof(SortState)> {};
+
+#if V8_ENABLE_WEBASSEMBLY
+// Only cached_map_ is weak (Weak<Map>|Null); signature_ and callback_data_ are
+// strong but visiting them as MaybeObject is safe because strong tagged values
+// decode back as strong.
+class WasmFastApiCallData::BodyDescriptor final
+    : public FixedWeakBodyDescriptor<offsetof(WasmFastApiCallData, signature_),
+                                     sizeof(WasmFastApiCallData),
+                                     sizeof(WasmFastApiCallData)> {};
+
+class WasmStringViewIter::BodyDescriptor final
+    : public FixedBodyDescriptor<offsetof(WasmStringViewIter, string_),
+                                 offsetof(WasmStringViewIter, offset_),
+                                 sizeof(WasmStringViewIter)> {};
+#endif  // V8_ENABLE_WEBASSEMBLY
 
 // This is a descriptor for one/two pointer fillers.
 class FreeSpaceFillerBodyDescriptor final : public DataOnlyBodyDescriptor {

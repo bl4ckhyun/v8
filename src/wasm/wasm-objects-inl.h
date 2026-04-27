@@ -1527,6 +1527,36 @@ void WasmSuspendingObject::set_callable(Tagged<JSReceiver> value,
   callable_.store(this, value, mode);
 }
 
+Tagged<HeapObject> WasmFastApiCallData::signature() const {
+  return signature_.load();
+}
+void WasmFastApiCallData::set_signature(Tagged<HeapObject> value,
+                                        WriteBarrierMode mode) {
+  signature_.store(this, value, mode);
+}
+Tagged<Object> WasmFastApiCallData::callback_data() const {
+  return callback_data_.load();
+}
+void WasmFastApiCallData::set_callback_data(Tagged<Object> value,
+                                            WriteBarrierMode mode) {
+  callback_data_.store(this, value, mode);
+}
+Tagged<MaybeObject> WasmFastApiCallData::cached_map() const {
+  return cached_map_.load();
+}
+void WasmFastApiCallData::set_cached_map(Tagged<MaybeObject> value,
+                                         WriteBarrierMode mode) {
+  cached_map_.store(this, value, mode);
+}
+
+Tagged<String> WasmStringViewIter::string() const { return string_.load(); }
+void WasmStringViewIter::set_string(Tagged<String> value,
+                                    WriteBarrierMode mode) {
+  string_.store(this, value, mode);
+}
+uint32_t WasmStringViewIter::offset() const { return offset_; }
+void WasmStringViewIter::set_offset(uint32_t value) { offset_ = value; }
+
 #include "src/objects/object-macros-undef.h"
 
 }  // namespace v8::internal

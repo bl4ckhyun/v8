@@ -96,6 +96,7 @@ enum InstanceType : uint16_t;
   V(MegaDomHandler)                   \
   V(NativeContext)                    \
   V(Oddball)                          \
+  V(OnHeapBasicBlockProfilerData)     \
   V(PreparseData)                     \
   V(PropertyArray)                    \
   V(PropertyCell)                     \
@@ -110,6 +111,7 @@ enum InstanceType : uint16_t;
   V(SmallOrderedHashMap)              \
   V(SmallOrderedHashSet)              \
   V(SmallOrderedNameDictionary)       \
+  V(SortState)                        \
   V(SourceTextModule)                 \
   V(Struct)                           \
   V(SwissNameDictionary)              \
@@ -129,7 +131,9 @@ enum InstanceType : uint16_t;
   IF_WASM(V, WasmStruct)              \
   IF_WASM(V, WasmSuspendingObject)    \
   IF_WASM(V, WasmContinuationObject)  \
+  IF_WASM(V, WasmFastApiCallData)     \
   IF_WASM(V, WasmStackObject)         \
+  IF_WASM(V, WasmStringViewIter)      \
   IF_WASM(V, WasmTableObject)         \
   IF_WASM(V, WasmTagObject)           \
   IF_WASM(V, WasmTypeInfo)            \

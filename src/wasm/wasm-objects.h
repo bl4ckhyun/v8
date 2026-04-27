@@ -2221,6 +2221,66 @@ inline constexpr int WasmStackObject::kStackOffset =
 inline constexpr int WasmStackObject::kHeaderSize = sizeof(WasmStackObject);
 inline constexpr int WasmStackObject::kSize = sizeof(WasmStackObject);
 
+V8_OBJECT class WasmFastApiCallData : public HeapObjectLayout {
+ public:
+  inline Tagged<HeapObject> signature() const;
+  inline void set_signature(Tagged<HeapObject> value,
+                            WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<Object> callback_data() const;
+  inline void set_callback_data(Tagged<Object> value,
+                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<MaybeObject> cached_map() const;
+  inline void set_cached_map(Tagged<MaybeObject> value,
+                             WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  DECL_PRINTER(WasmFastApiCallData)
+  DECL_VERIFIER(WasmFastApiCallData)
+
+  class BodyDescriptor;
+
+  static constexpr int SizeFor() { return sizeof(WasmFastApiCallData); }
+
+  static const int kSignatureOffset;
+  static const int kCallbackDataOffset;
+  static const int kCachedMapOffset;
+
+  TaggedMember<HeapObject> signature_;
+  TaggedMember<Object> callback_data_;
+  TaggedMember<MaybeObject> cached_map_;
+} V8_OBJECT_END;
+
+inline constexpr int WasmFastApiCallData::kSignatureOffset =
+    offsetof(WasmFastApiCallData, signature_);
+inline constexpr int WasmFastApiCallData::kCallbackDataOffset =
+    offsetof(WasmFastApiCallData, callback_data_);
+inline constexpr int WasmFastApiCallData::kCachedMapOffset =
+    offsetof(WasmFastApiCallData, cached_map_);
+
+V8_OBJECT class WasmStringViewIter : public HeapObjectLayout {
+ public:
+  inline Tagged<String> string() const;
+  inline void set_string(Tagged<String> value,
+                         WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline uint32_t offset() const;
+  inline void set_offset(uint32_t value);
+
+  DECL_PRINTER(WasmStringViewIter)
+  DECL_VERIFIER(WasmStringViewIter)
+
+  class BodyDescriptor;
+
+  static constexpr int SizeFor() { return sizeof(WasmStringViewIter); }
+
+  TaggedMember<String> string_;
+  uint32_t offset_;
+#if TAGGED_SIZE_8_BYTES
+  uint32_t optional_padding_;
+#endif  // TAGGED_SIZE_8_BYTES
+} V8_OBJECT_END;
+
 V8_OBJECT class WasmNull : public HeapObjectLayout {
  public:
 #if V8_STATIC_ROOTS_BOOL || V8_STATIC_ROOTS_GENERATION_BOOL

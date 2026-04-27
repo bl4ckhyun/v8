@@ -45,6 +45,7 @@
 #include "src/objects/script.h"
 #include "src/objects/shared-function-info.h"
 #include "src/objects/smi.h"
+#include "src/objects/sort-state.h"
 #include "src/objects/source-text-module.h"
 #include "src/objects/string.h"
 #include "src/objects/synthetic-module.h"

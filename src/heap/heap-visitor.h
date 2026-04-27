@@ -80,6 +80,7 @@ class MaybeObjectSize final {
   V(MegaDomHandler)                   \
   V(NativeContext)                    \
   V(Oddball)                          \
+  V(OnHeapBasicBlockProfilerData)     \
   V(PreparseData)                     \
   V(PropertyArray)                    \
   V(PropertyCell)                     \
@@ -96,6 +97,7 @@ class MaybeObjectSize final {
   V(SmallOrderedHashMap)              \
   V(SmallOrderedHashSet)              \
   V(SmallOrderedNameDictionary)       \
+  V(SortState)                        \
   V(SourceTextModule)                 \
   V(SwissNameDictionary)              \
   V(Symbol)                           \
@@ -104,10 +106,12 @@ class MaybeObjectSize final {
   V(TransitionArray)                  \
   V(WeakCell)                         \
   IF_WASM(V, WasmArray)               \
+  IF_WASM(V, WasmFastApiCallData)     \
   IF_WASM(V, WasmFuncRef)             \
   IF_WASM(V, WasmMemoryMapDescriptor) \
   IF_WASM(V, WasmNull)                \
   IF_WASM(V, WasmResumeData)          \
+  IF_WASM(V, WasmStringViewIter)      \
   IF_WASM(V, WasmStruct)              \
   IF_WASM(V, WasmContinuationObject)  \
   IF_WASM(V, WasmStackObject)         \

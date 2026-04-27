@@ -185,6 +185,19 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
     case MEGA_DOM_HANDLER_TYPE:
       return kVisitMegaDomHandler;
 
+    case ON_HEAP_BASIC_BLOCK_PROFILER_DATA_TYPE:
+      return kVisitOnHeapBasicBlockProfilerData;
+
+    case SORT_STATE_TYPE:
+      return kVisitSortState;
+
+#if V8_ENABLE_WEBASSEMBLY
+    case WASM_FAST_API_CALL_DATA_TYPE:
+      return kVisitWasmFastApiCallData;
+    case WASM_STRING_VIEW_ITER_TYPE:
+      return kVisitWasmStringViewIter;
+#endif  // V8_ENABLE_WEBASSEMBLY
+
     case TURBOFAN_BITSET_TYPE_TYPE:
       return kVisitTurbofanBitsetType;
     case TURBOFAN_UNION_TYPE_TYPE:

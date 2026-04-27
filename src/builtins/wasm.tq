@@ -1528,8 +1528,24 @@ builtin WasmStringSliceShared(string: String, start: uint32, end: uint32):
       LoadContextFromFrame(), string, SmiFromUint32(start),
       SmiFromUint32(clampedEnd - start));
 }
+extern macro WasmStringViewIterMapConstant(): Map;
+
+@if(TAGGED_SIZE_8_BYTES)
 builtin WasmStringAsIter(string: String): WasmStringViewIter {
-  return new WasmStringViewIter{string: string, offset: 0, optional_padding: 0};
+  return new WasmStringViewIter{
+    map: WasmStringViewIterMapConstant(),
+    string: string,
+    offset: 0,
+    optional_padding: 0
+  };
+}
+@ifnot(TAGGED_SIZE_8_BYTES)
+builtin WasmStringAsIter(string: String): WasmStringViewIter {
+  return new WasmStringViewIter{
+    map: WasmStringViewIterMapConstant(),
+    string: string,
+    offset: 0
+  };
 }
 macro IsLeadSurrogate(code: char16): bool {
   return (code & 0xfc00) == 0xd800;
