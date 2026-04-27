@@ -1384,6 +1384,7 @@ void MaglevGraphBuilder::BuildMergeStates() {
     HandlerTable table(*bytecode().object());
     for (uint32_t i = 0; i < table.NumberOfRangeEntries(); i++) {
       const int offset = table.GetRangeHandler(i);
+      if (table.GetRangeStart(i) == table.GetRangeEnd(i)) continue;
       const bool was_used = table.HandlerWasUsed(i);
       const interpreter::Register context_reg(table.GetRangeData(i));
       const compiler::BytecodeLivenessState* liveness =
