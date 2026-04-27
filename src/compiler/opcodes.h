@@ -1473,6 +1473,21 @@ class V8_EXPORT_PRIVATE IrOpcode {
     UNREACHABLE();
   }
 
+  static bool IsCallOpcode(Value value) {
+#define CASE(Name, ...) case k##Name:
+    switch (value) {
+      JS_CALL_OP_LIST(CASE)
+      case kTailCall:
+      case kCall:
+      case kJSCallRuntime:
+      case kFastApiCall:
+        return true;
+      default:
+        return false;
+    }
+#undef CASE
+  }
+
   static bool IsContextChainExtendingOpcode(Value value) {
     return kJSCreateFunctionContext <= value && value <= kJSCreateBlockContext;
   }
