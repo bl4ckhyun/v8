@@ -943,6 +943,22 @@ constexpr size_t kInterceptedSize = 4;
 // CallNamedInterceptorXXXX/CallIndexedInterceptorXXX builtins to caller.
 constexpr uint32_t kNotInterceptedSentinel = kHeapObjectTag;
 
+// ExtendedMap kinds.
+enum class ExtendedMapKind : uint8_t {
+  kJSInterceptorMap,
+};
+constexpr const char* ExtendedMapKindToString(ExtendedMapKind kind) {
+  switch (kind) {
+    case ExtendedMapKind::kJSInterceptorMap:
+      return "JSInterceptorMap";
+  }
+  return "<corrupt>";
+}
+
+inline std::ostream& operator<<(std::ostream& os, ExtendedMapKind kind) {
+  return os << ExtendedMapKindToString(kind);
+}
+
 // This constant is used as an undefined value when passing source positions.
 constexpr int kNoSourcePosition = -1;
 

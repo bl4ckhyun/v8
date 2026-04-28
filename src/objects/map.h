@@ -210,7 +210,7 @@ using MapHandlesSpan = v8::MemorySpan<DirectHandle<Map>>;
 //      |          |   - is_undetectable (bit 4)                     |
 //      |          |   - is_access_check_needed (bit 5)              |
 //      |          |   - is_constructor (bit 6)                      |
-//      |          |   - TBD (bit 7)                                 |
+//      |          |   - is_extended_map (bit 7)                     |
 //      +----------+-------------------------------------------------+
 //      | Byte     | [bit_field2]                                    |
 //      |          |   - new_target_is_base (bit 0)                  |
@@ -433,6 +433,10 @@ V8_OBJECT class Map : public HeapObjectLayout {
   // map.
   int ComputeMinObjectSlack(Isolate* isolate);
   inline int InstanceSizeFromSlack(int slack) const;
+
+  // Tells whether the Map represents a meta Map or extended Map (which
+  // has more fields than a normal Map) as opposed to regular Map.
+  DECL_BOOLEAN_ACCESSORS(is_extended_map)
 
   // Tells whether the object in the prototype property will be used
   // for instances created from this function.  If the prototype
@@ -1271,6 +1275,66 @@ inline constexpr int Map::kSize = sizeof(Map);
 
 static_assert(Map::kInstanceTypeOffset == Internals::kMapInstanceTypeOffset);
 
+// Base class for Maps with extra fields. Subclasses must be defined with
+// @hasSameInstanceTypeAsParent and define padding fields up to kTaggedSize.
+V8_ABSTRACT_OBJECT class ExtendedMap : public Map {
+ public:
+  // Bit positions for |bit_field_ex|.
+  struct BitsEx {
+    DEFINE_TORQUE_GENERATED_EXTENDED_MAP_BIT_FIELDS()
+  };
+
+  inline uint8_t bit_field_ex() const;
+  inline void set_bit_field_ex(uint8_t value);
+
+  inline uint8_t relaxed_bit_field_ex() const;
+  inline void set_relaxed_bit_field_ex(uint8_t value);
+
+  inline ExtendedMapKind map_kind() const;
+  inline uint8_t map_size_in_words() const;
+  inline int map_size() const;
+
+  inline void set_map_kind_and_size(ExtendedMapKind kind, int size_in_bytes);
+
+ public:
+  static const int kMinimumSize;
+  static const int kStartOfStrongExtendedFieldsOffset;
+
+  std::atomic<uint8_t> bit_field_ex_;
+  // Leaves kTaggedSize-1 unused bytes, they will be used by subclasses.
+} V8_OBJECT_END;
+
+constexpr int ExtendedMapSizeForKind(ExtendedMapKind kind);
+
+// Defined out-of-line because offsetof / sizeof on ExtendedMap cannot appear
+// inside ExtendedMap's own class body.
+inline constexpr int ExtendedMap::kMinimumSize =
+    RoundUp(sizeof(ExtendedMap), kTaggedSize);
+inline constexpr int ExtendedMap::kStartOfStrongExtendedFieldsOffset =
+    kMinimumSize;
+
+// Extended map for interceptor objects, it caches named and indexed
+// InterceptorInfo objects in the Map for faster access.
+V8_OBJECT class JSInterceptorMap : public ExtendedMap {
+ public:
+  inline Tagged<InterceptorInfo> named_interceptor() const;
+  inline void set_named_interceptor(
+      Tagged<InterceptorInfo> interceptor_info,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline Tagged<InterceptorInfo> indexed_interceptor() const;
+  inline void set_indexed_interceptor(
+      Tagged<InterceptorInfo> interceptor_info,
+      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+
+  inline void clear_extended_padding();
+
+ public:
+  uint8_t extended_padding_[kTaggedSize - 1];
+  TaggedMember<InterceptorInfo> named_interceptor_;
+  TaggedMember<InterceptorInfo> indexed_interceptor_;
+} V8_OBJECT_END;
+
 // The cache for maps used by normalized (dictionary mode) objects.
 // Such maps do not have property descriptors, so a typical program
 // needs very limited number of distinct normalized maps.
@@ -1305,7 +1369,9 @@ class NormalizedMapCache : public WeakFixedArray {
 #define DECL_TESTER(Type, ...) inline bool Is##Type##Map(Tagged<Map> map);
 INSTANCE_TYPE_CHECKERS(DECL_TESTER)
 #undef DECL_TESTER
-inline bool IsMetaMapMap(Tagged<Map> map);
+inline bool IsMetaMap(Tagged<Map> map);
+inline bool IsExtendedMap(Tagged<Map> map);
+inline bool IsJSInterceptorMap(Tagged<Map> map);
 inline bool IsNullMap(Tagged<Map> map);
 inline bool IsUndefinedMap(Tagged<Map> map);
 inline bool IsBooleanMap(Tagged<Map> map);

@@ -1318,8 +1318,9 @@ bool Map::ShouldCheckForReadOnlyElementsInPrototypeChain(Isolate* isolate) {
 
 Handle<Map> Map::RawCopy(Isolate* isolate, DirectHandle<Map> src_handle,
                          int instance_size, int inobject_properties) {
+  int map_size = src_handle->AllocatedSize();
   Handle<Map> result = isolate->factory()->NewMap(
-      src_handle, src_handle->instance_type(), instance_size,
+      src_handle, map_size, src_handle->instance_type(), instance_size,
       TERMINAL_FAST_ELEMENTS_KIND, inobject_properties);
 
   // We have to set the bitfields before any potential GCs could happen because
@@ -1351,8 +1352,23 @@ Handle<Map> Map::RawCopy(Isolate* isolate, DirectHandle<Map> src_handle,
         raw->SetPrototypeSharedClosureInfo(infos);
       }
     }
-
     raw->clear_padding();
+    if (raw->is_extended_map()) {
+      DCHECK_LE(ExtendedMap::kMinimumSize, map_size);
+      Address src_addr = src->address() + Map::kSize;
+      Address raw_addr = raw->address() + Map::kSize;
+      int count = (map_size - Map::kSize) / kTaggedSize;
+      DCHECK_LT(0, count);
+      // Copy bit_field_ex_ along with other raw bitfields and padding
+      // (within one kTaggedSize), followed by other tagged fields.
+      CopyTagged(raw_addr, src_addr, count);
+      --count;
+      if (count) {
+        // Trigger write barrier for the remaining tagged fields.
+        ObjectSlot slot(raw_addr + kTaggedSize);
+        WriteBarrier::ForRange(isolate->heap(), raw, slot, slot + count);
+      }
+    }
   }
   DirectHandle<JSPrototype> prototype(src_handle->prototype(), isolate);
   Map::SetPrototype(isolate, result, prototype);

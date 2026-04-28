@@ -581,14 +581,32 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   Handle<AllocationSite> NewAllocationSite(bool with_weak_next);
 
   // Allocates and initializes a new Map.
-  Handle<Map> NewMap(DirectHandle<HeapObject> meta_map_holder,
-                     InstanceType type, int instance_size,
+  Handle<Map> NewMap(DirectHandle<HeapObject> meta_map_holder, int map_size,
+                     InstanceType instance_type, int instance_size,
                      ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
                      int inobject_properties = 0,
                      AllocationType allocation_type = AllocationType::kMap);
 
   DirectHandle<Map> NewMapWithMetaMap(
+      DirectHandle<Map> meta_map, int map_size, InstanceType type,
+      int instance_size,
+      ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
+      int inobject_properties = 0,
+      AllocationType allocation_type = AllocationType::kMap);
+
+  DirectHandle<Map> NewMapWithMetaMap(
       DirectHandle<Map> meta_map, InstanceType type, int instance_size,
+      ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
+      int inobject_properties = 0,
+      AllocationType allocation_type = AllocationType::kMap) {
+    return NewMapWithMetaMap(meta_map, Map::kSize, type, instance_size,
+                             elements_kind, inobject_properties,
+                             allocation_type);
+  }
+
+  DirectHandle<ExtendedMap> NewExtendedMapWithMetaMap(
+      DirectHandle<Map> meta_map, ExtendedMapKind map_kind, InstanceType type,
+      int instance_size,
       ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
       int inobject_properties = 0,
       AllocationType allocation_type = AllocationType::kMap);
@@ -1396,7 +1414,7 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   // For example,  std::function<Tagged<Map>()>.
   template <typename MetaMapProviderFunc>
   V8_INLINE Handle<Map> NewMapImpl(
-      MetaMapProviderFunc&& meta_map_provider, InstanceType type,
+      MetaMapProviderFunc&& meta_map_provider, int map_size, InstanceType type,
       int instance_size,
       ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
       int inobject_properties = 0,

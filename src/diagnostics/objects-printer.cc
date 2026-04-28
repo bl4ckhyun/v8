@@ -4305,11 +4305,15 @@ void HeapObject::HeapObjectShortPrint(std::ostream& os) {
   switch (instance_type) {
     case MAP_TYPE: {
       Tagged<Map> map = Cast<Map>(*this);
-      if (IsMetaMapMap(map)) {
+      if (IsMetaMap(map)) {
         // This is one of the meta maps, print only relevant fields.
         os << "<MetaMap (" << Brief(map->native_context_or_null()) << ")>";
       } else {
-        os << "<Map";
+        if (map->is_extended_map()) {
+          os << "<ExtendedMap";
+        } else {
+          os << "<Map";
+        }
         if (map->instance_size() != kVariableSizeSentinel) {
           os << "[" << map->instance_size() << "]";
         }
@@ -4729,16 +4733,22 @@ void Map::PrintMapDetails(std::ostream& os) {
 }
 
 void Map::MapPrint(std::ostream& os) {
-  bool is_meta_map = IsMetaMapMap(this);
+  bool is_meta_map = IsMetaMap(this);
+  bool is_extended_map = IsExtendedMap(this);
 #if V8_ENABLE_WEBASSEMBLY
   bool is_wasm_map = IsWasmObjectMap(this);
 #else
   constexpr bool is_wasm_map = false;
 #endif  // V8_ENABLE_WEBASSEMBLY
 #ifdef OBJECT_PRINT
-  PrintHeader(os, is_meta_map ? "MetaMap" : "Map");
+  PrintHeader(os, is_meta_map       ? "MetaMap"
+                  : is_extended_map ? "ExtendedMap"
+                                    : "Map");
 #else
-  os << (is_meta_map ? "MetaMap=" : "Map=") << reinterpret_cast<void*>(ptr());
+  os << (is_meta_map       ? "MetaMap="
+         : is_extended_map ? "ExtendedMap="
+                           : "Map=")
+     << reinterpret_cast<void*>(ptr());
 #endif
   os << "\n - type: " << instance_type();
   if (is_meta_map) {
@@ -4835,6 +4845,25 @@ void Map::MapPrint(std::ostream& os) {
   }
   os << "\n - dependent code: " << Brief(dependent_code());
   os << "\n - construction counter: " << construction_counter();
+
+  if (is_extended_map) {
+    Tagged<ExtendedMap> map_ex = UncheckedCast<ExtendedMap>(this);
+    os << "\n -------";
+    os << "\n - extended map kind: " << map_ex->map_kind();
+    os << "\n - extended map size: " << map_ex->map_size();
+    switch (map_ex->map_kind()) {
+      case ExtendedMapKind::kJSInterceptorMap: {
+        Tagged<JSInterceptorMap> js_interceptor_map =
+            UncheckedCast<JSInterceptorMap>(map_ex);
+        os << "\n - named_interceptor: "
+           << Brief(js_interceptor_map->named_interceptor());
+        os << "\n - indexed_interceptor: "
+           << Brief(js_interceptor_map->indexed_interceptor());
+        break;
+      }
+    }
+  }
+
   os << "\n";
 }
 

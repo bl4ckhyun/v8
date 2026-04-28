@@ -233,16 +233,33 @@ bool IsNumeric(Tagged<Object> obj, PtrComprCageBase cage_base) {
   return IsNumber(obj, cage_base) || IsBigInt(obj, cage_base);
 }
 
-bool IsMetaMapMap(Tagged<Map> map) {
+bool IsMetaMap(Tagged<Map> map) {
   return InstanceTypeChecker::IsMap(map->instance_type());
 }
 
 bool IsMetaMap(Tagged<HeapObject> obj) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase(obj);
-  if (!InstanceTypeChecker::IsMap(obj->map(cage_base)->instance_type())) {
-    return false;
-  }
-  return IsMetaMapMap(UncheckedCast<Map>(obj));
+  if (!IsMap(obj)) return false;
+  return IsMetaMap(UncheckedCast<Map>(obj));
+}
+
+bool IsExtendedMap(Tagged<Map> map) {
+  DCHECK_IMPLIES(map->is_extended_map(), !IsMetaMap(map));
+  return map->is_extended_map();
+}
+
+bool IsExtendedMap(Tagged<HeapObject> obj) {
+  if (!IsMap(obj)) return false;
+  return IsExtendedMap(UncheckedCast<Map>(obj));
+}
+
+bool IsJSInterceptorMap(Tagged<Map> map) {
+  return IsExtendedMap(map) && (UncheckedCast<ExtendedMap>(map)->map_kind() ==
+                                ExtendedMapKind::kJSInterceptorMap);
+}
+
+bool IsJSInterceptorMap(Tagged<HeapObject> obj) {
+  if (!IsMap(obj)) return false;
+  return IsJSInterceptorMap(UncheckedCast<Map>(obj));
 }
 
 bool IsPrimitive(Tagged<Object> obj) {

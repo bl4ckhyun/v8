@@ -420,7 +420,8 @@ bool Heap::CreateEarlyReadOnlyMapsAndObjects() {
 #undef ALLOCATE_AND_SET_ROOT
 
     // Then, initialise the initial maps.
-    InitializePartialMap(isolate(), meta_map, meta_map, MAP_TYPE, Map::kSize);
+    InitializePartialMap(isolate(), meta_map, meta_map, MAP_TYPE,
+                         kVariableSizeSentinel);
     InitializePartialMap(isolate(), undefined_map, meta_map, ODDBALL_TYPE,
                          sizeof(Undefined));
     InitializePartialMap(isolate(), null_map, meta_map, ODDBALL_TYPE,

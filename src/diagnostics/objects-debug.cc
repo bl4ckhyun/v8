@@ -684,6 +684,21 @@ void Map::MapVerify(Isolate* isolate) {
   CHECK(instance_size() == kVariableSizeSentinel ||
         (kTaggedSize <= instance_size() &&
          static_cast<size_t>(instance_size()) < heap->Capacity()));
+
+  if (is_extended_map()) {
+    bool handled = false;
+    switch (UncheckedCast<ExtendedMap>(this)->map_kind()) {
+      case ExtendedMapKind::kJSInterceptorMap: {
+        Tagged<JSInterceptorMap> self = UncheckedCast<JSInterceptorMap>(this);
+        Object::VerifyPointer(isolate, self->named_interceptor());
+        Object::VerifyPointer(isolate, self->indexed_interceptor());
+        handled = true;
+        break;
+      }
+    }
+    CHECK(handled);
+  }
+
 #if V8_ENABLE_WEBASSEMBLY
   bool is_wasm_struct = InstanceTypeChecker::IsWasmStruct(instance_type());
 #else

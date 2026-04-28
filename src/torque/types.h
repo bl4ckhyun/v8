@@ -756,7 +756,7 @@ class ClassType final : public AggregateType {
   std::vector<ObjectSlotKind> ComputeHeaderSlotKinds() const;
   std::optional<ObjectSlotKind> ComputeArraySlotKind() const;
   bool HasNoPointerSlotsExceptMap() const;
-  bool HasIndexedFieldsIncludingInParents() const;
+  bool HasDynamicIndexedFieldsIncludingInParents() const;
   const Field* GetFieldPreceding(size_t field_index) const;
 
   // Given that the field exists in this class or a superclass, returns the

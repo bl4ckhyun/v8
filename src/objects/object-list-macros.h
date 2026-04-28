@@ -324,7 +324,9 @@ namespace internal {
   V(HandlerTable)                   \
   V(JSContextExtensionObject)       \
   V(JSError)                        \
+  V(JSInterceptorMap)               \
   V(MapCache)                       \
+  V(ExtendedMap)                    \
   V(MetaMap)                        \
   V(NumberWrapper)                  \
   V(OSROptimizedCodeCache)          \
