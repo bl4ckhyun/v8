@@ -63,6 +63,36 @@ options for any subcommand, run:
 ./tools/v8-logviewer <command> --help
 ```
 
+## Logging Flags
+
+To generate a `v8.log` with specific information, you must pass diagnostic flags to `d8` when running your script.
+
+Here are the most common flags to enable specific log events:
+
+- **`--prof`**
+  Enables execution profiling (ticks). This is required for `stats` and general profiling analysis.
+- **`--log-ic`** (slow)
+  Logs Inline Cache (IC) events. Required for the `ic` command.
+- **`--log-deopt`**
+  Logs deoptimizations. Required for the `deopt` command.
+- **`--log-maps`** (slow)
+  Logs map creation and modification events.
+- **`--log-code`**
+  Logs code events to the log file without profiling. Useful for the `code` command.
+- **`--log-code-disassemble`**
+  Logs all disassembled code to the log file.
+- **`--log-source-code`**
+  Logs source code information.
+- **`--log-all`**
+  Enables all logging (very verbose!). Use with caution.
+
+**Example:**
+```bash
+out/release/d8 --log-all my-script.js
+```
+
+This will generate a large v8.log file. It is recommended to use a more targeted set of flags when possible.
+
 ## Examples
 
 List the 10 largest script summaries to see which ones are interesting:
