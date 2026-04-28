@@ -376,6 +376,8 @@
   'wasm/log-wasm-to-js-wrapper-callref': [SKIP],
   'wasm/log-wasm-to-js-wrapper-indirect': [SKIP],
   'es6/big-weakmap': [SKIP],
+  # TODO(507078599): This test times out consistently on arm64 debug simulator.
+  'regress/regress-crbug-503557995-b': [PASS, ['(mode == debug)', SKIP]],
 
   # These test Array.prototype methods on ArrayBuffers that are multiples of
   # Wasm page size, which is very slow in the slow path.
