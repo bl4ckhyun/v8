@@ -2802,11 +2802,11 @@ DirectHandle<Map> Factory::NewMapWithMetaMap(DirectHandle<Map> meta_map,
 }
 
 DirectHandle<ExtendedMap> Factory::NewExtendedMapWithMetaMap(
-    DirectHandle<Map> meta_map, ExtendedMapKind kind, InstanceType type,
+    DirectHandle<Map> meta_map, ExtendedMapKind map_kind, InstanceType type,
     int instance_size, ElementsKind elements_kind, int inobject_properties,
     AllocationType allocation_type) {
   DCHECK_EQ(*meta_map, meta_map->map());
-  int map_size = ExtendedMapSizeForKind(kind);
+  int map_size = ExtendedMapSizeForKind(map_kind);
   DCHECK_GE(map_size, ExtendedMap::kMinimumSize);
   auto meta_map_provider = [meta_map] {
     // Use given meta map.
@@ -2816,7 +2816,7 @@ DirectHandle<ExtendedMap> Factory::NewExtendedMapWithMetaMap(
       NewMapImpl(meta_map_provider, map_size, type, instance_size,
                  elements_kind, inobject_properties, allocation_type));
   map->set_is_extended_map(true);
-  map->set_map_kind_and_size(kind, map_size);
+  map->set_map_kind_and_size(map_kind, map_size);
   return map;
 }
 
@@ -2854,6 +2854,29 @@ DirectHandle<Map> Factory::NewContextfulMap(
   DirectHandle<Map> map =
       NewMapImpl(meta_map_provider, Map::kSize, type, instance_size,
                  elements_kind, inobject_properties, allocation_type);
+  return map;
+}
+
+DirectHandle<ExtendedMap> Factory::NewContextfulMap(
+    DirectHandle<NativeContext> native_context, ExtendedMapKind map_kind,
+    InstanceType type, int instance_size, ElementsKind elements_kind,
+    int inobject_properties, AllocationType allocation_type) {
+  DCHECK(InstanceTypeChecker::IsNativeContextSpecific(type) ||
+#if V8_ENABLE_WEBASSEMBLY
+         InstanceTypeChecker::IsWasmStruct(type) ||
+#endif  // V8_ENABLE_WEBASSEMBLY
+         InstanceTypeChecker::IsMap(type));
+  int map_size = ExtendedMapSizeForKind(map_kind);
+  DCHECK_GE(map_size, ExtendedMap::kMinimumSize);
+  auto meta_map_provider = [native_context] {
+    // Tie new map to given native context.
+    return native_context->meta_map();
+  };
+  DirectHandle<ExtendedMap> map = UncheckedCast<ExtendedMap>(
+      NewMapImpl(meta_map_provider, map_size, type, instance_size,
+                 elements_kind, inobject_properties, allocation_type));
+  map->set_is_extended_map(true);
+  map->set_map_kind_and_size(map_kind, map_size);
   return map;
 }
 
