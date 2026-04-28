@@ -759,6 +759,9 @@ DirectHandle<String> Isolate::StackTraceString() {
 [[noreturn]] void Isolate::PushStackTraceAndDie(void* ptr1, void* ptr2,
                                                 void* ptr3, void* ptr4,
                                                 void* ptr5, void* ptr6) {
+  static std::atomic<bool> recursive{false};
+  if (recursive.exchange(true)) IMMEDIATE_CRASH();
+
   // Constructing the stack trace requires allocations and handles and is
   // therefore only supported on the main thread.
   CHECK(LocalHeap::Current()->is_main_thread());
