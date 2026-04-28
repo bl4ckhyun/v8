@@ -5299,8 +5299,7 @@ class AssemblerOpInterface : public Next {
     return ReduceIfReachableWasmAllocateStruct(rtt, struct_type, is_shared);
   }
 
-  V<WasmFuncRef> WasmRefFunc(V<WasmTrustedInstanceData> wasm_instance,
-                             uint32_t function_index) {
+  V<WasmFuncRef> WasmRefFunc(V<Object> wasm_instance, uint32_t function_index) {
     return ReduceIfReachableWasmRefFunc(wasm_instance, function_index);
   }
 
