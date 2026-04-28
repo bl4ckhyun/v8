@@ -1886,12 +1886,22 @@ class RepresentationSelector {
         return;
       }
 
-      // => AdditiveSafeIntegerAdd/Sub
-      VisitBinop<T>(node, UseInfo::CheckedSafeIntAsWord64(FeedbackSource{}),
-                    MachineRepresentation::kWord64,
-                    type_cache_->kAdditiveSafeIntegerFeedback);
-      if (lower<T>()) ChangeOp(node, AdditiveSafeIntegerOverflowOp(node));
-      return;
+      // The Word64 path is only profitable when at least one operand is
+      // statically in the AdditiveSafeInteger range; otherwise the
+      // CheckedSafeIntAsWord64 input conversion (range check + deopt) is
+      // more expensive than a Float64 add. Use the static (pre-RETYPE)
+      // type so the decision is consistent across PROPAGATE/RETYPE/LOWER.
+      Type lhs_type = NodeProperties::GetType(node->InputAt(0));
+      Type rhs_type = NodeProperties::GetType(node->InputAt(1));
+      if (lhs_type.Is(type_cache_->kAdditiveSafeInteger) ||
+          rhs_type.Is(type_cache_->kAdditiveSafeInteger)) {
+        // => AdditiveSafeIntegerAdd/Sub
+        VisitBinop<T>(node, UseInfo::CheckedSafeIntAsWord64(FeedbackSource{}),
+                      MachineRepresentation::kWord64,
+                      type_cache_->kAdditiveSafeIntegerFeedback);
+        if (lower<T>()) ChangeOp(node, AdditiveSafeIntegerOverflowOp(node));
+        return;
+      }
     }
 
     // Default case => Float64Add/Sub
