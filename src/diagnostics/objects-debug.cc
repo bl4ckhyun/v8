@@ -472,6 +472,18 @@ void BytecodeWrapper::BytecodeWrapperVerify(Isolate* isolate) {
   CHECK_EQ(bytecode->wrapper(), this);
 }
 
+void JSReceiver::JSReceiverVerify(Isolate* isolate) {
+  CHECK(IsJSReceiver(this));
+
+  Tagged<JSReceiver::PropertiesOrHash> properties_or_hash =
+      raw_properties_or_hash(kRelaxedLoad);
+  Object::VerifyPointer(isolate, properties_or_hash);
+  CHECK(IsFixedArrayBase(properties_or_hash) || IsSmi(properties_or_hash) ||
+        IsPropertyArray(properties_or_hash) ||
+        IsSwissNameDictionary(properties_or_hash) ||
+        IsGlobalDictionary(properties_or_hash));
+}
+
 bool JSObject::ElementsAreSafeToExamine(PtrComprCageBase cage_base) const {
   // If a GC was caused while constructing this object, the elements
   // pointer may point to a one pointer filler map.

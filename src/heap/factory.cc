@@ -2967,7 +2967,8 @@ Handle<JSObject> Factory::CopyJSObjectWithAllocationSite(
       DirectHandle<PropertyArray> prop =
           CopyArrayWithMap(direct_handle(properties, isolate()),
                            direct_handle(properties->map(), isolate()));
-      clone->set_raw_properties_or_hash(*prop, kRelaxedStore);
+      clone->set_raw_properties_or_hash(
+          UncheckedCast<JSReceiver::PropertiesOrHash>(*prop), kRelaxedStore);
     }
   } else {
     DirectHandle<Object> copied_properties;
@@ -2979,7 +2980,9 @@ Handle<JSObject> Factory::CopyJSObjectWithAllocationSite(
       copied_properties =
           CopyFixedArray(handle(source->property_dictionary(), isolate()));
     }
-    clone->set_raw_properties_or_hash(*copied_properties, kRelaxedStore);
+    clone->set_raw_properties_or_hash(
+        UncheckedCast<JSReceiver::PropertiesOrHash>(*copied_properties),
+        kRelaxedStore);
   }
   return clone;
 }
@@ -3500,13 +3503,15 @@ Handle<JSGlobalObject> Factory::NewJSGlobalObject(
 
 void Factory::InitializeJSObjectFromMap(
     Tagged<Map> map, Tagged<JSObject> obj,
-    std::optional<Tagged<Object>> maybe_properties,
+    std::optional<Tagged<JSReceiver::PropertiesOrHash>> maybe_properties,
     NewJSObjectType new_js_object_type) {
   DisallowGarbageCollection no_gc;
   if (!maybe_properties.has_value()) {
     obj->set_raw_properties_or_hash(*empty_fixed_array(), SKIP_WRITE_BARRIER);
   } else {
-    obj->set_raw_properties_or_hash(maybe_properties.value(), kRelaxedStore);
+    obj->set_raw_properties_or_hash(
+        UncheckedCast<JSReceiver::PropertiesOrHash>(maybe_properties.value()),
+        kRelaxedStore);
   }
   obj->initialize_elements();
   // TODO(1240798): Initialize the object's body using valid initial values
@@ -3596,7 +3601,9 @@ Handle<JSObject> Factory::NewSlowJSObjectFromMap(
   }
   Handle<JSObject> js_object =
       NewJSObjectFromMap(map, allocation, allocation_site, new_js_object_type);
-  js_object->set_raw_properties_or_hash(*object_properties, kRelaxedStore);
+  js_object->set_raw_properties_or_hash(
+      UncheckedCast<JSReceiver::PropertiesOrHash>(*object_properties),
+      kRelaxedStore);
   return js_object;
 }
 
@@ -3618,7 +3625,8 @@ DirectHandle<JSObject> Factory::NewSlowJSObjectWithPropertiesAndElements(
   DCHECK(object_map->is_dictionary_map());
   DirectHandle<JSObject> object =
       NewJSObjectFromMap(object_map, AllocationType::kYoung);
-  object->set_raw_properties_or_hash(*properties);
+  object->set_raw_properties_or_hash(
+      UncheckedCast<JSReceiver::PropertiesOrHash>(*properties));
   if (*elements != read_only_roots().empty_fixed_array()) {
     DCHECK(IsNumberDictionary(*elements));
     object_map = JSObject::GetElementsTransitionMap(isolate(), object,
@@ -4309,8 +4317,10 @@ void Factory::ReinitializeJSGlobalProxy(DirectHandle<JSGlobalProxy> object,
   raw->set_map(isolate(), *map, kReleaseStore);
 
   // Reinitialize the object from the constructor map.
-  InitializeJSObjectFromMap(*map, raw, {*raw_properties_or_hash},
-                            NewJSObjectType::kMaybeEmbedderFieldsAndApiWrapper);
+  InitializeJSObjectFromMap(
+      *map, raw,
+      {UncheckedCast<JSReceiver::PropertiesOrHash>(*raw_properties_or_hash)},
+      NewJSObjectType::kMaybeEmbedderFieldsAndApiWrapper);
   // Ensure that the object and constructor belongs to the same native context.
   DCHECK_EQ(object->map()->map(), constructor->map()->map());
 }

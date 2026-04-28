@@ -868,7 +868,8 @@ void JSAPIObjectWithEmbedderSlotsPrintHeader(std::ostream& os,
 void JSObjectPrintBody(std::ostream& os, Tagged<JSObject> obj,
                        bool print_elements = true) {
   os << "\n - properties: ";
-  Tagged<Object> properties_or_hash = obj->raw_properties_or_hash(kRelaxedLoad);
+  Tagged<JSReceiver::PropertiesOrHash> properties_or_hash =
+      obj->raw_properties_or_hash(kRelaxedLoad);
   if (!IsSmi(properties_or_hash)) {
     os << Brief(properties_or_hash);
   }

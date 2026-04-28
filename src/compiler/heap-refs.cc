@@ -354,8 +354,8 @@ std::optional<Tagged<Object>> GetOwnFastConstantDataPropertyFromHeap(
         return {};
       }
     } else {
-      Tagged<Object> raw_properties_or_hash =
-          holder.object()->raw_properties_or_hash(cage_base, kRelaxedLoad);
+      Tagged<JSReceiver::PropertiesOrHash> raw_properties_or_hash =
+          holder.object()->raw_properties_or_hash(kRelaxedLoad);
       // Ensure that the object is safe to inspect.
       if (broker->ObjectMayBeUninitialized(raw_properties_or_hash)) {
         return {};

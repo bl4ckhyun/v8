@@ -5811,8 +5811,8 @@ class VirtualObject : public FixedInputValueNodeT<0, VirtualObject> {
 };
 
 struct VirtualJSReceiverShape : VirtualHeapObjectShape {
-#define FIELD_LIST(V)                                        \
-  V(properties_or_hash, JSReceiver::kPropertiesOrHashOffset, \
+#define FIELD_LIST(V)                                              \
+  V(properties_or_hash, offsetof(JSReceiver, properties_or_hash_), \
     vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualHeapObjectShape, FIELD_LIST);
 #undef FIELD_LIST

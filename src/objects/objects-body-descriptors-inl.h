@@ -129,7 +129,7 @@ class JSAPIObjectWithEmbedderSlotsOrJSSpecialObjectBodyDescriptor
       Tagged<Map> map, Tagged<HeapObject> obj, int object_size,
       ObjectVisitor* v) {
     // Visit JSObject header.
-    IteratePointers(obj, JSObject::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSObject, properties_or_hash_),
                     JSObject::kEndOfStrongFieldsOffset, v);
 
     // Visit JSAPIObjectWithEmbedderSlots or JSSpecialObject header.
@@ -459,7 +459,7 @@ class FreeSpace::BodyDescriptor final : public DataOnlyBodyDescriptor {
 
 class JSObject::BodyDescriptor final : public BodyDescriptorBase {
  public:
-  static const int kStartOffset = JSReceiver::kPropertiesOrHashOffset;
+  static const int kStartOffset = offsetof(JSReceiver, properties_or_hash_);
 
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
@@ -474,7 +474,7 @@ class JSObject::BodyDescriptor final : public BodyDescriptorBase {
 
 class JSObject::FastBodyDescriptor final : public BodyDescriptorBase {
  public:
-  static const int kStartOffset = JSReceiver::kPropertiesOrHashOffset;
+  static const int kStartOffset = offsetof(JSReceiver, properties_or_hash_);
 
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
@@ -510,13 +510,13 @@ class JSDate::BodyDescriptor final : public BodyDescriptorBase {
 
 class JSRegExp::BodyDescriptor final : public BodyDescriptorBase {
  public:
-  static const int kStartOffset = JSReceiver::kPropertiesOrHashOffset;
+  static const int kStartOffset = offsetof(JSReceiver, properties_or_hash_);
 
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
     Tagged<JSRegExp> regexp = UncheckedCast<JSRegExp>(obj);
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     JSObject::kHeaderSize, v);
     IterateTrustedPointer(obj, &regexp->data_, v, IndirectPointerMode::kStrong);
     IteratePointer(obj, JSRegExp::kFlagsOffset, v);
@@ -907,7 +907,7 @@ class JSExternalObject::BodyDescriptor final : public BodyDescriptorBase {
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
     DCHECK_EQ(0, map->GetInObjectProperties());
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     JSObject::kHeaderSize, v);
     Tagged<JSExternalObject> external = UncheckedCast<JSExternalObject>(obj);
     v->VisitExternalPointer(
@@ -1221,7 +1221,9 @@ class JSSynchronizationPrimitive::BodyDescriptor final
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, kPropertiesOrHashOffset, kEndOfTaggedFieldsOffset, v);
+    IteratePointers(obj,
+                    offsetof(JSSynchronizationPrimitive, properties_or_hash_),
+                    kEndOfTaggedFieldsOffset, v);
     v->VisitExternalPointer(obj,
                             obj->RawExternalPointerField(kWaiterQueueHeadOffset,
                                                          kWaiterQueueNodeTag));
@@ -1305,7 +1307,7 @@ class WasmSuspendingObject::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     WasmSuspendingObject::kHeaderSize, v);
     IterateJSObjectBodyImpl(map, obj, WasmSuspendingObject::kHeaderSize,
                             object_size, v);
@@ -1321,7 +1323,7 @@ class WasmModuleObject::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     WasmModuleObject::kHeaderSize, v);
     IterateJSObjectBodyImpl(map, obj, WasmModuleObject::kHeaderSize,
                             object_size, v);
@@ -1339,7 +1341,7 @@ class WasmInstanceObject::BodyDescriptor final : public BodyDescriptorBase {
                                  int object_size, ObjectVisitor* v) {
     Tagged<WasmInstanceObject> instance =
         UncheckedCast<WasmInstanceObject>(obj);
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     WasmInstanceObject::kTrustedDataOffset, v);
     IterateTrustedPointer(obj, &instance->trusted_data_, v,
                           IndirectPointerMode::kStrong);
@@ -1360,7 +1362,7 @@ class WasmTagObject::BodyDescriptor final : public BodyDescriptorBase {
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
     Tagged<WasmTagObject> tag_object = UncheckedCast<WasmTagObject>(obj);
-    IteratePointers(obj, JSReceiver::kPropertiesOrHashOffset,
+    IteratePointers(obj, offsetof(JSReceiver, properties_or_hash_),
                     WasmTagObject::kTrustedDataOffset, v);
     IterateTrustedPointer(obj, &tag_object->trusted_data_, v,
                           IndirectPointerMode::kStrong);

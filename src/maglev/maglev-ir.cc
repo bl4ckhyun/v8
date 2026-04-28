@@ -3194,7 +3194,8 @@ void LoadTaggedFieldByFieldIndex::GenerateCode(MaglevAssembler* masm,
               // Load the property array.
               __ LoadTaggedField(
                   property_array,
-                  FieldMemOperand(object, JSObject::kPropertiesOrHashOffset));
+                  FieldMemOperand(object,
+                                  offsetof(JSObject, properties_or_hash_)));
 
               // See giant comment above. No need to sign extend, negate will
               // handle it.
@@ -3261,7 +3262,7 @@ void LoadTaggedFieldByFieldIndex::GenerateCode(MaglevAssembler* masm,
       // Load the property array.
       __ LoadTaggedField(
           property_array,
-          FieldMemOperand(object, JSObject::kPropertiesOrHashOffset));
+          FieldMemOperand(object, offsetof(JSObject, properties_or_hash_)));
 
       // See giant comment above. No need to sign extend, negate will handle it.
       __ NegateInt32(field_index);
@@ -5016,7 +5017,8 @@ void ExtendPropertiesBackingStore::GenerateCode(MaglevAssembler* masm,
     // The object might still have a hash, stored in properties_or_hash. If
     // properties_or_hash is a SMI, then it's the hash. It can also be an empty
     // PropertyArray.
-    __ LoadTaggedField(scratch, object, JSObject::kPropertiesOrHashOffset);
+    __ LoadTaggedField(scratch, object,
+                       offsetof(JSObject, properties_or_hash_));
 
     Label done;
     __ JumpIfSmi(scratch, &done);
@@ -5048,8 +5050,8 @@ void ExtendPropertiesBackingStore::GenerateCode(MaglevAssembler* masm,
     snapshot.live_tagged_registers.set(new_property_array);
 
     __ StoreTaggedFieldWithWriteBarrier(
-        object, JSObject::kPropertiesOrHashOffset, new_property_array, snapshot,
-        MaglevAssembler::kValueIsDecompressed,
+        object, offsetof(JSObject, properties_or_hash_), new_property_array,
+        snapshot, MaglevAssembler::kValueIsDecompressed,
         MaglevAssembler::kValueCannotBeSmi);
   }
   if (result_reg != new_property_array) {

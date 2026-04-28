@@ -1960,7 +1960,7 @@ constexpr int WasmTypeInfo::SizeFor(int supertypes_length) {
 // WasmObject is the abstract base for Wasm GC data ref types (WasmStruct and
 // WasmArray). It carries no fields of its own; subclasses lay out their
 // payload directly after the JSReceiver header.
-V8_OBJECT class WasmObject : public JSReceiverLayout {
+V8_OBJECT class WasmObject : public JSReceiver {
  public:
   static const int kHeaderSize;
 

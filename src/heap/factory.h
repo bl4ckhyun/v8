@@ -1464,7 +1464,7 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
   // Initializes a JSObject based on its map.
   void InitializeJSObjectFromMap(
       Tagged<Map> map, Tagged<JSObject> obj,
-      std::optional<Tagged<Object>> maybe_properties,
+      std::optional<Tagged<JSReceiver::PropertiesOrHash>> maybe_properties,
       NewJSObjectType = NewJSObjectType::kMaybeEmbedderFieldsAndNoApiWrapper);
   // Initializes JSObject body starting at given offset.
   void InitializeJSObjectBody(

@@ -144,17 +144,18 @@ FieldAccess AccessBuilder::ForBigIntLeastSignificantDigit64() {
 
 // static
 FieldAccess AccessBuilder::ForJSObjectPropertiesOrHash() {
-  FieldAccess access = {kTaggedBase,         JSObject::kPropertiesOrHashOffset,
-                        MaybeHandle<Name>(), OptionalMapRef(),
-                        Type::Any(),         MachineType::AnyTagged(),
-                        kFullWriteBarrier,   "JSObjectPropertiesOrHash"};
+  FieldAccess access = {
+      kTaggedBase,         offsetof(JSObject, properties_or_hash_),
+      MaybeHandle<Name>(), OptionalMapRef(),
+      Type::Any(),         MachineType::AnyTagged(),
+      kFullWriteBarrier,   "JSObjectPropertiesOrHash"};
   return access;
 }
 
 // static
 FieldAccess AccessBuilder::ForJSObjectPropertiesOrHashKnownPointer() {
   FieldAccess access = {
-      kTaggedBase,         JSObject::kPropertiesOrHashOffset,
+      kTaggedBase,         offsetof(JSObject, properties_or_hash_),
       MaybeHandle<Name>(), OptionalMapRef(),
       Type::Any(),         MachineType::AnyTagged(),
       kFullWriteBarrier,   "JSObjectPropertiesOrHashKnownPointer"};
