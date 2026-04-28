@@ -2564,7 +2564,7 @@ void JSPromise::JSPromiseVerify(Isolate* isolate) {
 }
 
 template <typename Derived>
-void SmallOrderedHashTable<Derived>::SmallOrderedHashTableVerify(
+void SmallOrderedHashTableImpl<Derived>::SmallOrderedHashTableVerify(
     Isolate* isolate) {
   CHECK(IsSmallOrderedHashTable(*this));
 
@@ -2604,7 +2604,7 @@ void SmallOrderedHashTable<Derived>::SmallOrderedHashTableVerify(
 
 void SmallOrderedHashMap::SmallOrderedHashMapVerify(Isolate* isolate) {
   CHECK(IsSmallOrderedHashMap(*this));
-  SmallOrderedHashTable<SmallOrderedHashMap>::SmallOrderedHashTableVerify(
+  SmallOrderedHashTableImpl<SmallOrderedHashMap>::SmallOrderedHashTableVerify(
       isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
        entry++) {
@@ -2617,7 +2617,7 @@ void SmallOrderedHashMap::SmallOrderedHashMapVerify(Isolate* isolate) {
 
 void SmallOrderedHashSet::SmallOrderedHashSetVerify(Isolate* isolate) {
   CHECK(IsSmallOrderedHashSet(*this));
-  SmallOrderedHashTable<SmallOrderedHashSet>::SmallOrderedHashTableVerify(
+  SmallOrderedHashTableImpl<SmallOrderedHashSet>::SmallOrderedHashTableVerify(
       isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
        entry++) {
@@ -2631,7 +2631,7 @@ void SmallOrderedHashSet::SmallOrderedHashSetVerify(Isolate* isolate) {
 void SmallOrderedNameDictionary::SmallOrderedNameDictionaryVerify(
     Isolate* isolate) {
   CHECK(IsSmallOrderedNameDictionary(*this));
-  SmallOrderedHashTable<
+  SmallOrderedHashTableImpl<
       SmallOrderedNameDictionary>::SmallOrderedHashTableVerify(isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
        entry++) {

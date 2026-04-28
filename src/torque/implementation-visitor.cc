@@ -3836,12 +3836,26 @@ class FieldOffsetsGenerator {
       header_size_emitted_ = true;
     }
 
-    // We don't know statically how much space an indexed field takes, so report
-    // it as zero.
+    // For variable-indexed fields we don't know statically how much space the
+    // field takes, so report it as zero. For constant-indexed fields with a
+    // literal length (e.g. padding[5]) we can compute the size as the literal
+    // multiplied by the element size.
     std::string size_string = "0";
     if (!f.index.has_value()) {
       size_t field_size;
       std::tie(field_size, size_string) = f.GetFieldSizeInformation();
+    } else if (f.index_is_constant) {
+      if (auto* literal =
+              IntegerLiteralExpression::DynamicCast(f.index->expr)) {
+        if (auto count = literal->value.TryTo<int>()) {
+          size_t element_size;
+          std::string element_size_string;
+          std::tie(element_size, element_size_string) =
+              f.GetFieldSizeInformation();
+          size_string =
+              "(" + std::to_string(*count) + " * " + element_size_string + ")";
+        }
+      }
     }
     if (f.offset.has_value()) {
       WriteField(f, size_string);

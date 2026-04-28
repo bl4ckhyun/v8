@@ -940,7 +940,7 @@ class Foreign::BodyDescriptor final : public BodyDescriptorBase {
 };
 
 template <typename Derived>
-class V8_EXPORT_PRIVATE SmallOrderedHashTable<Derived>::BodyDescriptor final
+class V8_EXPORT_PRIVATE SmallOrderedHashTableImpl<Derived>::BodyDescriptor final
     : public BodyDescriptorBase {
  public:
   template <typename ObjectVisitor>
