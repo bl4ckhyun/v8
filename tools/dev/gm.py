@@ -779,24 +779,23 @@ class ArgumentParser(object):
   def _parse_sync_arg(self, argstring):
     if argstring == "--sync":
       self.sync_mode = GclientSyncMode.NORMAL
-    elif argstring.startswith("--sync="):
+      return True
+    if argstring.startswith("--sync="):
       mode = argstring[len("--sync="):]
       try:
         self.sync_mode = GclientSyncMode(mode)
+        return True
       except ValueError:
         print(f"Unknown sync mode: {mode}")
         sys.exit(1)
-    else:
-      print(f"Didn't understand: {argstring}")
-      sys.exit(1)
+    return False
 
   def parse_arg(self, argstring):
     if argstring in ("-h", "--help", "help"):
       print_help_and_exit()
     if argstring == "--print-completions":
       print_completions_and_exit()
-    if argstring.startswith("--sync"):
-      self._parse_sync_arg(argstring)
+    if self._parse_sync_arg(argstring):
       return
     if argstring == "quiet":
       global QUIET
@@ -899,7 +898,7 @@ def main(argv):
     if sync_code != 0:
       return sync_code
   elif parser.sync_mode == GclientSyncMode.FORCE:
-    sync_code = _call("gclient sync -D --force")
+    sync_code = _call("gclient sync -D --force --reset")
     if sync_code != 0:
       return sync_code
 
