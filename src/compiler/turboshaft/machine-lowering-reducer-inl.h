@@ -233,6 +233,12 @@ class MachineLoweringReducer : public Next {
 
         return ui64;
       }
+      case ChangeOrDeoptOp::Kind::kInt32ToUint64: {
+        V<Word32> v32 = V<Word32>::Cast(input);
+        __ DeoptimizeIf(__ Int32LessThan(v32, 0), frame_state,
+                        DeoptimizeReason::kOutOfBounds, feedback);
+        return __ ChangeUint32ToUint64(v32);
+      }
       case ChangeOrDeoptOp::Kind::kFloat64NotHole: {
         V<Float64> f64_input = V<Float64>::Cast(input);
         // First check whether {value} is a NaN at all...
