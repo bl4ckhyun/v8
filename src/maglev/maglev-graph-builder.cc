@@ -4895,7 +4895,12 @@ ReduceResult MaglevGraphBuilder::BuildLoadFixedDoubleArrayElement(
         TryGetUint32Constant(vobject->get(FixedArrayBase::kLengthOffset));
     if (length.has_value()) {
       if (static_cast<uint32_t>(index) < length.value()) {
-        return vobject->get(FixedDoubleArray::OffsetOfElementAt(index));
+        // Initializing stores can place conversion nodes (e.g.
+        // ChangeInt32ToFloat64) into the virtual object, but conversion nodes
+        // must not leak into the interpreter frame state -- they belong in
+        // NodeInfo as alternative representations.
+        return vobject->get(FixedDoubleArray::OffsetOfElementAt(index))
+            ->Unwrap();
       } else {
         return BuildAbort(AbortReason::kUnreachable);
       }
