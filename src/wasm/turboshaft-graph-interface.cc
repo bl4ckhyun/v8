@@ -926,6 +926,36 @@ class TurboshaftGraphBuildingInterface
   void WideOp4(FullDecoder* decoder, WasmOpcode opcode, const Value& al,
                const Value& ah, const Value& bl, const Value& bh,
                Value* result_low, Value* result_high) {
+#if V8_TARGET_ARCH_IA32
+    if (opcode == kExprI64Add128) {
+      // Possible future ops that might want to reuse the wide op stack buffer
+      // might need other sizes.
+      static_assert(4 * kInt64Size <= kWideOpsStackBufferSize);
+      V<WordPtr> stack_slot = GetWideOpsStackBuffer();
+
+      __ Store(stack_slot, bh.get<Word64>(), StoreOp::Kind::RawAligned(),
+               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier, 0);
+      __ Store(stack_slot, bl.get<Word64>(), StoreOp::Kind::RawAligned(),
+               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+               kInt64Size);
+      __ Store(stack_slot, ah.get<Word64>(), StoreOp::Kind::RawAligned(),
+               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+               2 * kInt64Size);
+      __ Store(stack_slot, al.get<Word64>(), StoreOp::Kind::RawAligned(),
+               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+               3 * kInt64Size);
+
+      MachineType reps[]{MachineType::Pointer()};
+      MachineSignature sig(0, 1, reps);
+      CallC(&sig, ExternalReference::wasm_int128_add(), stack_slot);
+
+      result_low->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
+                               MemoryRepresentation::Uint64(), 3 * kInt64Size);
+      result_high->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
+                                MemoryRepresentation::Uint64(), 2 * kInt64Size);
+      return;
+    }
+#endif
     V<compiler::turboshaft::Word64Pair> op;
     switch (opcode) {
       case kExprI64Add128:
@@ -9734,6 +9764,17 @@ class TurboshaftGraphBuildingInterface
 
   std::optional<bool> deopts_enabled_;
   OptionalV<FrameState> parent_frame_state_;
+  OptionalV<WordPtr> wide_ops_stack_buffer_;
+  static constexpr int kWideOpsStackBufferSize = 4 * kInt64Size;
+
+  V<WordPtr> GetWideOpsStackBuffer() {
+    if (!wide_ops_stack_buffer_.has_value()) {
+      wide_ops_stack_buffer_ =
+          __ StackSlot(kWideOpsStackBufferSize, kInt64Size);
+    }
+    return wide_ops_stack_buffer_.value();
+  }
+
 #ifdef DEBUG
   const int graph_generation_bit_ = __ output_graph().generation_mod2();
 #else
