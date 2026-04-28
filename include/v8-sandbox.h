@@ -65,7 +65,7 @@ enum class CppHeapPointerTag : uint16_t {
 using CppHeapPointerTagRange = internal::TagRange<CppHeapPointerTag>;
 
 constexpr CppHeapPointerTagRange kAnyCppHeapPointer(
-    CppHeapPointerTag::kFirstTag, CppHeapPointerTag::kLastTag);
+    CppHeapPointerTag::kFirstTag, CppHeapPointerTag::kZappedEntryTag);
 
 /**
  * Hardware support for the V8 Sandbox.
