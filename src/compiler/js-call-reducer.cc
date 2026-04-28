@@ -4071,6 +4071,9 @@ Reduction JSCallReducer::ReduceArrayForEach(Node* node,
 
 Reduction JSCallReducer::ReduceArraySort(Node* node,
                                          SharedFunctionInfoRef shared) {
+  // Suppress for correctness fuzzing (different behavior vs. builtin).
+  if (V8_UNLIKELY(v8_flags.correctness_fuzzer_suppressions)) return NoChange();
+
   JSCallNode n(node);
   if (n.ArgumentCount() < 1) return NoChange();
 

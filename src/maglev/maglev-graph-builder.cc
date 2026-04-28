@@ -10820,6 +10820,10 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
   //
   // For arrays with length > kMaxInlineSortSize the slow path calls the sort
   // builtin normally so that large arrays are unaffected.
+
+  // Suppress for correctness fuzzing (different behavior vs. builtin).
+  if (V8_UNLIKELY(v8_flags.correctness_fuzzer_suppressions)) return {};
+
   if (!CanSpeculateCall()) return {};
 
   ValueNode* receiver = args.receiver();
