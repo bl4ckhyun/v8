@@ -12,6 +12,7 @@ if [ -f "$1" ]; then
   log_file="$1"
   shift
   command="stats"
+  is_default_command="true"
 else
   command="$1"
   shift
@@ -26,7 +27,11 @@ cli_script="${tools_path}/system-analyzer/cli.mjs"
 
 # Intercept help commands (no log file needed)
 if [[ "$@" =~ (--help|help) ]]; then
-  "$d8_exec" "$cli_script" -- "$@"
+  if [ "$is_default_command" = "true" ]; then
+    "$d8_exec" "$cli_script" -- "$@"
+  else
+    "$d8_exec" "$cli_script" -- "$command" "$@"
+  fi
   exit 0
 fi
 
