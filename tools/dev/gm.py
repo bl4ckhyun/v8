@@ -5,15 +5,21 @@
 """\
 Convenience wrapper for compiling V8 with gn/ninja and running tests.
 Sets up build output directories if they don't exist.
-Produces simulator builds for non-Intel target architectures.
+Produces simulator builds for non-native target architectures.
 Uses reclient by default if it is detected (at output directory setup time).
 Expects to be run from the root of a V8 checkout.
 
 Usage:
-    gm.py [--sync=<normal|force>] [<arch>].[<mode>[-<suffix>]].[<target>] [testname...] [--flag]
+    gm.py [<arch>].[<mode>[-<suffix>]].[<target>] [testname...] [options...]
 
- --sync:        Runs 'gclient sync -D'
- --sync=force:  Runs 'gclient sync -D --force' before building.
+Supported options:
+  --sync:        Runs 'gclient sync -D'
+  --sync=force:  Runs 'gclient sync -D --force --reset' before building.
+  --update-reclient-config: Autodetects remote compilation setup and updates
+                            args.gn accordingly.
+
+All other flags are passed unchanged to the test runner. They must start with
+"--" and must not contain spaces.
 
 All arguments are optional. Most combinations should work, e.g.:
     gm.py ia32.debug x64.release x64.release-my-custom-opts d8
@@ -23,9 +29,6 @@ All arguments are optional. Most combinations should work, e.g.:
 For a less automated experience, pass an existing output directory (which
 must contain an existing args.gn), e.g.:
     gm.py out/foo unittests
-
-Flags are passed unchanged to the test runner. They must start with -- and must
-not contain spaces.
 """
 # See HELP below for additional documentation.
 
@@ -212,6 +215,7 @@ BUILD_DISTRIBUTION_RE = re.compile(r"\nuse_(remoteexec|goma) = (false|true)")
 GOMA_DIR_LINE = re.compile(r"\ngoma_dir = \"[^\"]+\"")
 DEPRECATED_RBE_CFG_RE = re.compile(r"\nrbe_cfg_dir = \"[^\"]+\"")
 RECLIENT_CFG_RE = re.compile(r"\nreclient_cfg_dir = \"[^\"]+\"")
+UPDATE_RECLIENT_CONFIG = False
 
 class Reclient(IntEnum):
   NONE = 0
@@ -491,7 +495,8 @@ class RawConfig:
       _write(args_gn, new_gn_args, log=False)
 
   def build(self):
-    self.update_build_distribution_args()
+    if UPDATE_RECLIENT_CONFIG:
+      self.update_build_distribution_args()
     # If the target is to just build args.gn then we are done here; otherwise
     # drop that target because it's not something ninja can build.
     if 'gn_args' in self.targets:
@@ -800,6 +805,10 @@ class ArgumentParser(object):
     if argstring == "quiet":
       global QUIET
       QUIET = True
+      return
+    if argstring == "--update-reclient-config":
+      global UPDATE_RECLIENT_CONFIG
+      UPDATE_RECLIENT_CONFIG = True
       return
     arches = []
     modes = []
