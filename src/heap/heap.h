@@ -286,7 +286,7 @@ class Heap final {
     ~DevToolsTraceEventScope();
 
    private:
-    Heap* heap_;
+    [[maybe_unused]] Heap* heap_;
     const char* event_name_;
   };
 

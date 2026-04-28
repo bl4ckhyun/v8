@@ -1405,13 +1405,14 @@ Heap::DevToolsTraceEventScope::DevToolsTraceEventScope(Heap* heap,
                                                        const char* event_name,
                                                        const char* event_type)
     : heap_(heap), event_name_(event_name) {
-  TRACE_EVENT_BEGIN2("devtools.timeline,v8", event_name_, "usedHeapSizeBefore",
-                     heap_->SizeOfObjects(), "type", event_type);
+  TRACE_EVENT_BEGIN("devtools.timeline,v8", perfetto::StaticString(event_name_),
+                    "usedHeapSizeBefore", heap_->SizeOfObjects(), "type",
+                    event_type);
 }
 
 Heap::DevToolsTraceEventScope::~DevToolsTraceEventScope() {
-  TRACE_EVENT_END1("devtools.timeline,v8", event_name_, "usedHeapSizeAfter",
-                   heap_->SizeOfObjects());
+  TRACE_EVENT_END("devtools.timeline,v8", "usedHeapSizeAfter",
+                  heap_->SizeOfObjects());
 }
 
 namespace {
@@ -1537,7 +1538,8 @@ void Heap::CollectGarbage(
                                                          gc_reason);
       std::optional<TimedHistogramScope> histogram_timer_scope;
       std::optional<OptionalTimedHistogramScope> histogram_timer_priority_scope;
-      TRACE_EVENT0("v8", record_gc_phases_info.trace_event_name());
+      TRACE_EVENT("v8", perfetto::StaticString(
+                            record_gc_phases_info.trace_event_name()));
       if (record_gc_phases_info.type_timer()) {
         histogram_timer_scope.emplace(record_gc_phases_info.type_timer(),
                                       isolate_);
@@ -1914,9 +1916,10 @@ void Heap::CompleteArrayBufferSweeping() {
         scope_id = GCTracer::Scope::MC_COMPLETE_SWEEP_ARRAY_BUFFERS;
     }
 
-    TRACE_GC_EPOCH_WITH_FLOW(tracer(), scope_id, ThreadKind::kMain,
-                             array_buffer_sweeper()->GetTraceIdForFlowEvent(),
-                             TRACE_EVENT_FLAG_FLOW_IN);
+    TRACE_GC_EPOCH_WITH_FLOW(
+        tracer(), scope_id, ThreadKind::kMain,
+        perfetto::TerminatingFlow::ProcessScoped(
+            array_buffer_sweeper()->GetTraceIdForFlowEvent()));
     array_buffer_sweeper()->EnsureFinished();
   }
 }
@@ -4014,11 +4017,11 @@ void Heap::CheckMemoryPressure() {
   MemoryPressureLevel memory_pressure_level = memory_pressure_level_.exchange(
       MemoryPressureLevel::kNone, std::memory_order_relaxed);
   if (memory_pressure_level == MemoryPressureLevel::kCritical) {
-    TRACE_EVENT0("devtools.timeline,v8", "V8.CheckMemoryPressure");
+    TRACE_EVENT("devtools.timeline,v8", "V8.CheckMemoryPressure");
     CollectGarbageOnMemoryPressure();
   } else if (memory_pressure_level == MemoryPressureLevel::kModerate) {
     if (v8_flags.incremental_marking && incremental_marking()->IsStopped()) {
-      TRACE_EVENT0("devtools.timeline,v8", "V8.CheckMemoryPressure");
+      TRACE_EVENT("devtools.timeline,v8", "V8.CheckMemoryPressure");
       StartIncrementalMarking(GCFlag::kReduceMemoryFootprint,
                               GarbageCollectionReason::kMemoryPressure);
     }
@@ -4062,8 +4065,8 @@ void Heap::CollectGarbageOnMemoryPressure() {
 
 void Heap::MemoryPressureNotification(MemoryPressureLevel level,
                                       bool is_isolate_locked) {
-  TRACE_EVENT1("devtools.timeline,v8", "V8.MemoryPressureNotification", "level",
-               static_cast<int>(level));
+  TRACE_EVENT("devtools.timeline,v8", "V8.MemoryPressureNotification", "level",
+              static_cast<int>(level));
   MemoryPressureLevel previous =
       memory_pressure_level_.exchange(level, std::memory_order_relaxed);
   if ((previous != MemoryPressureLevel::kCritical &&
@@ -4170,7 +4173,7 @@ Heap::CreateDefaultMeasureMemoryDelegate(
 }
 
 void Heap::CollectCodeStatistics() {
-  TRACE_EVENT0("v8", "Heap::CollectCodeStatistics");
+  TRACE_EVENT("v8", "Heap::CollectCodeStatistics");
   SafepointScope safepoint_scope(isolate(),
                                  kGlobalSafepointForSharedSpaceIsolate);
   MakeHeapIterable(CompleteSweepingReason::kCollectCodeStatistics);
@@ -7616,9 +7619,8 @@ void Heap::EnsureSweepingCompleted(SweepingForcedFinalizationMode mode,
       TRACE_GC_EPOCH_WITH_FLOW(
           tracer(), GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING,
           ThreadKind::kMain,
-          sweeper_->GetTraceIdForFlowEvent(
-              GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING),
-          TRACE_EVENT_FLAG_FLOW_IN | TRACE_EVENT_FLAG_FLOW_OUT);
+          perfetto::Flow::ProcessScoped(sweeper_->GetTraceIdForFlowEvent(
+              GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING)));
       paged_new_space()->paged_space()->RefillFreeList();
     }
 
@@ -7661,9 +7663,8 @@ void Heap::EnsureYoungSweepingCompleted() {
 
   TRACE_GC_EPOCH_WITH_FLOW(
       tracer(), GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING, ThreadKind::kMain,
-      sweeper_->GetTraceIdForFlowEvent(
-          GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING),
-      TRACE_EVENT_FLAG_FLOW_IN);
+      perfetto::TerminatingFlow::ProcessScoped(sweeper_->GetTraceIdForFlowEvent(
+          GCTracer::Scope::MINOR_MS_COMPLETE_SWEEPING)));
 
   sweeper()->EnsureMinorCompleted();
   paged_new_space()->paged_space()->RefillFreeList();

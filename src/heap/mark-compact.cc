@@ -894,8 +894,8 @@ void MarkCompactCollector::Finish() {
   {
     TRACE_GC_EPOCH_WITH_FLOW(
         heap_->tracer(), GCTracer::Scope::MC_SWEEP, ThreadKind::kMain,
-        sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MC_SWEEP),
-        TRACE_EVENT_FLAG_FLOW_IN | TRACE_EVENT_FLAG_FLOW_OUT);
+        perfetto::Flow::ProcessScoped(
+            sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MC_SWEEP)));
 
     // Delay releasing empty new space pages and dead new large object pages
     // until after pointer updating is done because dead old space objects may
@@ -2585,9 +2585,10 @@ void MarkCompactCollector::MarkLiveObjects() {
       !heap_->incremental_marking()->IsStopped();
   if (was_marked_incrementally) {
     auto* incremental_marking = heap_->incremental_marking();
-    TRACE_GC_WITH_FLOW(
-        heap_->tracer(), GCTracer::Scope::MC_MARK_FINISH_INCREMENTAL,
-        incremental_marking->current_trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
+    TRACE_GC_WITH_FLOW(heap_->tracer(),
+                       GCTracer::Scope::MC_MARK_FINISH_INCREMENTAL,
+                       perfetto::TerminatingFlow::ProcessScoped(
+                           incremental_marking->current_trace_id()));
     DCHECK(incremental_marking->IsMajorMarking());
     incremental_marking->Stop();
     MarkingBarrier::PublishAll(heap_);
@@ -3145,7 +3146,7 @@ void MarkCompactCollector::ClearNonLiveReferences() {
       const int start = chunk * chunk_size;
       const int end = std::min(capacity, start + chunk_size);
       DCHECK_LT(start, end);
-      auto item =
+      [[maybe_unused]] auto item =
           MakeParallelItem("ClearStringTable", [this, isolate, start, end,
                                                 &string_table_removed_count](
                                                    ParallelItem* item,
@@ -3154,7 +3155,8 @@ void MarkCompactCollector::ClearNonLiveReferences() {
 
             TRACE_GC1_WITH_FLOW(
                 heap()->tracer(), GCTracer::Scope::MC_CLEAR_STRING_TABLE,
-                delegate, item->trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
+                delegate,
+                perfetto::TerminatingFlow::ProcessScoped(item->trace_id()));
             // Prune the string table removing all strings only pointed to
             // by the string table.  Cannot use string_table() here because
             // the string table is marked.
@@ -3168,21 +3170,22 @@ void MarkCompactCollector::ClearNonLiveReferences() {
                                                    std::memory_order_relaxed);
             }
           }).Enqueue(parallel_clearing_job);
-      TRACE_GC_NOTE_WITH_FLOW("ClearStringTableJob started", item->trace_id(),
-                              TRACE_EVENT_FLAG_FLOW_OUT);
+      TRACE_GC_NOTE_WITH_FLOW("ClearStringTableJob started",
+                              perfetto::Flow::ProcessScoped(item->trace_id()));
     }
   }
 
   if (isolate->is_shared_space_isolate() &&
       isolate->shared_struct_type_registry()) {
-    auto item =
+    [[maybe_unused]] auto item =
         MakeParallelItem(
             "ClearSharedStructTypeRegistry",
             [this, isolate](ParallelItem* item, JobDelegate* delegate) {
               TRACE_GC1_WITH_FLOW(
                   heap()->tracer(),
                   GCTracer::Scope::MC_CLEAR_SHARED_STRUCT_TYPE_REGISTRY,
-                  delegate, item->trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
+                  delegate,
+                  perfetto::TerminatingFlow::ProcessScoped(item->trace_id()));
               auto* registry = isolate->shared_struct_type_registry();
               SharedStructTypeRegistryCleaner cleaner(heap());
               registry->IterateElements(isolate, &cleaner);
@@ -3190,7 +3193,7 @@ void MarkCompactCollector::ClearNonLiveReferences() {
             })
             .Enqueue(parallel_clearing_job);
     TRACE_GC_NOTE_WITH_FLOW("ClearSharedStructTypeRegistryJob started",
-                            item->trace_id(), TRACE_EVENT_FLAG_FLOW_OUT);
+                            perfetto::Flow::ProcessScoped(item->trace_id()));
   }
 
   auto clear_external_string_table =
@@ -3329,63 +3332,67 @@ void MarkCompactCollector::ClearNonLiveReferences() {
       }).Enqueue(parallel_clearing_job);
 
   {
-    auto item = MakeParallelItem(
-                    "ClearTrivialWeakRefs",
-                    [this](ParallelItem* item, JobDelegate* delegate) {
-                      TRACE_GC1_WITH_FLOW(
-                          heap()->tracer(),
-                          GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_TRIVIAL,
-                          delegate, item->trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
-                      ClearTrivialWeakReferences();
-                    })
-                    // Do not run before these items finished, these may change
-                    // the value of weak references.
-                    .DependsOn(process_old_code_candidates_item)
-                    .DependsOn(process_all_weak_references)
-                    .DependsOn(clear_maps_items)
-                    .Enqueue(parallel_clearing_job);
-    TRACE_GC_NOTE_WITH_FLOW("ClearTrivialWeakRefJob started", item->trace_id(),
-                            TRACE_EVENT_FLAG_FLOW_OUT);
+    [[maybe_unused]] auto item =
+        MakeParallelItem(
+            "ClearTrivialWeakRefs",
+            [this](ParallelItem* item, JobDelegate* delegate) {
+              TRACE_GC1_WITH_FLOW(
+                  heap()->tracer(),
+                  GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_TRIVIAL, delegate,
+                  perfetto::TerminatingFlow::ProcessScoped(item->trace_id()));
+              ClearTrivialWeakReferences();
+            })
+            // Do not run before these items finished, these may change
+            // the value of weak references.
+            .DependsOn(process_old_code_candidates_item)
+            .DependsOn(process_all_weak_references)
+            .DependsOn(clear_maps_items)
+            .Enqueue(parallel_clearing_job);
+    TRACE_GC_NOTE_WITH_FLOW("ClearTrivialWeakRefJob started",
+                            perfetto::Flow::ProcessScoped(item->trace_id()));
   }
 
   {
-    auto item = MakeParallelItem(
-                    "ClearTrustedWeakRefs",
-                    [this](ParallelItem* item, JobDelegate* delegate) {
-                      TRACE_GC1_WITH_FLOW(
-                          heap()->tracer(),
-                          GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_TRUSTED,
-                          delegate, item->trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
-                      ClearTrustedWeakReferences();
-                    })
-                    // Do not run before these items finished, these may change
-                    // the value of weak references.
-                    .DependsOn(process_old_code_candidates_item)
-                    .DependsOn(process_all_weak_references)
-                    .DependsOn(clear_maps_items)
-                    .Enqueue(parallel_clearing_job);
-    TRACE_GC_NOTE_WITH_FLOW("ClearTrustedWeakRefJob started", item->trace_id(),
-                            TRACE_EVENT_FLAG_FLOW_OUT);
+    [[maybe_unused]] auto item =
+        MakeParallelItem(
+            "ClearTrustedWeakRefs",
+            [this](ParallelItem* item, JobDelegate* delegate) {
+              TRACE_GC1_WITH_FLOW(
+                  heap()->tracer(),
+                  GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_TRUSTED, delegate,
+                  perfetto::TerminatingFlow::ProcessScoped(item->trace_id()));
+              ClearTrustedWeakReferences();
+            })
+            // Do not run before these items finished, these may change
+            // the value of weak references.
+            .DependsOn(process_old_code_candidates_item)
+            .DependsOn(process_all_weak_references)
+            .DependsOn(clear_maps_items)
+            .Enqueue(parallel_clearing_job);
+    TRACE_GC_NOTE_WITH_FLOW("ClearTrustedWeakRefJob started",
+                            perfetto::Flow::ProcessScoped(item->trace_id()));
   }
 
   {
-    auto item = MakeParallelItem(
-                    "ClearNonTrivialWeakRefs",
-                    [this](ParallelItem* item, JobDelegate* delegate) {
-                      TRACE_GC1_WITH_FLOW(
-                          heap()->tracer(),
-                          GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_NON_TRIVIAL,
-                          delegate, item->trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
-                      ClearNonTrivialWeakReferences();
-                    })
-                    // Do not run before these items finished, these may change
-                    // the value of weak references.
-                    .DependsOn(process_old_code_candidates_item)
-                    .DependsOn(process_all_weak_references)
-                    .DependsOn(clear_maps_items)
-                    .Enqueue(parallel_clearing_job);
-    TRACE_GC_NOTE_WITH_FLOW("ClearNonTrivialWeakRefs started", item->trace_id(),
-                            TRACE_EVENT_FLAG_FLOW_OUT);
+    [[maybe_unused]] auto item =
+        MakeParallelItem(
+            "ClearNonTrivialWeakRefs",
+            [this](ParallelItem* item, JobDelegate* delegate) {
+              TRACE_GC1_WITH_FLOW(
+                  heap()->tracer(),
+                  GCTracer::Scope::MC_CLEAR_WEAK_REFERENCES_NON_TRIVIAL,
+                  delegate,
+                  perfetto::TerminatingFlow::ProcessScoped(item->trace_id()));
+              ClearNonTrivialWeakReferences();
+            })
+            // Do not run before these items finished, these may change
+            // the value of weak references.
+            .DependsOn(process_old_code_candidates_item)
+            .DependsOn(process_all_weak_references)
+            .DependsOn(clear_maps_items)
+            .Enqueue(parallel_clearing_job);
+    TRACE_GC_NOTE_WITH_FLOW("ClearNonTrivialWeakRefs started",
+                            perfetto::Flow::ProcessScoped(item->trace_id()));
   }
 
 #ifdef V8_COMPRESS_POINTERS
@@ -4953,12 +4960,13 @@ class PageEvacuationJob : public v8::JobTask {
     Evacuator* evacuator = (*evacuators_)[delegate->GetTaskId()].get();
     if (delegate->IsJoiningThread()) {
       TRACE_GC_WITH_FLOW(tracer_, GCTracer::Scope::MC_EVACUATE_COPY_PARALLEL,
-                         trace_id_, TRACE_EVENT_FLAG_FLOW_IN);
+                         perfetto::TerminatingFlow::ProcessScoped(trace_id_));
       ProcessItems(delegate, evacuator);
     } else {
       TRACE_GC_EPOCH_WITH_FLOW(
           tracer_, GCTracer::Scope::MC_BACKGROUND_EVACUATE_COPY,
-          ThreadKind::kBackground, trace_id_, TRACE_EVENT_FLAG_FLOW_IN);
+          ThreadKind::kBackground,
+          perfetto::TerminatingFlow::ProcessScoped(trace_id_));
       ProcessItems(delegate, evacuator);
     }
   }
@@ -5027,9 +5035,9 @@ size_t CreateAndExecuteEvacuationTasks(
   }
   auto page_evacuation_job = std::make_unique<PageEvacuationJob>(
       heap->isolate(), collector, &evacuators, std::move(evacuation_items));
-  TRACE_GC_NOTE_WITH_FLOW("PageEvacuationJob started",
-                          page_evacuation_job->trace_id(),
-                          TRACE_EVENT_FLAG_FLOW_OUT);
+  TRACE_GC_NOTE_WITH_FLOW(
+      "PageEvacuationJob started",
+      perfetto::Flow::ProcessScoped(page_evacuation_job->trace_id()));
   V8::GetCurrentPlatform()
       ->CreateJob(v8::TaskPriority::kUserBlocking,
                   std::move(page_evacuation_job))
@@ -5391,12 +5399,13 @@ class PointersUpdatingJob : public v8::JobTask {
     if (delegate->IsJoiningThread()) {
       TRACE_GC_WITH_FLOW(tracer_,
                          GCTracer::Scope::MC_EVACUATE_UPDATE_POINTERS_PARALLEL,
-                         trace_id_, TRACE_EVENT_FLAG_FLOW_IN);
+                         perfetto::TerminatingFlow::ProcessScoped(trace_id_));
       UpdatePointers(delegate);
     } else {
       TRACE_GC_EPOCH_WITH_FLOW(
           tracer_, GCTracer::Scope::MC_BACKGROUND_EVACUATE_UPDATE_POINTERS,
-          ThreadKind::kBackground, trace_id_, TRACE_EVENT_FLAG_FLOW_IN);
+          ThreadKind::kBackground,
+          perfetto::TerminatingFlow::ProcessScoped(trace_id_));
       UpdatePointers(delegate);
     }
   }
@@ -5850,9 +5859,9 @@ void MarkCompactCollector::UpdatePointersAfterEvacuation() {
 
     auto pointers_updating_job = std::make_unique<PointersUpdatingJob>(
         heap_->isolate(), this, std::move(updating_items));
-    TRACE_GC_NOTE_WITH_FLOW("PointersUpdatingJob started",
-                            pointers_updating_job->trace_id(),
-                            TRACE_EVENT_FLAG_FLOW_OUT);
+    TRACE_GC_NOTE_WITH_FLOW(
+        "PointersUpdatingJob started",
+        perfetto::Flow::ProcessScoped(pointers_updating_job->trace_id()));
     V8::GetCurrentPlatform()
         ->CreateJob(v8::TaskPriority::kUserBlocking,
                     std::move(pointers_updating_job))
@@ -6314,8 +6323,8 @@ void MarkCompactCollector::Sweep() {
 
   TRACE_GC_EPOCH_WITH_FLOW(
       heap_->tracer(), GCTracer::Scope::MC_SWEEP, ThreadKind::kMain,
-      sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MC_SWEEP),
-      TRACE_EVENT_FLAG_FLOW_OUT);
+      perfetto::Flow::ProcessScoped(
+          sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MC_SWEEP)));
 #ifdef DEBUG
   state_ = SWEEP_SPACES;
 #endif

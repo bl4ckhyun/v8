@@ -701,9 +701,10 @@ void MinorMarkSweepCollector::MarkLiveObjects() {
     StartMarking(false);
   } else {
     auto* incremental_marking = heap_->incremental_marking();
-    TRACE_GC_WITH_FLOW(
-        heap_->tracer(), GCTracer::Scope::MINOR_MS_MARK_FINISH_INCREMENTAL,
-        incremental_marking->current_trace_id(), TRACE_EVENT_FLAG_FLOW_IN);
+    TRACE_GC_WITH_FLOW(heap_->tracer(),
+                       GCTracer::Scope::MINOR_MS_MARK_FINISH_INCREMENTAL,
+                       perfetto::TerminatingFlow::ProcessScoped(
+                           incremental_marking->current_trace_id()));
     DCHECK(incremental_marking->IsMinorMarking());
     DCHECK(v8_flags.concurrent_minor_ms_marking);
     incremental_marking->Stop();
@@ -1041,8 +1042,8 @@ void MinorMarkSweepCollector::Sweep() {
 
   TRACE_GC_WITH_FLOW(
       heap_->tracer(), GCTracer::Scope::MINOR_MS_SWEEP,
-      sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MINOR_MS_SWEEP),
-      TRACE_EVENT_FLAG_FLOW_OUT);
+      perfetto::Flow::ProcessScoped(
+          sweeper_->GetTraceIdForFlowEvent(GCTracer::Scope::MINOR_MS_SWEEP)));
 
   if (v8_flags.sticky_mark_bits) {
     StartSweepNewSpaceWithStickyBits();

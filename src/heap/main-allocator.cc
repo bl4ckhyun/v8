@@ -775,8 +775,9 @@ bool PagedSpaceAllocatorPolicy::ContributeToSweeping(uint32_t max_pages) {
 
   TRACE_GC_EPOCH_WITH_FLOW(
       isolate_heap()->tracer(), sweeping_scope_id, sweeping_scope_kind,
-      isolate_heap()->sweeper()->GetTraceIdForFlowEvent(sweeping_scope_id),
-      TRACE_EVENT_FLAG_FLOW_IN | TRACE_EVENT_FLAG_FLOW_OUT);
+      perfetto::Flow::ProcessScoped(
+          isolate_heap()->sweeper()->GetTraceIdForFlowEvent(
+              sweeping_scope_id)));
   // Cleanup invalidated old-to-new refs for compaction space in the
   // final atomic pause.
   Sweeper::SweepingMode sweeping_mode =

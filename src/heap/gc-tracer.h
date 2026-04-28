@@ -37,44 +37,47 @@ enum YoungGenerationSpeedMode {
   DCHECK_NE(GCTracer::Scope::MC_BACKGROUND_SWEEPING, scope_id);       \
   GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                 \
       tracer, GCTracer::Scope::ScopeId(scope_id), ThreadKind::kMain); \
-  TRACE_EVENT0(TRACE_GC_CATEGORIES,                                   \
-               GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)))
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                                    \
+              perfetto::StaticString(                                 \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))))
 
-#define TRACE_GC_ARG1(tracer, scope_id, arg0_name, arg0_value)            \
-  DCHECK_NE(GCTracer::Scope::MC_SWEEP, scope_id);                         \
-  DCHECK_NE(GCTracer::Scope::MC_BACKGROUND_SWEEPING, scope_id);           \
-  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                     \
-      tracer, GCTracer::Scope::ScopeId(scope_id), ThreadKind::kMain);     \
-  TRACE_EVENT1(TRACE_GC_CATEGORIES,                                       \
-               GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)), \
-               arg0_name, arg0_value)
+#define TRACE_GC_ARG1(tracer, scope_id, arg0_name, arg0_value)                \
+  DCHECK_NE(GCTracer::Scope::MC_SWEEP, scope_id);                             \
+  DCHECK_NE(GCTracer::Scope::MC_BACKGROUND_SWEEPING, scope_id);               \
+  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                         \
+      tracer, GCTracer::Scope::ScopeId(scope_id), ThreadKind::kMain);         \
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                                            \
+              perfetto::StaticString(                                         \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))), \
+              arg0_name, arg0_value)
 
-#define TRACE_GC_WITH_FLOW(tracer, scope_id, bind_id, flow_flags)         \
-  DCHECK_NE(GCTracer::Scope::MC_SWEEP, scope_id);                         \
-  DCHECK_NE(GCTracer::Scope::MC_BACKGROUND_SWEEPING, scope_id);           \
-  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                     \
-      tracer, GCTracer::Scope::ScopeId(scope_id), ThreadKind::kMain);     \
-  TRACE_EVENT_WITH_FLOW0(                                                 \
-      TRACE_GC_CATEGORIES,                                                \
-      GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)), bind_id, \
-      flow_flags)
+#define TRACE_GC_WITH_FLOW(tracer, scope_id, flow)                            \
+  DCHECK_NE(GCTracer::Scope::MC_SWEEP, scope_id);                             \
+  DCHECK_NE(GCTracer::Scope::MC_BACKGROUND_SWEEPING, scope_id);               \
+  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                         \
+      tracer, GCTracer::Scope::ScopeId(scope_id), ThreadKind::kMain);         \
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                                            \
+              perfetto::StaticString(                                         \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))), \
+              flow)
 
 #define TRACE_GC1(tracer, scope_id, thread_kind_or_job_delegate) \
   GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(            \
       tracer, GCTracer::Scope::ScopeId(scope_id),                \
       thread_kind_or_job_delegate);                              \
-  TRACE_EVENT0(TRACE_GC_CATEGORIES,                              \
-               GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)))
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                               \
+              perfetto::StaticString(                            \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))))
 
-#define TRACE_GC1_WITH_FLOW(tracer, scope_id, thread_kind_or_job_delegate, \
-                            bind_id, flow_flags)                           \
-  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                      \
-      tracer, GCTracer::Scope::ScopeId(scope_id),                          \
-      thread_kind_or_job_delegate);                                        \
-  TRACE_EVENT_WITH_FLOW0(                                                  \
-      TRACE_GC_CATEGORIES,                                                 \
-      GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)), bind_id,  \
-      flow_flags)
+#define TRACE_GC1_WITH_FLOW(tracer, scope_id, thread_kind_or_job_delegate,    \
+                            flow)                                             \
+  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                         \
+      tracer, GCTracer::Scope::ScopeId(scope_id),                             \
+      thread_kind_or_job_delegate);                                           \
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                                            \
+              perfetto::StaticString(                                         \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))), \
+              flow)
 
 #define TRACE_GC_EPOCH(tracer, scope_id, thread_kind_or_job_delegate, ...)    \
   GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                         \
@@ -85,24 +88,24 @@ enum YoungGenerationSpeedMode {
                   GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))), \
               "epoch", tracer->CurrentEpoch(), ##__VA_ARGS__)
 
-#define TRACE_GC_EPOCH_WITH_FLOW(                                         \
-    tracer, scope_id, thread_kind_or_job_delegate, bind_id, flow_flags)   \
-  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                     \
-      tracer, GCTracer::Scope::ScopeId(scope_id),                         \
-      thread_kind_or_job_delegate);                                       \
-  TRACE_EVENT_WITH_FLOW1(                                                 \
-      TRACE_GC_CATEGORIES,                                                \
-      GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id)), bind_id, \
-      flow_flags, "epoch", tracer->CurrentEpoch())
+#define TRACE_GC_EPOCH_WITH_FLOW(tracer, scope_id,                            \
+                                 thread_kind_or_job_delegate, flow)           \
+  GCTracer::Scope UNIQUE_IDENTIFIER(gc_tracer_scope)(                         \
+      tracer, GCTracer::Scope::ScopeId(scope_id),                             \
+      thread_kind_or_job_delegate);                                           \
+  TRACE_EVENT(TRACE_GC_CATEGORIES,                                            \
+              perfetto::StaticString(                                         \
+                  GCTracer::Scope::Name(GCTracer::Scope::ScopeId(scope_id))), \
+              flow, "epoch", tracer->CurrentEpoch())
 
-#define TRACE_GC_NOTE(note)                  \
-  do {                                       \
-    TRACE_EVENT0(TRACE_GC_CATEGORIES, note); \
+#define TRACE_GC_NOTE(note)                 \
+  do {                                      \
+    TRACE_EVENT(TRACE_GC_CATEGORIES, note); \
   } while (0)
 
-#define TRACE_GC_NOTE_WITH_FLOW(note, bind_id, flow_flags)                  \
-  do {                                                                      \
-    TRACE_EVENT_WITH_FLOW0(TRACE_GC_CATEGORIES, note, bind_id, flow_flags); \
+#define TRACE_GC_NOTE_WITH_FLOW(note, flow)       \
+  do {                                            \
+    TRACE_EVENT(TRACE_GC_CATEGORIES, note, flow); \
   } while (0)
 
 using CollectionEpoch = uint32_t;
