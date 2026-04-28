@@ -248,7 +248,9 @@ constexpr int kMaxPolymorphism = 4;
 
 // A struct field beyond this limit needs an explicit null check (trapping null
 // access not guaranteed to behave properly).
+// LINT.IfChange(WasmMaxFieldIndexImplicitNullCheck)
 constexpr int kMaxStructFieldIndexForImplicitNullCheck = 4000;
+// LINT.ThenChange(/test/mjsunit/wasm/large-struct.js:WasmMaxFieldIndexImplicitNullCheck)
 
 // Compilation-hints proposal: This optimization-priority value signifies that
 // the function is only executed once, thus we only compile it eagerly with the
