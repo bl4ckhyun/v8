@@ -691,12 +691,6 @@ class ClassType final : public AggregateType {
     if (!ShouldGenerateCppClassDefinitions()) return false;
     return !HasUndefinedLayout() && !IsShape();
   }
-  bool ShouldGenerateBodyDescriptor() const {
-    if (flags_ & ClassFlag::kCppObjectDefinition) return false;
-    if (flags_ & ClassFlag::kCppObjectLayoutDefinition) return false;
-    if (flags_ & ClassFlag::kGenerateBodyDescriptor) return true;
-    return !IsAbstract() && !IsExtern();
-  }
   bool DoNotGenerateCast() const {
     return flags_ & ClassFlag::kDoNotGenerateCast;
   }

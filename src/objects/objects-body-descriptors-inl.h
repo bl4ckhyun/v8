@@ -2183,8 +2183,6 @@ class DoubleStringCache::BodyDescriptor final : public BodyDescriptorBase {
   }
 };
 
-#include "torque-generated/objects-body-descriptors-inl.inc"
-
 }  // namespace internal
 }  // namespace v8
 

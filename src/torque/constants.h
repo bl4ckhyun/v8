@@ -109,8 +109,6 @@ static const char* const ANNOTATION_INSTANCE_TYPE_VALUE =
     "@apiExposedInstanceTypeValue";
 static const char* const ANNOTATION_IF = "@if";
 static const char* const ANNOTATION_IFNOT = "@ifnot";
-static const char* const ANNOTATION_GENERATE_BODY_DESCRIPTOR =
-    "@generateBodyDescriptor";
 static const char* const ANNOTATION_GENERATE_UNIQUE_MAP = "@generateUniqueMap";
 static const char* const ANNOTATION_EXPORT = "@export";
 static const char* const ANNOTATION_DO_NOT_GENERATE_CAST = "@doNotGenerateCast";
@@ -175,7 +173,6 @@ enum class ClassFlag {
   kHighestInstanceTypeWithinParent = 1 << 6,
   kLowestInstanceTypeWithinParent = 1 << 7,
   kUndefinedLayout = 1 << 8,
-  kGenerateBodyDescriptor = 1 << 9,
   kExport = 1 << 10,
   kDoNotGenerateCast = 1 << 11,
   kGenerateUniqueMap = 1 << 12,

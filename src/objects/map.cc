@@ -539,12 +539,6 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
       return kVisitWasmTypeInfo;
 #endif  // V8_ENABLE_WEBASSEMBLY
 
-#define MAKE_TQ_CASE(TYPE, Name) \
-  case TYPE:                     \
-    return kVisit##Name;
-      TORQUE_INSTANCE_TYPE_TO_BODY_DESCRIPTOR_LIST(MAKE_TQ_CASE)
-#undef MAKE_TQ_CASE
-
 #define CASE(TypeCamelCase, TYPE_UPPER_CASE) \
   case TYPE_UPPER_CASE##_TYPE:               \
     return kVisit##TypeCamelCase;
@@ -2772,9 +2766,7 @@ const char* ToString(VisitorId visitor_id) {
   case kVisit##id:               \
     return #id;
     DATA_ONLY_VISITOR_ID_LIST(VISITOR_ID_CASE_DECL)
-    TORQUE_DATA_ONLY_VISITOR_ID_LIST(VISITOR_ID_CASE_DECL)
     POINTER_VISITOR_ID_LIST(VISITOR_ID_CASE_DECL)
-    TORQUE_POINTER_VISITOR_ID_LIST(VISITOR_ID_CASE_DECL)
     TRUSTED_VISITOR_ID_LIST(VISITOR_ID_CASE_DECL)
 #undef VISITOR_ID_CASE_DECL
     case kDataOnlyVisitorIdCount:

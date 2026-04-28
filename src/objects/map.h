@@ -21,7 +21,6 @@
 #include "src/objects/prototype-info.h"
 #include "src/roots/roots.h"
 #include "torque-generated/bit-fields.h"
-#include "torque-generated/visitor-lists.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
@@ -140,10 +139,6 @@ enum InstanceType : uint16_t;
   V(WeakCell)                         \
   SIMPLE_HEAP_OBJECT_LIST1(V)
 
-#define TORQUE_VISITOR_ID_LIST(V)     \
-  TORQUE_DATA_ONLY_VISITOR_ID_LIST(V) \
-  TORQUE_POINTER_VISITOR_ID_LIST(V)
-
 #define TRUSTED_VISITOR_ID_LIST(V) CONCRETE_TRUSTED_OBJECT_TYPE_LIST1(V)
 
 // Objects with the same visitor id are processed in the same way by
@@ -154,10 +149,8 @@ enum VisitorId {
 #define VISITOR_ID_ENUM_DECL(id) kVisit##id,
   // clang-format off
   DATA_ONLY_VISITOR_ID_LIST(VISITOR_ID_ENUM_DECL)
-  TORQUE_DATA_ONLY_VISITOR_ID_LIST(VISITOR_ID_ENUM_DECL)
   kDataOnlyVisitorIdCount,
   POINTER_VISITOR_ID_LIST(VISITOR_ID_ENUM_DECL)
-  TORQUE_POINTER_VISITOR_ID_LIST(VISITOR_ID_ENUM_DECL)
   TRUSTED_VISITOR_ID_LIST(VISITOR_ID_ENUM_DECL)
   kVisitorIdCount
 // clang-format on

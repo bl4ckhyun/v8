@@ -196,7 +196,6 @@ ClassDeclaration :
 
 ClassAnnotation :
   @doNotGenerateCppClass
-  @generateBodyDescriptor
   @generatePrint
   @abstract
   @export
@@ -274,8 +273,6 @@ class JSProxy : public JSReceiver {
   // Rest of class omitted...
 }
 ```
-
-`@generateBodyDescriptor` causes Torque to emit a class `BodyDescriptor` within the generated class, which represents how the garbage collector should visit the object. Otherwise the C++ code must either define its own object visitation, or use one of the existing patterns (for example, inheriting from `Struct` and including the class in `STRUCT_LIST` means that the class is expected to contain only tagged values).
 
 If the `@generatePrint` annotation is added, then the generator will implement a C++ function that prints the field values as defined by the Torque layout. Using the JSProxy example, the signature would be `void TorqueGeneratedJSProxy<JSProxy, JSReceiver>::JSProxyPrint(std::ostream& os)`, which can be inherited by `JSProxy`.
 

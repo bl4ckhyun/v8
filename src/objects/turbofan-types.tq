@@ -59,7 +59,6 @@ bitfield struct TurbofanTypeHighBits extends uint32 {
 }
 
 @cppObjectLayoutDefinition
-@generateBodyDescriptor
 @generateUniqueMap
 extern class TurbofanBitsetType extends TurbofanType {
   bitset_low: TurbofanTypeLowBits;
@@ -67,7 +66,6 @@ extern class TurbofanBitsetType extends TurbofanType {
 }
 
 @cppObjectLayoutDefinition
-@generateBodyDescriptor
 @generateUniqueMap
 extern class TurbofanUnionType extends TurbofanType {
   type1: TurbofanType;
@@ -75,7 +73,6 @@ extern class TurbofanUnionType extends TurbofanType {
 }
 
 @cppObjectLayoutDefinition
-@generateBodyDescriptor
 @generateUniqueMap
 extern class TurbofanRangeType extends TurbofanType {
   min: float64;
@@ -83,14 +80,12 @@ extern class TurbofanRangeType extends TurbofanType {
 }
 
 @cppObjectLayoutDefinition
-@generateBodyDescriptor
 @generateUniqueMap
 extern class TurbofanHeapConstantType extends TurbofanType {
   constant: HeapObject;
 }
 
 @cppObjectLayoutDefinition
-@generateBodyDescriptor
 @generateUniqueMap
 extern class TurbofanOtherNumberConstantType extends TurbofanType {
   constant: float64;

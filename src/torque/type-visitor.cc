@@ -281,9 +281,7 @@ const ClassType* TypeVisitor::ComputeType(
             " because superclass is neither @export or extern");
     }
   }
-  if ((flags & ClassFlag::kGenerateBodyDescriptor ||
-       flags & ClassFlag::kExport) &&
-      flags & ClassFlag::kUndefinedLayout) {
+  if ((flags & ClassFlag::kExport) && flags & ClassFlag::kUndefinedLayout) {
     Error("Class \"", decl->name->value,
           "\" requires a layout but doesn't have one");
   }

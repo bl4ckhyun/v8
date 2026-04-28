@@ -4404,9 +4404,7 @@ v8_torque_files(
         "factory.inc",
         "instance-types.h",
         "interface-descriptors.inc",
-        "objects-body-descriptors-inl.inc",
         "objects-printer.cc",
-        "visitor-lists.h",
 
     ],
     icu_srcs = [":icu/torque_files"],

@@ -2113,13 +2113,6 @@ int HeapObject::SizeFromMap(Tagged<Map> map) const {
     Tagged<PreparseData> data = UncheckedCast<PreparseData>(*this);
     return PreparseData::SizeFor(data->data_length(), data->children_length());
   }
-#define MAKE_TORQUE_SIZE_FOR(TYPE, TypeName)                \
-  if (instance_type == TYPE) {                              \
-    return UncheckedCast<TypeName>(*this)->AllocatedSize(); \
-  }
-  TORQUE_INSTANCE_TYPE_TO_BODY_DESCRIPTOR_LIST(MAKE_TORQUE_SIZE_FOR)
-#undef MAKE_TORQUE_SIZE_FOR
-
   if (instance_type == INSTRUCTION_STREAM_TYPE) {
     return UncheckedCast<InstructionStream>(*this)->Size();
   }

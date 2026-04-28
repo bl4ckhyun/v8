@@ -2445,9 +2445,7 @@ template("run_torque") {
       "$destination_folder/factory.inc",
       "$destination_folder/instance-types.h",
       "$destination_folder/interface-descriptors.inc",
-      "$destination_folder/objects-body-descriptors-inl.inc",
       "$destination_folder/objects-printer.cc",
-      "$destination_folder/visitor-lists.h",
     ]
 
     foreach(file, torque_files) {

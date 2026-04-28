@@ -203,7 +203,6 @@ class MaybeObjectSize final {
 #define FORWARD_DECLARE(TypeName) class TypeName;
 TYPED_VISITOR_ID_LIST(FORWARD_DECLARE)
 TYPED_VISITOR_WITH_SLACK_ID_LIST(FORWARD_DECLARE)
-TORQUE_VISITOR_ID_LIST(FORWARD_DECLARE)
 TRUSTED_VISITOR_ID_LIST(FORWARD_DECLARE)
 #undef FORWARD_DECLARE
 
@@ -287,7 +286,6 @@ class HeapVisitor : public ObjectVisitorWithCageBases {
                                    MaybeObjectSize maybe_object_size);
   TYPED_VISITOR_ID_LIST(VISIT)
   TYPED_VISITOR_WITH_SLACK_ID_LIST(VISIT)
-  TORQUE_VISITOR_ID_LIST(VISIT)
   TRUSTED_VISITOR_ID_LIST(VISIT)
 #undef VISIT
   V8_INLINE size_t VisitShortcutCandidate(Tagged<Map> map,

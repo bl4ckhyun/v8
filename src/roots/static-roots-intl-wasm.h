@@ -262,20 +262,7 @@ struct StaticReadOnlyRoot {
       kTurboshaftWord32RangeTypeMap + 40;
   static constexpr Tagged_t kTurboshaftFloat64RangeTypeMap =
       kTurboshaftWord64RangeTypeMap + 40;
-  static constexpr Tagged_t kInternalClassMap =
-      kTurboshaftFloat64RangeTypeMap + 40;
-  static constexpr Tagged_t kSmiPairMap = kInternalClassMap + 40;
-  static constexpr Tagged_t kSmiBoxMap = kSmiPairMap + 40;
-  static constexpr Tagged_t kExportedSubClassBaseMap = kSmiBoxMap + 40;
-  static constexpr Tagged_t kExportedSubClassMap =
-      kExportedSubClassBaseMap + 40;
-  static constexpr Tagged_t kAbstractInternalClassSubclass1Map =
-      kExportedSubClassMap + 40;
-  static constexpr Tagged_t kAbstractInternalClassSubclass2Map =
-      kAbstractInternalClassSubclass1Map + 40;
-  static constexpr Tagged_t kExportedSubClass2Map =
-      kAbstractInternalClassSubclass2Map + 40;
-  static constexpr Tagged_t kSortStateMap = kExportedSubClass2Map + 40;
+  static constexpr Tagged_t kSortStateMap = kTurboshaftFloat64RangeTypeMap + 40;
   static constexpr Tagged_t kWasmFastApiCallDataMap = kSortStateMap + 40;
   static constexpr Tagged_t kWasmStringViewIterMap =
       kWasmFastApiCallDataMap + 40;
@@ -287,10 +274,8 @@ struct StaticReadOnlyRoot {
       kTurboshaftWord32SetTypeMap + 40;
   static constexpr Tagged_t kTurboshaftFloat64SetTypeMap =
       kTurboshaftWord64SetTypeMap + 40;
-  static constexpr Tagged_t kInternalClassWithStructElementsMap =
-      kTurboshaftFloat64SetTypeMap + 40;
   static constexpr Tagged_t kOrderedHashMapMap =
-      kInternalClassWithStructElementsMap + 40;
+      kTurboshaftFloat64SetTypeMap + 40;
   static constexpr Tagged_t kOrderedHashSetMap = kOrderedHashMapMap + 40;
   static constexpr Tagged_t kSimpleNumberDictionaryMap =
       kOrderedHashSetMap + 40;
@@ -1267,7 +1252,7 @@ struct StaticReadOnlyRoot {
   static constexpr Tagged_t kLastAllocatedRoot = 0x1a015d;
 };
 
-static constexpr std::array<Tagged_t, 1048> StaticReadOnlyRootsPointerTable = {
+static constexpr std::array<Tagged_t, 1039> StaticReadOnlyRootsPointerTable = {
     StaticReadOnlyRoot::kUndefinedValue,
     StaticReadOnlyRoot::kTheHoleValue,
     StaticReadOnlyRoot::kNullValue,
@@ -2280,15 +2265,6 @@ static constexpr std::array<Tagged_t, 1048> StaticReadOnlyRootsPointerTable = {
     StaticReadOnlyRoot::kTurboshaftWord64SetTypeMap,
     StaticReadOnlyRoot::kTurboshaftFloat64RangeTypeMap,
     StaticReadOnlyRoot::kTurboshaftFloat64SetTypeMap,
-    StaticReadOnlyRoot::kInternalClassMap,
-    StaticReadOnlyRoot::kSmiPairMap,
-    StaticReadOnlyRoot::kSmiBoxMap,
-    StaticReadOnlyRoot::kExportedSubClassBaseMap,
-    StaticReadOnlyRoot::kExportedSubClassMap,
-    StaticReadOnlyRoot::kAbstractInternalClassSubclass1Map,
-    StaticReadOnlyRoot::kAbstractInternalClassSubclass2Map,
-    StaticReadOnlyRoot::kInternalClassWithStructElementsMap,
-    StaticReadOnlyRoot::kExportedSubClass2Map,
     StaticReadOnlyRoot::kSortStateMap,
     StaticReadOnlyRoot::kWasmFastApiCallDataMap,
     StaticReadOnlyRoot::kWasmStringViewIterMap,

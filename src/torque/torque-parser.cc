@@ -1038,8 +1038,8 @@ std::optional<ParseResult> MakeClassDeclaration(
       child_results,
       {ANNOTATION_ABSTRACT, ANNOTATION_HAS_SAME_INSTANCE_TYPE_AS_PARENT,
        ANNOTATION_DO_NOT_GENERATE_CPP_CLASS, ANNOTATION_CUSTOM_CPP_CLASS,
-       ANNOTATION_CUSTOM_MAP, ANNOTATION_GENERATE_BODY_DESCRIPTOR,
-       ANNOTATION_EXPORT, ANNOTATION_DO_NOT_GENERATE_CAST,
+       ANNOTATION_CUSTOM_MAP, ANNOTATION_EXPORT,
+       ANNOTATION_DO_NOT_GENERATE_CAST,
        ANNOTATION_DO_NOT_GENERATE_INSTANCE_TYPE_CHECK,
        ANNOTATION_GENERATE_UNIQUE_MAP,
        ANNOTATION_HIGHEST_INSTANCE_TYPE_WITHIN_PARENT,
@@ -1063,8 +1063,9 @@ std::optional<ParseResult> MakeClassDeclaration(
   if (annotations.Contains(ANNOTATION_CUSTOM_CPP_CLASS)) {
     Error(
         "@customCppClass is deprecated. Use 'extern' instead. "
-        "@generateBodyDescriptor and @generateUniqueMap accomplish most of "
-        "what '@export @customCppClass' used to.");
+        "@generateUniqueMap accomplishes most of what '@export "
+        "@customCppClass' "
+        "used to.");
   }
   if (annotations.Contains(ANNOTATION_CUSTOM_MAP)) {
     Error(
@@ -1073,9 +1074,6 @@ std::optional<ParseResult> MakeClassDeclaration(
   }
   if (annotations.Contains(ANNOTATION_DO_NOT_GENERATE_CAST)) {
     flags |= ClassFlag::kDoNotGenerateCast;
-  }
-  if (annotations.Contains(ANNOTATION_GENERATE_BODY_DESCRIPTOR)) {
-    flags |= ClassFlag::kGenerateBodyDescriptor;
   }
   if (annotations.Contains(ANNOTATION_GENERATE_UNIQUE_MAP)) {
     flags |= ClassFlag::kGenerateUniqueMap;

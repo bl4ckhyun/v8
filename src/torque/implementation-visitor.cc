@@ -3956,53 +3956,11 @@ void GenerateClassExport(const ClassType* type, std::ostream& header) {
                        ", " + super->name() + ">";
   header << "class " << type->name() << " : public " << parent << " {\n";
   header << " public:\n";
-  if (type->ShouldGenerateBodyDescriptor()) {
-    header << "  class BodyDescriptor;\n";
-  }
   header << "  TQ_OBJECT_CONSTRUCTORS(" << type->name() << ")\n";
   header << "};\n\n";
 }
 
 }  // namespace
-
-void ImplementationVisitor::GenerateVisitorLists(
-    const std::string& output_directory) {
-  std::stringstream header;
-  std::string file_name = "visitor-lists.h";
-  {
-    IncludeGuardScope include_guard(header, file_name);
-
-    header << "#define TORQUE_INSTANCE_TYPE_TO_BODY_DESCRIPTOR_LIST(V)\\\n";
-    for (const ClassType* type : TypeOracle::GetClasses()) {
-      if (type->ShouldGenerateBodyDescriptor() && type->OwnInstanceType()) {
-        std::string type_name =
-            CapifyStringWithUnderscores(type->name()) + "_TYPE";
-        header << "V(" << type_name << "," << type->name() << ")\\\n";
-      }
-    }
-    header << "\n";
-
-    header << "#define TORQUE_DATA_ONLY_VISITOR_ID_LIST(V)\\\n";
-    for (const ClassType* type : TypeOracle::GetClasses()) {
-      if (type->ShouldGenerateBodyDescriptor() &&
-          type->HasNoPointerSlotsExceptMap()) {
-        header << "V(" << type->name() << ")\\\n";
-      }
-    }
-    header << "\n";
-
-    header << "#define TORQUE_POINTER_VISITOR_ID_LIST(V)\\\n";
-    for (const ClassType* type : TypeOracle::GetClasses()) {
-      if (type->ShouldGenerateBodyDescriptor() &&
-          !type->HasNoPointerSlotsExceptMap()) {
-        header << "V(" << type->name() << ")\\\n";
-      }
-    }
-    header << "\n";
-  }
-  const std::string output_header_path = output_directory + "/" + file_name;
-  WriteFile(output_header_path, header.str());
-}
 
 void ImplementationVisitor::GenerateBitFields(
     const std::string& output_directory) {
@@ -4327,9 +4285,8 @@ void CppClassGenerator::GenerateClass() {
                << " * static_cast<int>(std::get<2>(slice));\n";
       });
     }
-  } else if (type_->ShouldGenerateBodyDescriptor() ||
-             (!type_->IsAbstract() &&
-              !type_->IsSubtypeOf(TypeOracle::GetJSObjectType()))) {
+  } else if (!type_->IsAbstract() &&
+             !type_->IsSubtypeOf(TypeOracle::GetJSObjectType())) {
     cpp::Function f(&c, "SizeFor");
     f.SetReturnType("int32_t");
     f.SetFlags({cpp::Function::kStatic, cpp::Function::kConstexpr,
@@ -5209,116 +5166,6 @@ std::optional<std::string> MatchSimpleBodyDescriptor(const ClassType* type) {
                     ">");
   }
   return std::nullopt;
-}
-
-void ImplementationVisitor::GenerateBodyDescriptors(
-    const std::string& output_directory) {
-  std::string file_name = "objects-body-descriptors-inl.inc";
-  std::stringstream h_contents;
-
-    for (const ClassType* type : TypeOracle::GetClasses()) {
-      std::string name = type->name();
-      if (!type->ShouldGenerateBodyDescriptor()) continue;
-
-      bool has_array_fields = !type->HasStaticSize();
-      std::vector<ObjectSlotKind> header_slot_kinds =
-          type->ComputeHeaderSlotKinds();
-      std::optional<ObjectSlotKind> array_slot_kind =
-          type->ComputeArraySlotKind();
-      DCHECK_EQ(has_array_fields, array_slot_kind.has_value());
-
-      h_contents << "class " << name << "::BodyDescriptor final : public ";
-      if (auto descriptor_name = MatchSimpleBodyDescriptor(type)) {
-        h_contents << *descriptor_name << " {\n";
-        h_contents << " public:\n";
-      } else {
-        h_contents << "BodyDescriptorBase {\n";
-        h_contents << " public:\n";
-
-        h_contents << "  template <typename ObjectVisitor>\n";
-        h_contents
-            << "  static inline void IterateBody(Tagged<Map> map, "
-               "Tagged<HeapObject> obj, int object_size, ObjectVisitor* v) {\n";
-
-        std::vector<ObjectSlotKind> slots = std::move(header_slot_kinds);
-        if (has_array_fields) slots.push_back(*array_slot_kind);
-
-        // Skip the map slot.
-        slots.erase(slots.begin());
-        size_t start_offset = TargetArchitecture::TaggedSize();
-
-        size_t end_offset = start_offset;
-        ObjectSlotKind section_kind;
-        for (size_t i = 0; i <= slots.size(); ++i) {
-          std::optional<ObjectSlotKind> next_section_kind;
-          bool finished_section = false;
-          if (i == 0) {
-            next_section_kind = slots[i];
-          } else if (i < slots.size()) {
-            if (auto combined = Combine(section_kind, slots[i])) {
-              next_section_kind = *combined;
-            } else {
-              next_section_kind = slots[i];
-              finished_section = true;
-            }
-          } else {
-            finished_section = true;
-          }
-          if (finished_section) {
-            bool is_array_slot = i == slots.size() && has_array_fields;
-            bool multiple_slots =
-                is_array_slot ||
-                (end_offset - start_offset > TargetArchitecture::TaggedSize());
-            std::optional<std::string> iterate_command;
-            switch (section_kind) {
-              case ObjectSlotKind::kStrongPointer:
-                iterate_command = "IteratePointer";
-                break;
-              case ObjectSlotKind::kMaybeObjectPointer:
-                iterate_command = "IterateMaybeWeakPointer";
-                break;
-              case ObjectSlotKind::kCustomWeakPointer:
-                iterate_command = "IterateCustomWeakPointer";
-                break;
-              case ObjectSlotKind::kNoPointer:
-                break;
-            }
-            if (iterate_command) {
-              if (multiple_slots) *iterate_command += "s";
-              h_contents << "    " << *iterate_command << "(obj, "
-                         << start_offset;
-              if (multiple_slots) {
-                h_contents << ", "
-                           << (i == slots.size() ? "object_size"
-                                                 : std::to_string(end_offset));
-              }
-              h_contents << ", v);\n";
-            }
-            start_offset = end_offset;
-          }
-          if (i < slots.size()) section_kind = *next_section_kind;
-          end_offset += TargetArchitecture::TaggedSize();
-        }
-
-        h_contents << "  }\n\n";
-      }
-
-      h_contents << "  static inline int SizeOf(Tagged<Map> map, "
-                    "Tagged<HeapObject> raw_object) {\n";
-      if (type->size().SingleValue()) {
-        h_contents << "    return " << *type->size().SingleValue() << ";\n";
-      } else {
-        // We use an UncheckedCast here because this is used for concurrent
-        // marking, where we shouldn't re-read the map.
-        h_contents << "    return UncheckedCast<" << name
-                   << ">(raw_object)->AllocatedSize();\n";
-      }
-      h_contents << "  }\n\n";
-
-      h_contents << "};\n";
-    }
-
-    WriteFile(output_directory + "/" + file_name, h_contents.str());
 }
 
 namespace {
