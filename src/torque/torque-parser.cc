@@ -1126,7 +1126,8 @@ std::optional<ParseResult> MakeClassDeclaration(
     flags |= ClassFlag::kUndefinedLayout;
   }
 
-  if (is_extern && body.has_value()) {
+  const bool is_shape = (flags & ClassFlag::kIsShape) != 0;
+  if (is_extern && body.has_value() && !is_shape) {
     if (!do_not_generate_cpp_class) {
       flags |= ClassFlag::kGenerateCppClassDefinitions;
     }
