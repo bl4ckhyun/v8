@@ -63,6 +63,11 @@
 #include "src/objects/map.h"
 #include "src/objects/objects.h"
 #include "src/objects/property-cell.h"
+#if V8_ENABLE_WEBASSEMBLY
+#include "src/wasm/canonical-types.h"
+#include "src/wasm/wasm-module.h"
+#include "src/wasm/wasm-objects-inl.h"
+#endif  // V8_ENABLE_WEBASSEMBLY
 #include "src/zone/zone-containers.h"
 
 namespace v8::internal::compiler::turboshaft {

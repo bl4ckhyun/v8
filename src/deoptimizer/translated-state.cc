@@ -21,14 +21,18 @@
 #include "src/heap/heap.h"
 #include "src/numbers/conversions.h"
 #include "src/objects/arguments.h"
+#include "src/objects/bytecode-array-inl.h"
 #include "src/objects/deoptimization-data.h"
+#include "src/objects/descriptor-array-inl.h"
 #include "src/objects/heap-number-inl.h"
 #include "src/objects/heap-object.h"
+#include "src/objects/js-regexp-inl.h"
+#include "src/objects/map-inl.h"
 #include "src/objects/oddball.h"
+#include "src/objects/string.h"
 
 // Has to be the last include (doesn't have include guards)
 #include "src/objects/object-macros.h"
-#include "src/objects/string.h"
 
 namespace v8 {
 

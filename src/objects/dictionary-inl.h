@@ -10,7 +10,6 @@
 
 #include <optional>
 
-#include "src/execution/isolate-utils-inl.h"
 #include "src/numbers/hash-seed-inl.h"
 #include "src/objects/hash-table-inl.h"
 #include "src/objects/objects-inl.h"

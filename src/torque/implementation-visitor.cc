@@ -138,7 +138,6 @@ void ImplementationVisitor::BeginGeneratedFiles() {
              << "-inl.h\"\n\n";
         file << "#include \"torque-generated/class-verifiers.h\"\n";
         file << "#include \"src/objects/objects-inl.h\"\n\n";
-        file << "#include \"src/objects/instance-type-inl.h\"\n\n";
       }
       if (contains_class_asserts.count(source) != 0) {
         file << "#include \""
@@ -4880,13 +4879,10 @@ void ImplementationVisitor::GenerateClassDefinitions(
   std::string forward_declarations_filename = "class-forward-declarations.h";
 
   {
-    factory_impl << "#include \"src/heap/factory-base.h\"\n";
     factory_impl << "#include \"src/heap/factory-base-inl.h\"\n";
-    factory_impl << "#include \"src/heap/heap.h\"\n";
     factory_impl << "#include \"src/heap/heap-inl.h\"\n";
     factory_impl << "#include \"src/execution/isolate.h\"\n";
-    factory_impl << "#include "
-                    "\"src/objects/all-objects-inl.h\"\n\n";
+    factory_impl << "#include \"src/objects/all-objects-inl.h\"\n\n";
     NamespaceScope factory_impl_namespaces(factory_impl, {"v8", "internal"});
     factory_impl << "\n";
 

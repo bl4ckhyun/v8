@@ -24,6 +24,7 @@
 #include "src/heap/factory.h"
 #include "src/objects/fixed-array.h"
 #include "src/objects/instance-type.h"
+#include "src/objects/js-array-buffer-inl.h"
 #include "src/objects/js-function.h"
 #include "src/objects/managed-inl.h"
 #include "src/objects/objects-inl.h"

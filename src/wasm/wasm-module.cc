@@ -8,6 +8,7 @@
 
 #include "src/api/api-inl.h"
 #include "src/compiler/wasm-compiler.h"
+#include "src/objects/js-array-buffer-inl.h"
 #include "src/objects/js-array-inl.h"
 #include "src/objects/objects.h"
 #include "src/wasm/canonical-types.h"

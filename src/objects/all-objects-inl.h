@@ -100,6 +100,10 @@
 #include "src/objects/turbofan-types-inl.h"
 #include "src/objects/turboshaft-types-inl.h"
 
+#if V8_ENABLE_WEBASSEMBLY
+#include "src/wasm/wasm-objects-inl.h"
+#endif  // V8_ENABLE_WEBASSEMBLY
+
 #ifdef V8_INTL_SUPPORT
 #include "src/objects/js-break-iterator-inl.h"
 #include "src/objects/js-collator-inl.h"

@@ -17,11 +17,13 @@
 #include "src/objects/descriptor-array-inl.h"
 #include "src/objects/dictionary.h"
 #include "src/objects/field-type.h"
+#include "src/objects/heap-object.h"
+#include "src/objects/hole.h"
 #include "src/objects/instance-type-inl.h"
 #include "src/objects/js-function-inl.h"
 #include "src/objects/literal-objects.h"
 #include "src/objects/map-updater.h"
-#include "src/objects/objects-inl.h"
+#include "src/objects/object-predicates-inl.h"
 #include "src/objects/property.h"
 #include "src/objects/prototype-info-inl.h"
 #include "src/objects/prototype-info.h"
@@ -32,7 +34,7 @@
 #include "src/utils/memcopy.h"
 
 #if V8_ENABLE_WEBASSEMBLY
-#include "src/wasm/wasm-objects-inl.h"
+#include "src/wasm/wasm-objects.h"
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 // Has to be the last include (doesn't have include guards):
