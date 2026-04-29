@@ -667,6 +667,7 @@ Builtins::JSBuiltinStateFlags Builtins::GetJSBuiltinState(Builtin builtin) {
     case Builtin::kArraySomeLoopLazyDeoptContinuation:
     case Builtin::kStringCreateLazyDeoptContinuation:
     case Builtin::kGenericLazyDeoptContinuation:
+    case Builtin::kGeneratorPrototypeNextLazyDeoptContinuation:
     case Builtin::kPromiseConstructorLazyDeoptContinuation:
       return JSBuiltinStateFlag::kDisabledJSBuiltin;
 

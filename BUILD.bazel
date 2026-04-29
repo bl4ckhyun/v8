@@ -1118,6 +1118,7 @@ filegroup(
         "src/builtins/frame-arguments.tq",
         "src/builtins/frames.tq",
         "src/builtins/function.tq",
+        "src/builtins/generator.tq",
         "src/builtins/growable-fixed-array.tq",
         "src/builtins/ic.tq",
         "src/builtins/ic-callable.tq",

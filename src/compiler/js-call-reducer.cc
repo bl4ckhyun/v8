@@ -7128,6 +7128,18 @@ Reduction JSCallReducer::ReduceGeneratorPrototypeNext(Node* node) {
     return NoChange();
   }
 
+  // We build a LAZY_WITH_CATCH continuation frame state for the inlined call
+  // so the deoptimizer treats the lazy-deopt continuation as a catch handler
+  // when a throw arrives at the inlined call PC after the optimized code is
+  // invalidated. That requires the surrounding function's SharedFunctionInfo,
+  // which lives in the outer frame state.
+  FrameState outer_frame_state{n.frame_state()};
+  Handle<SharedFunctionInfo> outer_shared;
+  if (!outer_frame_state.frame_state_info().shared_info().ToHandle(
+          &outer_shared)) {
+    return NoChange();
+  }
+
   MapInference inference(broker(), receiver, effect);
   if (inference.HaveMaps() &&
       inference.AllOfInstanceTypesAre(JS_GENERATOR_OBJECT_TYPE)) {
@@ -7211,20 +7223,29 @@ Reduction JSCallReducer::ReduceGeneratorPrototypeNext(Node* node) {
       callable.descriptor().GetStackParameterCount(),
       CallDescriptor::kNeedsFrameState);
 
-  // Use a GeneratorNextLazyDeoptContinuation to wrap the yielded value
-  // correctly in case of a lazy deopt.
-  Node* lazy_deopt_parameters[] = {receiver};
-  Node* frame_state = CreateStubBuiltinContinuationFrameState(
-      jsgraph(), Builtin::kGeneratorNextLazyDeoptContinuation, context,
-      lazy_deopt_parameters, arraysize(lazy_deopt_parameters), n.frame_state(),
-      ContinuationFrameStateMode::LAZY);
+  // Use a GeneratorPrototypeNextLazyDeoptContinuation to wrap the yielded
+  // value correctly in case of a lazy deopt. LAZY_WITH_CATCH so the
+  // continuation also handles the deopt-on-throw case (close the generator
+  // and rethrow); see frame_state setup above.
+  Node* lazy_deopt_parameters[] = {
+      jsgraph()->UndefinedConstant(), /* receiver of the JS continuation */
+      receiver,                       /* generator argument */
+  };
+  Node* frame_state = CreateJavaScriptBuiltinContinuationFrameState(
+      jsgraph(), MakeRef(broker(), outer_shared),
+      Builtin::kGeneratorPrototypeNextLazyDeoptContinuation, n.target(),
+      context, lazy_deopt_parameters, arraysize(lazy_deopt_parameters),
+      n.frame_state(), ContinuationFrameStateMode::LAZY_WITH_CATCH);
 
   Node* result = e_receiverisrunning = if_receiverisrunning = graph()->NewNode(
       common()->Call(descriptor),
       jsgraph()->HeapConstantNoHole(callable.code()), value, receiver, context,
       frame_state, e_receiverisrunning, if_receiverisrunning);
 
-  // Close the generator if there was an exception.
+  // Close the generator if there was an exception, then dispatch to the
+  // surrounding handler (if any) or physically rethrow. The
+  // LAZY_WITH_CATCH continuation above handles the same flow when the
+  // optimized code is invalidated mid-call.
   Node* if_exception = graph()->NewNode(
       common()->IfException(), e_receiverisrunning, if_receiverisrunning);
   Node* e_exception = if_exception;
