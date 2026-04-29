@@ -3188,8 +3188,6 @@ DEFINE_INT(heap_snapshot_on_gc, -1,
            "results in taking a snapshot on every invocation.")
 DEFINE_UINT(heap_snapshot_string_limit, 1024,
             "truncate strings to this length in the heap snapshot")
-DEFINE_BOOL(heap_profiler_show_hidden_objects, false,
-            "use 'native' rather than 'hidden' node type in snapshot")
 DEFINE_BOOL(profile_heap_snapshot, false, "dump time spent on heap snapshot")
 #ifdef V8_ENABLE_HEAP_SNAPSHOT_VERIFY
 DEFINE_BOOL(heap_snapshot_verify, false,

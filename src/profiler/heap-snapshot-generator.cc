@@ -1060,7 +1060,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
     }
   } else if (InstanceTypeChecker::IsSymbol(instance_type)) {
     if (Cast<Symbol>(object)->is_any_private())
-      return AddEntry(object, HeapEntry::kHidden, "private symbol");
+      return AddEntry(object, HeapEntry::kSymbol, "private symbol");
     else
       return AddEntry(object, HeapEntry::kSymbol, "symbol");
 
@@ -1095,7 +1095,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
     if (it != native_context_tag_map_.end() && it->second.tag) {
       name = names_->GetFormatted("%s / %s", name, it->second.tag);
     }
-    return AddEntry(object, HeapEntry::kHidden, name);
+    return AddEntry(object, HeapEntry::kNative, name);
 
   } else if (InstanceTypeChecker::IsContext(instance_type)) {
     Tagged<Context> context = Cast<Context>(object);
@@ -1111,7 +1111,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
     return AddEntry(object, HeapEntry::kHeapNumber, "heap number");
   } else if (InstanceTypeChecker::IsOddball(instance_type)) {
     Tagged<String> name = Cast<Oddball>(object)->to_string();
-    return AddEntry(object, HeapEntry::kHidden, names_->GetName(name));
+    return AddEntry(object, HeapEntry::kNative, names_->GetName(name));
   } else if (InstanceTypeChecker::IsCppHeapExternalObject(instance_type)) {
     return AddEntry(object, HeapEntry::kObject, "system / CppHeapExternal");
   }
@@ -1152,7 +1152,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
       name = names_->GetFormatted("system / Foreign (%s)", tag_name);
     }
 
-    return AddEntry(object.address(), HeapEntry::kHidden, name, size);
+    return AddEntry(object.address(), HeapEntry::kNative, name, size);
   }
 
   return AddEntry(object, GetSystemEntryType(object),
@@ -1168,11 +1168,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object,
 
 HeapEntry* V8HeapExplorer::AddEntry(Address address, HeapEntry::Type type,
                                     const char* name, size_t size) {
-  if (type == HeapEntry::kHidden &&
-      (snapshot_->expose_internals() ||
-       v8_flags.heap_profiler_show_hidden_objects)) {
-    type = HeapEntry::kNative;
-  }
+  DCHECK_NE(type, HeapEntry::kHidden);
   SnapshotObjectId object_id = heap_object_map_->FindOrAddEntry(
       address, static_cast<unsigned int>(size));
   unsigned trace_node_id = 0;
@@ -1278,7 +1274,7 @@ HeapEntry::Type V8HeapExplorer::GetSystemEntryType(Tagged<HeapObject> object) {
     return HeapEntry::kObjectShape;
   }
 
-  return HeapEntry::kHidden;
+  return HeapEntry::kNative;
 }
 
 void V8HeapExplorer::PopulateLineEnds() {
@@ -3047,13 +3043,6 @@ void V8HeapExplorer::SetRootGcRootsReference() {
       HeapGraphEdge::kElement, snapshot_->gc_roots(), generator_);
 }
 
-void V8HeapExplorer::SetUserGlobalReference(Tagged<Object> child_obj) {
-  HeapEntry* child_entry = GetEntry(child_obj);
-  DCHECK_NOT_NULL(child_entry);
-  snapshot_->root()->SetNamedAutoIndexReference(
-      HeapGraphEdge::kShortcut, nullptr, child_entry, names_, generator_);
-}
-
 void V8HeapExplorer::SetGcRootsReference(Root root) {
   snapshot_->gc_roots()->SetIndexedAutoIndexReference(
       HeapGraphEdge::kElement, snapshot_->gc_subroot(root), generator_);
@@ -3082,24 +3071,6 @@ void V8HeapExplorer::SetGcSubrootReference(Root root, const char* description,
     snapshot_->gc_subroot(root)->SetNamedAutoIndexReference(
         edge_type, description, child_entry, names_, generator_);
   }
-
-  // For full heap snapshots we do not emit user roots but rather rely on
-  // regular GC roots to retain objects.
-  if (snapshot_->expose_internals()) return;
-
-  // Add a shortcut to JS global object reference at snapshot root.
-  // That allows the user to easily find global objects. They are
-  // also used as starting points in distance calculations.
-  if (is_weak) return;
-  if (!IsNativeContext(child_heap_obj)) {
-    return;
-  }
-
-  Tagged<NativeContext> native_context = Cast<NativeContext>(child_heap_obj);
-
-  if (!user_roots_.insert(native_context).second) return;
-
-  SetUserGlobalReference(native_context);
 }
 
 const char* V8HeapExplorer::GetStrongGcSubrootName(Tagged<HeapObject> object) {
