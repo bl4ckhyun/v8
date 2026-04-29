@@ -89,9 +89,15 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertEquals(1231234567891, foo(1231234567890, 1));
     assertOptimized(foo);
 
-    // We don't deopt in overflow because neither input is statically known
-    // to be in the AdditiveSafeInteger range, so we fell back to Float64.
+    // We deopt in overflow.
     assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger, 1));
+    assertUnoptimized(foo);
+
+    // Re-optimize to continue test.
+    %PrepareFunctionForOptimization(foo);
+    assertEquals(1231234567891, foo(1231234567890, 1));
+    %OptimizeFunctionOnNextCall(foo);
+    assertEquals(1231234567891, foo(1231234567890, 1));
     assertOptimized(foo);
 
     // Don't deopt with doubles.
@@ -167,8 +173,8 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertOptimized(foo);
 })();
 
-// We do not optimize when the result is pass to another add. We would need
-// to propagate the type of the optimized add, which we don't do anymore.
+// Optimize when the result is pass to another add, since we know the result of
+// the add is in the safe integer range.
 (function() {
     function foo(a, b) {
         return 1 + a + b;
@@ -188,7 +194,16 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertEquals(minAdditiveSafeInteger + 2, foo(minAdditiveSafeInteger, 1));
     assertOptimized(foo);
 
-    // Nor when we overflow the second add.
+    // Overflow the second add to ensure that we optimize with additive safe int add.
+    assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger - 1, 1));
+    assertUnoptimized(foo);
+
+    // Optimize again.
+    %OptimizeFunctionOnNextCall(foo);
+    assertEquals(1231234567892, foo(1231234567890, 1));
+    assertOptimized(foo);
+
+    // This time we don't overflow, since we useFloat64Add.
     assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger - 1, 1));
     assertOptimized(foo);
 
@@ -211,7 +226,7 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertOptimized(foo);
 })();
 
-// Same as above. Don't optimize the second add.
+// This also works if the known input is the middle one.
 (function() {
     function foo(a, b) {
         return a + 1 + b;
@@ -231,7 +246,16 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertEquals(minAdditiveSafeInteger + 2, foo(minAdditiveSafeInteger, 1));
     assertOptimized(foo);
 
-    // Nor when we overflow the second add.
+    // Overflow the second add to ensure that we optimize with additive safe int add.
+    assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger - 1, 1));
+    assertUnoptimized(foo);
+
+    // Optimize again.
+    %OptimizeFunctionOnNextCall(foo);
+    assertEquals(1231234567892, foo(1231234567890, 1));
+    assertOptimized(foo);
+
+    // This time we don't overflow, since we useFloat64Add.
     assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger - 1, 1));
     assertOptimized(foo);
 
@@ -281,10 +305,15 @@ const minAdditiveSafeInteger = - 2251799813685248; // - 2^51
     assertEquals(maxAdditiveSafeInteger + 1, foo(maxAdditiveSafeInteger - 1, 1));
     assertOptimized(foo);
 
-    // And we cannot deopt by overflowing the first one, which has fallen
-    // back to Float64 since neither side is statically known to be in the
-    // AdditiveSafeInteger range.
+    // And we cannot deopt by overflowing the first one.
     assertEquals(maxAdditiveSafeInteger + 2, foo(maxAdditiveSafeInteger, 1));
+    assertUnoptimized(foo);
+
+    // Re-optimize to continue test.
+    %PrepareFunctionForOptimization(foo);
+    assertEquals(1231234567892, foo(1231234567890, 1));
+    %OptimizeFunctionOnNextCall(foo);
+    assertEquals(1231234567892, foo(1231234567890, 1));
     assertOptimized(foo);
 
     // Don't deopt with doubles.
