@@ -339,7 +339,7 @@ class ExceptionHandlerInfo;
   V(Int32ToUint8Clamped)                                              \
   V(Uint32ToUint8Clamped)                                             \
   V(Float64ToUint8Clamped)                                            \
-  V(CheckedNumberToUint8Clamped)                                      \
+  V(CheckedNumberOrOddballToUint8Clamped)                             \
   V(Int32CountLeadingZeros)                                           \
   V(TaggedCountLeadingZeros)                                          \
   V(Float64CountLeadingZeros)                                         \
@@ -3913,10 +3913,11 @@ class Float64ToUint8Clamped
   void GenerateCode(MaglevAssembler*, const ProcessingState&);
 };
 
-class CheckedNumberToUint8Clamped
-    : public FixedInputValueNodeT<1, CheckedNumberToUint8Clamped> {
+class CheckedNumberOrOddballToUint8Clamped
+    : public FixedInputValueNodeT<1, CheckedNumberOrOddballToUint8Clamped> {
  public:
-  explicit CheckedNumberToUint8Clamped(uint64_t bitfield) : Base(bitfield) {}
+  explicit CheckedNumberOrOddballToUint8Clamped(uint64_t bitfield)
+      : Base(bitfield) {}
 
   static constexpr OpProperties kProperties =
       OpProperties::EagerDeopt() | OpProperties::Int32();

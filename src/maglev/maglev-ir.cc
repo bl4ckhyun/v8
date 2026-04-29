@@ -6643,18 +6643,16 @@ void CheckedInternalizedString::GenerateCode(MaglevAssembler* masm,
   __ bind(*done);
 }
 
-void CheckedNumberToUint8Clamped::SetValueLocationConstraints() {
+void CheckedNumberOrOddballToUint8Clamped::SetValueLocationConstraints() {
   UseRegister(ValueInput());
   DefineSameAsFirst(this);
-  set_temporaries_needed(1);
   set_double_temporaries_needed(1);
 }
-void CheckedNumberToUint8Clamped::GenerateCode(MaglevAssembler* masm,
-                                               const ProcessingState& state) {
+void CheckedNumberOrOddballToUint8Clamped::GenerateCode(
+    MaglevAssembler* masm, const ProcessingState& state) {
   Register value = ToRegister(ValueInput());
   Register result_reg = ToRegister(result());
   MaglevAssembler::TemporaryRegisterScope temps(masm);
-  Register scratch = temps.Acquire();
   DoubleRegister double_value = temps.AcquireDouble();
   Label is_not_smi, min, max, done;
   // Check if Smi.
@@ -6666,13 +6664,17 @@ void CheckedNumberToUint8Clamped::GenerateCode(MaglevAssembler* masm,
   __ CompareInt32AndJumpIf(value, 255, kGreaterThanEqual, &max);
   __ Jump(&done);
   __ bind(&is_not_smi);
-  // Check if HeapNumber, deopt otherwise.
-  __ CompareMapWithRootAndEmitEagerDeoptIf(value, RootIndex::kHeapNumberMap,
-                                           scratch, kNotEqual,
-                                           DeoptimizeReason::kNotANumber, this);
-  // If heap number, get double value.
-  __ LoadHeapNumberValue(double_value, value);
-  // Clamp.
+  // Check if HeapNumber or Oddball, deopt otherwise.
+  Label* deopt_label =
+      __ GetDeoptLabel(this, DeoptimizeReason::kNotANumberOrOddball);
+  JumpToFailIfNotHeapNumberOrOddball(
+      masm, value, TaggedToFloat64ConversionType::kNumberOrOddball,
+      deopt_label);
+  // ToNumber of an oddball reads its to_number_raw field, which lives at the
+  // same offset as HeapNumber::value_, so the same load works for both.
+  __ LoadHeapNumberOrOddballValue(double_value, value);
+  // Clamp. Note: ToUint8Clamped maps NaN (e.g. ToNumber(undefined)) to 0 via
+  // the min path.
   __ ToUint8Clamped(value, double_value, &min, &max, &done);
   __ bind(&min);
   __ Move(result_reg, 0);

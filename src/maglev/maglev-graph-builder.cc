@@ -1900,7 +1900,7 @@ ValueNode* MaglevGraphBuilder::GetUint8ClampedForToNumber(ValueNode* value) {
     case ValueRepresentation::kIntPtr:
       // This is not an efficient implementation, but this only happens in
       // corner cases.
-      return AddNewNodeNoInputConversion<CheckedNumberToUint8Clamped>(
+      return AddNewNodeNoInputConversion<CheckedNumberOrOddballToUint8Clamped>(
           {AddNewNodeNoInputConversion<IntPtrToNumber>({value})});
     case ValueRepresentation::kTagged: {
       if (SmiConstant* constant = value->TryCast<SmiConstant>()) {
@@ -1911,7 +1911,8 @@ ValueNode* MaglevGraphBuilder::GetUint8ClampedForToNumber(ValueNode* value) {
         return AddNewNodeNoInputConversion<Int32ToUint8Clamped>(
             {info->alternative().int32()});
       }
-      return AddNewNodeNoInputConversion<CheckedNumberToUint8Clamped>({value});
+      return AddNewNodeNoInputConversion<CheckedNumberOrOddballToUint8Clamped>(
+          {value});
     }
     // HoleyFloat64 is treated like Float64. ToNumber of undefined is anyway a
     // NaN, so we'll simply truncate away the NaN-ness of the hole, and don't

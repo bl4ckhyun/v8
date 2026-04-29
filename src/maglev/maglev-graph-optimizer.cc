@@ -1804,8 +1804,8 @@ ProcessResult MaglevGraphOptimizer::VisitFloat64ToUint8Clamped(
   return ProcessResult::kContinue;
 }
 
-ProcessResult MaglevGraphOptimizer::VisitCheckedNumberToUint8Clamped(
-    CheckedNumberToUint8Clamped* node, const ProcessingState& state) {
+ProcessResult MaglevGraphOptimizer::VisitCheckedNumberOrOddballToUint8Clamped(
+    CheckedNumberOrOddballToUint8Clamped* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.
   return ProcessResult::kContinue;
 }
