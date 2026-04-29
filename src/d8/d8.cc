@@ -6509,10 +6509,7 @@ bool Shell::SetOptions(int argc, char* argv[]) {
     } else if (FlagMatches("--ignore-unhandled-promises", &argv[i])) {
       options.ignore_unhandled_promises = true;
     } else if (FlagMatches("--isolate", &argv[i], /*keep_flag=*/true)) {
-      // Bundles and isolates together are not supported.
-      if (!options.bundle) {
-        options.num_isolates++;
-      }
+      options.num_isolates++;
     } else if (FlagMatches("--throws", &argv[i])) {
       options.expected_to_throw = true;
     } else if (FlagMatches("--no-fail", &argv[i])) {
@@ -6634,8 +6631,6 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       options.max_serializer_memory = atoi(flag_value) * i::MB;
     } else if (FlagMatches("--bundle", &argv[i])) {
       options.bundle = true;
-      // Bundles and isolates together are not supported.
-      options.num_isolates = 1;
 #ifdef V8_FUZZILLI
     } else if (FlagMatches("--fuzzilli-enable-builtins-coverage", &argv[i])) {
       options.fuzzilli_enable_builtins_coverage = true;
@@ -6770,13 +6765,9 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       options.post_filtering_cwd_index = i;
       continue;
     } else if (strcmp(str, "--isolate") == 0) {
-      if (!options.bundle) {
-        current->End(i);
-        current++;
-        current->Begin(argv, i + 1);
-      }
-      // Otherwise, just ignore the --isolate flag (don't print out a warning
-      // about an unknown flag below).
+      current->End(i);
+      current++;
+      current->Begin(argv, i + 1);
     } else if (strcmp(str, "--module") == 0 || strcmp(str, "--json") == 0) {
       // Pass on to SourceGroup, which understands these options.
     } else if (strncmp(str, "--", 2) == 0) {
@@ -6799,7 +6790,9 @@ int Shell::RunMain(v8::Isolate* isolate, bool last_run) {
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(isolate);
 
   for (int i = 1; i < options.num_isolates; ++i) {
-    options.isolate_sources[i].StartExecuteInThread();
+    if (!options.bundle) {
+      options.isolate_sources[i].StartExecuteInThread();
+    }
   }
 
   // The Context object, created inside RunMainIsolate, is used after the method
@@ -6814,10 +6807,12 @@ int Shell::RunMain(v8::Isolate* isolate, bool last_run) {
   i_isolate->main_thread_local_heap()->ExecuteMainThreadWhileParked(
       [last_run](const i::ParkedScope& parked) {
         for (int i = 1; i < options.num_isolates; ++i) {
-          if (last_run) {
-            options.isolate_sources[i].JoinThread(parked);
-          } else {
-            options.isolate_sources[i].WaitForThread(parked);
+          if (!options.bundle) {
+            if (last_run) {
+              options.isolate_sources[i].JoinThread(parked);
+            } else {
+              options.isolate_sources[i].WaitForThread(parked);
+            }
           }
         }
         WaitForRunningWorkers(parked);
