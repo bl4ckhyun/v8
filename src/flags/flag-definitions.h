@@ -1986,6 +1986,7 @@ DEFINE_NEG_IMPLICATION(liftoff_only, wasm_dynamic_tiering)
 DEFINE_DEBUG_BOOL(
     enable_testing_opcode_in_wasm, false,
     "enables a testing opcode in wasm that is only implemented in TurboFan")
+DEFINE_NEG_IMPLICATION(liftoff_only, enable_testing_opcode_in_wasm)
 // Do synchronous tier up (instead of in-background tierup) in single threaded
 // mode.
 DEFINE_IMPLICATION(single_threaded, wasm_sync_tier_up)
