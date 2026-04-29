@@ -475,7 +475,7 @@ void Deoptimizer::DeoptimizeMarkedCode(Isolate* isolate) {
 void Deoptimizer::DeoptimizeAll(Isolate* isolate) {
   RCS_SCOPE(isolate, RuntimeCallCounterId::kDeoptimizeCode);
   TimerEventScope<TimerEventDeoptimizeCode> timer(isolate);
-  TRACE_EVENT0("v8", "V8.DeoptimizeCode");
+  TRACE_EVENT("v8", "V8.DeoptimizeCode");
   TraceDeoptAll(isolate);
   isolate->AbortConcurrentOptimization(BlockingBehavior::kBlock);
 
@@ -498,7 +498,7 @@ void Deoptimizer::DeoptimizeFunction(Tagged<JSFunction> function,
   Isolate* isolate = Isolate::Current();
   RCS_SCOPE(isolate, RuntimeCallCounterId::kDeoptimizeCode);
   TimerEventScope<TimerEventDeoptimizeCode> timer(isolate);
-  TRACE_EVENT0("v8", "V8.DeoptimizeCode");
+  TRACE_EVENT("v8", "V8.DeoptimizeCode");
   function->ResetIfCodeFlushed(isolate);
   if (code.is_null()) code = function->code(isolate);
 
@@ -516,7 +516,7 @@ void Deoptimizer::DeoptimizeAllOptimizedCodeWithFunction(
     Isolate* isolate, DirectHandle<SharedFunctionInfo> function) {
   RCS_SCOPE(isolate, RuntimeCallCounterId::kDeoptimizeCode);
   TimerEventScope<TimerEventDeoptimizeCode> timer(isolate);
-  TRACE_EVENT0("v8", "V8.DeoptimizeAllOptimizedCodeWithFunction");
+  TRACE_EVENT("v8", "V8.DeoptimizeAllOptimizedCodeWithFunction");
 
   // Wait for ongoing compilation jobs to complete and finalize them. If we
   // aborted ongoing jobs, we would risk aborting unrelated jobs, and if we're

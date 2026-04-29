@@ -1619,8 +1619,8 @@ void VisitStack_ForCallSiteBuilder(Isolate* isolate, CallSiteBuilder* visitor) {
 Handle<FixedArray> CaptureSimpleStackTrace(Isolate* isolate, int limit,
                                            FrameSkipMode mode,
                                            Handle<Object> caller) {
-  TRACE_EVENT_BEGIN1(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__,
-                     "maxFrameCount", limit);
+  TRACE_EVENT_BEGIN(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+                    perfetto::StaticString(__func__), "maxFrameCount", limit);
 
 #if V8_ENABLE_WEBASSEMBLY
   wasm::WasmCodeRefScope code_ref_scope;
@@ -1637,8 +1637,8 @@ Handle<FixedArray> CaptureSimpleStackTrace(Isolate* isolate, int limit,
   }
 
   Handle<FixedArray> stack_trace = builder.Build();
-  TRACE_EVENT_END1(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__,
-                   "frameCount", stack_trace->ulength().value());
+  TRACE_EVENT_END(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), "frameCount",
+                  stack_trace->ulength().value());
   return stack_trace;
 }
 
@@ -1682,7 +1682,8 @@ DirectHandle<StackTraceInfo> GetDetailedStackTraceFromCallSiteInfos(
 MaybeDirectHandle<JSObject> Isolate::CaptureAndSetErrorStack(
     DirectHandle<JSObject> error_object, FrameSkipMode mode,
     Handle<Object> caller) {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
   Handle<UnionOf<Undefined, FixedArray>> call_site_infos_or_formatted_stack =
       factory()->undefined_value();
 
@@ -1868,13 +1869,13 @@ class StackFrameBuilder {
 
 DirectHandle<StackTraceInfo> Isolate::CaptureDetailedStackTrace(
     int limit, StackTrace::StackTraceOptions options) {
-  TRACE_EVENT_BEGIN1(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__,
-                     "maxFrameCount", limit);
+  TRACE_EVENT_BEGIN(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+                    perfetto::StaticString(__func__), "maxFrameCount", limit);
   StackFrameBuilder builder(this, static_cast<uint32_t>(limit));
   VisitStack(this, &builder, options);
   auto frames = builder.Build();
-  TRACE_EVENT_END1(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__,
-                   "frameCount", frames->ulength().value());
+  TRACE_EVENT_END(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), "frameCount",
+                  frames->ulength().value());
   auto stack_trace = factory()->NewStackTraceInfo(frames);
   OnStackTraceCaptured(stack_trace);
   return stack_trace;
@@ -2056,14 +2057,16 @@ class CurrentScriptStackVisitor {
 }  // namespace
 
 DirectHandle<String> Isolate::CurrentScriptNameOrSourceURL() {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
   CurrentScriptNameStackVisitor visitor(this);
   VisitStack(this, &visitor);
   return visitor.CurrentScriptNameOrSourceURL();
 }
 
 int Isolate::CurrentScriptId() {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
   CurrentScriptIdStackVisitor visitor;
   VisitStack(this, &visitor);
   return visitor.CurrentScriptId();
@@ -2074,7 +2077,8 @@ size_t Isolate::CurrentScriptIdsAndContexts(
   if (frame_data.size() == 0) {
     return 0;
   }
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
   CurrentScriptIdsAndContextsStackVisitor visitor(this, frame_data);
   VisitStack(this, &visitor);
   return visitor.FrameCount();
@@ -2083,7 +2087,8 @@ size_t Isolate::CurrentScriptIdsAndContexts(
 size_t Isolate::CurrentScriptData(
     v8::MemorySpan<StackTrace::ScriptData> frame_data) {
   if (frame_data.size() == 0) return 0;
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
 
   CurrentScriptDataStackVisitor visitor(this, frame_data);
   // CurrentScriptData should only expose frames from the same origin.
@@ -2092,7 +2097,8 @@ size_t Isolate::CurrentScriptData(
 }
 
 MaybeDirectHandle<Script> Isolate::CurrentReferrerScript() {
-  TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"), __func__);
+  TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.stack_trace"),
+              perfetto::StaticString(__func__));
   CurrentScriptStackVisitor visitor{};
   VisitStack(this, &visitor);
   DirectHandle<Script> script;
@@ -7897,8 +7903,7 @@ void Isolate::PrintWithTimestamp(const char* format, ...) {
                   output_buffer);
 
 #if defined(V8_USE_PERFETTO)
-  TRACE_EVENT_INSTANT1("v8", "V8.PrintWithTimestamp", TRACE_EVENT_SCOPE_THREAD,
-                       "value", TRACE_STR_COPY(output_buffer));
+  TRACE_EVENT_INSTANT("v8", "V8.PrintWithTimestamp", "value", output_buffer);
 #endif
 }
 

@@ -322,7 +322,7 @@ RUNTIME_FUNCTION(Runtime_WasmReThrow) {
 RUNTIME_FUNCTION(Runtime_WasmStackGuard) {
   SealHandleScope shs(isolate);
   DCHECK_EQ(1, args.length());
-  TRACE_EVENT0("v8.execute", "V8.StackGuard");
+  TRACE_EVENT("v8.execute", "V8.StackGuard");
 
   uint32_t gap = args.positive_smi_value_at(0);
 
@@ -344,7 +344,7 @@ RUNTIME_FUNCTION(Runtime_WasmStackGuard) {
 RUNTIME_FUNCTION(Runtime_WasmStackGuardLoop) {
   DCHECK_EQ(0, args.length());
   SealHandleScope shs(isolate);
-  TRACE_EVENT0("v8.execute", "V8.StackGuard");
+  TRACE_EVENT("v8.execute", "V8.StackGuard");
 
   return isolate->stack_guard()->HandleInterrupts(
       StackGuard::InterruptLevel::kNoHeapWrites);
@@ -365,7 +365,7 @@ RUNTIME_FUNCTION(Runtime_WasmCompileLazy) {
     Tagged<WasmTrustedInstanceData> trusted_instance_data =
         TrustedCast<WasmTrustedInstanceData>(args[0]);
 
-    TRACE_EVENT1("v8.wasm", "wasm.CompileLazy", "func_index", func_index);
+    TRACE_EVENT("v8.wasm", "wasm.CompileLazy", "func_index", func_index);
     native_module = trusted_instance_data->native_module();
 
     DCHECK(isolate->context().is_null());
