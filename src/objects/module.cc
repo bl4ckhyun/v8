@@ -146,13 +146,9 @@ void Module::ResetGraph(Isolate* isolate, DirectHandle<Module> module) {
     if (IsModule(*descendant)) {
       ResetGraph(isolate, Cast<Module>(descendant));
     } else {
-      // The requested module is either an undefined or a WasmModule object.
-#if V8_ENABLE_WEBASSEMBLY
-      DCHECK(IsUndefined(*descendant, isolate) ||
-             IsWasmModuleObject(*descendant));
-#else
-      DCHECK(IsUndefined(*descendant, isolate));
-#endif
+      // Source phase imports store a JSReceiver (e.g. WasmModuleObject) in
+      // requested_modules. Pre-linking entries are Undefined.
+      CHECK(IsUndefined(*descendant, isolate) || IsJSReceiver(*descendant));
     }
   }
 }

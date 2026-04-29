@@ -725,10 +725,14 @@ void SourceTextModule::FetchStarExports(Isolate* isolate,
       continue;  // Indirect export.
     }
 
-    DCHECK_EQ(Cast<ModuleRequest>(module->info()->module_requests()->get(
-                                      entry->module_request()))
-                  ->phase(),
-              ModuleImportPhase::kEvaluation);
+    // Source phase imports store a JSReceiver (not a Module) in
+    // requested_modules. Guard against type confusion if a future change
+    // breaks the invariant that star exports only reference evaluation-phase
+    // imports.
+    CHECK_EQ(Cast<ModuleRequest>(module->info()->module_requests()->get(
+                                     entry->module_request()))
+                 ->phase(),
+             ModuleImportPhase::kEvaluation);
     Handle<Module> requested_module(
         Cast<Module>(module->requested_modules()->get(entry->module_request())),
         isolate);
@@ -844,7 +848,10 @@ DirectHandle<JSModuleNamespace> SourceTextModule::GetModuleNamespace(
     int module_request_index) {
   Tagged<ModuleRequest> module_request = Cast<ModuleRequest>(
       module->info()->module_requests()->get(module_request_index));
-  DCHECK_NE(module_request->phase(), ModuleImportPhase::kSource);
+  // Source phase imports store a JSReceiver (not a Module) in
+  // requested_modules. Guard against type confusion if a future change
+  // routes a source-phase request through GetModuleNamespace.
+  CHECK_NE(module_request->phase(), ModuleImportPhase::kSource);
 
   Handle<Module> requested_module(
       Cast<Module>(module->requested_modules()->get(module_request_index)),
