@@ -1425,6 +1425,8 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
   }
 
   if (v8_flags.disable_write_barriers) return;
+  Label done;
+  j(not_equal, &done, Label::kNear);
   // This assumes that the caller didn't pin any additional registers.
   // {expected}, {value_reg} and {new_value} are no longer needed; we need to
   // unpin them so that enough registers are available for the write barrier.
@@ -1434,6 +1436,7 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
              .is_empty());
   pinned = new_pinned;
   EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
+  bind(&done);
 }
 
 void LiftoffAssembler::AtomicFence() { mfence(); }
