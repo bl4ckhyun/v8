@@ -6770,9 +6770,13 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       options.post_filtering_cwd_index = i;
       continue;
     } else if (strcmp(str, "--isolate") == 0) {
-      current->End(i);
-      current++;
-      current->Begin(argv, i + 1);
+      if (!options.bundle) {
+        current->End(i);
+        current++;
+        current->Begin(argv, i + 1);
+      }
+      // Otherwise, just ignore the --isolate flag (don't print out a warning
+      // about an unknown flag below).
     } else if (strcmp(str, "--module") == 0 || strcmp(str, "--json") == 0) {
       // Pass on to SourceGroup, which understands these options.
     } else if (strncmp(str, "--", 2) == 0) {
