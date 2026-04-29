@@ -3067,6 +3067,23 @@ class LiftoffCompiler {
 
     __ PushRegister(kI64, dest_low);
     __ PushRegister(kI64, dest_high);
+#elif V8_TARGET_ARCH_IA32
+    __ SpillAllRegisters();
+
+    // Compute the lowest address of the four 64bit inputs.
+    // The top of the stack has the lowest address (stack grows down).
+    // The top value is at the back of the stack_state.
+    int stack_offset = __ cache_state() -> stack_state.back().offset();
+
+    LiftoffRegister addr_reg = __ GetUnusedRegister(kGpReg, {});
+    __ LoadSpillAddress(addr_reg.gp(), stack_offset,
+                        __ cache_state()->stack_state.back().kind());
+
+    ExternalReference ext_ref = ExternalReference::wasm_int128_add();
+    GenerateCCall(kVoid, {VarState{kI32, addr_reg, 0}}, ext_ref);
+
+    __ DropValues(2);
+
 #else
     unsupported(decoder, kUnsupportedArchitecture, "wide arithmetic");
 #endif
