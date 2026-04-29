@@ -3598,6 +3598,8 @@ DEFINE_BOOL(sandbox_trap_fuzzing, false,
             "Enable the trap-based sandbox fuzzing mode.")
 DEFINE_IMPLICATION(sandbox_trap_fuzzing, sandbox_fuzzing)
 
+DEFINE_IMPLICATION(sandbox_fuzzing, fuzzing)
+
 // Only one of these can be enabled.
 DEFINE_NEG_IMPLICATION(sandbox_fuzzing, sandbox_testing)
 DEFINE_NEG_IMPLICATION(sandbox_testing, sandbox_fuzzing)
