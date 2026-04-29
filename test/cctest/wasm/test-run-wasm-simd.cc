@@ -6886,6 +6886,51 @@ TEST(RunWasmTurbofan_I32x8SplatConst) {
   }
 }
 
+TEST(RunWasmTurbofan_Simd256AsSimd128) {
+  EXPERIMENTAL_FLAG_SCOPE(revectorize);
+  if (!CpuFeatures::IsSupported(AVX) || !CpuFeatures::IsSupported(AVX2)) return;
+  WasmRunner<int32_t> r(TestExecutionTier::kTurbofan);
+  int32_t* memory = r.builder().AddMemoryElems<int32_t>(20);
+  constexpr int32_t x = 5;
+  uint8_t temp1 = r.AllocateLocal(kWasmS128);
+  uint8_t temp2 = r.AllocateLocal(kWasmS128);
+  uint8_t temp3 = r.AllocateLocal(kWasmS128);
+  uint8_t temp4 = r.AllocateLocal(kWasmS128);
+  constexpr std::array<int8_t, kSimd128Size> shuffle = {
+      0, 1, 2,  3,  4,  5,  6,  7,
+      8, 9, 10, 11, 16, 17, 18, 18};  // Generic I8x16Shuffle
+
+  {
+    TSSimd256VerifyScope ts_scope(
+        r.zone(), TSSimd256VerifyScope::VerifyHaveOpWithKind<
+                      compiler::turboshaft::Simd256SplatOp,
+                      compiler::turboshaft::Simd256SplatOp::Kind::kI32x8>);
+    r.Build({WASM_LOCAL_SET(temp1, WASM_SIMD_LOAD_MEM(WASM_ZERO)),
+             WASM_LOCAL_SET(temp2, WASM_SIMD_LOAD_MEM_OFFSET(16, WASM_ZERO)),
+             WASM_LOCAL_SET(
+                 temp3, WASM_SIMD_BINOP(kExprI32x4Add, WASM_LOCAL_GET(temp1),
+                                        WASM_SIMD_I32x4_SPLAT(WASM_I32V(x)))),
+             WASM_LOCAL_SET(
+                 temp4, WASM_SIMD_BINOP(kExprI32x4Add, WASM_LOCAL_GET(temp2),
+                                        WASM_SIMD_I32x4_SPLAT(WASM_I32V(x)))),
+
+             WASM_SIMD_STORE_MEM_OFFSET(32, WASM_ZERO, WASM_LOCAL_GET(temp3)),
+             WASM_SIMD_STORE_MEM_OFFSET(48, WASM_ZERO, WASM_LOCAL_GET(temp4)),
+             WASM_SIMD_STORE_MEM_OFFSET(
+                 64, WASM_ZERO,
+                 WASM_SIMD_I8x16_SHUFFLE_OP(kExprI8x16Shuffle, shuffle,
+                                            WASM_SIMD_I32x4_SPLAT(WASM_I32V(x)),
+                                            WASM_LOCAL_GET(temp1))),
+             WASM_ONE});
+  }
+
+  r.Call();
+  for (int i = 0; i < 8; ++i) {
+    CHECK_EQ(r.builder().ReadMemory(&memory[i + 8]),
+             r.builder().ReadMemory(&memory[i]) + x);
+  }
+}
+
 TEST(RunWasmTurbofan_I64x4Splat) {
   EXPERIMENTAL_FLAG_SCOPE(revectorize);
   if (!CpuFeatures::IsSupported(AVX) || !CpuFeatures::IsSupported(AVX2)) return;

@@ -6786,7 +6786,7 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
         SetupSimdImmediateInRegister(masm(), mask1, tmp_simd);
         __ Pshufb(kScratchDoubleReg, tmp_simd);
         uint32_t mask2[4] = {};
-        if (instr->InputAt(1)->IsSimd128Register()) {
+        if (instr->InputAt(1)->CanBeSimd128Register()) {
           XMMRegister src1 = i.InputSimd128Register(1);
           if (src1 != dst) __ Movdqa(dst, src1);
         } else {
