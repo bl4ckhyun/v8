@@ -1886,11 +1886,42 @@ class RepresentationSelector {
         return;
       }
 
-      // => AdditiveSafeIntegerAdd/Sub
-      VisitBinop<T>(node, UseInfo::CheckedSafeIntAsWord64(FeedbackSource{}),
-                    MachineRepresentation::kWord64,
-                    type_cache_->kAdditiveSafeIntegerFeedback);
-      if (lower<T>()) ChangeOp(node, AdditiveSafeIntegerOverflowOp(node));
+      // The Word64 path is only profitable when at least one operand is
+      // statically in the AdditiveSafeInteger range; otherwise the
+      // CheckedSafeIntAsWord64 input conversion (range check + deopt) is
+      // more expensive than a Float64 add. Use the static (pre-RETYPE)
+      // type so the decision is consistent across PROPAGATE/RETYPE/LOWER.
+      Type lhs_type = NodeProperties::GetType(node->InputAt(0));
+      Type rhs_type = NodeProperties::GetType(node->InputAt(1));
+      if (lhs_type.Is(type_cache_->kAdditiveSafeInteger) ||
+          rhs_type.Is(type_cache_->kAdditiveSafeInteger)) {
+        // => AdditiveSafeIntegerAdd/Sub
+        VisitBinop<T>(node, UseInfo::CheckedSafeIntAsWord64(FeedbackSource{}),
+                      MachineRepresentation::kWord64,
+                      type_cache_->kAdditiveSafeIntegerFeedback);
+        if (lower<T>()) ChangeOp(node, AdditiveSafeIntegerOverflowOp(node));
+        return;
+      }
+
+      // Inputs aren't statically in the safe-int range, so a Word64 lowering
+      // would be dominated by CheckedSafeIntAsWord64's range check. Lower to
+      // Float64Add instead — but the input UseInfo must keep
+      // check_safe_integer=true to stay compatible with the Word32-checked
+      // and Word64-checked sub-paths above (PROPAGATE may revisit this node
+      // as the truncation generalizes, and the per-input truncation lattice
+      // requires check_safe_integer to monotonically rise). Representation
+      // change only consults TypeCheckKind, so emitting the standard
+      // CheckedNumberOrOddballAsFloat64 conversion plus a ck=true marker
+      // does not change codegen.
+      VisitBinop<T>(node,
+                    UseInfo(MachineRepresentation::kFloat64,
+                            Truncation::Any(kDistinguishZeros,
+                                            /*check_safe_integer=*/true),
+                            TypeCheckKind::kNumberOrOddball, FeedbackSource()),
+                    MachineRepresentation::kFloat64, Type::Number());
+      if (lower<T>()) {
+        ChangeToPureOp(node, Float64Op(node));
+      }
       return;
     }
 
