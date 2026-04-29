@@ -251,6 +251,8 @@ bool IsSplat(const T& node_group) {
   return node_group[1] == node_group[0];
 }
 
+bool IsSignExtensionOp(const Operation& op);
+
 class ForcePackNode;
 class ShufflePackNode;
 class BundlePackNode;
@@ -691,15 +693,20 @@ class WasmRevecReducer : public UniformReducerAdapter<WasmRevecReducer, Next> {
     DCHECK(!pnode->is_force_packing());
 
     for (OpIndex use : analyzer_.uses(ig_index)) {
-      // Extract128 is needed for the additional Simd128 store before
-      // Simd256 store in case of OOB trap at the higher 128-bit
-      // address.
       PackNode* use_pnode = analyzer_.GetPackNode(use);
       if (use_pnode != nullptr && !use_pnode->is_force_packing()) {
         DCHECK_GE(use_pnode->nodes().size(), 2);
-        if (__ input_graph().Get(use).opcode != Opcode::kStore ||
-            use_pnode->nodes()[0] != use ||
-            use_pnode->nodes()[0] > use_pnode->nodes()[1]) {
+        const Operation& use_op = __ input_graph().Get(use);
+
+        // Extract128 is needed for the additional Simd128 store before
+        // Simd256 store in case of OOB trap at the higher 128-bit address.
+        bool is_first_store = use_op.opcode == Opcode::kStore &&
+                              use_pnode->nodes()[0] == use &&
+                              use_pnode->nodes()[0] < use_pnode->nodes()[1];
+
+        // Packed sign-extension unary/binary ops still use SIMD128 inputs
+        // and need an Extract128 node.
+        if (!IsSignExtensionOp(use_op) && !is_first_store) {
           continue;
         }
       }
@@ -930,6 +937,7 @@ class WasmRevecReducer : public UniformReducerAdapter<WasmRevecReducer, Next> {
     if (!og_index.valid()) {
       V<Simd256> input = analyzer_.GetReducedInput(pnode);
       if (!input.valid()) {
+        DCHECK(IsSignExtensionOp(unary));
         V<Simd128> input_128 = __ MapToNewGraph(unary.input());
         og_index = __ Simd256Unary(input_128, GetSimd256UnaryKind(unary.kind));
       } else {
@@ -951,6 +959,7 @@ class WasmRevecReducer : public UniformReducerAdapter<WasmRevecReducer, Next> {
     // Skip revectorized node.
     if (!og_index.valid()) {
       if (pnode->GetOperandsSize() < 2) {
+        DCHECK(IsSignExtensionOp(op));
         V<Simd128> left = __ MapToNewGraph(op.left());
         V<Simd128> right = __ MapToNewGraph(op.right());
         og_index = __ Simd256Binop(left, right, GetSimd256BinOpKind(op.kind));

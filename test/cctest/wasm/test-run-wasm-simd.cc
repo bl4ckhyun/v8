@@ -5144,6 +5144,79 @@ TEST(RunWasmTurbofan_ForcePackExtMulSplat) {
       kExprI64x2ExtMulHighI32x4U, MultiplyLong);
 }
 
+TEST(RunWasmTurbofan_ExtMulContinuousLoadRevec) {
+  EXPERIMENTAL_FLAG_SCOPE(revectorize);
+  if (!CpuFeatures::IsSupported(AVX) || !CpuFeatures::IsSupported(AVX2)) return;
+
+  WasmRunner<int32_t, int32_t, int32_t> r(TestExecutionTier::kTurbofan);
+
+  constexpr uint32_t lanes = kSimd128Size / sizeof(int8_t);
+  int8_t* memory = r.builder().AddMemoryElems<int8_t>(lanes * 6);
+  uint8_t param1 = 0;
+  uint8_t param2 = 1;
+  uint8_t v1 = r.AllocateLocal(kWasmS128);
+  uint8_t v2 = r.AllocateLocal(kWasmS128);
+  uint8_t v3 = r.AllocateLocal(kWasmS128);
+  uint8_t v4 = r.AllocateLocal(kWasmS128);
+  uint8_t v5 = r.AllocateLocal(kWasmS128);
+  uint8_t v6 = r.AllocateLocal(kWasmS128);
+  constexpr uint8_t offset = 16;
+
+  {
+    TSSimd256VerifyScope ts_scope(
+        r.zone(),
+        TSSimd256VerifyScope::VerifyHaveOpcode<
+            compiler::turboshaft::Opcode::kSimd256Extract128Lane>,
+        ExpectedResult::kPass);
+    // Simulates the clusterfuzz case:
+    // v1 and v2 are sequentially loaded.
+    // v3 and v4 use v1 and v2 sequentially and are stored sequentially,
+    // naturally packing v1 and v2. v5 and v6 perform ExtMulLow / ExtMulHigh
+    // using the naturally packed (v1, v2) pair and will create an extract node
+    // as Simd128 input.
+    r.Build(
+        {WASM_LOCAL_SET(v1, WASM_SIMD_LOAD_MEM(WASM_LOCAL_GET(param1))),
+         WASM_LOCAL_SET(
+             v2, WASM_SIMD_LOAD_MEM_OFFSET(offset, WASM_LOCAL_GET(param1))),
+         WASM_LOCAL_SET(v3, WASM_SIMD_BINOP(kExprI16x8Add, WASM_LOCAL_GET(v1),
+                                            WASM_LOCAL_GET(v1))),
+         WASM_LOCAL_SET(v4, WASM_SIMD_BINOP(kExprI16x8Add, WASM_LOCAL_GET(v2),
+                                            WASM_LOCAL_GET(v2))),
+         WASM_LOCAL_SET(
+             v5, WASM_SIMD_BINOP(kExprI16x8ExtMulLowI8x16S, WASM_LOCAL_GET(v1),
+                                 WASM_LOCAL_GET(v2))),
+         WASM_LOCAL_SET(
+             v6, WASM_SIMD_BINOP(kExprI16x8ExtMulHighI8x16S, WASM_LOCAL_GET(v1),
+                                 WASM_LOCAL_GET(v2))),
+
+         WASM_SIMD_STORE_MEM_OFFSET(offset, WASM_LOCAL_GET(param2),
+                                    WASM_LOCAL_GET(v4)),
+         WASM_SIMD_STORE_MEM(WASM_LOCAL_GET(param2), WASM_LOCAL_GET(v3)),
+         WASM_SIMD_STORE_MEM_OFFSET(offset * 3, WASM_LOCAL_GET(param2),
+                                    WASM_LOCAL_GET(v6)),
+         WASM_SIMD_STORE_MEM_OFFSET(offset * 2, WASM_LOCAL_GET(param2),
+                                    WASM_LOCAL_GET(v5)),
+         WASM_ONE});
+  }
+
+  for (int8_t x : compiler::ValueHelper::GetVector<int8_t>()) {
+    for (int8_t y : compiler::ValueHelper::GetVector<int8_t>()) {
+      for (uint32_t i = 0; i < lanes; i++) {
+        r.builder().WriteMemory(&memory[i], x);          // v1
+        r.builder().WriteMemory(&memory[i + lanes], y);  // v2
+      }
+      r.Call(0, 32);
+      int16_t expected_low = MultiplyLong<int16_t>(x, y);
+      int16_t expected_high = expected_low;
+      int16_t* output = reinterpret_cast<int16_t*>(memory + lanes * 4);
+      for (uint32_t i = 0; i < lanes / 2; i++) {
+        CHECK_EQ(expected_low, output[i]);
+        CHECK_EQ(expected_high, output[lanes / 2 + i]);
+      }
+    }
+  }
+}
+
 TEST(RunWasmTurbofan_I16x16Shl) {
   RunI16x16ShiftOpRevecTest(kExprI16x8Shl, LogicalShiftLeft);
 }
