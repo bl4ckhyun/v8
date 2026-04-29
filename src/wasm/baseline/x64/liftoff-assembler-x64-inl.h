@@ -1127,7 +1127,18 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
   }
 
   if (v8_flags.disable_write_barriers) return;
+  Label done;
+#ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
+  // TODO(429142815): WriteBarrier builtins currently require a sandbox mode
+  // switch, so more code is emitted and we need far jumps here. Once the
+  // builtins run in sandboxed mode, we can again always use near jumps.
+  Label::Distance distance = Label::kFar;
+#else
+  Label::Distance distance = Label::kNear;
+#endif  // V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
+  j(not_equal, &done, distance);
   EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
+  bind(&done);
 }
 
 void LiftoffAssembler::AtomicFence() { mfence(); }
