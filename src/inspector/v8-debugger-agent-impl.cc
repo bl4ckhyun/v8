@@ -1809,7 +1809,10 @@ Response V8DebuggerAgentImpl::currentCallFrames(
   for (; !iterator->Done(); iterator->Advance(), frameOrdinal++) {
     int contextId = iterator->GetContextId();
     InjectedScript* injectedScript = nullptr;
-    if (contextId) m_session->findInjectedScript(contextId, injectedScript);
+    std::shared_ptr<InspectedContext> context;
+    if (contextId) {
+      m_session->findInjectedScript(contextId, injectedScript, &context);
+    }
     String16 callFrameId = RemoteCallFrameId::serialize(
         m_inspector->isolateId(), contextId, frameOrdinal);
 
@@ -2213,7 +2216,8 @@ void V8DebuggerAgentImpl::didPause(
         protocol::Debugger::Paused::ReasonEnum::Assert, nullptr));
   } else if (breakReasons.contains(v8::debug::BreakReason::kException)) {
     InjectedScript* injectedScript = nullptr;
-    m_session->findInjectedScript(contextId, injectedScript);
+    std::shared_ptr<InspectedContext> context;
+    m_session->findInjectedScript(contextId, injectedScript, &context);
     if (injectedScript) {
       String16 breakReason =
           exceptionType == v8::debug::kPromiseRejection
