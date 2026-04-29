@@ -2143,7 +2143,9 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
           this, object, offset, value, ip, kScratchReg,
           RecordWriteMode::kValueIsAny, DetermineStubCallMode(),
           &unwinding_info_writer_);
+      __ bne(ool->exit());
       __ JumpIfSmi(value, ool->exit());
+
       __ CheckPageFlag(object, kScratchReg,
                        MemoryChunk::kPointersFromHereAreInterestingMask, ne,
                        ool->entry());
