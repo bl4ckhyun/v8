@@ -120,4 +120,45 @@ $ MINIMIZER_PATH=path/to/minimizer
 $ python tools/minimize.py $MINIMIZER_PATH
 ```
 
-The path should point to a local checkout of the [minimizer](https://chrome-internal.googlesource.com/chrome/tools/clusterfuzz/+/refs/heads/master/src/python/bot/minimizer/).
+The path should point to a local checkout of the [minimizer](
+https://chrome-internal.googlesource.com/chrome/tools/clusterfuzz/+/refs/heads/master/src/python/bot/minimizer/).
+
+# Local Execution (Clusterfuzz Simulation)
+
+To simulate Clusterfuzz's behavior locally—generating test cases and running
+them against a `d8` binary to find crashes—use the
+`tools/run_locally_against_d8.py` script.
+
+This script automates:
+1.  Generating a batch of test cases using the fuzzer.
+2.  Executing each test case with `d8` (applying any generated flags).
+3.  Detecting crashes (via signals, exit codes, or "FATAL" error messages).
+4.  Saving crashing test cases and their flags to a local directory.
+
+## Usage
+
+```bash
+$ python3 tools/run_locally_against_d8.py [options]
+```
+
+### Options
+- `--num-tests <n>`: Total number of test cases to generate and run (default: 10000).
+- `--num-crashes <n>`: Stop execution after finding this many crashes
+  (default: 10).
+- `--d8 <path>`: Path to the `d8` binary to test (default:
+  `../../../../out/x64.release/d8` relative to script).
+- `--crash-dir <path>`: Directory where crashing test cases will be saved
+  (default: `workdir/crash/` in js_fuzzer directory).
+- `--batch-size <n>`: Number of tests to generate in each fuzzer invocation
+  (default: 100).
+- `--extra-flags "<flags>"`: Extra flags to always pass to `d8`
+  (e.g. `--extra-flags "--turbofan --allow-natives-syntax"`).
+- `--jobs <n>`: Number of parallel `d8` jobs to run (default: CPU count).
+
+## Results
+- **Crashes**: Any test cases that cause `d8` to crash are saved in the
+  `crash/` directory (or the directory specified by `--crash-dir`). Each crash
+  artifact includes the `.js` test file and its corresponding `flags-N.js` file
+  if applicable.
+- **Progress**: The script outputs real-time progress to the terminal, showing
+  how many tests have been run and how many crashes have been found so far.
