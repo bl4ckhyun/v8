@@ -2718,6 +2718,9 @@
 
   # TODO(v8:14581): Re-enable this once turboshaft frontend is done.
   'turbolev/*': [SKIP],
+
+  # Cannot open trace file 'v8_trace.json' for writing: Permission denied.
+  'd8_trace': [SKIP],
 }], # variant == google3_nociu or variant == google3_icu
 
 # Specific failures for no_icu builds
