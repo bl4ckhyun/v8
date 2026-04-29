@@ -1666,13 +1666,8 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
   }
 
   if (v8_flags.disable_write_barriers) return;
-  // We only need a write barrier if the CAS was successful.
-  // The AtomicCompareExchange above leaves the condition flags from the
-  // final comparison.
-  Label exit;
-  b(ne, &exit);
-
   // Emit the write barrier.
+  Label exit;
   JumpIfSmi(new_value.gp(), &exit);
   CheckPageFlag(dst_addr, MemoryChunk::kPointersFromHereAreInterestingMask,
                 kZero, &exit);

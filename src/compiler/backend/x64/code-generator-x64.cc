@@ -7427,12 +7427,10 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       }
 
       if (v8_flags.disable_write_barriers) break;
-
       // Emit write barrier.
       auto ool = zone()->New<OutOfLineRecordWrite>(
           this, object, i.MemoryOperand(2), written_value, scratch0, scratch1,
           RecordWriteMode::kValueIsAny, DetermineStubCallMode());
-      __ j(not_equal, ool->exit());
       __ JumpIfSmi(written_value, ool->exit());
 #if V8_ENABLE_STICKY_MARK_BITS_BOOL
       __ CheckPageFlag(object, scratch0, MemoryChunk::kIncrementalMarking,

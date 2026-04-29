@@ -1127,10 +1127,7 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
   }
 
   if (v8_flags.disable_write_barriers) return;
-  Label done;
-  j(not_equal, &done, Label::kNear);
   EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
-  bind(&done);
 }
 
 void LiftoffAssembler::AtomicFence() { mfence(); }
