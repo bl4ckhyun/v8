@@ -2589,7 +2589,7 @@ DirectHandle<PrototypeInfo> Map::GetOrCreatePrototypeInfo(
     DirectHandle<Map> prototype_map, Isolate* isolate) {
   {
     Tagged<Object> maybe_proto_info = prototype_map->prototype_info();
-    if (PrototypeInfo::IsPrototypeInfoFast(maybe_proto_info)) {
+    if (IsPrototypeInfo(maybe_proto_info)) {
       return direct_handle(Cast<PrototypeInfo>(maybe_proto_info), isolate);
     }
   }

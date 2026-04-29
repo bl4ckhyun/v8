@@ -763,7 +763,7 @@ class ReadOnlyRoots {
 #undef ROOT_ACCESSOR
 
   V8_INLINE bool IsNameForProtector(Tagged<HeapObject> object) const;
-  V8_INLINE void VerifyNameForProtectorsPages() const;
+  void VerifyNameForProtectorsPages() const;
 #ifdef DEBUG
   void VerifyNameForProtectors();
   void VerifyTypes();

@@ -8,16 +8,12 @@
 #include "src/objects/swiss-name-dictionary.h"
 // Include the non-inl header before the rest of the headers.
 
-#include <algorithm>
 #include <optional>
 
-#include "src/base/macros.h"
-#include "src/execution/isolate-utils-inl.h"
+#include "src/base/logging.h"
 #include "src/heap/heap.h"
 #include "src/objects/fixed-array-inl.h"
-#include "src/objects/fixed-array.h"
 #include "src/objects/instance-type-inl.h"
-#include "src/objects/js-collection-iterator.h"
 #include "src/objects/objects-inl.h"
 #include "src/objects/slots-inl.h"
 #include "src/objects/smi.h"

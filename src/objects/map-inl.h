@@ -26,7 +26,6 @@
 #include "src/objects/object-predicates-inl.h"
 #include "src/objects/property.h"
 #include "src/objects/prototype-info-inl.h"
-#include "src/objects/prototype-info.h"
 #include "src/objects/shared-function-info-inl.h"
 #include "src/objects/templates-inl.h"
 #include "src/objects/transitions-inl.h"
@@ -775,7 +774,7 @@ bool Map::should_be_fast_prototype_map() const {
 
 bool Map::has_prototype_info() const {
   DCHECK(is_prototype_map());
-  return PrototypeInfo::IsPrototypeInfoFast(prototype_info());
+  return IsPrototypeInfo(prototype_info());
 }
 
 bool Map::TryGetPrototypeInfo(Tagged<PrototypeInfo>* result) const {
@@ -785,7 +784,7 @@ bool Map::TryGetPrototypeInfo(Tagged<PrototypeInfo>* result) const {
   DCHECK(is_prototype_map());
 #endif  // V8_ENABLE_WEBASSEMBLY
   Tagged<Object> maybe_proto_info = prototype_info();
-  if (!PrototypeInfo::IsPrototypeInfoFast(maybe_proto_info)) return false;
+  if (!IsPrototypeInfo(maybe_proto_info)) return false;
   *result = Cast<PrototypeInfo>(maybe_proto_info);
   return true;
 }
