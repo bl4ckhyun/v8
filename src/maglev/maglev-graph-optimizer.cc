@@ -2285,13 +2285,6 @@ ProcessResult MaglevGraphOptimizer::VisitInt32MultiplyOverflownBits(
   return ProcessResult::kContinue;
 }
 
-ProcessResult MaglevGraphOptimizer::VisitInt32Divide(
-    Int32Divide* node, const ProcessingState& state) {
-  // TODO(victorgomes): TryFoldInt32Operation can emit a CheckInt32Condition
-  // which needs an eager deopt point. We need to propagate this information
-  return ProcessResult::kContinue;
-}
-
 ProcessResult MaglevGraphOptimizer::VisitInt32AddWithOverflow(
     Int32AddWithOverflow* node, const ProcessingState& state) {
   RETURN_IF_SUCCESS(TryFoldInt32Operation<Operation::kAdd>(node));
@@ -3128,6 +3121,7 @@ ProcessResult MaglevGraphOptimizer::VisitJumpLoop(
 #define UNREACHABLE_NODES(X) \
   X(ConstantGapMove)         \
   X(GapMove)                 \
+  X(Int32Divide)             \
   X(VirtualObject)
 
 #define UNREACHEABLE_VISITOR(Node)                                          \
