@@ -2894,7 +2894,38 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
   }
 }
 
-void InstructionSelector::VisitUint64Add128(OpIndex node) { UNIMPLEMENTED(); }
+void InstructionSelector::VisitUint64Add128(OpIndex node) {
+  Arm64OperandGenerator g(this);
+  const auto& op = Get(node).Cast<Word64Add128Op>();
+
+  OptionalV<Word64> out_low = FindProjection(node, 0);
+  OptionalV<Word64> out_high = FindProjection(node, 1);
+
+  DCHECK(out_low.valid() && out_high.valid());
+
+  if (!IsUsed(out_high.value())) {
+    InstructionOperand b_low_op = g.UseOperand(op.right_low(), kArithmeticImm);
+    Emit(kArm64Add, g.DefineAsRegister(out_low.value()),
+         g.UseRegister(op.left_low()), b_low_op);
+    return;
+  }
+
+  InstructionOperand inputs[4];
+  size_t input_count = 0;
+  InstructionOperand outputs[2];
+  size_t output_count = 0;
+
+  inputs[input_count++] = g.UseRegister(op.left_low());
+  inputs[input_count++] = g.UseOperand(op.right_low(), kArithmeticImm);
+
+  inputs[input_count++] = g.UseRegister(op.left_high());
+  inputs[input_count++] = g.UseRegister(op.right_high());
+
+  outputs[output_count++] = g.DefineAsRegister(out_low.value());
+  outputs[output_count++] = g.DefineAsRegister(out_high.value());
+
+  this->Emit(kArm64Add128, output_count, outputs, input_count, inputs);
+}
 
 #if V8_ENABLE_WEBASSEMBLY
 namespace {
