@@ -20,6 +20,7 @@
 #include "include/v8-script.h"
 #include "include/v8-value-serializer.h"
 #include "src/base/once.h"
+#include "src/base/platform/platform.h"
 #include "src/base/platform/time.h"
 #include "src/base/platform/wrappers.h"
 #include "src/base/vector.h"
@@ -393,6 +394,17 @@ class PerIsolateData {
 };
 
 extern bool check_d8_flag_contradictions;
+extern bool exit_on_flag_contradictions;
+
+inline void ReportFlagError(const char* format, const char* name) {
+  if (exit_on_flag_contradictions) {
+    base::OS::PrintError(format, name);
+    base::OS::PrintError("\n");
+    base::OS::ExitProcess(-1);
+  } else {
+    FATAL(format, name);
+  }
+}
 
 class ShellOptions {
  public:
@@ -420,11 +432,11 @@ class ShellOptions {
       if (check_d8_flag_contradictions) {
         if (kAllowIdenticalAssignment) {
           if (specified_ && value_ != value) {
-            FATAL("Contradictory values for d8 flag --%s", name_);
+            ReportFlagError("Contradictory values for d8 flag --%s", name_);
           }
         } else {
           if (specified_) {
-            FATAL("Repeated specification of d8 flag --%s", name_);
+            ReportFlagError("Repeated specification of d8 flag --%s", name_);
           }
         }
       }

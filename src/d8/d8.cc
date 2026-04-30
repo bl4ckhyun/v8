@@ -570,6 +570,7 @@ std::unordered_set<size_t> Shell::wasm_serialized_bytes_hashes_;
 Global<Context> Shell::evaluation_context_;
 ArrayBuffer::Allocator* Shell::array_buffer_allocator;
 bool check_d8_flag_contradictions = true;
+bool exit_on_flag_contradictions = false;
 ShellOptions Shell::options;
 base::OnceType Shell::quit_once_ = V8_ONCE_INIT;
 
@@ -6438,7 +6439,6 @@ bool FlagWithArgMatches(const char (&flag)[N], char** flag_value, int argc,
 bool Shell::SetOptions(int argc, char* argv[]) {
   options.d8_path = argv[0];
   bool disallow_unsafe_flags = false;
-  bool exit_on_flag_contradictions = false;
   bool flag_processing_mode_explicitly_set = false;
   for (int i = 0; i < argc; i++) {
     char* flag_value = nullptr;
@@ -6682,15 +6682,10 @@ bool Shell::SetOptions(int argc, char* argv[]) {
           if (!flag.WasSpecified()) {
             return;
           }
-          base::OS::PrintError(
+          ReportFlagError(
               "Command-line provided flag --%s is prohibited by "
-              "--disallow-unsafe-flags.\n",
+              "--disallow-unsafe-flags",
               flag.name());
-          if (exit_on_flag_contradictions) {
-            base::OS::ExitProcess(-1);
-          } else {
-            base::OS::Abort();
-          }
         };  // NOLINT(readability/braces)
     // The --disallow-unsafe-flags is meant to block known unsafe configurations
     // and mitigate spurious reports due invalid flag combinations/values. To
