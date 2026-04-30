@@ -401,9 +401,9 @@ bool WasmShuffleAnalyzer::ProcessShuffleOfShuffle(
                                         shuffle_in_end % kSimd128Size + 1);
         // shuffle_out.shuffle will need to be updated to read the modified
         // shuffle_in.
-        shuffles_to_read_shifted_.emplace_back(
-            &shuffle_out, shuffle_out_begin,
-            shuffle_out_begin + shuffle_out_demanded.bytes(), shuffle_in_begin);
+        shuffles_to_read_shifted_.emplace_back(&shuffle_out, shuffle_out_begin,
+                                               shuffle_out_begin + span,
+                                               shuffle_in_begin);
       }
       // shuffle_in will be reduced.
       demanded_byte_analysis_.RecordOp(shuffle_in, shuffle_in_demanded);
