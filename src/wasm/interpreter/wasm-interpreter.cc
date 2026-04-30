@@ -12355,7 +12355,7 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
   case kExpr##format##ExtractLane: {                    \
     EMIT_INSTR_HANDLER(s2s_Simd##format##ExtractLane);  \
     /* emit 8 bits ? */                                 \
-    EmitI16Const(instr.optional.simd_lane);             \
+    EmitI16Const(instr.optional.simd_lane.lane());      \
     S128Pop();                                          \
     op_type##Push();                                    \
     return RegMode::kNoReg;                             \
@@ -12370,7 +12370,7 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
   case kExpr##format##ExtractLane##sign: {                                 \
     EMIT_INSTR_HANDLER(s2s_Simd##format##ExtractLane##sign);               \
     /* emit 8 bits ? */                                                    \
-    EmitI16Const(instr.optional.simd_lane);                                \
+    EmitI16Const(instr.optional.simd_lane.lane());                         \
     S128Pop();                                                             \
     I32Push();                                                             \
     return RegMode::kNoReg;                                                \
@@ -12590,7 +12590,7 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
   case kExpr##format##ReplaceLane: {                           \
     EMIT_INSTR_HANDLER(s2s_Simd##format##ReplaceLane);         \
     /* emit 8 bits ? */                                        \
-    EmitI16Const(instr.optional.simd_lane);                    \
+    EmitI16Const(instr.optional.simd_lane.lane());             \
     op_type##Pop();                                            \
     S128Pop();                                                 \
     S128Push();                                                \
@@ -12928,21 +12928,21 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
       LOAD_ZERO_EXTEND_CASE(Load64Zero, I64)
 #undef LOAD_ZERO_EXTEND_CASE
 
-#define LOAD_LANE_CASE(op)                                                 \
-  case kExprS128##op: {                                                    \
-    bool is_memory64 =                                                     \
-        module_->memories[instr.optional.simd_loadstore_lane.memory_index] \
-            .is_memory64();                                                \
-    EMIT_MULTI_MEM64_INSTR_HANDLER_WITH_PC(s2s_SimdS128##op, is_memory64,  \
-                                           instr.pc);                      \
-    S128Pop();                                                             \
-    EmitMemoryOffset(instr.optional.simd_loadstore_lane.offset);           \
-    EmitMemoryIndex(instr.optional.simd_loadstore_lane.memory_index);      \
-    MemIndexPop(is_memory64);                                              \
-    /* emit 8 bits ? */                                                    \
-    EmitI16Const(instr.optional.simd_loadstore_lane.lane);                 \
-    S128Push();                                                            \
-    return RegMode::kNoReg;                                                \
+#define LOAD_LANE_CASE(op)                                                   \
+  case kExprS128##op: {                                                      \
+    bool is_memory64 =                                                       \
+        module_->memories[instr.optional.simd_loadstore_lane.memory_index()] \
+            .is_memory64();                                                  \
+    EMIT_MULTI_MEM64_INSTR_HANDLER_WITH_PC(s2s_SimdS128##op, is_memory64,    \
+                                           instr.pc);                        \
+    S128Pop();                                                               \
+    EmitMemoryOffset(instr.optional.simd_loadstore_lane.offset());           \
+    EmitMemoryIndex(instr.optional.simd_loadstore_lane.memory_index());      \
+    MemIndexPop(is_memory64);                                                \
+    /* emit 8 bits ? */                                                      \
+    EmitI16Const(instr.optional.simd_loadstore_lane.lane());                 \
+    S128Push();                                                              \
+    return RegMode::kNoReg;                                                  \
   }
       LOAD_LANE_CASE(Load8Lane)
       LOAD_LANE_CASE(Load16Lane)
@@ -12950,20 +12950,20 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
       LOAD_LANE_CASE(Load64Lane)
 #undef LOAD_LANE_CASE
 
-#define STORE_LANE_CASE(op)                                                \
-  case kExprS128##op: {                                                    \
-    bool is_memory64 =                                                     \
-        module_->memories[instr.optional.simd_loadstore_lane.memory_index] \
-            .is_memory64();                                                \
-    EMIT_MULTI_MEM64_INSTR_HANDLER_WITH_PC(s2s_SimdS128##op, is_memory64,  \
-                                           instr.pc);                      \
-    S128Pop();                                                             \
-    EmitMemoryOffset(instr.optional.simd_loadstore_lane.offset);           \
-    EmitMemoryIndex(instr.optional.simd_loadstore_lane.memory_index);      \
-    MemIndexPop(is_memory64);                                              \
-    /* emit 8 bits ? */                                                    \
-    EmitI16Const(instr.optional.simd_loadstore_lane.lane);                 \
-    return RegMode::kNoReg;                                                \
+#define STORE_LANE_CASE(op)                                                  \
+  case kExprS128##op: {                                                      \
+    bool is_memory64 =                                                       \
+        module_->memories[instr.optional.simd_loadstore_lane.memory_index()] \
+            .is_memory64();                                                  \
+    EMIT_MULTI_MEM64_INSTR_HANDLER_WITH_PC(s2s_SimdS128##op, is_memory64,    \
+                                           instr.pc);                        \
+    S128Pop();                                                               \
+    EmitMemoryOffset(instr.optional.simd_loadstore_lane.offset());           \
+    EmitMemoryIndex(instr.optional.simd_loadstore_lane.memory_index());      \
+    MemIndexPop(is_memory64);                                                \
+    /* emit 8 bits ? */                                                      \
+    EmitI16Const(instr.optional.simd_loadstore_lane.lane());                 \
+    return RegMode::kNoReg;                                                  \
   }
       STORE_LANE_CASE(Store8Lane)
       STORE_LANE_CASE(Store16Lane)

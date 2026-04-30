@@ -305,7 +305,7 @@ bool WasmBytecodeGenerator::DecodeSimdOp(WasmOpcode opcode,
     if (imm.lane >= kSimd128Size) {
       return false;
     }
-    optional->simd_lane = imm.lane;
+    optional->simd_lane.set_lane(imm.lane);
     *len += 1;
   } else if ((opcode >= kExprS128Load8Lane) &&
              (opcode <= kExprS128Store64Lane)) {
@@ -322,9 +322,9 @@ bool WasmBytecodeGenerator::DecodeSimdOp(WasmOpcode opcode,
       return false;
     }
 
-    optional->simd_loadstore_lane.offset = mem_imm.offset;
-    optional->simd_loadstore_lane.memory_index = mem_imm.mem_index;
-    optional->simd_loadstore_lane.lane = lane_imm.lane;
+    optional->simd_loadstore_lane.set_offset(mem_imm.offset);
+    optional->simd_loadstore_lane.set_memory_index(mem_imm.mem_index);
+    optional->simd_loadstore_lane.set_lane(lane_imm.lane);
     *len += lane_imm.length;
   } else if (WasmOpcodes::IsRelaxedSimdOpcode(opcode)) {
     // Relaxed SIMD opcodes:
