@@ -690,7 +690,7 @@ class FastApiCallReducerAssembler : public JSCallReducerAssembler {
     base::SmallVector<Node*, kInlineSize> inputs(value_input_count +
                                                  kEffectAndControl);
     int cursor = 0;
-    inputs[cursor++] = n.receiver();
+    inputs[cursor++] = receiver_;
 
     // TODO(turbofan): Consider refactoring CFunctionInfo to distinguish
     // between receiver and arguments, simplifying this (and related) spots.
