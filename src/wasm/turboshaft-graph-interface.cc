@@ -4057,15 +4057,14 @@ class TurboshaftGraphBuildingInterface
     // signature.
     CanonicalTypeIndex expected_csig_index =
         env_->module->canonical_type_id(imm.cont_type->contfun_typeindex());
-    const CanonicalSig* expected_csig =
-        GetTypeCanonicalizer()->LookupFunctionSignature(expected_csig_index);
-    uint64_t expected_hash = expected_csig->signature_hash();
-    V<Word64> signature_hash = __ Load(stack, LoadOp::Kind::RawAligned(),
-                                       MemoryRepresentation::Uint64(),
-                                       StackMemory::signature_hash_offset());
-    __ TrapIfNot(__ Equal(signature_hash, __ Word64Constant(expected_hash),
-                          RegisterRepresentation::Word64()),
-                 TrapId::kTrapFuncSigMismatch);
+    V<Word32> expected_id =
+        __ RelocatableWasmCanonicalSignatureId(expected_csig_index.index);
+    V<Word32> signature_id = __ Load(stack, LoadOp::Kind::RawAligned(),
+                                     MemoryRepresentation::Uint32(),
+                                     StackMemory::signature_id_offset());
+    __ TrapIfNot(
+        __ Equal(signature_id, expected_id, RegisterRepresentation::Word32()),
+        TrapId::kTrapFuncSigMismatch);
     return stack;
   }
 
@@ -4098,11 +4097,14 @@ class TurboshaftGraphBuildingInterface
           }
         });
     V<Context> native_context = instance_cache_.native_context();
+    CanonicalTypeIndex new_csig_index = decoder->module_->canonical_type_id(
+        new_imm.cont_type->contfun_typeindex());
     // Allocate a new continuation for this stack, and invalidate the old one by
     // pointing {StackMemory::current_cont_} to the new one.
     V<WasmContinuationObject> cont = __ WasmCallRuntime(
         decoder->zone(), Runtime::kWasmAllocateBoundContinuation,
-        {input_cont.op, __ SmiConstant(Smi::FromInt(static_cast<int>(delta)))},
+        {input_cont.op, __ SmiConstant(Smi::FromInt(static_cast<int>(delta))),
+         __ SmiConstant(Smi::FromInt(static_cast<int>(new_csig_index.index)))},
         native_context);
     result->op = cont;
   }
@@ -4182,6 +4184,23 @@ class TurboshaftGraphBuildingInterface
       tag_params[index].op =
           AnnotateResultIfReference(loaded, tag_params[index].type);
     });
+
+    ModuleTypeIndex cont_type_index = cont_val->type.ref_index();
+    const ContType* cont_type = decoder->module_->cont_type(cont_type_index);
+    ModuleTypeIndex fun_type_index = cont_type->contfun_typeindex();
+    wasm::CanonicalTypeIndex sig_id =
+        decoder->module_->canonical_type_id(fun_type_index);
+
+    // Store the signature ID in the continuation's stack.
+    V<WasmStackObject> stack_obj = __ Load(
+        cont, LoadOp::Kind::TaggedBase(), MemoryRepresentation::TaggedPointer(),
+        WasmContinuationObject::kStackObjOffset);
+    V<WordPtr> stack_mem = __ LoadExternalPointerFromObject(
+        stack_obj, WasmStackObject::kStackOffset, kWasmStackMemoryTag);
+    __ Store(stack_mem, OpIndex::Invalid(), __ Word32Constant(sig_id.index),
+             StoreOp::Kind::RawAligned(), MemoryRepresentation::Uint32(),
+             WriteBarrierKind::kNoWriteBarrier,
+             StackMemory::signature_id_offset());
 
     instance_cache_.ReloadCachedMemory();
     cont_val->op = cont;

@@ -219,10 +219,10 @@ class StackMemory {
   constexpr static uint32_t current_continuation_offset() {
     return OFFSET_OF(StackMemory, current_cont_);
   }
-  constexpr static uint32_t signature_hash_offset() {
-    return OFFSET_OF(StackMemory, signature_hash_);
+  constexpr static uint32_t signature_id_offset() {
+    return OFFSET_OF(StackMemory, signature_id_);
   }
-  void set_signature_hash(uint64_t hash) { signature_hash_ = hash; }
+  void set_signature_id(CanonicalTypeIndex id) { signature_id_ = id; }
   constexpr static uint32_t arg_buffer_offset() {
     return OFFSET_OF(StackMemory, arg_buffer_);
   }
@@ -282,7 +282,7 @@ class StackMemory {
   base::Vector<const CanonicalValueType> param_types_;
   Address arg_buffer_ = kNullAddress;
   int num_bound_args_ = 0;
-  uint64_t signature_hash_ = 0;
+  CanonicalTypeIndex signature_id_{kInvalidCanonicalIndex};
   // When adding fields here, also check if it needs to be cleared in
   // StackMemory::Reset() when the stack is moved to the stack pool after
   // retiring.
