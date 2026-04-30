@@ -2434,19 +2434,14 @@ template("run_torque") {
       "$destination_folder/class-debug-readers.cc",
       "$destination_folder/class-debug-readers.h",
       "$destination_folder/class-forward-declarations.h",
-      "$destination_folder/class-verifiers.cc",
-      "$destination_folder/class-verifiers.h",
       "$destination_folder/csa-types.h",
       "$destination_folder/debug-macros.cc",
       "$destination_folder/debug-macros.h",
       "$destination_folder/enum-verifiers.cc",
       "$destination_folder/exported-macros-assembler.cc",
       "$destination_folder/exported-macros-assembler.h",
-      "$destination_folder/factory.cc",
-      "$destination_folder/factory.inc",
       "$destination_folder/instance-types.h",
       "$destination_folder/interface-descriptors.inc",
-      "$destination_folder/objects-printer.cc",
     ]
 
     foreach(file, torque_files) {
@@ -2655,13 +2650,8 @@ v8_cluster_source_set("torque_generated_definitions") {
     ":v8_maybe_icu",
   ]
 
-  sources = torque_def_cc_files + [
-              "$target_gen_dir/torque-generated/class-forward-declarations.h",
-              "$target_gen_dir/torque-generated/class-verifiers.cc",
-              "$target_gen_dir/torque-generated/class-verifiers.h",
-              "$target_gen_dir/torque-generated/factory.cc",
-              "$target_gen_dir/torque-generated/objects-printer.cc",
-            ]
+  sources = torque_def_cc_files +
+            [ "$target_gen_dir/torque-generated/class-forward-declarations.h" ]
 
   # Add .inc files (always included, not compiled directly)
   sources += torque_def_inc_files

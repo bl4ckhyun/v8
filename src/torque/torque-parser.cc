@@ -1044,7 +1044,6 @@ std::optional<ParseResult> MakeClassDeclaration(
        ANNOTATION_GENERATE_UNIQUE_MAP,
        ANNOTATION_HIGHEST_INSTANCE_TYPE_WITHIN_PARENT,
        ANNOTATION_LOWEST_INSTANCE_TYPE_WITHIN_PARENT,
-       ANNOTATION_CPP_OBJECT_DEFINITION,
        ANNOTATION_CPP_OBJECT_LAYOUT_DEFINITION},
       {ANNOTATION_RESERVE_BITS_IN_INSTANCE_TYPE,
        ANNOTATION_INSTANCE_TYPE_VALUE});
@@ -1086,9 +1085,6 @@ std::optional<ParseResult> MakeClassDeclaration(
   }
   if (annotations.Contains(ANNOTATION_LOWEST_INSTANCE_TYPE_WITHIN_PARENT)) {
     flags |= ClassFlag::kLowestInstanceTypeWithinParent;
-  }
-  if (annotations.Contains(ANNOTATION_CPP_OBJECT_DEFINITION)) {
-    flags |= ClassFlag::kCppObjectDefinition;
   }
   if (annotations.Contains(ANNOTATION_CPP_OBJECT_LAYOUT_DEFINITION)) {
     flags |= ClassFlag::kCppObjectLayoutDefinition;

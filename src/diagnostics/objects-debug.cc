@@ -102,7 +102,6 @@
 #include "src/regexp/regexp.h"
 #include "src/sandbox/js-dispatch-table-inl.h"
 #include "src/utils/ostreams.h"
-#include "torque-generated/class-verifiers.h"
 
 #if V8_ENABLE_WEBASSEMBLY
 #include "src/base/strings.h"
@@ -137,11 +136,6 @@ namespace internal {
 //
 
 #ifdef VERIFY_HEAP
-
-#define USE_TORQUE_VERIFIER(Class)                                \
-  void Class::Class##Verify(Isolate* isolate) {                   \
-    TorqueGeneratedClassVerifiers::Class##Verify(*this, isolate); \
-  }
 
 // static
 void Object::ObjectVerify(Tagged<Object> obj, Isolate* isolate) {
@@ -1616,10 +1610,6 @@ void JSBoundFunction::JSBoundFunctionVerify(Isolate* isolate) {
 }
 
 void JSFunction::JSFunctionVerify(Isolate* isolate) {
-  // Don't call TorqueGeneratedClassVerifiers::JSFunctionVerify here because the
-  // Torque class definition contains the field `prototype_or_initial_map` which
-  // may not be allocated.
-
   // This assertion exists to encourage updating this verification function if
   // new fields are added in the Torque class layout definition.
   static_assert(JSFunctionWithoutPrototype::kHeaderSize == 7 * kTaggedSize);
@@ -4181,8 +4171,6 @@ bool TransitionsAccessor::IsConsistentWithBackPointers() {
       });
   return success;
 }
-
-#undef USE_TORQUE_VERIFIER
 
 #endif  // DEBUG
 

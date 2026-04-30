@@ -677,20 +677,6 @@ class ClassType final : public AggregateType {
   std::string GetGeneratedTypeNameImpl() const override;
   std::string GetGeneratedTNodeTypeNameImpl() const override;
   bool IsExtern() const { return flags_ & ClassFlag::kExtern; }
-  bool ShouldGeneratePrint() const {
-    if (flags_ & ClassFlag::kCppObjectDefinition) return false;
-    if (flags_ & ClassFlag::kCppObjectLayoutDefinition) return false;
-    if (!IsExtern()) return true;
-    if (!ShouldGenerateCppClassDefinitions()) return false;
-    return !IsAbstract() && !HasUndefinedLayout();
-  }
-  bool ShouldGenerateVerify() const {
-    if (flags_ & ClassFlag::kCppObjectDefinition) return false;
-    if (flags_ & ClassFlag::kCppObjectLayoutDefinition) return false;
-    if (!IsExtern()) return true;
-    if (!ShouldGenerateCppClassDefinitions()) return false;
-    return !HasUndefinedLayout() && !IsShape();
-  }
   bool DoNotGenerateCast() const {
     return flags_ & ClassFlag::kDoNotGenerateCast;
   }
@@ -705,14 +691,6 @@ class ClassType final : public AggregateType {
   bool HasSameInstanceTypeAsParent() const {
     return flags_ & ClassFlag::kHasSameInstanceTypeAsParent;
   }
-  bool ShouldGenerateCppClassDefinitions() const {
-    if (flags_ & ClassFlag::kCppObjectDefinition) return false;
-    if (flags_ & ClassFlag::kCppObjectLayoutDefinition) return false;
-    return (flags_ & ClassFlag::kGenerateCppClassDefinitions) || !IsExtern();
-  }
-  bool ShouldGenerateCppObjectDefinitionAsserts() const {
-    return flags_ & ClassFlag::kCppObjectDefinition;
-  }
   bool ShouldGenerateCppObjectLayoutDefinitionAsserts() const {
     return flags_ & ClassFlag::kCppObjectLayoutDefinition &&
            flags_ & ClassFlag::kGenerateCppClassDefinitions;
@@ -721,9 +699,6 @@ class ClassType final : public AggregateType {
   bool ShouldGenerateUniqueMap() const {
     return (flags_ & ClassFlag::kGenerateUniqueMap) ||
            (!IsExtern() && !IsAbstract());
-  }
-  bool ShouldGenerateFactoryFunction() const {
-    return ShouldExport() && !IsAbstract();
   }
   bool ShouldExport() const { return flags_ & ClassFlag::kExport; }
   bool IsShape() const { return flags_ & ClassFlag::kIsShape; }

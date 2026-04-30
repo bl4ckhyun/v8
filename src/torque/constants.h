@@ -114,8 +114,6 @@ static const char* const ANNOTATION_EXPORT = "@export";
 static const char* const ANNOTATION_DO_NOT_GENERATE_CAST = "@doNotGenerateCast";
 static const char* const ANNOTATION_USE_PARENT_TYPE_CHECKER =
     "@useParentTypeChecker";
-static const char* const ANNOTATION_CPP_OBJECT_DEFINITION =
-    "@cppObjectDefinition";
 static const char* const ANNOTATION_CPP_OBJECT_LAYOUT_DEFINITION =
     "@cppObjectLayoutDefinition";
 static const char* const ANNOTATION_SAME_ENUM_VALUE_AS = "@sameEnumValueAs";
@@ -176,7 +174,6 @@ enum class ClassFlag {
   kExport = 1 << 10,
   kDoNotGenerateCast = 1 << 11,
   kGenerateUniqueMap = 1 << 12,
-  kCppObjectDefinition = 1 << 13,
   kCppObjectLayoutDefinition = 1 << 14,
   kDoNotGenerateInstanceTypeCheck = 1 << 15,
 };
