@@ -1592,6 +1592,7 @@ static void TestExternalPointerWrapping() {
                    "foo(), true")
             ->BooleanValue(isolate));
 
+  expected_ptr = nullptr;
   delete ptr;
 }
 
@@ -1600,6 +1601,7 @@ THREADED_TEST(ExternalWrap) {
   int* ptr = new int;
   expected_ptr = ptr;
   TestExternalPointerWrapping();
+  expected_ptr = nullptr;
   delete ptr;
 
   // Check stack allocated object.
