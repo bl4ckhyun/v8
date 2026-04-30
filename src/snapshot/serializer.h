@@ -117,7 +117,7 @@ class CodeAddressMap : public CodeEventLogger {
     }
 
     void RemoveEntry(base::HashMap::Entry* entry) {
-      impl_.Remove(entry->key, entry->hash);
+      impl_.Remove(entry->key, entry->hash());
     }
 
     base::HashMap impl_;
