@@ -285,17 +285,6 @@ const ClassType* TypeVisitor::ComputeType(
     Error("Class \"", decl->name->value,
           "\" requires a layout but doesn't have one");
   }
-  if (flags & ClassFlag::kGenerateUniqueMap) {
-    if (!(flags & ClassFlag::kExtern)) {
-      Error("No need to specify ", ANNOTATION_GENERATE_UNIQUE_MAP,
-            ", non-extern classes always have a unique map.");
-    }
-    if (flags & ClassFlag::kAbstract) {
-      Error(ANNOTATION_ABSTRACT, " and ", ANNOTATION_GENERATE_UNIQUE_MAP,
-            " shouldn't be used together, because abstract classes are never "
-            "instantiated.");
-    }
-  }
   if (flags & ClassFlag::kExtern) {
     if (decl->generates) {
       bool enforce_tnode_type = true;

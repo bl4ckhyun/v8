@@ -306,7 +306,6 @@ namespace internal {
   IF_WASM(V, WasmTypeInfo)                      \
   IF_WASM(V, WasmValueObject)                   \
   V(WeakCell)                                   \
-  TORQUE_DEFINED_CLASS_LIST(V)                  \
   SIMPLE_HEAP_OBJECT_LIST1(V)
 // clang-format off
 // LINT.ThenChange(/src/objects/map.cc:get_visitor_id, /src/objects/js-objects.cc:get_header_size, /src/compiler/turbofan-types.cc:bitset_type_lub)

@@ -198,7 +198,6 @@ type FixedInt32Array extends ByteArray constexpr 'FixedInt32Array';
 type FixedUInt32Array extends ByteArray constexpr 'FixedUInt32Array';
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class OnHeapBasicBlockProfilerData extends HeapObject {
   block_ids: FixedInt32Array;
   counts: FixedUInt32Array;

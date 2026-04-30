@@ -22,7 +22,6 @@ extern macro SortStateMapConstant(): Map;
 // must be declared there. The free macros that operate on SortState remain
 // in 'array'.
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class SortState extends HeapObject {
   // The receiver of the Array.p.sort call.
   receiver: JSReceiver;

@@ -70,7 +70,6 @@ extern operator '.instance_data' macro LoadInstanceDataFromWasmImportData(
     WasmImportData): WasmTrustedInstanceData|Smi;
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class WasmFastApiCallData extends HeapObject {
   signature: HeapObject;
   callback_data: Object;
@@ -337,7 +336,6 @@ extern class WasmArray extends WasmObject {
 }
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class WasmStringViewIter extends HeapObject {
   string: String;
   offset: uint32;  // Index into string.

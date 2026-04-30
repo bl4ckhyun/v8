@@ -139,9 +139,6 @@ bool IsAnyHole(Tagged<HeapObject> obj, PtrComprCageBase) {
   return IsAnyHole(obj);
 }
 
-bool IsHole(Tagged<HeapObject> obj) { return IsAnyHole(obj); }
-
-bool IsHole(Tagged<HeapObject> obj, PtrComprCageBase) { return IsAnyHole(obj); }
 
 bool IsNullOrUndefined(Tagged<Object> obj, Isolate*) {
   return IsNullOrUndefined(obj);

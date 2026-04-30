@@ -23,14 +23,12 @@ extern class TurboshaftType extends HeapObject {}
 extern class TurboshaftWord32Type extends TurboshaftType {}
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftWord32RangeType extends TurboshaftWord32Type {
   from: uint32;
   to: uint32;
 }
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftWord32SetType extends TurboshaftWord32Type {
   const set_size: uint32;
   elements[set_size]: uint32;
@@ -41,7 +39,6 @@ extern class TurboshaftWord32SetType extends TurboshaftWord32Type {
 extern class TurboshaftWord64Type extends TurboshaftType {}
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftWord64RangeType extends TurboshaftWord64Type {
   from_high: uint32;
   from_low: uint32;
@@ -50,7 +47,6 @@ extern class TurboshaftWord64RangeType extends TurboshaftWord64Type {
 }
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftWord64SetType extends TurboshaftWord64Type {
   const set_size: uint32;
   elements_high[set_size]: uint32;
@@ -64,7 +60,6 @@ extern class TurboshaftFloat64Type extends TurboshaftType {
 }
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftFloat64RangeType extends TurboshaftFloat64Type {
   _padding: uint32;
   min: float64;
@@ -72,7 +67,6 @@ extern class TurboshaftFloat64RangeType extends TurboshaftFloat64Type {
 }
 
 @cppObjectLayoutDefinition
-@generateUniqueMap
 extern class TurboshaftFloat64SetType extends TurboshaftFloat64Type {
   const set_size: uint32;
   elements[set_size]: float64;

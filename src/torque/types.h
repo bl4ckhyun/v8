@@ -680,9 +680,6 @@ class ClassType final : public AggregateType {
   bool DoNotGenerateCast() const {
     return flags_ & ClassFlag::kDoNotGenerateCast;
   }
-  bool DoNotGenerateInstanceTypeCheck() const {
-    return flags_ & ClassFlag::kDoNotGenerateInstanceTypeCheck;
-  }
   bool IsTransient() const override { return flags_ & ClassFlag::kTransient; }
   bool IsAbstract() const { return flags_ & ClassFlag::kAbstract; }
   bool IsLayoutDefinedInCpp() const {
@@ -696,10 +693,6 @@ class ClassType final : public AggregateType {
            flags_ & ClassFlag::kGenerateCppClassDefinitions;
   }
   bool ShouldGenerateFullClassDefinition() const { return !IsExtern(); }
-  bool ShouldGenerateUniqueMap() const {
-    return (flags_ & ClassFlag::kGenerateUniqueMap) ||
-           (!IsExtern() && !IsAbstract());
-  }
   bool ShouldExport() const { return flags_ & ClassFlag::kExport; }
   bool IsShape() const { return flags_ & ClassFlag::kIsShape; }
   bool HasStaticSize() const;
