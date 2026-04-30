@@ -346,10 +346,10 @@ using kSimd128I16x8Mul = Simd128BinopMask::For<Simd128BinopOp::Kind::kI16x8Mul>;
 using kSimd128AndNot = Simd128BinopMask::For<Simd128BinopOp::Kind::kS128AndNot>;
 using kSimd128Xor = Simd128BinopMask::For<Simd128BinopOp::Kind::kS128Xor>;
 
-#define SIMD_SIGN_EXTENSION_BINOP_MASK(kind) \
+#define SIMD_EXTENSION_BINOP_MASK(kind) \
   using kSimd128##kind = Simd128BinopMask::For<Simd128BinopOp::Kind::k##kind>;
-FOREACH_SIMD_128_BINARY_SIGN_EXTENSION_OPCODE(SIMD_SIGN_EXTENSION_BINOP_MASK)
-#undef SIMD_SIGN_EXTENSION_BINOP_MASK
+FOREACH_SIMD_128_BINARY_EXTENSION_OPCODE(SIMD_EXTENSION_BINOP_MASK)
+#undef SIMD_EXTENSION_BINOP_MASK
 
 using Simd128UnaryMask =
     MaskBuilder<Simd128UnaryOp, FIELD(Simd128UnaryOp, kind)>;

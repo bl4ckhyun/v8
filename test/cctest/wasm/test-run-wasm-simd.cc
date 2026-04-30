@@ -4497,32 +4497,32 @@ TEST(RunWasmTurbofan_F32x8UConvertI32x8) {
 }
 
 TEST(RunWasmTurbofan_I64x4SConvertI32x4) {
-  RunIntSignExtensionRevecTest<int32_t, int64_t>(
+  RunIntExtensionRevecTest<int32_t, int64_t>(
       kExprI64x2SConvertI32x4Low, kExprI64x2SConvertI32x4High, kExprI32x4Splat);
 }
 
 TEST(RunWasmTurbofan_I64x4UConvertI32x4) {
-  RunIntSignExtensionRevecTest<uint32_t, uint64_t>(
+  RunIntExtensionRevecTest<uint32_t, uint64_t>(
       kExprI64x2UConvertI32x4Low, kExprI64x2UConvertI32x4High, kExprI32x4Splat);
 }
 
 TEST(RunWasmTurbofan_I32x8SConvertI16x8) {
-  RunIntSignExtensionRevecTest<int16_t, int32_t>(
+  RunIntExtensionRevecTest<int16_t, int32_t>(
       kExprI32x4SConvertI16x8Low, kExprI32x4SConvertI16x8High, kExprI16x8Splat);
 }
 
 TEST(RunWasmTurbofan_I32x8UConvertI16x8) {
-  RunIntSignExtensionRevecTest<uint16_t, uint32_t>(
+  RunIntExtensionRevecTest<uint16_t, uint32_t>(
       kExprI32x4UConvertI16x8Low, kExprI32x4UConvertI16x8High, kExprI16x8Splat);
 }
 
 TEST(RunWasmTurbofan_I16x16SConvertI8x16) {
-  RunIntSignExtensionRevecTest<int8_t, int16_t>(
+  RunIntExtensionRevecTest<int8_t, int16_t>(
       kExprI16x8SConvertI8x16Low, kExprI16x8SConvertI8x16High, kExprI8x16Splat);
 }
 
 TEST(RunWasmTurbofan_I16x16UConvertI8x16) {
-  RunIntSignExtensionRevecTest<uint8_t, uint16_t>(
+  RunIntExtensionRevecTest<uint8_t, uint16_t>(
       kExprI16x8UConvertI8x16Low, kExprI16x8UConvertI8x16High, kExprI8x16Splat);
 }
 

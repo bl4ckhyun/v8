@@ -20,13 +20,13 @@
 
 namespace v8::internal::compiler::turboshaft {
 
-bool IsSignExtensionOp(const Operation& op) {
+bool IsExtensionOp(const Operation& op) {
   if (const Simd128UnaryOp* unop = op.TryCast<Simd128UnaryOp>()) {
-    return unop->kind >= Simd128UnaryOp::Kind::kFirstSignExtensionOp &&
-           unop->kind <= Simd128UnaryOp::Kind::kLastSignExtensionOp;
+    return base::IsInRange(unop->kind, Simd128UnaryOp::Kind::kFirstExtensionOp,
+                           Simd128UnaryOp::Kind::kLastExtensionOp);
   } else if (const Simd128BinopOp* binop = op.TryCast<Simd128BinopOp>()) {
-    return binop->kind >= Simd128BinopOp::Kind::kFirstSignExtensionOp &&
-           binop->kind <= Simd128BinopOp::Kind::kLastSignExtensionOp;
+    return base::IsInRange(binop->kind, Simd128BinopOp::Kind::kFirstExtensionOp,
+                           Simd128BinopOp::Kind::kLastExtensionOp);
   }
   return false;
 }
@@ -84,8 +84,8 @@ bool IsSupportedSameSimd128OpKind(const Operation& op0, const Operation& op1) {
 
 bool IsCompatibleOpAndKind(const Operation& op0, const Operation& op1) {
   if (op0.opcode != op1.opcode) return false;
-  // For sign-extension ops, allow differing kinds (low/high)
-  if (IsSignExtensionOp(op0) && IsSignExtensionOp(op1)) {
+  // For extension ops, allow differing kinds (low/high)
+  if (IsExtensionOp(op0) && IsExtensionOp(op1)) {
     return true;
   }
   return IsSupportedSameSimd128OpKind(op0, op1);
@@ -1173,7 +1173,7 @@ PackNode* SLPTree::BuildTreeRec(const NodeGroup& node_group,
     case Opcode::kSimd128Unary: {
 #define UNARY_CASE(op_128, not_used) case Simd128UnaryOp::Kind::k##op_128:
 
-#define UNARY_SIGN_EXTENSION_CASE(op_low, not_used1, op_high)                 \
+#define UNARY_EXTENSION_OP_CASE(op_low, not_used1, op_high)                   \
   case Simd128UnaryOp::Kind::k##op_low: {                                     \
     if (const Simd128UnaryOp* unop1 =                                         \
             op1.TryCast<Opmask::kSimd128##op_high>();                         \
@@ -1192,7 +1192,7 @@ PackNode* SLPTree::BuildTreeRec(const NodeGroup& node_group,
     }                                                                         \
   }
       switch (op0.Cast<Simd128UnaryOp>().kind) {
-        SIMD256_UNARY_SIGN_EXTENSION_OP(UNARY_SIGN_EXTENSION_CASE)
+        SIMD256_UNARY_EXTENSION_OP(UNARY_EXTENSION_OP_CASE)
         SIMD256_UNARY_SIMPLE_OP(UNARY_CASE) {
           TRACE("Added a vector of Unary\n");
           PackNode* pnode = NewPackNodeAndRecurse(node_group, 0, value_in_count,
@@ -1206,13 +1206,13 @@ PackNode* SLPTree::BuildTreeRec(const NodeGroup& node_group,
         }
       }
 #undef UNARY_CASE
-#undef UNARY_SIGN_EXTENSION_CASE
+#undef UNARY_EXTENSION_OP_CASE
     }
 
     case Opcode::kSimd128Binop: {
       const Simd128BinopOp& binop0 = op0.Cast<Simd128BinopOp>();
       switch (binop0.kind) {
-#define BINOP_SIGN_EXTENSION_CASE(op_low, _, op_high)                        \
+#define BINOP_EXTENSION_CASE(op_low, _, op_high)                             \
   case Simd128BinopOp::Kind::k##op_low: {                                    \
     if (const Simd128BinopOp* binop1 =                                       \
             op1.TryCast<Opmask::kSimd128##op_high>();                        \
@@ -1230,8 +1230,8 @@ PackNode* SLPTree::BuildTreeRec(const NodeGroup& node_group,
     }                                                                        \
     return nullptr;                                                          \
   }
-        SIMD256_BINOP_SIGN_EXTENSION_OP(BINOP_SIGN_EXTENSION_CASE)
-#undef BINOP_SIGN_EXTENSION_CASE
+        SIMD256_BINOP_EXTENSION_OP(BINOP_EXTENSION_CASE)
+#undef BINOP_EXTENSION_CASE
 
 #define BINOP_CASE(op_128, _) case Simd128BinopOp::Kind::k##op_128:
 
@@ -1584,9 +1584,9 @@ bool WasmRevecAnalyzer::DecideVectorize() {
             const Operation& use_op = graph_.Get(use);
             const PackNode* use_pnode = GetPackNode(use);
             if (!use_pnode || use_pnode->is_force_packing() ||
-                // Packed sign-extension unary/binary ops still use SIMD128
+                // Packed extension unary/binary ops still use SIMD128
                 // inputs that need an extract node.
-                IsSignExtensionOp(use_op)) {
+                IsExtensionOp(use_op)) {
               TRACE("External use edge: (%d:%s) -> (%d:%s)\n", use.id(),
                     OpcodeName(use_op.opcode), nodes[i].id(),
                     OpcodeName(graph_.Get(nodes[i]).opcode));

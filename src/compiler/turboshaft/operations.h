@@ -8414,18 +8414,18 @@ struct Simd128ConstantOp : FixedArityOperationT<0, Simd128ConstantOp> {
   void PrintOptions(std::ostream& os) const;
 };
 
-#define FOREACH_SIMD_128_BINARY_SIGN_EXTENSION_OPCODE(V) \
-  V(I16x8ExtMulLowI8x16S)                                \
-  V(I16x8ExtMulHighI8x16S)                               \
-  V(I16x8ExtMulLowI8x16U)                                \
-  V(I16x8ExtMulHighI8x16U)                               \
-  V(I32x4ExtMulLowI16x8S)                                \
-  V(I32x4ExtMulHighI16x8S)                               \
-  V(I32x4ExtMulLowI16x8U)                                \
-  V(I32x4ExtMulHighI16x8U)                               \
-  V(I64x2ExtMulLowI32x4S)                                \
-  V(I64x2ExtMulHighI32x4S)                               \
-  V(I64x2ExtMulLowI32x4U)                                \
+#define FOREACH_SIMD_128_BINARY_EXTENSION_OPCODE(V) \
+  V(I16x8ExtMulLowI8x16S)                           \
+  V(I16x8ExtMulHighI8x16S)                          \
+  V(I16x8ExtMulLowI8x16U)                           \
+  V(I16x8ExtMulHighI8x16U)                          \
+  V(I32x4ExtMulLowI16x8S)                           \
+  V(I32x4ExtMulHighI16x8S)                          \
+  V(I32x4ExtMulLowI16x8U)                           \
+  V(I32x4ExtMulHighI16x8U)                          \
+  V(I64x2ExtMulLowI32x4S)                           \
+  V(I64x2ExtMulHighI32x4S)                          \
+  V(I64x2ExtMulLowI32x4U)                           \
   V(I64x2ExtMulHighI32x4U)
 
 #define FOREACH_SIMD_128_BINARY_BASIC_OPCODE(V) \
@@ -8524,7 +8524,7 @@ struct Simd128ConstantOp : FixedArityOperationT<0, Simd128ConstantOp> {
   V(F64x2RelaxedMax)                            \
   V(I16x8RelaxedQ15MulRS)                       \
   V(I16x8DotI8x16I7x16S)                        \
-  FOREACH_SIMD_128_BINARY_SIGN_EXTENSION_OPCODE(V)
+  FOREACH_SIMD_128_BINARY_EXTENSION_OPCODE(V)
 
 #define FOREACH_SIMD_128_BINARY_SPECIAL_OPCODE(V) \
   V(I8x16Swizzle)                                 \
@@ -8558,8 +8558,8 @@ struct Simd128BinopOp : FixedArityOperationT<2, Simd128BinopOp> {
   enum class Kind : uint8_t {
 #define DEFINE_KIND(kind) k##kind,
     FOREACH_SIMD_128_BINARY_OPCODE(DEFINE_KIND)
-    kFirstSignExtensionOp = kI16x8ExtMulLowI8x16S,
-    kLastSignExtensionOp = kI64x2ExtMulHighI32x4U,
+    kFirstExtensionOp = kI16x8ExtMulLowI8x16S,
+    kLastExtensionOp = kI64x2ExtMulHighI32x4U,
 #undef DEFINE_KIND
   };
   // clang-format on
@@ -8615,18 +8615,18 @@ struct Simd128BinopOp : FixedArityOperationT<2, Simd128BinopOp> {
 V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream& os,
                                            Simd128BinopOp::Kind kind);
 
-#define FOREACH_SIMD_128_UNARY_SIGN_EXTENSION_OPCODE(V) \
-  V(I16x8SConvertI8x16Low)                              \
-  V(I16x8SConvertI8x16High)                             \
-  V(I16x8UConvertI8x16Low)                              \
-  V(I16x8UConvertI8x16High)                             \
-  V(I32x4SConvertI16x8Low)                              \
-  V(I32x4SConvertI16x8High)                             \
-  V(I32x4UConvertI16x8Low)                              \
-  V(I32x4UConvertI16x8High)                             \
-  V(I64x2SConvertI32x4Low)                              \
-  V(I64x2SConvertI32x4High)                             \
-  V(I64x2UConvertI32x4Low)                              \
+#define FOREACH_SIMD_128_UNARY_EXTENSION_OPCODE(V) \
+  V(I16x8SConvertI8x16Low)                         \
+  V(I16x8SConvertI8x16High)                        \
+  V(I16x8UConvertI8x16Low)                         \
+  V(I16x8UConvertI8x16High)                        \
+  V(I32x4SConvertI16x8Low)                         \
+  V(I32x4SConvertI16x8High)                        \
+  V(I32x4UConvertI16x8Low)                         \
+  V(I32x4UConvertI16x8High)                        \
+  V(I64x2SConvertI32x4Low)                         \
+  V(I64x2SConvertI32x4High)                        \
+  V(I64x2UConvertI32x4Low)                         \
   V(I64x2UConvertI32x4High)
 
 #define FOREACH_SIMD_128_UNARY_NON_OPTIONAL_OPCODE(V) \
@@ -8664,7 +8664,7 @@ V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream& os,
   V(I32x4RelaxedTruncF32x4U)                          \
   V(I32x4RelaxedTruncF64x2SZero)                      \
   V(I32x4RelaxedTruncF64x2UZero)                      \
-  FOREACH_SIMD_128_UNARY_SIGN_EXTENSION_OPCODE(V)
+  FOREACH_SIMD_128_UNARY_EXTENSION_OPCODE(V)
 
 #define FOREACH_SIMD_128_UNARY_OPTIONAL_OPCODE(V)                             \
   V(F16x8Abs)                                                                 \
@@ -8702,8 +8702,8 @@ struct Simd128UnaryOp : FixedArityOperationT<1, Simd128UnaryOp> {
   enum class Kind : uint8_t {
 #define DEFINE_KIND(kind) k##kind,
     FOREACH_SIMD_128_UNARY_OPCODE(DEFINE_KIND)
-    kFirstSignExtensionOp = kI16x8SConvertI8x16Low,
-    kLastSignExtensionOp = kI64x2UConvertI32x4High,
+    kFirstExtensionOp = kI16x8SConvertI8x16Low,
+    kLastExtensionOp = kI64x2UConvertI32x4High,
 #undef DEFINE_KIND
   };
   // clang-format on
@@ -9614,12 +9614,12 @@ struct Simd256LoadTransformOp
   void PrintOptions(std::ostream& os) const;
 };
 
-#define FOREACH_SIMD_256_UNARY_SIGN_EXTENSION_OPCODE(V) \
-  V(I16x16SConvertI8x16)                                \
-  V(I16x16UConvertI8x16)                                \
-  V(I32x8SConvertI16x8)                                 \
-  V(I32x8UConvertI16x8)                                 \
-  V(I64x4SConvertI32x4)                                 \
+#define FOREACH_SIMD_256_UNARY_EXTENSION_OPCODE(V) \
+  V(I16x16SConvertI8x16)                           \
+  V(I16x16UConvertI8x16)                           \
+  V(I32x8SConvertI16x8)                            \
+  V(I32x8UConvertI16x8)                            \
+  V(I64x4SConvertI32x4)                            \
   V(I64x4UConvertI32x4)
 
 #define FOREACH_SIMD_256_UNARY_OPTIONAL_OPCODE(V) \
@@ -9653,15 +9653,15 @@ struct Simd256LoadTransformOp
   V(I32x8RelaxedTruncF32x8S)                \
   V(I32x8RelaxedTruncF32x8U)                \
   FOREACH_SIMD_256_UNARY_OPTIONAL_OPCODE(V) \
-  FOREACH_SIMD_256_UNARY_SIGN_EXTENSION_OPCODE(V)
+  FOREACH_SIMD_256_UNARY_EXTENSION_OPCODE(V)
 
 struct Simd256UnaryOp : FixedArityOperationT<1, Simd256UnaryOp> {
   // clang-format off
   enum class Kind : uint8_t {
 #define DEFINE_KIND(kind) k##kind,
     FOREACH_SIMD_256_UNARY_OPCODE(DEFINE_KIND)
-    kFirstSignExtensionOp = kI16x16SConvertI8x16,
-    kLastSignExtensionOp = kI64x4UConvertI32x4,
+    kFirstExtensionOp = kI16x16SConvertI8x16,
+    kLastExtensionOp = kI64x4UConvertI32x4,
 #undef DEFINE_KIND
   };
   // clang-format on
@@ -9676,7 +9676,7 @@ struct Simd256UnaryOp : FixedArityOperationT<1, Simd256UnaryOp> {
 
   base::Vector<const MaybeRegisterRepresentation> inputs_rep(
       ZoneVector<MaybeRegisterRepresentation>& storage) const {
-    if (kind >= Kind::kFirstSignExtensionOp) {
+    if (kind >= Kind::kFirstExtensionOp) {
       return MaybeRepVector<RegisterRepresentation::Simd128()>();
     } else {
       return MaybeRepVector<RegisterRepresentation::Simd256()>();
@@ -9692,12 +9692,12 @@ struct Simd256UnaryOp : FixedArityOperationT<1, Simd256UnaryOp> {
 };
 std::ostream& operator<<(std::ostream& os, Simd256UnaryOp::Kind kind);
 
-#define FOREACH_SIMD_256_BINARY_SIGN_EXTENSION_OPCODE(V) \
-  V(I64x4ExtMulI32x4S)                                   \
-  V(I64x4ExtMulI32x4U)                                   \
-  V(I32x8ExtMulI16x8S)                                   \
-  V(I32x8ExtMulI16x8U)                                   \
-  V(I16x16ExtMulI8x16S)                                  \
+#define FOREACH_SIMD_256_BINARY_EXTENSION_OPCODE(V) \
+  V(I64x4ExtMulI32x4S)                              \
+  V(I64x4ExtMulI32x4U)                              \
+  V(I32x8ExtMulI16x8S)                              \
+  V(I32x8ExtMulI16x8U)                              \
+  V(I16x16ExtMulI8x16S)                             \
   V(I16x16ExtMulI8x16U)
 
 #define FOREACH_SIMD_256_BINARY_OPCODE(V) \
@@ -9794,15 +9794,15 @@ std::ostream& operator<<(std::ostream& os, Simd256UnaryOp::Kind kind);
   V(F64x4RelaxedMin)                      \
   V(F64x4RelaxedMax)                      \
   V(I16x16DotI8x32I7x32S)                 \
-  FOREACH_SIMD_256_BINARY_SIGN_EXTENSION_OPCODE(V)
+  FOREACH_SIMD_256_BINARY_EXTENSION_OPCODE(V)
 
 struct Simd256BinopOp : FixedArityOperationT<2, Simd256BinopOp> {
   // clang-format off
   enum class Kind : uint8_t {
 #define DEFINE_KIND(kind) k##kind,
     FOREACH_SIMD_256_BINARY_OPCODE(DEFINE_KIND)
-    kFirstSignExtensionOp = kI64x4ExtMulI32x4S,
-    kLastSignExtensionOp = kI16x16ExtMulI8x16U,
+    kFirstExtensionOp = kI64x4ExtMulI32x4S,
+    kLastExtensionOp = kI16x16ExtMulI8x16U,
 #undef DEFINE_KIND
   };
   // clang-format on
@@ -9817,7 +9817,7 @@ struct Simd256BinopOp : FixedArityOperationT<2, Simd256BinopOp> {
 
   base::Vector<const MaybeRegisterRepresentation> inputs_rep(
       ZoneVector<MaybeRegisterRepresentation>& storage) const {
-    if (kind >= Kind::kFirstSignExtensionOp) {
+    if (kind >= Kind::kFirstExtensionOp) {
       return MaybeRepVector<RegisterRepresentation::Simd128(),
                             RegisterRepresentation::Simd128()>();
     } else {
