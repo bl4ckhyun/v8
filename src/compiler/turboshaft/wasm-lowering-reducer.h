@@ -172,7 +172,8 @@ class WasmLoweringReducer : public Next {
 
       BIND(convert_to_heap_number_label);
       V<Object> heap_number;
-      if (!__ data()->is_wasm()) {
+      const bool is_wasm_in_js_inlining = !__ data() -> is_wasm();
+      if (is_wasm_in_js_inlining) {
         // We are in the JS pipeline (i.e. Wasm-in-JS inlining). Wasm nodes
         // are compiled within the JS compiler, so there is no Wasm jump table.
         // We use regular builtin calls instead.
@@ -534,10 +535,24 @@ class WasmLoweringReducer : public Next {
           shared_ == SharedFlag::kNo &&
           module_->function_is_shared(function_index) == SharedFlag::kYes;
 
-      V<WasmFuncRef> from_builtin = __ template WasmCallBuiltinThroughJumptable<
-          deprecated::BuiltinCallDescriptor::WasmRefFunc>(
-          {__ Word32Constant(function_index),
-           __ Word32Constant(extract_shared_data ? 1 : 0)});
+      V<WasmFuncRef> from_builtin;
+      const bool is_wasm_in_js_inlining = !__ data() -> is_wasm();
+      if (is_wasm_in_js_inlining) {
+        // We are in the JS pipeline (i.e. Wasm-in-JS inlining). Wasm nodes
+        // are compiled within the JS compiler, so there is no Wasm jump table.
+        // We use regular builtin calls instead.
+        Isolate* isolate = __ data() -> isolate();
+        DCHECK_NOT_NULL(isolate);
+        from_builtin = __ template CallBuiltin<
+            deprecated::BuiltinCallDescriptor::WasmRefFunc>(
+            isolate, {__ Word32Constant(function_index),
+                      __ Word32Constant(extract_shared_data ? 1 : 0)});
+      } else {
+        from_builtin = __ template WasmCallBuiltinThroughJumptable<
+            deprecated::BuiltinCallDescriptor::WasmRefFunc>(
+            {__ Word32Constant(function_index),
+             __ Word32Constant(extract_shared_data ? 1 : 0)});
+      }
 
       GOTO(done, from_builtin);
     } ELSE {
