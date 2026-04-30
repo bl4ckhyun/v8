@@ -27,31 +27,30 @@ class AbstractCode : public HeapObject {
   int SourcePosition(Isolate* isolate, int offset);
   int SourceStatementPosition(Isolate* isolate, int offset);
 
-  inline Address InstructionStart(PtrComprCageBase cage_base);
-  inline Address InstructionEnd(PtrComprCageBase cage_base);
-  inline int InstructionSize(PtrComprCageBase cage_base);
+  inline Address InstructionStart();
+  inline Address InstructionEnd();
+  inline int InstructionSize();
 
   // Return the source position table for interpreter code.
   inline Tagged<TrustedByteArray> SourcePositionTable(
       Isolate* isolate, Tagged<SharedFunctionInfo> sfi);
 
-  void DropStackFrameCache(PtrComprCageBase cage_base);
 
   // Returns the size of instructions and the metadata.
-  inline int SizeIncludingMetadata(PtrComprCageBase cage_base);
+  inline int SizeIncludingMetadata();
 
   // Returns true if pc is inside this object's instructions.
   inline bool contains(Isolate* isolate, Address pc);
 
   // Returns the kind of the code.
-  inline CodeKind kind(PtrComprCageBase cage_base);
+  inline CodeKind kind();
 
-  inline Builtin builtin_id(PtrComprCageBase cage_base);
+  inline Builtin builtin_id();
 
-  inline bool has_instruction_stream(PtrComprCageBase cage_base);
+  inline bool has_instruction_stream();
 
-  bool is_context_specialized(PtrComprCageBase cage_base);
-  BytecodeOffset osr_offset(PtrComprCageBase cage_base);
+  bool is_context_specialized();
+  BytecodeOffset osr_offset();
 
   inline Tagged<Code> GetCode();
   inline Tagged<BytecodeArray> GetBytecodeArray();

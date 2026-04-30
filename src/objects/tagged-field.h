@@ -211,30 +211,21 @@ class TaggedField : public AllStatic {
   static inline Address address(Tagged<HeapObject> host, int offset = 0);
 
   static inline PtrType load(Tagged<HeapObject> host, int offset = 0);
-  static inline PtrType load(PtrComprCageBase cage_base,
-                             Tagged<HeapObject> host, int offset = 0);
 
   static inline void store(Tagged<HeapObject> host, PtrType value);
   static inline void store(Tagged<HeapObject> host, int offset, PtrType value);
 
   static inline PtrType Relaxed_Load(Tagged<HeapObject> host, int offset = 0);
-  static inline PtrType Relaxed_Load(PtrComprCageBase cage_base,
-                                     Tagged<HeapObject> host, int offset = 0);
 
   static inline void Relaxed_Store(Tagged<HeapObject> host, PtrType value);
   static inline void Relaxed_Store(Tagged<HeapObject> host, int offset,
                                    PtrType value);
 
   static inline PtrType Acquire_Load(Tagged<HeapObject> host, int offset = 0);
-  static inline PtrType Acquire_Load_No_Unpack(PtrComprCageBase cage_base,
-                                               Tagged<HeapObject> host,
+  static inline PtrType Acquire_Load_No_Unpack(Tagged<HeapObject> host,
                                                int offset = 0);
-  static inline PtrType Acquire_Load(PtrComprCageBase cage_base,
-                                     Tagged<HeapObject> host, int offset = 0);
 
   static inline PtrType SeqCst_Load(Tagged<HeapObject> host, int offset = 0);
-  static inline PtrType SeqCst_Load(PtrComprCageBase cage_base,
-                                    Tagged<HeapObject> host, int offset = 0);
 
   static inline void Release_Store(Tagged<HeapObject> host, PtrType value);
   static inline void Release_Store(Tagged<HeapObject> host, int offset,
@@ -245,9 +236,6 @@ class TaggedField : public AllStatic {
                                   PtrType value);
 
   static inline PtrType SeqCst_Swap(Tagged<HeapObject> host, int offset,
-                                    PtrType value);
-  static inline PtrType SeqCst_Swap(PtrComprCageBase cage_base,
-                                    Tagged<HeapObject> host, int offset,
                                     PtrType value);
 
   static inline Tagged_t Release_CompareAndSwap(Tagged<HeapObject> host,
@@ -260,8 +248,7 @@ class TaggedField : public AllStatic {
 
   // Note: Use these *_Map_Word methods only when loading a MapWord from a
   // MapField.
-  static inline PtrType Relaxed_Load_Map_Word(PtrComprCageBase cage_base,
-                                              Tagged<HeapObject> host);
+  static inline PtrType Relaxed_Load_Map_Word(Tagged<HeapObject> host);
   static inline void Relaxed_Store_Map_Word(Tagged<HeapObject> host,
                                             PtrType value);
   static inline void Release_Store_Map_Word(Tagged<HeapObject> host,
@@ -270,9 +257,7 @@ class TaggedField : public AllStatic {
  private:
   static inline Tagged_t* location(Tagged<HeapObject> host, int offset = 0);
 
-  template <typename TOnHeapAddress>
-  static inline Address tagged_to_full(TOnHeapAddress on_heap_addr,
-                                       Tagged_t tagged_value);
+  static inline Address tagged_to_full(Tagged_t tagged_value);
 
   static inline Tagged_t full_to_tagged(Address value);
 };

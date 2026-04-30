@@ -241,8 +241,7 @@ void BreakLocation::AllAtCurrentStatement(
   auto summary = FrameSummary::GetTop(frame).AsJavaScript();
   int offset = summary.code_offset();
   DirectHandle<AbstractCode> abstract_code = summary.abstract_code();
-  PtrComprCageBase cage_base = GetPtrComprCageBase(*debug_info);
-  if (IsCode(*abstract_code, cage_base)) offset = offset - 1;
+  if (IsCode(*abstract_code)) offset = offset - 1;
   int statement_position;
   {
     BreakIterator it(debug_info);
@@ -302,7 +301,7 @@ bool BreakLocation::HasBreakPoint(Isolate* isolate,
     // Then check whether a break point at that source position would have
     // the same code offset. Otherwise it's just a break location that we can
     // step to, but not actually a location where we can put a break point.
-    DCHECK(IsBytecodeArray(*abstract_code_, isolate));
+    DCHECK(IsBytecodeArray(*abstract_code_));
     BreakIterator it(debug_info);
     it.SkipToPosition(position_);
     return it.code_offset() == code_offset_;
@@ -1403,7 +1402,7 @@ void Debug::PrepareStepOnThrow() {
         if (summaries.size() > 1) {
           DirectHandle<AbstractCode> code =
               summary.AsJavaScript().abstract_code();
-          CHECK_EQ(CodeKind::INTERPRETED_FUNCTION, code->kind(isolate_));
+          CHECK_EQ(CodeKind::INTERPRETED_FUNCTION, code->kind());
           HandlerTable table(code->GetBytecodeArray());
           int code_offset = summary.code_offset();
           found_handler = table.LookupHandlerIndexForRange(code_offset) !=
@@ -1548,7 +1547,7 @@ void Debug::PrepareStep(StepAction step_action) {
                 JSReceiver::GetDataProperty(
                     isolate_, return_value,
                     isolate_->factory()->promise_awaited_by_symbol());
-            if (IsWeakFixedArray(*awaited_by_holder, isolate_)) {
+            if (IsWeakFixedArray(*awaited_by_holder)) {
               auto weak_fixed_array = Cast<WeakFixedArray>(awaited_by_holder);
               if (weak_fixed_array->ulength().value() == 1 &&
                   weak_fixed_array->get(0).IsWeak()) {

@@ -475,7 +475,7 @@ class PromotedPageRecordMigratedSlotVisitor final
   }
 
   void Process(Tagged<HeapObject> object) {
-    Tagged<Map> map = object->map(cage_base());
+    Tagged<Map> map = object->map();
     if (Map::ObjectFieldsFrom(map->visitor_id()) == ObjectFields::kDataOnly) {
       return;
     }
@@ -491,7 +491,7 @@ class PromotedPageRecordMigratedSlotVisitor final
 
   V8_INLINE void VisitMapPointer(Tagged<HeapObject> host) final {
     VerifyHost(host);
-    VisitObjectImpl(host, host->map(cage_base()), host->map_slot().address());
+    VisitObjectImpl(host, host->map(), host->map_slot().address());
   }
 
   V8_INLINE void VisitPointer(Tagged<HeapObject> host, ObjectSlot p) final {

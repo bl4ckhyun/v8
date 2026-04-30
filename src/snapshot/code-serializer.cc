@@ -272,8 +272,7 @@ void CodeSerializer::SerializeObjectImpl(Handle<HeapObject> obj,
   CHECK(!InstanceTypeChecker::IsJSGlobalProxy(instance_type) &&
         !InstanceTypeChecker::IsJSGlobalObject(instance_type));
   // Embedded FixedArrays that need rehashing must support rehashing.
-  CHECK_IMPLIES(obj->NeedsRehashing(cage_base()),
-                obj->CanBeRehashed(cage_base()));
+  CHECK_IMPLIES(obj->NeedsRehashing(), obj->CanBeRehashed());
   // We expect no instantiated function objects or contexts.
   CHECK(!InstanceTypeChecker::IsJSFunction(instance_type) &&
         !InstanceTypeChecker::IsContext(instance_type));

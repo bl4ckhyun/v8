@@ -303,7 +303,7 @@ V8_WARN_UNUSED_RESULT bool TryFastArrayFill(
 
   // Need to ensure that the fill value can be contained in the array.
   ElementsKind origin_kind = array->GetElementsKind();
-  ElementsKind target_kind = Object::OptimalElementsKind(*value, isolate);
+  ElementsKind target_kind = Object::OptimalElementsKind(*value);
 
   if (target_kind != origin_kind) {
     // Use a short-lived HandleScope to avoid creating several copies of the
@@ -427,7 +427,7 @@ BUILTIN(ArrayPrototypeFill) {
     if (end_index - start_index > kMaxFillRange) {
       isolate->PushStackTraceAndDie(
           reinterpret_cast<void*>((*receiver).ptr()),
-          reinterpret_cast<void*>((*receiver)->map(isolate).ptr()),
+          reinterpret_cast<void*>((*receiver)->map().ptr()),
           reinterpret_cast<void*>(static_cast<uintptr_t>(length)),
           reinterpret_cast<void*>(static_cast<uintptr_t>(start_index)),
           reinterpret_cast<void*>(static_cast<uintptr_t>(end_index)),
@@ -850,13 +850,13 @@ class ArrayConcatVisitor {
         index_offset_(0u),
         bit_field_(FastElementsField::encode(fast_elements) |
                    ExceedsLimitField::encode(false) |
-                   IsFixedArrayField::encode(IsFixedArray(*storage, isolate)) |
+                   IsFixedArrayField::encode(IsFixedArray(*storage)) |
                    HasSimpleElementsField::encode(
-                       IsFixedArray(*storage, isolate) ||
+                       IsFixedArray(*storage) ||
                        // Don't take fast path for storages that might have
                        // side effects when storing to them.
-                       (!IsCustomElementsReceiverMap(storage->map(isolate)) &&
-                        !IsJSTypedArray(*storage, isolate)))) {
+                       (!IsCustomElementsReceiverMap(storage->map()) &&
+                        !IsJSTypedArray(*storage)))) {
     DCHECK_IMPLIES(this->fast_elements(), is_fixed_array());
   }
 

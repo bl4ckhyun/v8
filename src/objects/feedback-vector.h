@@ -346,8 +346,6 @@ V8_OBJECT class FeedbackVector : public HeapObjectLayout {
   inline void set_flags(uint16_t value);
 
   inline Tagged<SharedFunctionInfo> shared_function_info() const;
-  inline Tagged<SharedFunctionInfo> shared_function_info(
-      PtrComprCageBase cage_base) const;
   inline void set_shared_function_info(
       Tagged<SharedFunctionInfo> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
@@ -426,8 +424,6 @@ V8_OBJECT class FeedbackVector : public HeapObjectLayout {
                               WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   inline Tagged<MaybeObject> Get(FeedbackSlot slot) const;
-  inline Tagged<MaybeObject> Get(PtrComprCageBase cage_base,
-                                 FeedbackSlot slot) const;
 
   // Returns the feedback cell at |index| that is used to create the
   // closure.

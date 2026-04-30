@@ -470,7 +470,7 @@ class ScopeInfo::LocalNamesRange {
       if (range_->inlined()) {
         return scope_info()->ContextInlinedLocalName(index_.as_int());
       }
-      return Cast<String>(table()->KeyAt(GetPtrComprCageBase(), index_));
+      return Cast<String>(table()->KeyAt(index_));
     }
 
     const Iterator* operator*() const { return this; }

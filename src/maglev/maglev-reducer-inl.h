@@ -801,7 +801,7 @@ ReduceResult MaglevReducer<BaseT>::GetTruncatedInt32ForToNumber(
     case Opcode::kRootConstant: {
       Tagged<Object> root_object =
           local_isolate()->root(value->Cast<RootConstant>()->index());
-      if (!IsOddball(root_object, local_isolate())) break;
+      if (!IsOddball(root_object)) break;
       int32_t truncated_value =
           DoubleToInt32(Cast<Oddball>(root_object)->to_number_raw());
       // All oddball ToNumber truncations are valid Smis.

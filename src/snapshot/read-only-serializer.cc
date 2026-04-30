@@ -33,7 +33,7 @@ class ObjectPreProcessor final {
   V(Code)
 
   void PreProcessIfNeeded(Tagged<HeapObject> o) {
-    const InstanceType itype = o->map(isolate_)->instance_type();
+    const InstanceType itype = o->map()->instance_type();
 #define V(TYPE)                                    \
   if (InstanceTypeChecker::Is##TYPE(itype)) {      \
     return PreProcess##TYPE(TrustedCast<TYPE>(o)); \
@@ -350,7 +350,6 @@ class EncodeRelocationsVisitor final : public ObjectVisitor {
 void ReadOnlySegmentForSerialization::EncodeTaggedSlots(Isolate* isolate) {
   DCHECK(!V8_STATIC_ROOTS_BOOL);
   EncodeRelocationsVisitor v(isolate, this);
-  PtrComprCageBase cage_base(isolate);
 
   DCHECK_GE(segment_start, page->area_start());
   const Address segment_end = segment_start + segment_size;

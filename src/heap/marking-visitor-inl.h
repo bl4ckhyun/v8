@@ -82,8 +82,7 @@ void MarkingVisitorBase<ConcreteVisitor>::ProcessStrongHeapObject(
   }
   // TODO(chromium:1495151): Remove after diagnosing.
   if (V8_UNLIKELY(!MemoryChunk::FromHeapObject(heap_object)->IsMarking() &&
-                  IsFreeSpaceOrFiller(
-                      heap_object, ObjectVisitorWithCageBases::cage_base()))) {
+                  IsFreeSpaceOrFiller(heap_object))) {
     heap_->isolate()->PushParamsAndDie(
         reinterpret_cast<void*>(host->map().ptr()),
         reinterpret_cast<void*>(host->address()),
@@ -196,8 +195,7 @@ template <typename ConcreteVisitor>
 void MarkingVisitorBase<ConcreteVisitor>::VisitEmbeddedPointer(
     Tagged<InstructionStream> host, RelocInfo* rinfo) {
   DCHECK(RelocInfo::IsEmbeddedObjectMode(rinfo->rmode()));
-  Tagged<HeapObject> object =
-      rinfo->target_object(ObjectVisitorWithCageBases::cage_base());
+  Tagged<HeapObject> object = rinfo->target_object();
   const auto target_worklist = MarkingHelper::ShouldMarkObject(heap_, object);
   if (!target_worklist) {
     return;
@@ -877,8 +875,7 @@ void MarkingVisitorBase<ConcreteVisitor>::VisitDescriptorsForMap(
   // slot holding the descriptor array will be implicitly recorded when the
   // pointer fields of this map are visited.
   Tagged<Object> maybe_descriptors =
-      TaggedField<Object, Map::kInstanceDescriptorsOffset>::Acquire_Load(
-          heap_->isolate(), map);
+      TaggedField<Object, Map::kInstanceDescriptorsOffset>::Acquire_Load(map);
 
   // If the descriptors are a Smi, then this Map is in the process of being
   // deserialized, and doesn't yet have an initialized descriptor field.

@@ -2971,8 +2971,7 @@ void CreateFillerObjectAtImpl(const WritableFreeSpace& free_space, Heap* heap,
     HeapObject::SetFillerMap(free_space,
                              roots.unchecked_one_pointer_filler_map());
     // Ensure the filler map is properly initialized.
-    DCHECK(IsMap(
-        HeapObject::FromAddress(free_space.Address())->map(heap->isolate())));
+    DCHECK(IsMap(HeapObject::FromAddress(free_space.Address())->map()));
   } else if (size == 2 * kTaggedSize) {
     HeapObject::SetFillerMap(free_space,
                              roots.unchecked_two_pointer_filler_map());
@@ -2980,8 +2979,7 @@ void CreateFillerObjectAtImpl(const WritableFreeSpace& free_space, Heap* heap,
       free_space.ClearTagged<kTaggedSize>((size / kTaggedSize) - 1);
     }
     // Ensure the filler map is properly initialized.
-    DCHECK(IsMap(
-        HeapObject::FromAddress(free_space.Address())->map(heap->isolate())));
+    DCHECK(IsMap(HeapObject::FromAddress(free_space.Address())->map()));
   } else {
     DCHECK_GT(size, 2 * kTaggedSize);
     HeapObject::SetFillerMap(free_space, roots.unchecked_free_space_map());
@@ -2994,8 +2992,7 @@ void CreateFillerObjectAtImpl(const WritableFreeSpace& free_space, Heap* heap,
     // map is initialized. In this case we cannot access the map yet, as it
     // might be null, or not set up properly yet.
     DCHECK_IMPLIES(roots.is_initialized(RootIndex::kFreeSpaceMap),
-                   IsMap(HeapObject::FromAddress(free_space.Address())
-                             ->map(heap->isolate())));
+                   IsMap(HeapObject::FromAddress(free_space.Address())->map()));
   }
 }
 
@@ -3171,17 +3168,17 @@ void Heap::OnMoveEvent(Tagged<HeapObject> source, Tagged<HeapObject> target,
   for (auto& tracker : allocation_trackers_) {
     tracker->MoveEvent(source.address(), target.address(), size_in_bytes);
   }
-  if (IsSharedFunctionInfo(target, isolate_)) {
+  if (IsSharedFunctionInfo(target)) {
     LOG_CODE_EVENT(isolate_, SharedFunctionInfoMoveEvent(source.address(),
                                                          target.address()));
-  } else if (IsNativeContext(target, isolate_)) {
+  } else if (IsNativeContext(target)) {
     if (isolate_->current_embedder_state() != nullptr) {
       isolate_->current_embedder_state()->OnMoveEvent(source.address(),
                                                       target.address());
     }
     PROFILE(isolate_,
             NativeContextMoveEvent(source.address(), target.address()));
-  } else if (IsMap(target, isolate_)) {
+  } else if (IsMap(target)) {
     LOG(isolate_, MapMoveEvent(Cast<Map>(source), Cast<Map>(target)));
   }
 }
@@ -4492,7 +4489,7 @@ bool ClearStaleLeftTrimmedPointerVisitor::IsLeftTrimmed(FullObjectSlot p) {
   if (!TryCast<HeapObject>(*p, &current)) return false;
   // Using MapWord instead of `current` directly defends against concurrent
   // Scavenge tasks installing forward pointers on `current`.
-  MapWord map_word = current->map_word(cage_base(), kRelaxedLoad);
+  MapWord map_word = current->map_word(kRelaxedLoad);
   if (!IsInterestingObjectStart(map_word)) {
 #ifdef DEBUG
       // We need to find a FixedArrayBase map after walking the fillers.
@@ -4507,7 +4504,7 @@ bool ClearStaleLeftTrimmedPointerVisitor::IsLeftTrimmed(FullObjectSlot p) {
           next += current->SizeFromMap(map);
         }
         current = Cast<HeapObject>(Tagged<Object>(next));
-        map_word = current->map_word(cage_base(), kRelaxedLoad);
+        map_word = current->map_word(kRelaxedLoad);
       }
       // Scavenge tasks may run concurrently to this function and therefore
       // could introduce forwarding pointers at any moment. This is the reason
@@ -6797,7 +6794,7 @@ class UnreachableObjectsFilter : public HeapObjectsFilter {
         : ObjectVisitorWithCageBases(filter->heap_), filter_(filter) {}
 
     void VisitMapPointer(Tagged<HeapObject> object) override {
-      MarkHeapObject(UncheckedCast<Map>(object->map(cage_base())));
+      MarkHeapObject(UncheckedCast<Map>(object->map()));
     }
     void VisitPointers(Tagged<HeapObject> host, ObjectSlot start,
                        ObjectSlot end) override {
@@ -6826,7 +6823,7 @@ class UnreachableObjectsFilter : public HeapObjectsFilter {
     }
     void VisitEmbeddedPointer(Tagged<InstructionStream> host,
                               RelocInfo* rinfo) final {
-      MarkHeapObject(rinfo->target_object(cage_base()));
+      MarkHeapObject(rinfo->target_object());
     }
 
     void VisitRootPointers(Root root, const char* description,
@@ -7377,10 +7374,9 @@ void Heap::CreateObjectStats() {
 }
 
 Tagged<Map> Heap::GcSafeMapOfHeapObject(Tagged<HeapObject> object) {
-  PtrComprCageBase cage_base(isolate());
-  MapWord map_word = object->map_word(cage_base, kRelaxedLoad);
+  MapWord map_word = object->map_word(kRelaxedLoad);
   if (map_word.IsForwardingAddress()) {
-    return map_word.ToForwardingAddress(object)->map(cage_base);
+    return map_word.ToForwardingAddress(object)->map();
   }
   return map_word.ToMap();
 }

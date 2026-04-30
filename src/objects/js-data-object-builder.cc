@@ -72,15 +72,15 @@ void JSDataObjectBuilder::RewindExpectedFinalMapFastPathToBeforeCurrent() {
     return;
   }
   DCHECK_EQ(*map_, *expected_final_map_);
-  map_ = handle(map_->FindFieldOwner(
-                    isolate_, InternalIndex(current_property_index_ - 1)),
-                isolate_);
+  map_ =
+      handle(map_->FindFieldOwner(InternalIndex(current_property_index_ - 1)),
+             isolate_);
 }
 
 void JSDataObjectBuilder::RewindExpectedFinalMapFastPathToIncludeCurrent() {
   DCHECK_EQ(*map_, *expected_final_map_);
   map_ = handle(expected_final_map_->FindFieldOwner(
-                    isolate_, InternalIndex(current_property_index_)),
+                    InternalIndex(current_property_index_)),
                 isolate_);
 }
 

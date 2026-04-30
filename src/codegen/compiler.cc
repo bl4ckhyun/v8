@@ -492,13 +492,12 @@ GlobalHandleVector<Map> OptimizedCompilationJob::CollectRetainedMaps(
 
   DisallowGarbageCollection no_gc;
   GlobalHandleVector<Map> maps(isolate->heap());
-  PtrComprCageBase cage_base(isolate);
   int const mode_mask = RelocInfo::EmbeddedObjectModeMask();
   for (RelocIterator it(*code, mode_mask); !it.done(); it.next()) {
     DCHECK(RelocInfo::IsEmbeddedObjectMode(it.rinfo()->rmode()));
-    Tagged<HeapObject> target_object = it.rinfo()->target_object(cage_base);
+    Tagged<HeapObject> target_object = it.rinfo()->target_object();
     if (code->IsWeakObjectInOptimizedCode(target_object)) {
-      if (IsMap(target_object, cage_base)) {
+      if (IsMap(target_object)) {
         maps.Push(Cast<Map>(target_object));
       }
     }
@@ -1234,18 +1233,17 @@ MaybeHandle<Code> CompileTurbofan(Isolate* isolate, Handle<JSFunction> function,
 void RecordMaglevFunctionCompilation(Isolate* isolate,
                                      DirectHandle<JSFunction> function,
                                      DirectHandle<AbstractCode> code) {
-  PtrComprCageBase cage_base(isolate);
-  DirectHandle<SharedFunctionInfo> shared(function->shared(cage_base), isolate);
-  DirectHandle<Script> script(Cast<Script>(shared->script(cage_base)), isolate);
-  DirectHandle<FeedbackVector> feedback_vector(
-      function->feedback_vector(cage_base), isolate);
+  DirectHandle<SharedFunctionInfo> shared(function->shared(), isolate);
+  DirectHandle<Script> script(Cast<Script>(shared->script()), isolate);
+  DirectHandle<FeedbackVector> feedback_vector(function->feedback_vector(),
+                                               isolate);
 
   // Optimistic estimate.
   double time_taken_ms = 0;
 
   Compiler::LogFunctionCompilation(
       isolate, LogEventListener::CodeTag::kFunction, script, shared,
-      feedback_vector, code, code->kind(cage_base), time_taken_ms);
+      feedback_vector, code, code->kind(), time_taken_ms);
 }
 #endif  // V8_ENABLE_MAGLEV
 
@@ -2086,12 +2084,9 @@ void BackgroundCompileTask::Run(
 // SharedFunctionInfos and updates any pointers which need updating.
 class ConstantPoolPointerForwarder {
  public:
-  explicit ConstantPoolPointerForwarder(PtrComprCageBase cage_base,
-                                        LocalHeap* local_heap,
+  explicit ConstantPoolPointerForwarder(LocalHeap* local_heap,
                                         DirectHandle<Script> old_script)
-      : cage_base_(cage_base),
-        local_heap_(local_heap),
-        old_script_(old_script) {}
+      : local_heap_(local_heap), old_script_(old_script) {}
 
   void AddBytecodeArray(Tagged<BytecodeArray> bytecode_array) {
     CHECK(IsBytecodeArray(bytecode_array));
@@ -2228,19 +2223,18 @@ class ConstantPoolPointerForwarder {
     Tagged<Object> obj = constant_pool->get(i);
     if (IsSmi(obj)) return;
     Tagged<HeapObject> heap_obj = Cast<HeapObject>(obj);
-    if (IsFixedArray(heap_obj, cage_base_)) {
+    if (IsFixedArray(heap_obj)) {
       // Constant pools can have nested fixed arrays, but such relationships
       // are acyclic and never more than a few layers deep, so recursion is
       // fine here.
       IterateConstantPoolNestedArray(Cast<FixedArray>(heap_obj));
     } else if (has_shared_function_info_to_forward_ &&
-               IsSharedFunctionInfo(heap_obj, cage_base_)) {
+               IsSharedFunctionInfo(heap_obj)) {
       VisitSharedFunctionInfo(constant_pool, i,
                               Cast<SharedFunctionInfo>(heap_obj));
-    } else if (!scope_infos_to_update_.empty() &&
-               IsScopeInfo(heap_obj, cage_base_)) {
+    } else if (!scope_infos_to_update_.empty() && IsScopeInfo(heap_obj)) {
       VisitScopeInfo(constant_pool, i, Cast<ScopeInfo>(heap_obj));
-    } else if (IsObjectBoilerplateDescription(heap_obj, cage_base_)) {
+    } else if (IsObjectBoilerplateDescription(heap_obj)) {
       VisitObjectBoilerplateDescription(
           Cast<ObjectBoilerplateDescription>(heap_obj));
     }
@@ -2316,7 +2310,6 @@ class ConstantPoolPointerForwarder {
     }
   }
 
-  PtrComprCageBase cage_base_;
   LocalHeap* local_heap_;
   DirectHandle<Script> old_script_;
   std::vector<IndirectHandle<BytecodeArray>> bytecode_arrays_to_update_;
@@ -2453,7 +2446,7 @@ void BackgroundMergeTask::BeginMergeInBackground(
   local_heap->AttachPersistentHandles(std::move(persistent_handles_));
   LocalHandleScope handle_scope(local_heap);
   DirectHandle<Script> old_script = cached_script_.ToHandleChecked();
-  ConstantPoolPointerForwarder forwarder(isolate, local_heap, old_script);
+  ConstantPoolPointerForwarder forwarder(local_heap, old_script);
 
   {
     DisallowGarbageCollection no_gc;
@@ -2576,8 +2569,8 @@ Handle<SharedFunctionInfo> BackgroundMergeTask::CompleteMergeInForeground(
 
   HandleScope handle_scope(isolate);
   DirectHandle<Script> old_script = cached_script_.ToHandleChecked();
-  ConstantPoolPointerForwarder forwarder(
-      isolate, isolate->main_thread_local_heap(), old_script);
+  ConstantPoolPointerForwarder forwarder(isolate->main_thread_local_heap(),
+                                         old_script);
 
   // Find infos that didn't exist during the background work, but do now. This
   // means a re-merge is necessary. Potential references to the new script's SFI
@@ -2612,7 +2605,7 @@ Handle<SharedFunctionInfo> BackgroundMergeTask::CompleteMergeInForeground(
   if (forwarder.HasAnythingToForward()) {
     for (DirectHandle<SharedFunctionInfo> new_sfi : used_new_sfis_) {
       forwarder.UpdateScopeInfo(*new_sfi);
-      if (new_sfi->HasBytecodeArray(isolate)) {
+      if (new_sfi->HasBytecodeArray()) {
         forwarder.AddBytecodeArray(new_sfi->GetBytecodeArray(isolate));
       }
     }
@@ -2623,7 +2616,7 @@ Handle<SharedFunctionInfo> BackgroundMergeTask::CompleteMergeInForeground(
       // actually copy it.
       Tagged<SharedFunctionInfo> sfi = *new_compiled_data.new_sfi;
       forwarder.InstallOwnScopeInfo(sfi);
-      if (new_compiled_data.new_sfi->HasBytecodeArray(isolate)) {
+      if (new_compiled_data.new_sfi->HasBytecodeArray()) {
         forwarder.AddBytecodeArray(
             new_compiled_data.new_sfi->GetBytecodeArray(isolate));
       }
@@ -3218,7 +3211,7 @@ bool Compiler::CompileBaseline(Isolate* isolate,
                                DirectHandle<JSFunction> function,
                                ClearExceptionFlag flag,
                                IsCompiledScope* is_compiled_scope) {
-  Handle<SharedFunctionInfo> shared(function->shared(isolate), isolate);
+  Handle<SharedFunctionInfo> shared(function->shared(), isolate);
   if (!CompileSharedWithBaseline(isolate, shared, flag, is_compiled_scope)) {
     return false;
   }
@@ -3896,7 +3889,7 @@ bool CanBackgroundCompile(const ScriptDetails& script_details,
 
 bool CompilationExceptionIsRangeError(Isolate* isolate,
                                       DirectHandle<Object> obj) {
-  if (!IsJSError(*obj, isolate)) return false;
+  if (!IsJSError(*obj)) return false;
   DirectHandle<JSReceiver> js_obj = Cast<JSReceiver>(obj);
   DirectHandle<JSReceiver> constructor;
   if (!JSReceiver::GetConstructor(isolate, js_obj).ToHandle(&constructor)) {

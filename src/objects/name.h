@@ -300,7 +300,6 @@ V8_OBJECT class Name : public PrimitiveHeapObject {
 } V8_OBJECT_END;
 
 inline bool IsUniqueName(Tagged<Name> obj);
-inline bool IsUniqueName(Tagged<Name> obj, PtrComprCageBase cage_base);
 
 // ES6 symbols.
 V8_OBJECT class Symbol : public Name {

@@ -3327,14 +3327,13 @@ HandlerTable::CatchPrediction PredictException(const FrameSummary& summary,
     // for exception handling.
     return HandlerTable::UNCAUGHT;
   }
-  PtrComprCageBase cage_base(isolate);
   DirectHandle<AbstractCode> code = summary.AsJavaScript().abstract_code();
-  if (code->kind(cage_base) == CodeKind::BUILTIN) {
+  if (code->kind() == CodeKind::BUILTIN) {
     return CatchPredictionFor(code->GetCode()->builtin_id());
   }
 
   // Must have been constructed from a bytecode array.
-  CHECK_EQ(CodeKind::INTERPRETED_FUNCTION, code->kind(cage_base));
+  CHECK_EQ(CodeKind::INTERPRETED_FUNCTION, code->kind());
   return PredictExceptionFromBytecode(code->GetBytecodeArray(),
                                       summary.code_offset());
 }
@@ -6851,7 +6850,7 @@ void Isolate::IncreaseDateCacheStampAndInvalidateProtector() {
 
 Isolate::KnownPrototype Isolate::IsArrayOrObjectOrStringPrototype(
     Tagged<JSObject> object) {
-  Tagged<Map> metamap = object->map(this)->map(this);
+  Tagged<Map> metamap = object->map()->map();
   Tagged<NativeContext> native_context = metamap->native_context();
   if (native_context->initial_object_prototype() == object) {
     return KnownPrototype::kObject;
@@ -6865,7 +6864,7 @@ Isolate::KnownPrototype Isolate::IsArrayOrObjectOrStringPrototype(
 
 bool Isolate::IsInCreationContext(Tagged<JSObject> object, uint32_t index) {
   DisallowGarbageCollection no_gc;
-  Tagged<Map> metamap = object->map(this)->map(this);
+  Tagged<Map> metamap = object->map()->map();
   // Filter out native-context independent objects.
   if (metamap == ReadOnlyRoots(this).meta_map()) return false;
   Tagged<NativeContext> native_context = metamap->native_context();
@@ -8289,7 +8288,7 @@ void Isolate::LocalsBlockListCacheRehash() {
   if (IsEphemeronHashTable(heap()->locals_block_list_cache())) {
     Tagged<EphemeronHashTable> cache =
         Cast<EphemeronHashTable>(heap()->locals_block_list_cache());
-    cache->Rehash(this);
+    cache->Rehash();
   }
 }
 void Isolate::LocalsBlockListCacheSet(

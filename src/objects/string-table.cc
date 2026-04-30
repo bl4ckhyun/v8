@@ -618,7 +618,7 @@ Address StringTable::Data::TryStringToIndexOrLookupExisting(
   const Char* chars;
 
   SharedStringAccessGuardIfNeeded access_guard(isolate);
-  if (IsConsString(source, isolate)) {
+  if (IsConsString(source)) {
     DCHECK(!source->IsFlat());
     buffer.Reset(length);
     String::WriteToFlat(source, buffer.Data(), 0, length, access_guard);

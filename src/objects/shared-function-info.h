@@ -269,15 +269,11 @@ V8_OBJECT class SharedFunctionInfo : public HeapObjectLayout {
   // field declarations. Other accessors are declared further below with
   // the existing DECL_* macros.
   inline Tagged<Object> untrusted_function_data() const;
-  inline Tagged<Object> untrusted_function_data(
-      PtrComprCageBase cage_base) const;
   inline void set_untrusted_function_data(
       Tagged<Object> value, WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   inline Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
   outer_scope_info_or_feedback_metadata() const;
-  inline Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
-  outer_scope_info_or_feedback_metadata(PtrComprCageBase cage_base) const;
   inline void set_outer_scope_info_or_feedback_metadata(
       Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
@@ -594,7 +590,6 @@ V8_OBJECT class SharedFunctionInfo : public HeapObjectLayout {
   // TODO(jgruber): Remove these overloads and pass the kAcquireLoad tag
   // explicitly.
   inline Tagged<HeapObject> script() const;
-  inline Tagged<HeapObject> script(PtrComprCageBase cage_base) const;
   inline bool has_script(AcquireLoadTag tag) const;
 
   // True if the underlying script was parsed and compiled in REPL mode.

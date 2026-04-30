@@ -420,8 +420,7 @@ V8_OBJECT class JSObject : public JSReceiver {
   // acquire/release semantics ever become necessary, the default setter should
   // be reverted to non-atomic behavior, and setters with explicit tags
   // introduced and used when required.
-  Tagged<FixedArrayBase> elements(PtrComprCageBase cage_base,
-                                  AcquireLoadTag tag) const = delete;
+  Tagged<FixedArrayBase> elements(AcquireLoadTag tag) const = delete;
   void set_elements(Tagged<FixedArrayBase> value, ReleaseStoreTag tag,
                     WriteBarrierMode mode = UPDATE_WRITE_BARRIER) = delete;
 
@@ -815,12 +814,7 @@ V8_OBJECT class JSObject : public JSReceiver {
                                             FieldIndex index,
                                             SeqCstAccessTag tag);
   inline Tagged<JSAny> RawFastPropertyAt(FieldIndex index) const;
-  inline Tagged<JSAny> RawFastPropertyAt(PtrComprCageBase cage_base,
-                                         FieldIndex index) const;
   inline Tagged<JSAny> RawFastPropertyAt(FieldIndex index,
-                                         SeqCstAccessTag tag) const;
-  inline Tagged<JSAny> RawFastPropertyAt(PtrComprCageBase cage_base,
-                                         FieldIndex index,
                                          SeqCstAccessTag tag) const;
 
   // See comment in the body of the method to understand the conditions
@@ -828,8 +822,7 @@ V8_OBJECT class JSObject : public JSReceiver {
   // provides against invalid reads from another thread during object
   // mutation.
   inline std::optional<Tagged<Object>> RawInobjectPropertyAt(
-      PtrComprCageBase cage_base, Tagged<Map> original_map,
-      FieldIndex index) const;
+      Tagged<Map> original_map, FieldIndex index) const;
 
   inline void FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
                                 WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
@@ -950,8 +943,7 @@ V8_OBJECT class JSObject : public JSReceiver {
   // If a GC was caused while constructing this object, the elements pointer
   // may point to a one pointer filler map. The object won't be rooted, but
   // our heap verification code could stumble across it.
-  V8_EXPORT_PRIVATE bool ElementsAreSafeToExamine(
-      PtrComprCageBase cage_base) const;
+  V8_EXPORT_PRIVATE bool ElementsAreSafeToExamine() const;
 #endif
 
   Tagged<Object> SlowReverseLookup(Tagged<Object> value);
@@ -1278,8 +1270,6 @@ V8_OBJECT class JSGlobalObject : public JSSpecialObject {
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   inline Tagged<GlobalDictionary> global_dictionary(AcquireLoadTag) const;
-  inline Tagged<GlobalDictionary> global_dictionary(PtrComprCageBase cage_base,
-                                                    AcquireLoadTag) const;
   inline void set_global_dictionary(
       Tagged<GlobalDictionary> value, ReleaseStoreTag,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);

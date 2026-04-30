@@ -143,10 +143,6 @@ Tagged<NameOrScopeInfoT> SharedFunctionInfo::name_or_scope_info(
     AcquireLoadTag) const {
   return name_or_scope_info_.Acquire_Load();
 }
-Tagged<NameOrScopeInfoT> SharedFunctionInfo::name_or_scope_info(
-    PtrComprCageBase, AcquireLoadTag tag) const {
-  return name_or_scope_info(tag);
-}
 void SharedFunctionInfo::set_name_or_scope_info(Tagged<NameOrScopeInfoT> value,
                                                 ReleaseStoreTag,
                                                 WriteBarrierMode mode) {
@@ -216,11 +212,7 @@ Tagged<Object> SharedFunctionInfo::GetUntrustedData() const {
 }
 
 DEF_GETTER(SharedFunctionInfo, script, Tagged<HeapObject>) {
-  return script(cage_base, kAcquireLoad);
-}
-Tagged<HeapObject> SharedFunctionInfo::script(PtrComprCageBase,
-                                              AcquireLoadTag tag) const {
-  return script(tag);
+  return script(kAcquireLoad);
 }
 bool SharedFunctionInfo::has_script(AcquireLoadTag tag) const {
   return IsScript(script(tag));
@@ -229,11 +221,6 @@ bool SharedFunctionInfo::has_script(AcquireLoadTag tag) const {
 Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
 SharedFunctionInfo::outer_scope_info_or_feedback_metadata() const {
   return outer_scope_info_or_feedback_metadata_.load();
-}
-Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
-SharedFunctionInfo::outer_scope_info_or_feedback_metadata(
-    PtrComprCageBase) const {
-  return outer_scope_info_or_feedback_metadata();
 }
 void SharedFunctionInfo::set_outer_scope_info_or_feedback_metadata(
     Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>> value,
@@ -245,11 +232,6 @@ Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
 SharedFunctionInfo::raw_outer_scope_info_or_feedback_metadata() const {
   return outer_scope_info_or_feedback_metadata();
 }
-Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
-SharedFunctionInfo::raw_outer_scope_info_or_feedback_metadata(
-    PtrComprCageBase cage_base) const {
-  return outer_scope_info_or_feedback_metadata(cage_base);
-}
 void SharedFunctionInfo::set_raw_outer_scope_info_or_feedback_metadata(
     Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>> value,
     WriteBarrierMode mode) {
@@ -260,18 +242,9 @@ SharedFunctionInfo::raw_outer_scope_info_or_feedback_metadata(
     AcquireLoadTag) const {
   return outer_scope_info_or_feedback_metadata_.Acquire_Load();
 }
-Tagged<UnionOf<ScopeInfo, FeedbackMetadata, TheHole>>
-SharedFunctionInfo::raw_outer_scope_info_or_feedback_metadata(
-    PtrComprCageBase cage_base, AcquireLoadTag tag) const {
-  return raw_outer_scope_info_or_feedback_metadata(tag);
-}
 
 Tagged<Object> SharedFunctionInfo::untrusted_function_data() const {
   return untrusted_function_data_.load();
-}
-Tagged<Object> SharedFunctionInfo::untrusted_function_data(
-    PtrComprCageBase) const {
-  return untrusted_function_data();
 }
 void SharedFunctionInfo::set_untrusted_function_data(Tagged<Object> value,
                                                      WriteBarrierMode mode) {
@@ -417,7 +390,7 @@ bool SharedFunctionInfo::needs_script_context() const {
 Tagged<AbstractCode> SharedFunctionInfo::abstract_code(Isolate* isolate) {
   // TODO(v8:11429): Decide if this return bytecode or baseline code, when the
   // latter is present.
-  if (HasBytecodeArray(isolate)) {
+  if (HasBytecodeArray()) {
     return Cast<AbstractCode>(GetBytecodeArray(isolate));
   } else {
     return Cast<AbstractCode>(GetCode(isolate));
@@ -675,22 +648,21 @@ void SharedFunctionInfo::DontAdaptArguments() {
 }
 
 DEF_ACQUIRE_GETTER(SharedFunctionInfo, scope_info, Tagged<ScopeInfo>) {
-  Tagged<Object> maybe_scope_info = name_or_scope_info(cage_base, kAcquireLoad);
-  if (IsScopeInfo(maybe_scope_info, cage_base)) {
+  Tagged<Object> maybe_scope_info = name_or_scope_info(tag);
+  if (IsScopeInfo(maybe_scope_info)) {
     return Cast<ScopeInfo>(maybe_scope_info);
   }
   return GetReadOnlyRoots().empty_scope_info();
 }
 
 DEF_GETTER(SharedFunctionInfo, scope_info, Tagged<ScopeInfo>) {
-  return scope_info(cage_base, kAcquireLoad);
+  return scope_info(kAcquireLoad);
 }
 
 Tagged<ScopeInfo> SharedFunctionInfo::EarlyScopeInfo(AcquireLoadTag tag) {
   // Keep in sync with the scope_info getter above.
-  PtrComprCageBase cage_base = GetPtrComprCageBase(*this);
-  Tagged<Object> maybe_scope_info = name_or_scope_info(cage_base, tag);
-  if (IsScopeInfo(maybe_scope_info, cage_base)) {
+  Tagged<Object> maybe_scope_info = name_or_scope_info(tag);
+  if (IsScopeInfo(maybe_scope_info)) {
     return Cast<ScopeInfo>(maybe_scope_info);
   }
   return EarlyGetReadOnlyRoots().empty_scope_info();
@@ -733,7 +705,7 @@ DEF_GETTER(SharedFunctionInfo, outer_scope_info,
   DCHECK(!is_compiled());
   DCHECK(!HasFeedbackMetadata());
   return Cast<UnionOf<ScopeInfo, TheHole>>(
-      raw_outer_scope_info_or_feedback_metadata(cage_base));
+      raw_outer_scope_info_or_feedback_metadata());
 }
 
 bool SharedFunctionInfo::HasOuterScopeInfo() const {
@@ -781,17 +753,11 @@ bool SharedFunctionInfo::HasFeedbackMetadata(AcquireLoadTag tag) const {
 
 DEF_GETTER(SharedFunctionInfo, feedback_metadata, Tagged<FeedbackMetadata>) {
   DCHECK(HasFeedbackMetadata());
-  return Cast<FeedbackMetadata>(
-      raw_outer_scope_info_or_feedback_metadata(cage_base));
+  return Cast<FeedbackMetadata>(raw_outer_scope_info_or_feedback_metadata());
 }
 
 Tagged<FeedbackMetadata> SharedFunctionInfo::feedback_metadata(
     AcquireLoadTag) const {
-  PtrComprCageBase cage_base = GetPtrComprCageBase(*this);
-  return feedback_metadata(cage_base, kAcquireLoad);
-}
-Tagged<FeedbackMetadata> SharedFunctionInfo::feedback_metadata(
-    PtrComprCageBase cage_base, AcquireLoadTag) const {
   Tagged<FeedbackMetadata> value = Cast<FeedbackMetadata>(
       outer_scope_info_or_feedback_metadata_.Acquire_Load());
   DCHECK(HasFeedbackMetadata(kAcquireLoad));
@@ -918,8 +884,7 @@ DEF_GETTER(SharedFunctionInfo, HasBytecodeArray, bool) {
       GetTrustedData(GetCurrentIsolateForSandbox());
   // If the SFI has no trusted data, GetTrustedData() will return Smi::zero().
   if (IsSmi(data)) return false;
-  InstanceType instance_type =
-      Cast<HeapObject>(data)->map(cage_base)->instance_type();
+  InstanceType instance_type = Cast<HeapObject>(data)->map()->instance_type();
   return InstanceTypeChecker::IsBytecodeArray(instance_type) ||
          InstanceTypeChecker::IsInterpreterData(instance_type) ||
          InstanceTypeChecker::IsCode(instance_type);
@@ -1047,7 +1012,7 @@ DEF_GETTER(SharedFunctionInfo, HasBaselineCode, bool) {
 }
 
 DEF_ACQUIRE_GETTER(SharedFunctionInfo, baseline_code, Tagged<Code>) {
-  DCHECK(HasBaselineCode(cage_base));
+  DCHECK(HasBaselineCode());
   IsolateForSandbox isolate = GetCurrentIsolateForSandbox();
   auto code = GetTrustedData<Code, kCodeIndirectPointerTag>(isolate);
   SBXCHECK_EQ(code->kind(), CodeKind::BASELINE);

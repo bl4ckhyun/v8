@@ -1452,8 +1452,8 @@ static size_t NameDictionaryLookupForwardedStringWithHandle(Isolate* isolate,
   ReadOnlyRoots roots(isolate);
   uint32_t hash = key->hash();
   InternalIndex entry = mode == kFindExisting
-                            ? dict->FindEntry(isolate, roots, key, hash)
-                            : dict->FindInsertionEntry(isolate, roots, hash);
+                            ? dict->FindEntry(roots, key, hash)
+                            : dict->FindInsertionEntry(roots, hash);
   return entry.raw_value();
 }
 
@@ -1488,8 +1488,8 @@ static size_t NameDictionaryLookupForwardedString(Isolate* isolate,
   ReadOnlyRoots roots(isolate);
   uint32_t hash = key->hash();
   InternalIndex entry = mode == kFindExisting
-                            ? dict->FindEntry(isolate, roots, key, hash)
-                            : dict->FindInsertionEntry(isolate, roots, hash);
+                            ? dict->FindEntry(roots, key, hash)
+                            : dict->FindInsertionEntry(roots, hash);
   return entry.raw_value();
 }
 

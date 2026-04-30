@@ -222,7 +222,7 @@ class Committee final {
   static PromoRecommendation GetPromoRecommendation(Committee* committee,
                                                     Isolate* isolate,
                                                     Tagged<HeapObject> o) {
-    const InstanceType itype = o->map(isolate)->instance_type();
+    const InstanceType itype = o->map()->instance_type();
 #define V(TYPE)                                                \
   if (InstanceTypeChecker::Is##TYPE(itype)) {                  \
     return GetPromoRecommendation##TYPE(committee, isolate,    \
@@ -426,7 +426,7 @@ class ReadOnlyPromotionImpl final : public AllStatic {
       HeapObjectMap* moves) {
     ReadOnlySpace* rospace = isolate->heap()->read_only_space();
     for (Tagged<HeapObject> src : promotees) {
-      const int size = src->Size(isolate);
+      const int size = src->Size();
       Tagged<HeapObject> dst =
           rospace->AllocateRaw(size, kTaggedAligned).ToObjectChecked();
       Heap::CopyBlock(dst.address(), src.address(), size);
@@ -500,7 +500,7 @@ class ReadOnlyPromotionImpl final : public AllStatic {
     // verifier would fail on this now-dead object.
     for (auto [src, dst] : moves) {
       CHECK(!HeapLayout::InReadOnlySpace(src));
-      isolate->heap()->CreateFillerObjectAt(src.address(), src->Size(isolate));
+      isolate->heap()->CreateFillerObjectAt(src.address(), src->Size());
     }
   }
 

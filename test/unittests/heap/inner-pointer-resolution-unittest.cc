@@ -614,7 +614,6 @@ TEST_F(InnerPointerResolutionHeapTest, UnusedRegularYoungPages) {
   auto allocator = heap()->memory_allocator();
 
   {
-    PtrComprCageBase cage_base{isolate()};
     HandleScope handle_scope(isolate());
 
     // Allocate two objects, large enough that they fall in two different young
@@ -754,7 +753,6 @@ TEST_F(InnerPointerResolutionHeapTest, UnusedLargeYoungPage) {
   Address inner_ptr;
 
   {
-    PtrComprCageBase cage_base{isolate()};
     HandleScope scope(isolate());
 
     // Allocate a large object in the young generation.

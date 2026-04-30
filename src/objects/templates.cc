@@ -346,7 +346,7 @@ DirectHandle<JSObject> DictionaryTemplateInfo::NewInstance(
           isolate, property_names, property_values, num_properties_set);
     }
     JSObject::MigrateToMap(isolate, object, current_map);
-    PropertyDetails details = current_map->GetLastDescriptorDetails(isolate);
+    PropertyDetails details = current_map->GetLastDescriptorDetails();
     object->WriteToField(InternalIndex(current_property_index), details,
                          *value);
     current_property_index++;

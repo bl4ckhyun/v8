@@ -462,9 +462,9 @@ RUNTIME_FUNCTION(Runtime_CompileBaseline) {
   DirectHandle<JSFunction> function = Cast<JSFunction>(function_object);
 
   IsCompiledScope is_compiled_scope =
-      function->shared(isolate)->is_compiled_scope(isolate);
+      function->shared()->is_compiled_scope(isolate);
 
-  CHECK_UNLESS_FUZZING(function->shared(isolate)->IsUserJavaScript());
+  CHECK_UNLESS_FUZZING(function->shared()->IsUserJavaScript());
 
   // First compile the bytecode, if we have to.
   CHECK_UNLESS_FUZZING(is_compiled_scope.is_compiled() ||
@@ -883,11 +883,10 @@ RUNTIME_FUNCTION(Runtime_NeverOptimizeFunction) {
   HandleScope scope(isolate);
   CHECK_UNLESS_FUZZING(args.length() == 1);
   Handle<Object> function_object = args.at(0);
-  PtrComprCageBase cage_base(isolate);
-  CHECK_UNLESS_FUZZING(IsJSFunction(*function_object, cage_base));
+  CHECK_UNLESS_FUZZING(IsJSFunction(*function_object));
   auto function = Cast<JSFunction>(function_object);
-  DirectHandle<SharedFunctionInfo> sfi(function->shared(cage_base), isolate);
-  CodeKind code_kind = sfi->abstract_code(isolate)->kind(cage_base);
+  DirectHandle<SharedFunctionInfo> sfi(function->shared(), isolate);
+  CodeKind code_kind = sfi->abstract_code(isolate)->kind();
   switch (code_kind) {
     case CodeKind::INTERPRETED_FUNCTION:
       break;
@@ -1067,7 +1066,7 @@ RUNTIME_FUNCTION(Runtime_ForceFlush) {
   Handle<Object> function_object = args.at(0);
   CHECK_UNLESS_FUZZING(IsJSFunction(*function_object));
   auto function = Cast<JSFunction>(function_object);
-  Tagged<SharedFunctionInfo> sfi = function->shared(isolate);
+  Tagged<SharedFunctionInfo> sfi = function->shared();
 
   // Don't try to flush functions that cannot be flushed.
   CHECK_UNLESS_FUZZING(sfi->CanDiscardCompiled());

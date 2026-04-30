@@ -85,11 +85,6 @@ bool GcSafeCode::CanDeoptAt(Isolate* isolate, Address pc) const {
   return false;
 }
 
-Tagged<Object> GcSafeCode::raw_instruction_stream(
-    PtrComprCageBase code_cage_base) const {
-  return UnsafeCastToCode()->raw_instruction_stream(code_cage_base);
-}
-
 INT_ACCESSORS(Code, instruction_size, kInstructionSizeOffset)
 INT_ACCESSORS(Code, metadata_size, kMetadataSizeOffset)
 INT_ACCESSORS(Code, handler_table_offset, kHandlerTableOffsetOffset)
@@ -206,7 +201,7 @@ Tagged<TrustedByteArray> Code::SourcePositionTable(
   DisallowGarbageCollection no_gc;
 
   if (kind() == CodeKind::BASELINE) {
-    return sfi->GetBytecodeArray(isolate)->SourcePositionTable(isolate);
+    return sfi->GetBytecodeArray(isolate)->SourcePositionTable();
   }
 
   if (!has_source_position_table()) {
@@ -697,12 +692,7 @@ void Code::IterateDeoptimizationLiterals(RootVisitor* v) {
 }
 
 Tagged<Object> Code::raw_instruction_stream() const {
-  PtrComprCageBase cage_base = code_cage_base();
-  return Code::raw_instruction_stream(cage_base);
-}
-
-Tagged<Object> Code::raw_instruction_stream(PtrComprCageBase cage_base) const {
-  return ExternalCodeField<Object>::load(cage_base, *this);
+  return ExternalCodeField<Object>::load(*this);
 }
 
 void Code::set_raw_instruction_stream(Tagged<Object> value,
@@ -745,39 +735,21 @@ PtrComprCageBase Code::code_cage_base() const {
 }
 
 Tagged<InstructionStream> Code::instruction_stream() const {
-  PtrComprCageBase cage_base = code_cage_base();
-  return Code::instruction_stream(cage_base);
+  DCHECK(has_instruction_stream());
+  return ExternalCodeField<InstructionStream>::load(*this);
 }
 
 Tagged<InstructionStream> Code::unchecked_instruction_stream() const {
   return UncheckedCast<InstructionStream>(raw_instruction_stream());
 }
 
-Tagged<InstructionStream> Code::instruction_stream(
-    PtrComprCageBase cage_base) const {
-  DCHECK(has_instruction_stream());
-  return ExternalCodeField<InstructionStream>::load(cage_base, *this);
-}
-
 Tagged<InstructionStream> Code::instruction_stream(RelaxedLoadTag tag) const {
-  PtrComprCageBase cage_base = code_cage_base();
-  return Code::instruction_stream(cage_base, tag);
-}
-
-Tagged<InstructionStream> Code::instruction_stream(PtrComprCageBase cage_base,
-                                                   RelaxedLoadTag tag) const {
   DCHECK(has_instruction_stream());
-  return ExternalCodeField<InstructionStream>::Relaxed_Load(cage_base, *this);
+  return ExternalCodeField<InstructionStream>::Relaxed_Load(*this);
 }
 
 Tagged<Object> Code::raw_instruction_stream(RelaxedLoadTag tag) const {
-  PtrComprCageBase cage_base = code_cage_base();
-  return Code::raw_instruction_stream(cage_base, tag);
-}
-
-Tagged<Object> Code::raw_instruction_stream(PtrComprCageBase cage_base,
-                                            RelaxedLoadTag tag) const {
-  return ExternalCodeField<Object>::Relaxed_Load(cage_base, *this);
+  return ExternalCodeField<Object>::Relaxed_Load(*this);
 }
 
 DEF_GETTER(Code, instruction_start, Address) {

@@ -380,15 +380,14 @@ void JSObjectFuzzingPrint(Tagged<JSObject> obj, int depth,
 
 void HeapObjectFuzzingPrint(Tagged<HeapObject> obj, int depth,
                             std::ostream& os) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase();
-  if (IsString(obj, cage_base)) {
+  if (IsString(obj)) {
     HeapStringAllocator allocator;
     StringStream accumulator(&allocator);
     FuzzingStringShortPrint(Cast<String>(obj), &accumulator);
     os << accumulator.ToCString().get();
     return;
   }
-  if (IsJSObject(obj, cage_base)) {
+  if (IsJSObject(obj)) {
     HeapStringAllocator allocator;
     StringStream accumulator(&allocator);
     JSObjectFuzzingPrint(Cast<JSObject>(obj), depth, &accumulator);
@@ -396,7 +395,7 @@ void HeapObjectFuzzingPrint(Tagged<HeapObject> obj, int depth,
     return;
   }
 
-  InstanceType instance_type = obj->map(cage_base)->instance_type();
+  InstanceType instance_type = obj->map()->instance_type();
 
   // Skip invalid trusted objects. Technically it'd be fine to still handle
   // them below since we only print the objects, but such an object will

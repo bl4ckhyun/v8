@@ -74,8 +74,7 @@ static Handle<FixedArray> CombineKeys(Isolate* isolate,
   int nof_descriptors = map->NumberOfOwnDescriptors();
   if (nof_descriptors == 0 && !may_have_elements) return prototype_chain_keys;
 
-  DirectHandle<DescriptorArray> descs(map->instance_descriptors(isolate),
-                                      isolate);
+  DirectHandle<DescriptorArray> descs(map->instance_descriptors(), isolate);
   const uint32_t own_keys_length =
       own_keys.is_null() ? 0 : own_keys->ulength().value();
   Handle<FixedArray> combined_keys = isolate->factory()->NewFixedArray(
@@ -395,8 +394,8 @@ Handle<FixedArray> ReduceFixedArrayTo(Isolate* isolate,
 Handle<FixedArray> GetFastEnumPropertyKeys(Isolate* isolate,
                                            DirectHandle<JSObject> object) {
   DirectHandle<Map> map(object->map(), isolate);
-  Handle<FixedArray> keys(
-      map->instance_descriptors(isolate)->enum_cache()->keys(), isolate);
+  Handle<FixedArray> keys(map->instance_descriptors()->enum_cache()->keys(),
+                          isolate);
 
   // Check if the {map} has a valid enum length, which implies that it
   // must have a valid enum cache as well.
@@ -444,7 +443,7 @@ MaybeHandle<FixedArray> GetOwnKeysWithElements(Isolate* isolate,
   if (skip_indices) {
     result = keys;
   } else {
-    ElementsAccessor* accessor = object->GetElementsAccessor(isolate);
+    ElementsAccessor* accessor = object->GetElementsAccessor();
     result = accessor->PrependElementIndices(isolate, object, keys, convert,
                                              ONLY_ENUMERABLE);
   }
@@ -557,7 +556,7 @@ Handle<FixedArray> FastKeyAccumulator::InitializeFastPropertyEnumCache(
   DCHECK_EQ(enum_length, map->NumberOfEnumerableProperties());
   DCHECK(!map->is_dictionary_map());
 
-  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(isolate),
+  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(),
                                             isolate);
 
   // The enum cache should have been a hit if the number of enumerable
@@ -726,9 +725,9 @@ bool FastKeyAccumulator::TryPrototypeInfoCache(
     return false;
   }
   DisallowGarbageCollection no_gc;
-  Tagged<HeapObject> prototype = receiver->map(isolate_)->prototype();
+  Tagged<HeapObject> prototype = receiver->map()->prototype();
   if (prototype.is_null()) return false;
-  Tagged<Map> maybe_proto_map = prototype->map(isolate_);
+  Tagged<Map> maybe_proto_map = prototype->map();
   if (!maybe_proto_map->is_prototype_map()) return false;
   Tagged<PrototypeInfo> prototype_info;
   if (!maybe_proto_map->TryGetPrototypeInfo(&prototype_info)) return false;
@@ -1069,10 +1068,10 @@ Maybe<bool> KeyAccumulator::CollectOwnPropertyNames(
       int nof_descriptors = map->NumberOfOwnDescriptors();
       if (enum_keys->ulength().value() !=
           static_cast<uint32_t>(nof_descriptors)) {
-        if (map->prototype(isolate_) != ReadOnlyRoots(isolate_).null_value()) {
+        if (map->prototype() != ReadOnlyRoots(isolate_).null_value()) {
           AllowGarbageCollection allow_gc;
-          DirectHandle<DescriptorArray> descs(
-              map->instance_descriptors(isolate_), isolate_);
+          DirectHandle<DescriptorArray> descs(map->instance_descriptors(),
+                                              isolate_);
           for (InternalIndex i : InternalIndex::Range(nof_descriptors)) {
             PropertyDetails details = descs->GetDetails(i);
             if (!details.IsDontEnum()) continue;
@@ -1108,8 +1107,8 @@ Maybe<bool> KeyAccumulator::CollectOwnPropertyNames(
   } else {
     if (object->HasFastProperties()) {
       int limit = object->map()->NumberOfOwnDescriptors();
-      DirectHandle<DescriptorArray> descs(
-          object->map()->instance_descriptors(isolate_), isolate_);
+      DirectHandle<DescriptorArray> descs(object->map()->instance_descriptors(),
+                                          isolate_);
       // First collect the strings,
       std::optional<int> first_symbol =
           CollectOwnPropertyNamesInternal<true>(object, this, descs, 0, limit);
@@ -1142,8 +1141,8 @@ ExceptionStatus KeyAccumulator::CollectPrivateNames(
   DCHECK_EQ(mode_, KeyCollectionMode::kOwnOnly);
   if (object->HasFastProperties()) {
     int limit = object->map()->NumberOfOwnDescriptors();
-    DirectHandle<DescriptorArray> descs(
-        object->map()->instance_descriptors(isolate_), isolate_);
+    DirectHandle<DescriptorArray> descs(object->map()->instance_descriptors(),
+                                        isolate_);
     CollectOwnPropertyNamesInternal<false>(object, this, descs, 0, limit);
   } else if (IsJSGlobalObject(*object)) {
     RETURN_FAILURE_IF_NOT_SUCCESSFUL(CollectKeysFromDictionary(

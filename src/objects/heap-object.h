@@ -46,12 +46,7 @@ V8_OBJECT class HeapObjectLayout {
   // [map]: Contains a map which contains the object's reflective
   // information.
   inline Tagged<Map> map() const;
-  // The cage_base parameter is unused for HeapObjectLayout (memory is
-  // accessed directly without decompression-base hint); the overload
-  // exists for source compatibility with the legacy HeapObject API.
-  inline Tagged<Map> map(PtrComprCageBase cage_base) const;
   inline Tagged<Map> map(AcquireLoadTag) const;
-  inline Tagged<Map> map(PtrComprCageBase cage_base, AcquireLoadTag tag) const;
 
   inline MapWord map_word(RelaxedLoadTag) const;
 
@@ -239,8 +234,8 @@ V8_OBJECT class HeapObjectLayout {
   // migration.
   // TODO(jgruber): Remove once HeapObject is collapsed into HeapObjectLayout.
   inline bool NeedsRehashing(InstanceType instance_type) const;
-  inline bool NeedsRehashing(PtrComprCageBase cage_base) const;
-  inline bool CanBeRehashed(PtrComprCageBase cage_base) const;
+  inline bool NeedsRehashing() const;
+  inline bool CanBeRehashed() const;
   template <typename IsolateT>
   inline void RehashBasedOnMap(IsolateT* isolate);
 #ifdef VERIFY_HEAP
@@ -632,18 +627,18 @@ class HeapObject : public TaggedImpl<HeapObjectReferenceType::STRONG, Address> {
       InSharedSpace in_shared_space, Tagged<Map> map);
   static inline AllocationAlignment RequiredAlignment(
       AllocationSpace allocation_space, Tagged<Map> map);
-  bool inline CheckRequiredAlignment(PtrComprCageBase cage_base) const;
+  bool inline CheckRequiredAlignment() const;
 
   // Whether the object needs rehashing. That is the case if the object's
   // content depends on v8_flags.hash_seed. When the object is deserialized into
   // a heap with a different hash seed, these objects need to adapt.
   bool NeedsRehashing(InstanceType instance_type) const;
-  bool NeedsRehashing(PtrComprCageBase cage_base) const;
+  bool NeedsRehashing() const;
 
   // Rehashing support is not implemented for all objects that need rehashing.
   // With objects that need rehashing but cannot be rehashed, rehashing has to
   // be disabled.
-  bool CanBeRehashed(PtrComprCageBase cage_base) const;
+  bool CanBeRehashed() const;
 
   // Rehash the object based on the layout inferred from its map.
   template <typename IsolateT>
@@ -723,14 +718,10 @@ constexpr HeapObject Tagged<HeapObject>::ToRawPtr() const {
 }
 
 // Overload Is* predicates for HeapObject.
-#define IS_TYPE_FUNCTION_DECL(Type)                                            \
-  V8_INLINE bool Is##Type(Tagged<HeapObject> obj);                             \
-  V8_INLINE bool Is##Type(Tagged<HeapObject> obj, PtrComprCageBase cage_base); \
-  V8_INLINE bool Is##Type(HeapObject);                                         \
-  V8_INLINE bool Is##Type(HeapObject obj, PtrComprCageBase cage_base);         \
-  V8_INLINE bool Is##Type(const HeapObjectLayout* obj);                        \
-  V8_INLINE bool Is##Type(const HeapObjectLayout* ob,                          \
-                          PtrComprCageBase cage_base);
+#define IS_TYPE_FUNCTION_DECL(Type)                \
+  V8_INLINE bool Is##Type(Tagged<HeapObject> obj); \
+  V8_INLINE bool Is##Type(HeapObject);             \
+  V8_INLINE bool Is##Type(const HeapObjectLayout* obj);
 HEAP_OBJECT_TYPE_LIST(IS_TYPE_FUNCTION_DECL)
 IS_TYPE_FUNCTION_DECL(HashTableBase)
 IS_TYPE_FUNCTION_DECL(SloppyArgumentsElements)
@@ -753,14 +744,10 @@ IS_TYPE_FUNCTION_DECL(UndefinedContextCell)
 IS_TYPE_FUNCTION_DECL(NullOrUndefined)
 #undef IS_TYPE_FUNCTION_DECL
 
-#define DECL_STRUCT_PREDICATE(NAME, Name, name)                                \
-  V8_INLINE bool Is##Name(Tagged<HeapObject> obj);                             \
-  V8_INLINE bool Is##Name(Tagged<HeapObject> obj, PtrComprCageBase cage_base); \
-  V8_INLINE bool Is##Name(HeapObject);                                         \
-  V8_INLINE bool Is##Name(HeapObject obj, PtrComprCageBase cage_base);         \
-  V8_INLINE bool Is##Name(const HeapObjectLayout* obj);                        \
-  V8_INLINE bool Is##Name(const HeapObjectLayout* obj,                         \
-                          PtrComprCageBase cage_base);
+#define DECL_STRUCT_PREDICATE(NAME, Name, name)    \
+  V8_INLINE bool Is##Name(Tagged<HeapObject> obj); \
+  V8_INLINE bool Is##Name(HeapObject);             \
+  V8_INLINE bool Is##Name(const HeapObjectLayout* obj);
 STRUCT_LIST(DECL_STRUCT_PREDICATE)
 #undef DECL_STRUCT_PREDICATE
 

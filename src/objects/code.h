@@ -559,8 +559,6 @@ class GcSafeCode : public HeapObject {
   inline Address InstructionStart(Isolate* isolate, Address pc) const;
   inline Address InstructionEnd(Isolate* isolate, Address pc) const;
   inline bool CanDeoptAt(Isolate* isolate, Address pc) const;
-  inline Tagged<Object> raw_instruction_stream(
-      PtrComprCageBase code_cage_base) const;
   // The two following accessors repurpose the InlinedBytecodeSize field, see
   // comment in code-inl.h.
   inline uint16_t wasm_js_tagged_parameter_count() const;

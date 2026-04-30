@@ -1333,8 +1333,8 @@ void ScavengerCollector::QuarantinedPageSweeper::JobTask::Run(
   if (pinned_object_per_page_.empty()) {
     // Populate the per page map.
     for (const PinnedObjectEntry& entry : pinned_objects_) {
-      DCHECK(!HeapLayout::IsSelfForwarded(
-          HeapObject::FromAddress(entry.address), heap_->isolate()));
+      DCHECK(
+          !HeapLayout::IsSelfForwarded(HeapObject::FromAddress(entry.address)));
       MemoryChunk* chunk = MemoryChunk::FromAddress(entry.address);
       DCHECK(!chunk->Metadata(heap_->isolate())->is_quarantined());
       ObjectsAndSizes& objects_for_page = pinned_object_per_page_[chunk];

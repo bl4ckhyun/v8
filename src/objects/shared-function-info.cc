@@ -240,13 +240,12 @@ void SharedFunctionInfo::SetScript(IsolateForSandbox isolate,
 
 void SharedFunctionInfo::CopyFrom(Tagged<SharedFunctionInfo> other,
                                   IsolateForSandbox isolate) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase(*this);
-  set_name_or_scope_info(other->name_or_scope_info(cage_base, kAcquireLoad),
+  set_name_or_scope_info(other->name_or_scope_info(kAcquireLoad),
                          kReleaseStore);
 
   set_outer_scope_info_or_feedback_metadata(
-      other->outer_scope_info_or_feedback_metadata(cage_base));
-  set_script(other->script(cage_base, kAcquireLoad), kReleaseStore);
+      other->outer_scope_info_or_feedback_metadata());
+  set_script(other->script(kAcquireLoad), kReleaseStore);
 
   set_length(other->length());
   set_formal_parameter_count(other->formal_parameter_count());
@@ -539,7 +538,7 @@ void SharedFunctionInfo::DisableOptimization(Isolate* isolate,
             kRelaxedStore);
   // Code should be the lazy compilation stub or else interpreted.
   if constexpr (DEBUG_BOOL) {
-    CodeKind kind = abstract_code(isolate)->kind(isolate);
+    CodeKind kind = abstract_code(isolate)->kind();
     CHECK(kind == CodeKind::INTERPRETED_FUNCTION || kind == CodeKind::BUILTIN);
   }
   PROFILE(isolate,

@@ -33,8 +33,7 @@ Tagged<TransitionArray> TransitionsAccessor::GetTransitionArray(
 // static
 Tagged<TransitionArray> TransitionsAccessor::GetTransitionArray(
     Isolate* isolate, DirectHandle<Map> map) {
-  Tagged<MaybeObject> raw_transitions =
-      map->raw_transitions(isolate, kAcquireLoad);
+  Tagged<MaybeObject> raw_transitions = map->raw_transitions(kAcquireLoad);
   return GetTransitionArray(isolate, raw_transitions);
 }
 
@@ -175,7 +174,7 @@ PropertyDetails TransitionsAccessor::GetTargetDetails(Tagged<Name> name,
 
 PropertyDetails TransitionsAccessor::GetSimpleTargetDetails(
     Tagged<Map> transition) {
-  return transition->GetLastDescriptorDetails(isolate_);
+  return transition->GetLastDescriptorDetails();
 }
 
 // static
@@ -345,7 +344,7 @@ TransitionsAccessor::TransitionsAccessor(Isolate* isolate, Tagged<Map> map,
                                          bool concurrent_access)
     : isolate_(isolate),
       map_(map),
-      raw_transitions_(map->raw_transitions(isolate_, kAcquireLoad)),
+      raw_transitions_(map->raw_transitions(kAcquireLoad)),
       encoding_(GetEncoding(isolate_, raw_transitions_)),
       concurrent_access_(concurrent_access) {
   DCHECK_IMPLIES(encoding_ == kMigrationTarget, map_->is_deprecated());
@@ -388,8 +387,7 @@ TransitionsAccessor::Encoding TransitionsAccessor::GetEncoding(
 // static
 TransitionsAccessor::Encoding TransitionsAccessor::GetEncoding(
     Isolate* isolate, DirectHandle<Map> map) {
-  Tagged<MaybeObject> raw_transitions =
-      map->raw_transitions(isolate, kAcquireLoad);
+  Tagged<MaybeObject> raw_transitions = map->raw_transitions(kAcquireLoad);
   return GetEncoding(isolate, raw_transitions);
 }
 

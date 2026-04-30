@@ -358,7 +358,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastAssign(
 
       // The descriptor array is not cached on purpose since it has to stay in
       // sync with map->instance_descriptors to avoid it from being pruned.
-      DirectHandle<Name> next_key(map->instance_descriptors(isolate)->GetKey(i),
+      DirectHandle<Name> next_key(map->instance_descriptors()->GetKey(i),
                                   isolate);
       if (mode == PropertiesEnumerationMode::kEnumerationOrder) {
         if (IsSymbol(*next_key)) {
@@ -374,8 +374,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastAssign(
       if (stable) {
         DCHECK_EQ(from->map(), *map);
 
-        PropertyDetails details =
-            map->instance_descriptors(isolate)->GetDetails(i);
+        PropertyDetails details = map->instance_descriptors()->GetDetails(i);
         if (!details.IsEnumerable()) continue;
         if (details.kind() == PropertyKind::kData) {
           CHECK_EQ(details.location(), PropertyLocation::kField);
@@ -2239,7 +2238,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastGetOwnValuesOrEntries(
   if (!map->OnlyHasSimpleProperties()) return Just(false);
 
   DirectHandle<JSObject> object(Cast<JSObject>(*receiver), isolate);
-  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(isolate),
+  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(),
                                             isolate);
 
   uint32_t number_of_own_descriptors =
@@ -2271,7 +2270,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastGetOwnValuesOrEntries(
   // side-effects.
   bool stable = *map == object->map();
   if (stable) {
-    descriptors.SetValue(map->instance_descriptors(isolate));
+    descriptors.SetValue(map->instance_descriptors());
   }
 
   for (InternalIndex index : InternalIndex::Range(number_of_own_descriptors)) {
@@ -2284,7 +2283,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastGetOwnValuesOrEntries(
     // Directly decode from the descriptor array if |from| did not change shape.
     if (stable) {
       DCHECK_EQ(object->map(), *map);
-      DCHECK_EQ(*descriptors, map->instance_descriptors(isolate));
+      DCHECK_EQ(*descriptors, map->instance_descriptors());
 
       PropertyDetails details = descriptors->GetDetails(index);
       if (!details.IsEnumerable()) continue;
@@ -2305,7 +2304,7 @@ V8_WARN_UNUSED_RESULT Maybe<bool> FastGetOwnValuesOrEntries(
         ASSIGN_RETURN_ON_EXCEPTION(isolate, prop_value,
                                    Object::GetProperty(&it));
         stable = object->map() == *map;
-        descriptors.SetValue(map->instance_descriptors(isolate));
+        descriptors.SetValue(map->instance_descriptors());
       }
     } else {
       // If the map did change, do a slower lookup. We are still guaranteed that
@@ -2843,7 +2842,7 @@ void JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
     DirectHandle<GlobalDictionary> dictionary(
         global_obj->global_dictionary(kAcquireLoad), isolate);
     ReadOnlyRoots roots(isolate);
-    InternalIndex entry = dictionary->FindEntry(isolate, roots, name, hash);
+    InternalIndex entry = dictionary->FindEntry(roots, name, hash);
 
     if (entry.is_not_found()) {
       DCHECK_IMPLIES(global_obj->map()->is_prototype_map(),
@@ -3088,9 +3087,8 @@ void JSObject::PrintInstanceMigration(FILE* file, Tagged<Map> original_map,
     return;
   }
   PrintF(file, "[migrating]");
-  Isolate* isolate = Isolate::Current();
-  Tagged<DescriptorArray> o = original_map->instance_descriptors(isolate);
-  Tagged<DescriptorArray> n = new_map->instance_descriptors(isolate);
+  Tagged<DescriptorArray> o = original_map->instance_descriptors();
+  Tagged<DescriptorArray> n = new_map->instance_descriptors();
   for (InternalIndex i : original_map->IterateOwnDescriptors()) {
     Representation o_r = o->GetDetails(i).representation();
     Representation n_r = n->GetDetails(i).representation();
@@ -3204,7 +3202,7 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
     }
 
     // If the map adds a new kDescriptor property, simply set the map.
-    PropertyDetails details = new_map->GetLastDescriptorDetails(isolate);
+    PropertyDetails details = new_map->GetLastDescriptorDetails();
     if (details.location() == PropertyLocation::kDescriptor) {
       object->set_map(isolate, *new_map, kReleaseStore);
       return;
@@ -3216,7 +3214,7 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
     FieldIndex index = FieldIndex::ForDetails(*new_map, details);
     if (index.is_inobject() ||
         static_cast<uint32_t>(index.outobject_array_index()) <
-            object->property_array(isolate)->length().value()) {
+            object->property_array()->length().value()) {
       // Allocate HeapNumbers for double fields.
       if (index.is_double()) {
         auto value = isolate->factory()->NewHeapNumberWithHoleNaN();
@@ -3229,8 +3227,7 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
     // This migration is a transition from a map that has run out of property
     // space. Extend the backing store.
     int grow_by = new_map->UnusedPropertyFields() + 1;
-    DirectHandle<PropertyArray> old_storage(object->property_array(isolate),
-                                            isolate);
+    DirectHandle<PropertyArray> old_storage(object->property_array(), isolate);
     DCHECK_GE(grow_by, 0);
     DirectHandle<PropertyArray> new_storage =
         isolate->factory()->CopyPropertyArrayAndGrow(
@@ -3282,10 +3279,10 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
   DirectHandle<FixedArray> inobject_props =
       isolate->factory()->NewFixedArray(static_cast<uint32_t>(inobject));
 
-  DirectHandle<DescriptorArray> old_descriptors(
-      old_map->instance_descriptors(isolate), isolate);
-  DirectHandle<DescriptorArray> new_descriptors(
-      new_map->instance_descriptors(isolate), isolate);
+  DirectHandle<DescriptorArray> old_descriptors(old_map->instance_descriptors(),
+                                                isolate);
+  DirectHandle<DescriptorArray> new_descriptors(new_map->instance_descriptors(),
+                                                isolate);
   int old_nof = old_map->NumberOfOwnDescriptors();
   int new_nof = new_map->NumberOfOwnDescriptors();
 
@@ -3320,7 +3317,7 @@ void MigrateFastToFast(Isolate* isolate, DirectHandle<JSObject> object,
     } else {
       DCHECK_EQ(PropertyLocation::kField, old_details.location());
       FieldIndex index = FieldIndex::ForDetails(*old_map, old_details);
-      value = handle(object->RawFastPropertyAt(isolate, index), isolate);
+      value = handle(object->RawFastPropertyAt(index), isolate);
       if (!old_representation.IsDouble() && representation.IsDouble()) {
         DCHECK_IMPLIES(old_representation.IsNone(),
                        IsUninitializedHole(*value, isolate));
@@ -3399,15 +3396,15 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
                        DirectHandle<Map> new_map,
                        int expected_additional_properties) {
   // The global object is always normalized.
-  DCHECK(!IsJSGlobalObject(*object, isolate));
+  DCHECK(!IsJSGlobalObject(*object));
   // JSGlobalProxy must never be normalized
-  DCHECK(!IsJSGlobalProxy(*object, isolate));
+  DCHECK(!IsJSGlobalProxy(*object));
 
   DCHECK_IMPLIES(new_map->is_prototype_map(),
                  !new_map->IsPrototypeValidityCellValid());
 
   HandleScope scope(isolate);
-  DirectHandle<Map> map(object->map(isolate), isolate);
+  DirectHandle<Map> map(object->map(), isolate);
 
   // Allocate new content.
   int real_size = map->NumberOfOwnDescriptors();
@@ -3428,8 +3425,7 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
     dictionary = isolate->factory()->NewNameDictionary(property_count);
   }
 
-  DirectHandle<DescriptorArray> descs(map->instance_descriptors(isolate),
-                                      isolate);
+  DirectHandle<DescriptorArray> descs(map->instance_descriptors(), isolate);
   for (InternalIndex i : InternalIndex::Range(real_size)) {
     PropertyDetails details = descs->GetDetails(i);
     DirectHandle<Name> key(descs->GetKey(i), isolate);
@@ -3437,17 +3433,15 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
     if (details.location() == PropertyLocation::kField) {
       FieldIndex index = FieldIndex::ForDetails(*map, details);
       if (details.kind() == PropertyKind::kData) {
-        value =
-            direct_handle(object->RawFastPropertyAt(isolate, index), isolate);
+        value = direct_handle(object->RawFastPropertyAt(index), isolate);
         if (details.representation().IsDouble()) {
-          DCHECK(IsHeapNumber(*value, isolate));
+          DCHECK(IsHeapNumber(*value));
           double old_value = Cast<HeapNumber>(value)->value();
           value = isolate->factory()->NewHeapNumber(old_value);
         }
       } else {
         DCHECK_EQ(PropertyKind::kAccessor, details.kind());
-        value =
-            direct_handle(object->RawFastPropertyAt(isolate, index), isolate);
+        value = direct_handle(object->RawFastPropertyAt(index), isolate);
       }
 
     } else {
@@ -3527,8 +3521,8 @@ void MigrateFastToSlow(Isolate* isolate, DirectHandle<JSObject> object,
 void JSObject::MigrateToMap(Isolate* isolate, DirectHandle<JSObject> object,
                             DirectHandle<Map> new_map,
                             int expected_additional_properties) {
-  if (object->map(isolate) == *new_map) return;
-  DirectHandle<Map> old_map(object->map(isolate), isolate);
+  if (object->map() == *new_map) return;
+  DirectHandle<Map> old_map(object->map(), isolate);
   NotifyMapChange(old_map, new_map, isolate);
 
   if (old_map->is_dictionary_map()) {
@@ -3554,7 +3548,7 @@ void JSObject::MigrateToMap(Isolate* isolate, DirectHandle<JSObject> object,
       DCHECK_EQ(0,
                 TransitionsAccessor(isolate, *old_map).NumberOfTransitions());
       DCHECK(IsUndefined(new_map->GetBackPointer(), isolate));
-      DCHECK(object->map(isolate) != *old_map);
+      DCHECK(object->map() != *old_map);
     }
   } else {
     MigrateFastToSlow(isolate, object, new_map, expected_additional_properties);
@@ -3620,7 +3614,7 @@ void JSObject::AllocateStorageForMap(Isolate* isolate,
   // have external properties, but is also necessary if we only have inobject
   // properties but don't unbox double fields.
 
-  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(isolate),
+  DirectHandle<DescriptorArray> descriptors(map->instance_descriptors(),
                                             isolate);
   DCHECK_GE(inobject, 0);
   DirectHandle<FixedArray> storage =
@@ -4004,7 +3998,7 @@ void JSObject::MigrateSlowToFast(DirectHandle<JSObject> object,
       kind = swiss_dictionary->DetailsAt(index).kind();
     } else {
       InternalIndex index(Smi::ToInt(iteration_order->get(i)));
-      DCHECK(dictionary->IsKey(roots, dictionary->KeyAt(isolate, index)));
+      DCHECK(dictionary->IsKey(roots, dictionary->KeyAt(index)));
       kind = dictionary->DetailsAt(index).kind();
     }
 
@@ -4144,7 +4138,7 @@ void JSObject::MigrateSlowToFast(DirectHandle<JSObject> object,
   descriptors->Sort();
 
   DisallowGarbageCollection no_gc;
-  new_map->InitializeDescriptors(isolate, *descriptors);
+  new_map->InitializeDescriptors(*descriptors);
   if (number_of_allocated_fields == 0) {
     new_map->SetInObjectUnusedPropertyFields(unused_property_fields);
   } else {
@@ -5075,7 +5069,7 @@ void JSObject::OptimizeAsPrototype(DirectHandle<JSObject> object,
     DirectHandle<Map> new_map;
     if (enable_setup_mode && PrototypeBenefitsFromNormalization(*object)) {
 #if DEBUG
-      DirectHandle<Map> old_map(object->map(isolate), isolate);
+      DirectHandle<Map> old_map(object->map(), isolate);
 #endif  // DEBUG
       // First normalize to ensure all JSFunctions are DATA_CONSTANT. Don't use
       // the cache, since we're going to use the normalized version directly,
@@ -5085,9 +5079,9 @@ void JSObject::OptimizeAsPrototype(DirectHandle<JSObject> object,
                                     0, kUseCache,
                                     "NormalizeAndCopyAsPrototype");
       // A new map was created.
-      DCHECK_NE(*old_map, object->map(isolate));
+      DCHECK_NE(*old_map, object->map());
 
-      new_map = direct_handle(object->map(isolate), isolate);
+      new_map = direct_handle(object->map(), isolate);
     } else {
       new_map = Map::Copy(isolate, direct_handle(object->map(), isolate),
                           "CopyAsPrototype");
@@ -5152,8 +5146,7 @@ void JSObject::OptimizeAsPrototype(DirectHandle<JSObject> object,
   bool should_be_dictionary = V8_DICT_PROPERTY_CONST_TRACKING_BOOL &&
                               enable_setup_mode && !IsJSGlobalProxy(*object) &&
                               !isolate->bootstrapper()->IsActive();
-  DCHECK_IMPLIES(should_be_dictionary,
-                 object->map(isolate)->is_dictionary_map());
+  DCHECK_IMPLIES(should_be_dictionary, object->map()->is_dictionary_map());
 #endif
 }
 
@@ -5579,17 +5572,17 @@ Maybe<bool> JSObject::AddDataElement(Isolate* isolate,
                                      DirectHandle<JSObject> object,
                                      uint32_t index, DirectHandle<Object> value,
                                      PropertyAttributes attributes) {
-  DCHECK(object->map(isolate)->is_extensible());
+  DCHECK(object->map()->is_extensible());
 
   uint32_t old_length = 0;
   uint32_t new_capacity = 0;
 
-  if (IsJSArray(*object, isolate)) {
+  if (IsJSArray(*object)) {
     CHECK(Object::ToArrayLength(Cast<JSArray>(*object)->length(), &old_length));
   }
 
-  ElementsKind kind = object->GetElementsKind(isolate);
-  Tagged<FixedArrayBase> elements = object->elements(isolate);
+  ElementsKind kind = object->GetElementsKind();
+  Tagged<FixedArrayBase> elements = object->elements();
   ElementsKind dictionary_kind = DICTIONARY_ELEMENTS;
   if (IsSloppyArgumentsElementsKind(kind)) {
     elements = Cast<SloppyArgumentsElements>(elements)->arguments();
@@ -5600,7 +5593,7 @@ Maybe<bool> JSObject::AddDataElement(Isolate* isolate,
 
   if (attributes != NONE) {
     kind = dictionary_kind;
-  } else if (IsNumberDictionary(elements, isolate)) {
+  } else if (IsNumberDictionary(elements)) {
     kind = ShouldConvertToFastElements(
                *object, Cast<NumberDictionary>(elements), index, &new_capacity)
                ? BestFittingFastElementsKind(*object)
@@ -5610,9 +5603,8 @@ Maybe<bool> JSObject::AddDataElement(Isolate* isolate,
     kind = dictionary_kind;
   }
 
-  ElementsKind to = Object::OptimalElementsKind(*value, isolate);
-  if (IsHoleyElementsKind(kind) || !IsJSArray(*object, isolate) ||
-      index > old_length) {
+  ElementsKind to = Object::OptimalElementsKind(*value);
+  if (IsHoleyElementsKind(kind) || !IsJSArray(*object) || index > old_length) {
     to = GetHoleyElementsKind(to);
     kind = GetHoleyElementsKind(kind);
   }
@@ -5622,7 +5614,7 @@ Maybe<bool> JSObject::AddDataElement(Isolate* isolate,
       accessor->Add(isolate, object, index, value, attributes, new_capacity),
       Nothing<bool>());
 
-  if (IsJSArray(*object, isolate) && index >= old_length) {
+  if (IsJSArray(*object) && index >= old_length) {
     DirectHandle<Number> new_length =
         isolate->factory()->NewNumberFromUint(index + 1);
     Cast<JSArray>(*object)->set_length(*new_length);

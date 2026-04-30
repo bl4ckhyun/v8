@@ -764,8 +764,7 @@ PropertyAccessInfo AccessorAccessInfoHelper(
             Cast<JSModuleNamespace>(proto_info->module_namespace()));
     Handle<Cell> cell = broker->CanonicalPersistentHandle(
         Cast<Cell>(module_namespace->module()->exports()->Lookup(
-            isolate, name.object(),
-            Smi::ToInt(Object::GetHash(*name.object())))));
+            name.object(), Smi::ToInt(Object::GetHash(*name.object())))));
     if (IsAnyStore(access_mode)) {
       // https://tc39.es/ecma262/#sec-module-namespace-exotic-objects-set-p-v-receiver
       // https://tc39.es/ecma262/#sec-module-namespace-exotic-objects-defineownproperty-p-desc

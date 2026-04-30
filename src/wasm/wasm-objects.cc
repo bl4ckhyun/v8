@@ -336,7 +336,7 @@ void WasmTableObject::SetFunctionTableEntry(
     Isolate* isolate, DirectHandle<WasmTableObject> table,
     DirectHandle<WasmDispatchTable> dispatch_table, int entry_index,
     DirectHandle<Object> entry) {
-  if (IsWasmNull(*entry, isolate)) {
+  if (IsWasmNull(*entry)) {
     dispatch_table->Clear(entry_index, WasmDispatchTable::kExistingEntry);
     table->entries()->set(entry_index, ReadOnlyRoots(isolate).wasm_null());
     return;
@@ -437,7 +437,7 @@ DirectHandle<Object> WasmTableObject::Get(Isolate* isolate,
 
   DirectHandle<Object> entry(entries->get(entry_index), isolate);
 
-  if (IsWasmNull(*entry, isolate)) return entry;
+  if (IsWasmNull(*entry)) return entry;
   if (IsWasmFuncRef(*entry)) return entry;
 
   wasm::ValueType unsafe_type = table->unsafe_type();
@@ -3077,8 +3077,7 @@ DirectHandle<Map> CreateArrayMap(Isolate* isolate,
                 instance_type, map_instance_size, elements_kind,
                 inobject_properties);
   map->set_wasm_type_info(*type_info);
-  map->SetInstanceDescriptors(isolate,
-                              *isolate->factory()->empty_descriptor_array(), 0,
+  map->SetInstanceDescriptors(*isolate->factory()->empty_descriptor_array(), 0,
                               SKIP_WRITE_BARRIER);
   map->set_is_extensible(false);
   WasmArray::EncodeElementSizeInMap(element_type.value_kind_size(), *map);

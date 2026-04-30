@@ -29,7 +29,7 @@ MarkingVerifierBase::MarkingVerifierBase(Heap* heap)
     : ObjectVisitorWithCageBases(heap), heap_(heap) {}
 
 void MarkingVerifierBase::VisitMapPointer(Tagged<HeapObject> object) {
-  VerifyMap(object->map(cage_base()));
+  VerifyMap(object->map());
 }
 
 void MarkingVerifierBase::VerifyRoots() {

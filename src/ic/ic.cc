@@ -1112,7 +1112,7 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
         DirectHandle<ObjectHashTable> exports(
             Cast<JSModuleNamespace>(holder)->module()->exports(), isolate());
         InternalIndex entry =
-            exports->FindEntry(isolate(), roots, lookup->name(),
+            exports->FindEntry(roots, lookup->name(),
                                Smi::ToInt(Object::GetHash(*lookup->name())));
         // We found the accessor, so the entry must exist.
         DCHECK(entry.is_found());
@@ -1245,7 +1245,7 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
       DCHECK_EQ(PropertyKind::kData, lookup->property_details().kind());
       Handle<Smi> smi_handler;
       if (lookup->is_dictionary_holder()) {
-        if (IsJSGlobalObject(*holder, isolate())) {
+        if (IsJSGlobalObject(*holder)) {
           // TODO(verwaest): Also supporting the global object as receiver is a
           // workaround for code that leaks the global object.
           TRACE_HANDLER_STATS(isolate(), LoadIC_LoadGlobalDH);
@@ -1270,7 +1270,7 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
       } else {
         DCHECK_EQ(PropertyLocation::kField,
                   lookup->property_details().location());
-        DCHECK(IsJSObject(*holder, isolate()));
+        DCHECK(IsJSObject(*holder));
         FieldIndex field = lookup->GetFieldIndex();
         InternalIndex descriptor = lookup->GetFieldDescriptorIndex();
         smi_handler = LoadHandler::LoadField(isolate(), field, descriptor);
@@ -1996,7 +1996,7 @@ Maybe<bool> DefineOwnDataProperty(LookupIterator* it,
                                   StoreOrigin store_origin) {
   // It should not be possible to call DefineOwnDataProperty in a
   // contextual store (indicated by IsJSGlobalObject()).
-  DCHECK(!IsJSGlobalObject(*it->GetReceiver(), it->isolate()));
+  DCHECK(!IsJSGlobalObject(*it->GetReceiver()));
 
   // Handle special cases that can't be handled by
   // DefineOwnPropertyIgnoreAttributes first.

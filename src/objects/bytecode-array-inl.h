@@ -173,10 +173,6 @@ Tagged<TrustedByteArray> BytecodeArray::SourcePositionTable() const {
     return TrustedCast<TrustedByteArray>(maybe_table);
   return Isolate::Current()->heap()->empty_trusted_byte_array();
 }
-Tagged<TrustedByteArray> BytecodeArray::SourcePositionTable(
-    PtrComprCageBase cage_base) const {
-  return SourcePositionTable();
-}
 
 void BytecodeArray::SetSourcePositionsFailedToCollect() {
   // Store Smi::zero() into the protected source_position_table_ slot

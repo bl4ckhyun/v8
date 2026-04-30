@@ -316,7 +316,7 @@ void Heap::FinalizePartialMap(Tagged<Map> map) {
   ReadOnlyRoots roots(this);
   map->set_dependent_code(DependentCode::empty_dependent_code(roots));
   map->set_raw_transitions(Smi::zero());
-  map->SetInstanceDescriptors(isolate(), roots.empty_descriptor_array(), 0,
+  map->SetInstanceDescriptors(roots.empty_descriptor_array(), 0,
                               SKIP_WRITE_BARRIER);
   map->init_prototype_and_constructor_or_back_pointer_during_bootstrap(roots);
 }
@@ -921,7 +921,7 @@ bool Heap::CreateLateReadOnlyJSReceiverMaps() {
         ALL_ATTRIBUTES_MASK, PropertyConstness::kConst, Representation::Smi(),
         MaybeObjectDirectHandle(FieldType::Any(isolate())), true);
     descriptors->Set(InternalIndex(0), &length_descriptor);
-    shared_array_map->InitializeDescriptors(isolate(), *descriptors);
+    shared_array_map->InitializeDescriptors(*descriptors);
     set_js_shared_array_map(shared_array_map);
   }
 

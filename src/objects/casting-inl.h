@@ -28,8 +28,7 @@ bool GCAwareObjectTypeCheck(Tagged<Object> object, const Heap* heap) {
   }
   // 2) A conservative scavenge is ongoing and `object` was pinned by
   // conservative stack scanning.
-  MapWord map_word = heap_object->map_word(
-      PtrComprCageBase(heap->isolate()->cage_base()), kRelaxedLoad);
+  MapWord map_word = heap_object->map_word(kRelaxedLoad);
   if ((heap->gc_state() == Heap::SCAVENGE) &&
       HeapLayout::InYoungGeneration(heap_object) &&
       ((heap->ConservativeStackScanningModeForMinorGC() !=

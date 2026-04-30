@@ -78,7 +78,7 @@ void SamplingHeapProfiler::SampleObject(Address soon_object, size_t size) {
   DisallowGarbageCollection no_gc;
 
   // Check if the area is iterable by confirming that it starts with a map.
-  DCHECK(IsMap(HeapObject::FromAddress(soon_object)->map(isolate_), isolate_));
+  DCHECK(IsMap(HeapObject::FromAddress(soon_object)->map()));
 
   HandleScope scope(isolate_);
   Tagged<HeapObject> heap_object = HeapObject::FromAddress(soon_object);

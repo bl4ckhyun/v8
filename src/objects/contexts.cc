@@ -61,7 +61,7 @@ Handle<NameToIndexHashTable> AddLocalNamesFromContext(
     DirectHandle<Name> name(it->name(), isolate);
     if (ignore_duplicates) {
       int32_t hash = NameToIndexShape::Hash(roots, *name);
-      if (names_table->FindEntry(isolate, roots, *name, hash).is_found()) {
+      if (names_table->FindEntry(roots, *name, hash).is_found()) {
         continue;
       }
     }

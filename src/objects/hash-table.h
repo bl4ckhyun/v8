@@ -169,13 +169,12 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
   }
 
   // Find entry for key otherwise return kNotFound.
-  inline InternalIndex FindEntry(PtrComprCageBase cage_base,
-                                 ReadOnlyRoots roots, Key key, int32_t hash);
+  inline InternalIndex FindEntry(ReadOnlyRoots roots, Key key, int32_t hash);
   template <typename IsolateT>
   inline InternalIndex FindEntry(IsolateT* isolate, Key key);
 
   // Rehashes the table in-place.
-  void Rehash(PtrComprCageBase cage_base);
+  void Rehash();
 
   // Returns whether k is a real key.  The hole and undefined are not allowed as
   // keys and can be used to indicate missing or deleted elements.
@@ -184,15 +183,11 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
 
   inline bool ToKey(ReadOnlyRoots roots, InternalIndex entry,
                     Tagged<Object>* out_k);
-  inline bool ToKey(PtrComprCageBase cage_base, InternalIndex entry,
-                    Tagged<Object>* out_k);
+  inline bool ToKey(InternalIndex entry, Tagged<Object>* out_k);
 
   // Returns the key at entry.
   inline Tagged<Object> KeyAt(InternalIndex entry);
-  inline Tagged<Object> KeyAt(PtrComprCageBase cage_base, InternalIndex entry);
   inline Tagged<Object> KeyAt(InternalIndex entry, RelaxedLoadTag tag);
-  inline Tagged<Object> KeyAt(PtrComprCageBase cage_base, InternalIndex entry,
-                              RelaxedLoadTag tag);
 
   inline void SetKeyAt(InternalIndex entry, Tagged<Object> value,
                        WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
@@ -260,8 +255,7 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
 
   // Find the entry at which to insert element with the given key that
   // has the given hash value.
-  InternalIndex FindInsertionEntry(PtrComprCageBase cage_base,
-                                   ReadOnlyRoots roots, uint32_t hash);
+  InternalIndex FindInsertionEntry(ReadOnlyRoots roots, uint32_t hash);
   template <typename IsolateT>
   InternalIndex FindInsertionEntry(IsolateT* isolate, uint32_t hash);
 
@@ -277,7 +271,7 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
       Isolate* isolate, HandleType<Derived> table, int additionalCapacity = 0);
 
   // Rehashes this hash-table into the new table.
-  void Rehash(PtrComprCageBase cage_base, Tagged<Derived> new_table);
+  void Rehash(Tagged<Derived> new_table);
 
   inline void set_key(int index, Tagged<Object> value);
   inline void set_key(int index, Tagged<Object> value, WriteBarrierMode mode);
@@ -406,8 +400,6 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) ObjectHashTableBase
   // returned in case the key is not present.
   Tagged<Object> Lookup(DirectHandle<Object> key);
   Tagged<Object> Lookup(DirectHandle<Object> key, int32_t hash);
-  Tagged<Object> Lookup(PtrComprCageBase cage_base, DirectHandle<Object> key,
-                        int32_t hash);
 
   // Returns the value at entry.
   Tagged<Object> ValueAt(InternalIndex entry);
@@ -501,8 +493,6 @@ class ObjectMultiHashTableBase
   // Returns the values associated with the given key. Return an std::array of
   // holes if not found.
   std::array<Tagged<Object>, N> Lookup(DirectHandle<Object> key);
-  std::array<Tagged<Object>, N> Lookup(PtrComprCageBase cage_base,
-                                       DirectHandle<Object> key);
 
   // Adds or overwrites the values associated with the given key.
   static Handle<Derived> Put(Isolate* isolate, Handle<Derived> table,

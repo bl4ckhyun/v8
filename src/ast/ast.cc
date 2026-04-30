@@ -801,10 +801,9 @@ void ArrayLiteralBoilerplateBuilder::BuildBoilerplateDescription(
         boilerplate_value = Smi::zero();
       }
 
-      DCHECK_EQ(kind, GetMoreGeneralElementsKind(
-                          kind, Object::OptimalElementsKind(
-                                    boilerplate_value,
-                                    GetPtrComprCageBase(*elements))));
+      DCHECK_EQ(kind,
+                GetMoreGeneralElementsKind(
+                    kind, Object::OptimalElementsKind(boilerplate_value)));
 
       Cast<FixedArray>(*elements)->set(array_index, boilerplate_value);
     }

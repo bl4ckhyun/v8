@@ -2493,7 +2493,7 @@ void TranslatedState::EnsurePropertiesAllocatedAndMarked(
   Tagged<ByteArray> raw_object_storage = *object_storage;
 
   // Set markers for out-of-object properties.
-  Tagged<DescriptorArray> descriptors = map->instance_descriptors(isolate());
+  Tagged<DescriptorArray> descriptors = map->instance_descriptors();
   for (InternalIndex i : map->IterateOwnDescriptors()) {
     FieldIndex index = FieldIndex::ForDescriptor(raw_map, i);
     Representation representation = descriptors->GetDetails(i).representation();
@@ -2533,7 +2533,7 @@ void TranslatedState::EnsureJSObjectAllocated(TranslatedValue* slot,
   DisallowGarbageCollection no_gc;
   Tagged<Map> raw_map = *map;
   Tagged<ByteArray> raw_object_storage = *object_storage;
-  Tagged<DescriptorArray> descriptors = map->instance_descriptors(isolate());
+  Tagged<DescriptorArray> descriptors = map->instance_descriptors();
 
   // Set markers for in-object properties.
   for (InternalIndex i : raw_map->IterateOwnDescriptors()) {

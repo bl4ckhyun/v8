@@ -576,7 +576,7 @@ MaybeDirectHandle<String> Object::NoSideEffectsToMaybeString(
     Isolate* isolate, DirectHandle<Object> input) {
   DisallowJavascriptExecution no_js(isolate);
 
-  if (IsAnyHole(*input, isolate)) {
+  if (IsAnyHole(*input)) {
     ReadOnlyRoots roots(isolate);
 #define HOLE_CASE(CamelName, snake_name, _)                           \
   if (Is##CamelName(*input)) {                                        \
@@ -2177,19 +2177,12 @@ SafeHeapObjectSize HeapObject::SafeSizeFromMap(Tagged<Map> map) const {
   return SafeHeapObjectSize(static_cast<uint32_t>(unsafe_size));
 }
 
-bool HeapObject::NeedsRehashing(PtrComprCageBase cage_base) const {
-  return NeedsRehashing(map(cage_base)->instance_type());
+bool HeapObject::NeedsRehashing() const {
+  return NeedsRehashing(map()->instance_type());
 }
 
 bool HeapObject::NeedsRehashing(InstanceType instance_type) const {
-  if (V8_EXTERNAL_CODE_SPACE_BOOL) {
-    // Use map() only when it's guaranteed that it's not an InstructionStream
-    // object.
-    DCHECK_IMPLIES(instance_type != INSTRUCTION_STREAM_TYPE,
-                   instance_type == map()->instance_type());
-  } else {
-    DCHECK_EQ(instance_type, map()->instance_type());
-  }
+  DCHECK_EQ(instance_type, map()->instance_type());
   switch (instance_type) {
     case DESCRIPTOR_ARRAY_TYPE:
     case STRONG_DESCRIPTOR_ARRAY_TYPE:
@@ -2219,9 +2212,9 @@ bool HeapObject::NeedsRehashing(InstanceType instance_type) const {
   UNREACHABLE();
 }
 
-bool HeapObject::CanBeRehashed(PtrComprCageBase cage_base) const {
-  DCHECK(NeedsRehashing(cage_base));
-  switch (map(cage_base)->instance_type()) {
+bool HeapObject::CanBeRehashed() const {
+  DCHECK(NeedsRehashing());
+  switch (map()->instance_type()) {
     case JS_MAP_TYPE:
     case JS_SET_TYPE:
       return true;
@@ -2257,33 +2250,33 @@ bool HeapObject::CanBeRehashed(PtrComprCageBase cage_base) const {
 
 template <typename IsolateT>
 void HeapObject::RehashBasedOnMap(IsolateT* isolate) {
-  switch (map(isolate)->instance_type()) {
+  switch (map()->instance_type()) {
     case HASH_TABLE_TYPE:
-      Cast<ObjectHashTable>(*this)->Rehash(isolate);
+      Cast<ObjectHashTable>(*this)->Rehash();
       break;
     case NAME_DICTIONARY_TYPE:
-      Cast<NameDictionary>(*this)->Rehash(isolate);
+      Cast<NameDictionary>(*this)->Rehash();
       break;
     case NAME_TO_INDEX_HASH_TABLE_TYPE:
-      Cast<NameToIndexHashTable>(*this)->Rehash(isolate);
+      Cast<NameToIndexHashTable>(*this)->Rehash();
       break;
     case REGISTERED_SYMBOL_TABLE_TYPE:
-      Cast<RegisteredSymbolTable>(*this)->Rehash(isolate);
+      Cast<RegisteredSymbolTable>(*this)->Rehash();
       break;
     case SWISS_NAME_DICTIONARY_TYPE:
       Cast<SwissNameDictionary>(*this)->Rehash(isolate);
       break;
     case GLOBAL_DICTIONARY_TYPE:
-      Cast<GlobalDictionary>(*this)->Rehash(isolate);
+      Cast<GlobalDictionary>(*this)->Rehash();
       break;
     case NUMBER_DICTIONARY_TYPE:
-      Cast<NumberDictionary>(*this)->Rehash(isolate);
+      Cast<NumberDictionary>(*this)->Rehash();
       break;
     case SIMPLE_NAME_DICTIONARY_TYPE:
-      Cast<SimpleNameDictionary>(*this)->Rehash(isolate);
+      Cast<SimpleNameDictionary>(*this)->Rehash();
       break;
     case SIMPLE_NUMBER_DICTIONARY_TYPE:
-      Cast<SimpleNumberDictionary>(*this)->Rehash(isolate);
+      Cast<SimpleNumberDictionary>(*this)->Rehash();
       break;
     case DESCRIPTOR_ARRAY_TYPE:
     case STRONG_DESCRIPTOR_ARRAY_TYPE:
@@ -2553,7 +2546,7 @@ bool Object::CheckContextualStoreToJSGlobalObject(
     LookupIterator* it, Maybe<ShouldThrow> should_throw) {
   Isolate* isolate = it->isolate();
 
-  if (IsJSGlobalObject(*it->GetReceiver(), isolate) &&
+  if (IsJSGlobalObject(*it->GetReceiver()) &&
       (GetShouldThrow(isolate, should_throw) == ShouldThrow::kThrowOnError)) {
     if (it->state() == LookupIterator::TRANSITION) {
       // The property cell that we have created is garbage because we are going
@@ -2775,7 +2768,7 @@ Maybe<bool> Object::RedefineIncompatibleProperty(
 Maybe<bool> Object::SetDataProperty(LookupIterator* it,
                                     DirectHandle<Object> value) {
   Isolate* isolate = it->isolate();
-  DCHECK_IMPLIES(IsJSProxy(*it->GetReceiver(), isolate),
+  DCHECK_IMPLIES(IsJSProxy(*it->GetReceiver()),
                  it->GetName()->IsAnyPrivateName());
   DCHECK_IMPLIES(!it->IsElement() && it->GetName()->IsAnyPrivateName(),
                  it->state() == LookupIterator::DATA);
@@ -2786,9 +2779,8 @@ Maybe<bool> Object::SetDataProperty(LookupIterator* it,
 
   DirectHandle<Object> to_assign = value;
   // Convert the incoming value to a number for storing into typed arrays.
-  if (it->IsElement() && IsJSObject(*receiver, isolate) &&
-      Cast<JSObject>(*receiver)->HasTypedArrayOrRabGsabTypedArrayElements(
-          isolate)) {
+  if (it->IsElement() && IsJSObject(*receiver) &&
+      Cast<JSObject>(*receiver)->HasTypedArrayOrRabGsabTypedArrayElements()) {
     auto receiver_ta = Cast<JSTypedArray>(receiver);
     ElementsKind elements_kind = Cast<JSObject>(*receiver)->GetElementsKind();
     if (IsBigIntTypedArrayElementsKind(elements_kind)) {
@@ -2808,9 +2800,8 @@ Maybe<bool> Object::SetDataProperty(LookupIterator* it,
     }
   }
 
-  DCHECK(!IsWasmObject(*receiver, isolate));
-  if (V8_UNLIKELY(IsJSSharedStruct(*receiver, isolate) ||
-                  IsJSSharedArray(*receiver, isolate))) {
+  DCHECK(!IsWasmObject(*receiver));
+  if (V8_UNLIKELY(IsJSSharedStruct(*receiver) || IsJSSharedArray(*receiver))) {
     // Shared structs can only point to primitives or shared values.
     ASSIGN_RETURN_ON_EXCEPTION(
         isolate, to_assign, Object::Share(isolate, to_assign, kThrowOnError));
@@ -5167,8 +5158,7 @@ Handle<Derived> HashTable<Derived, Shape>::NewInternal(
 }
 
 template <typename Derived, typename Shape>
-void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base,
-                                       Tagged<Derived> new_table) {
+void HashTable<Derived, Shape>::Rehash(Tagged<Derived> new_table) {
   DisallowGarbageCollection no_gc;
   WriteBarrierModeScope mode = new_table->GetWriteBarrierMode(no_gc);
 
@@ -5187,7 +5177,7 @@ void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base,
     if (!IsKey(roots, k)) continue;
     uint32_t hash = TodoShape::HashForObject(roots, k);
     uint32_t insertion_index =
-        EntryToIndex(new_table->FindInsertionEntry(cage_base, roots, hash));
+        EntryToIndex(new_table->FindInsertionEntry(roots, hash));
     new_table->set_key(insertion_index, get(from_index), *mode);
     for (int j = 1; j < TodoShape::kEntrySize; j++) {
       new_table->set(insertion_index + j, get(from_index + j), *mode);
@@ -5233,7 +5223,7 @@ void HashTable<Derived, Shape>::Swap(InternalIndex entry1, InternalIndex entry2,
 }
 
 template <typename Derived, typename Shape>
-void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base) {
+void HashTable<Derived, Shape>::Rehash() {
   DisallowGarbageCollection no_gc;
   WriteBarrierModeScope mode = GetWriteBarrierMode(no_gc);
   EarlyReadOnlyRoots roots = EarlyGetReadOnlyRoots();
@@ -5245,7 +5235,7 @@ void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base) {
     done = true;
     for (InternalIndex current(0); current.raw_value() < capacity;
          /* {current} is advanced manually below, when appropriate.*/) {
-      Tagged<Object> current_key = KeyAt(cage_base, current);
+      Tagged<Object> current_key = KeyAt(current);
       if (!IsKey(roots, current_key)) {
         ++current;  // Advance to next entry.
         continue;
@@ -5255,7 +5245,7 @@ void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base) {
         ++current;  // Advance to next entry.
         continue;
       }
-      Tagged<Object> target_key = KeyAt(cage_base, target);
+      Tagged<Object> target_key = KeyAt(target);
       if (!IsKey(roots, target_key) ||
           EntryForProbe(roots, target_key, probe, target) != target) {
         // Put the current element into the correct position.
@@ -5275,7 +5265,7 @@ void HashTable<Derived, Shape>::Rehash(PtrComprCageBase cage_base) {
   Tagged<HeapObject> undefined = roots.undefined_value();
   Derived* self = static_cast<Derived*>(this);
   for (InternalIndex current : InternalIndex::Range(capacity)) {
-    if (KeyAt(cage_base, current) == the_hole) {
+    if (KeyAt(current) == the_hole) {
       self->set_key(EntryToIndex(current) + kEntryKeyIndex, undefined,
                     SKIP_WRITE_BARRIER);
     }
@@ -5301,7 +5291,7 @@ HandleType<Derived> HashTable<Derived, Shape>::EnsureCapacity(
       isolate, new_nof,
       should_pretenure ? AllocationType::kOld : AllocationType::kYoung);
 
-  table->Rehash(isolate, *new_table);
+  table->Rehash(*new_table);
   return new_table;
 }
 
@@ -5364,19 +5354,19 @@ HandleType<Derived> HashTable<Derived, Shape>::Shrink(Isolate* isolate,
                      pretenure ? AllocationType::kOld : AllocationType::kYoung,
                      USE_CUSTOM_MINIMUM_CAPACITY);
 
-  table->Rehash(isolate, *new_table);
+  table->Rehash(*new_table);
   return new_table;
 }
 
 template <typename Derived, typename Shape>
-InternalIndex HashTable<Derived, Shape>::FindInsertionEntry(
-    PtrComprCageBase cage_base, ReadOnlyRoots roots, uint32_t hash) {
+InternalIndex HashTable<Derived, Shape>::FindInsertionEntry(ReadOnlyRoots roots,
+                                                            uint32_t hash) {
   uint32_t capacity = Capacity();
   uint32_t count = 1;
   // EnsureCapacity will guarantee the hash table is never full.
   for (InternalIndex entry = FirstProbe(hash, capacity);;
        entry = NextProbe(entry, count++, capacity)) {
-    if (!IsKey(roots, KeyAt(cage_base, entry))) return entry;
+    if (!IsKey(roots, KeyAt(entry))) return entry;
   }
 }
 
@@ -5390,7 +5380,6 @@ GlobalDictionary::TryFindPropertyCellForConcurrentLookupIterator(
   //   repeated load (unsafe with concurrent modifications).
 
   DisallowGarbageCollection no_gc;
-  PtrComprCageBase cage_base{isolate};
   ReadOnlyRoots roots(isolate);
   const int32_t hash = TodoShape::Hash(roots, name);
   const uint32_t capacity = Capacity();
@@ -5400,12 +5389,12 @@ GlobalDictionary::TryFindPropertyCellForConcurrentLookupIterator(
   // EnsureCapacity will guarantee the hash table is never full.
   for (InternalIndex entry = FirstProbe(hash, capacity);;
        entry = NextProbe(entry, count++, capacity)) {
-    Tagged<Object> element = KeyAt(cage_base, entry, kRelaxedLoad);
+    Tagged<Object> element = KeyAt(entry, kRelaxedLoad);
     if (isolate->heap()->IsPendingAllocation(element)) return {};
     if (element == undefined) return {};
     if (TodoShape::kMatchNeedsHoleCheck && element == the_hole) continue;
     if (!TodoShape::IsMatch(name, element)) continue;
-    CHECK(IsPropertyCell(element, cage_base));
+    CHECK(IsPropertyCell(element));
     return Cast<PropertyCell>(element);
   }
 }
@@ -5487,7 +5476,7 @@ int BaseNameDictionary<Derived, Shape>::NextEnumerationIndex(
     for (uint32_t i = 0; i < length; i++) {
       InternalIndex internal_index(Smi::ToInt(iteration_order->get(i)));
       DCHECK(dictionary->IsKey(GetReadOnlyRoots(),
-                               dictionary->KeyAt(isolate, internal_index)));
+                               dictionary->KeyAt(internal_index)));
 
       int enum_index = PropertyDetails::kInitialIndex + i;
 
@@ -5612,10 +5601,10 @@ HandleType<Derived> Dictionary<Derived, Shape>::Add(
   DirectHandle<Object> k =
       TodoShape::template AsHandle<key_allocation>(isolate, key);
 
-  InternalIndex entry = dictionary->FindInsertionEntry(isolate, roots, hash);
+  InternalIndex entry = dictionary->FindInsertionEntry(roots, hash);
   dictionary->SetEntry(entry, *k, *value, details);
-  DCHECK(IsNumber(dictionary->KeyAt(isolate, entry)) ||
-         IsUniqueName(TodoShape::Unwrap(dictionary->KeyAt(isolate, entry))));
+  DCHECK(IsNumber(dictionary->KeyAt(entry)) ||
+         IsUniqueName(TodoShape::Unwrap(dictionary->KeyAt(entry))));
   dictionary->ElementAdded();
   if (entry_out) *entry_out = entry;
   return dictionary;
@@ -5640,10 +5629,10 @@ void Dictionary<Derived, Shape>::UncheckedAdd(IsolateT* isolate,
   DirectHandle<Object> k =
       TodoShape::template AsHandle<key_allocation>(isolate, key);
 
-  InternalIndex entry = dictionary->FindInsertionEntry(isolate, roots, hash);
+  InternalIndex entry = dictionary->FindInsertionEntry(roots, hash);
   dictionary->SetEntry(entry, *k, *value, details);
-  DCHECK(IsNumber(dictionary->KeyAt(isolate, entry)) ||
-         IsUniqueName(TodoShape::Unwrap(dictionary->KeyAt(isolate, entry))));
+  DCHECK(IsNumber(dictionary->KeyAt(entry)) ||
+         IsUniqueName(TodoShape::Unwrap(dictionary->KeyAt(entry))));
 }
 
 template <typename Derived, typename Shape>
@@ -5812,12 +5801,12 @@ void ObjectHashTableBase<Derived, Shape>::FillEntriesWithHoles(
 
 template <typename Derived, typename Shape>
 Tagged<Object> ObjectHashTableBase<Derived, Shape>::Lookup(
-    PtrComprCageBase cage_base, DirectHandle<Object> key, int32_t hash) {
+    DirectHandle<Object> key, int32_t hash) {
   DisallowGarbageCollection no_gc;
   ReadOnlyRoots roots = GetReadOnlyRoots();
   DCHECK(this->IsKey(roots, *key));
 
-  InternalIndex entry = this->FindEntry(cage_base, roots, key, hash);
+  InternalIndex entry = this->FindEntry(roots, key, hash);
   if (entry.is_not_found()) return roots.the_hole_value();
   return this->get(Derived::EntryToIndex(entry) + 1);
 }
@@ -5826,10 +5815,9 @@ Tagged<Object> ObjectHashTableBase<Derived, Shape>::Lookup(
 // CodeStubAssembler::NameToIndexHashTableLookup.
 int NameToIndexHashTable::Lookup(Tagged<Name> key) {
   DisallowGarbageCollection no_gc;
-  PtrComprCageBase cage_base = GetPtrComprCageBase(this);
   ReadOnlyRoots roots = GetReadOnlyRoots();
 
-  InternalIndex entry = this->FindEntry(cage_base, roots, key, key->hash());
+  InternalIndex entry = this->FindEntry(roots, key, key->hash());
   if (entry.is_not_found()) return -1;
   return Cast<Smi>(this->get(EntryToValueIndex(entry))).value();
 }
@@ -5839,7 +5827,6 @@ Tagged<Object> ObjectHashTableBase<Derived, Shape>::Lookup(
     DirectHandle<Object> key) {
   DisallowGarbageCollection no_gc;
 
-  PtrComprCageBase cage_base = GetPtrComprCageBase(this);
   ReadOnlyRoots roots = GetReadOnlyRoots();
   DCHECK(this->IsKey(roots, *key));
 
@@ -5848,13 +5835,7 @@ Tagged<Object> ObjectHashTableBase<Derived, Shape>::Lookup(
   if (IsUndefined(hash, roots)) {
     return roots.the_hole_value();
   }
-  return Lookup(cage_base, key, Smi::ToInt(hash));
-}
-
-template <typename Derived, typename Shape>
-Tagged<Object> ObjectHashTableBase<Derived, Shape>::Lookup(
-    DirectHandle<Object> key, int32_t hash) {
-  return Lookup(GetPtrComprCageBase(this), key, hash);
+  return Lookup(key, Smi::ToInt(hash));
 }
 
 template <typename Derived, typename Shape>
@@ -5902,7 +5883,7 @@ void RehashObjectHashTableAndGCIfNeeded(Isolate* isolate, HandleType<T> table) {
   // Rehash if more than 33% of the entries are deleted entries.
   // TODO(verwaest): Consider to shrink the fixed array in place.
   if ((table->NumberOfDeletedElements() << 1) > table->NumberOfElements()) {
-    table->Rehash(isolate);
+    table->Rehash();
   }
   // If we're out of luck, we didn't get a GC recently, and so rehashing
   // isn't enough to avoid a crash.
@@ -5914,7 +5895,7 @@ void RehashObjectHashTableAndGCIfNeeded(Isolate* isolate, HandleType<T> table) {
         isolate->heap()->CollectAllGarbage(
             GCFlag::kNoFlags, GarbageCollectionReason::kFullHashtable);
       }
-      table->Rehash(isolate);
+      table->Rehash();
     }
   }
 }
@@ -5929,7 +5910,7 @@ Handle<Derived> ObjectHashTableBase<Derived, Shape>::Put(
   DCHECK(table->IsKey(roots, *key));
   DCHECK(!IsTheHole(*value, roots));
 
-  InternalIndex entry = table->FindEntry(isolate, roots, key, hash);
+  InternalIndex entry = table->FindEntry(roots, key, hash);
 
   // Key is already in table, just overwrite value.
   if (entry.is_found()) {
@@ -5967,7 +5948,7 @@ Handle<Derived> ObjectHashTableBase<Derived, Shape>::Remove(
   ReadOnlyRoots roots = GetReadOnlyRoots();
   DCHECK(table->IsKey(roots, *key));
 
-  InternalIndex entry = table->FindEntry(isolate, roots, key, hash);
+  InternalIndex entry = table->FindEntry(roots, key, hash);
   if (entry.is_not_found()) {
     *was_present = false;
     return table;
@@ -5999,12 +5980,6 @@ void ObjectHashTableBase<Derived, Shape>::RemoveEntry(InternalIndex entry) {
 template <typename Derived, int N>
 std::array<Tagged<Object>, N> ObjectMultiHashTableBase<Derived, N>::Lookup(
     DirectHandle<Object> key) {
-  return Lookup(GetPtrComprCageBase(this), key);
-}
-
-template <typename Derived, int N>
-std::array<Tagged<Object>, N> ObjectMultiHashTableBase<Derived, N>::Lookup(
-    PtrComprCageBase cage_base, DirectHandle<Object> key) {
   DisallowGarbageCollection no_gc;
 
   ReadOnlyRoots roots = GetReadOnlyRoots();
@@ -6016,7 +5991,7 @@ std::array<Tagged<Object>, N> ObjectMultiHashTableBase<Derived, N>::Lookup(
   }
   int32_t hash = Smi::ToInt(hash_obj);
 
-  InternalIndex entry = this->FindEntry(cage_base, roots, key, hash);
+  InternalIndex entry = this->FindEntry(roots, key, hash);
   if (entry.is_not_found()) {
     return {roots.the_hole_value(), roots.the_hole_value()};
   }
@@ -6040,7 +6015,7 @@ Handle<Derived> ObjectMultiHashTableBase<Derived, N>::Put(
   DCHECK(table->IsKey(roots, *key));
 
   int32_t hash = Object::GetOrCreateHash(*key, isolate).value();
-  InternalIndex entry = table->FindEntry(isolate, roots, key, hash);
+  InternalIndex entry = table->FindEntry(roots, key, hash);
 
   // Overwrite values if entry is found.
   if (entry.is_found()) {

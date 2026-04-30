@@ -2937,11 +2937,9 @@ THREADED_TEST(AccessorIsPreservedOnAttributeChange) {
   v8::Local<v8::Value> res = CompileRun("var a = []; a;");
   i::DirectHandle<i::JSReceiver> a(
       v8::Utils::OpenHandle(v8::Object::Cast(*res)));
-  CHECK_EQ(1,
-           a->map()->instance_descriptors(i_isolate)->number_of_descriptors());
+  CHECK_EQ(1, a->map()->instance_descriptors()->number_of_descriptors());
   CompileRun("Object.defineProperty(a, 'length', { writable: false });");
-  CHECK_EQ(0,
-           a->map()->instance_descriptors(i_isolate)->number_of_descriptors());
+  CHECK_EQ(0, a->map()->instance_descriptors()->number_of_descriptors());
   // But we should still have an AccessorInfo.
   i::DirectHandle<i::String> name = i_isolate->factory()->length_string();
   i::LookupIterator it(i_isolate, a, name,
@@ -3240,8 +3238,7 @@ TEST(InternalFieldsSubclassing) {
 #ifdef VERIFY_HEAP
       i_value->HeapObjectVerify(i_isolate);
       i::Object::ObjectVerify(i_value->map(), i_isolate);
-      i::Object::ObjectVerify(i_value->map()->FindRootMap(i_isolate),
-                              i_isolate);
+      i::Object::ObjectVerify(i_value->map()->FindRootMap(), i_isolate);
 #endif
       CHECK_EQ(nof_embedder_fields, value->InternalFieldCount());
       if (in_object_only) {
@@ -3252,7 +3249,7 @@ TEST(InternalFieldsSubclassing) {
 
       // Make sure we get the precise property count.
       i::MapUpdater::CompleteInobjectSlackTracking(
-          i_isolate, i_value->map()->FindRootMap(i_isolate));
+          i_isolate, i_value->map()->FindRootMap());
       // TODO(cbruni): fix accounting to make this condition true.
       // CHECK_EQ(0, i_value->map()->UnusedPropertyFields());
       if (in_object_only) {

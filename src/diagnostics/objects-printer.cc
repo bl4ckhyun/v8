@@ -223,12 +223,11 @@ namespace {
 
 void PrintHeapObjectHeaderWithoutMap(Tagged<HeapObject> object,
                                      std::ostream& os, const char* id) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase();
   os << reinterpret_cast<void*>(object.ptr()) << ": [";
   if (id != nullptr) {
     os << id;
   } else {
-    os << object->map(cage_base)->instance_type();
+    os << object->map()->instance_type();
   }
   os << "]";
   if (ReadOnlyHeap::Contains(object)) {
@@ -273,16 +272,13 @@ void HeapObjectLayout::PrintHeader(std::ostream& os, const char* id) {
 
 void HeapObject::PrintHeader(std::ostream& os, const char* id) {
   PrintHeapObjectHeaderWithoutMap(*this, os, id);
-  PtrComprCageBase cage_base = GetPtrComprCageBase();
   if (!IsMetaMap(*this)) {
-    os << "\n - map: " << Brief(map(cage_base));
+    os << "\n - map: " << Brief(map());
   }
 }
 
 void HeapObject::HeapObjectPrint(std::ostream& os) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase();
-
-  InstanceType instance_type = map(cage_base)->instance_type();
+  InstanceType instance_type = map()->instance_type();
 
   if (instance_type < FIRST_NONSTRING_TYPE) {
     Cast<String>(*this)->StringPrint(os);
@@ -537,8 +533,7 @@ void FreeSpace::FreeSpacePrint(std::ostream& os) {
 
 bool JSObject::PrintProperties(std::ostream& os) {
   if (HasFastProperties()) {
-    Tagged<DescriptorArray> descs =
-        map()->instance_descriptors(Isolate::Current());
+    Tagged<DescriptorArray> descs = map()->instance_descriptors();
     for (InternalIndex i : map()->IterateOwnDescriptors()) {
       os << "\n    ";
       descs->GetKey(i)->NamePrint(os);
@@ -4284,17 +4279,16 @@ void HeapObject::Print(Tagged<Object> obj, std::ostream& os) {
 }
 
 void HeapObject::HeapObjectShortPrint(std::ostream& os) {
-  PtrComprCageBase cage_base = GetPtrComprCageBase();
   os << AsHex::Address(this->ptr()) << " ";
 
-  if (IsString(*this, cage_base)) {
+  if (IsString(*this)) {
     HeapStringAllocator allocator;
     StringStream accumulator(&allocator);
     Cast<String>(*this)->StringShortPrint(&accumulator);
     os << accumulator.ToCString().get();
     return;
   }
-  if (IsJSObject(*this, cage_base)) {
+  if (IsJSObject(*this)) {
     HeapStringAllocator allocator;
     StringStream accumulator(&allocator);
     Cast<JSObject>(*this)->JSObjectShortPrint(&accumulator);
@@ -4302,7 +4296,7 @@ void HeapObject::HeapObjectShortPrint(std::ostream& os) {
     return;
   }
 
-  InstanceType instance_type = map(cage_base)->instance_type();
+  InstanceType instance_type = map()->instance_type();
 
   // Skip invalid trusted objects. Technically it'd be fine to still handle
   // them below since we only print the objects, but such an object will
@@ -5078,8 +5072,7 @@ void TransitionsAccessor::PrintTransitionTree(
           DCHECK(!IsSpecialTransition(ReadOnlyRoots(isolate_), key));
           os << "to ";
           InternalIndex descriptor = target->LastAdded();
-          Tagged<DescriptorArray> descriptors =
-              target->instance_descriptors(isolate_);
+          Tagged<DescriptorArray> descriptors = target->instance_descriptors();
           descriptors->PrintDescriptorDetails(os, descriptor,
                                               PropertyDetails::kForTransitions);
         }
@@ -5349,8 +5342,7 @@ V8_DEBUGGING_EXPORT extern "C" void _v8_internal_Print_TransitionTree(
 #if defined(DEBUG) || defined(OBJECT_PRINT)
     i::Tagged<i::Map> map = i::UncheckedCast<i::Map>(o);
     i::TransitionsAccessor transitions(
-        i::Isolate::Current(),
-        start_at_root ? map->FindRootMap(GetPtrComprCageBase(map)) : map);
+        i::Isolate::Current(), start_at_root ? map->FindRootMap() : map);
     transitions.PrintTransitionTree();
 #endif
   }

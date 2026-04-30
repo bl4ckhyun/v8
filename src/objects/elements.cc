@@ -1675,7 +1675,7 @@ class DictionaryElementsAccessor
           // Find last non-deletable element in range of elements to be
           // deleted and adjust range accordingly.
           for (InternalIndex entry : dict->IterateEntries()) {
-            Tagged<Object> index = dict->KeyAt(isolate, entry);
+            Tagged<Object> index = dict->KeyAt(entry);
             if (dict->IsKey(roots, index)) {
               uint32_t number =
                   static_cast<uint32_t>(Object::NumberValue(index));
@@ -1694,7 +1694,7 @@ class DictionaryElementsAccessor
           // Remove elements that should be deleted.
           int removed_entries = 0;
           for (InternalIndex entry : dict->IterateEntries()) {
-            Tagged<Object> index = dict->KeyAt(isolate, entry);
+            Tagged<Object> index = dict->KeyAt(entry);
             if (dict->IsKey(roots, index)) {
               uint32_t number =
                   static_cast<uint32_t>(Object::NumberValue(index));
@@ -1739,10 +1739,9 @@ class DictionaryElementsAccessor
     DisallowGarbageCollection no_gc;
     Tagged<NumberDictionary> dict = Cast<NumberDictionary>(backing_store);
     if (!dict->requires_slow_elements()) return false;
-    PtrComprCageBase cage_base = GetPtrComprCageBase(holder);
     ReadOnlyRoots roots = GetReadOnlyRoots();
     for (InternalIndex i : dict->IterateEntries()) {
-      Tagged<Object> key = dict->KeyAt(cage_base, i);
+      Tagged<Object> key = dict->KeyAt(i);
       if (!dict->IsKey(roots, key)) continue;
       PropertyDetails details = dict->DetailsAt(i);
       if (details.kind() == PropertyKind::kAccessor) return true;
@@ -1839,7 +1838,7 @@ class DictionaryElementsAccessor
                            InternalIndex entry) {
     DisallowGarbageCollection no_gc;
     Tagged<NumberDictionary> dict = Cast<NumberDictionary>(store);
-    Tagged<Object> index = dict->KeyAt(isolate, entry);
+    Tagged<Object> index = dict->KeyAt(entry);
     return !IsTheHole(index, isolate);
   }
 
@@ -1889,7 +1888,7 @@ class DictionaryElementsAccessor
                                      InternalIndex entry,
                                      PropertyFilter filter) {
     DisallowGarbageCollection no_gc;
-    Tagged<Object> raw_key = dictionary->KeyAt(isolate, entry);
+    Tagged<Object> raw_key = dictionary->KeyAt(entry);
     if (!dictionary->IsKey(ReadOnlyRoots(isolate), raw_key)) return kMaxUInt32;
     return FilterKey(dictionary, entry, raw_key, filter);
   }
@@ -1907,7 +1906,7 @@ class DictionaryElementsAccessor
     ReadOnlyRoots roots(isolate);
     for (InternalIndex i : dictionary->IterateEntries()) {
       AllowGarbageCollection allow_gc;
-      Tagged<Object> raw_key = dictionary->KeyAt(isolate, i);
+      Tagged<Object> raw_key = dictionary->KeyAt(i);
       if (!dictionary->IsKey(roots, raw_key)) continue;
       uint32_t key = FilterKey(dictionary, i, raw_key, filter);
       if (key == kMaxUInt32) {
@@ -1953,9 +1952,9 @@ class DictionaryElementsAccessor
         Cast<NumberDictionary>(receiver->elements()), isolate);
     ReadOnlyRoots roots(isolate);
     for (InternalIndex i : dictionary->IterateEntries()) {
-      Tagged<Object> k = dictionary->KeyAt(isolate, i);
+      Tagged<Object> k = dictionary->KeyAt(i);
       if (!dictionary->IsKey(roots, k)) continue;
-      Tagged<Object> value = dictionary->ValueAt(isolate, i);
+      Tagged<Object> value = dictionary->ValueAt(i);
       DCHECK(!IsTheHole(value, isolate));
       DCHECK(!IsAccessorPair(value));
       DCHECK(!IsAccessorInfo(value));
@@ -1979,7 +1978,7 @@ class DictionaryElementsAccessor
     // must be accessed in order via the slow path.
     bool found = false;
     for (InternalIndex i : dictionary->IterateEntries()) {
-      Tagged<Object> k = dictionary->KeyAt(isolate, i);
+      Tagged<Object> k = dictionary->KeyAt(i);
       if (k == the_hole) continue;
       if (k == undefined) continue;
 
@@ -1994,7 +1993,7 @@ class DictionaryElementsAccessor
         // access getters out of order
         return false;
       } else if (!found) {
-        Tagged<Object> element_k = dictionary->ValueAt(isolate, i);
+        Tagged<Object> element_k = dictionary->ValueAt(i);
         if (Object::SameValueZero(*value, element_k)) found = true;
       }
     }

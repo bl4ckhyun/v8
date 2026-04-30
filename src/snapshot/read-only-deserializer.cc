@@ -224,7 +224,7 @@ class ObjectPostProcessor final {
 
   V8_INLINE void PostProcessIfNeeded(Tagged<HeapObject> o,
                                      InstanceType instance_type) {
-    DCHECK_EQ(o->map(isolate_)->instance_type(), instance_type);
+    DCHECK_EQ(o->map()->instance_type(), instance_type);
 #define V(TYPE)                                       \
   if (InstanceTypeChecker::Is##TYPE(instance_type)) { \
     return PostProcess##TYPE(TrustedCast<TYPE>(o));   \
@@ -424,7 +424,6 @@ void ReadOnlyDeserializer::PostProcessNewObjects() {
   // heap and search for objects that need post-processing.
   //
   // See also Deserializer<IsolateT>::PostProcessNewObject.
-  PtrComprCageBase cage_base(isolate());
 #ifdef V8_COMPRESS_POINTERS
   ExternalPointerTable::UnsealReadOnlySegmentScope unseal_scope(
       &isolate()->external_pointer_table());
@@ -432,7 +431,7 @@ void ReadOnlyDeserializer::PostProcessNewObjects() {
   ObjectPostProcessor post_processor(isolate());
   ReadOnlyHeapObjectIterator it(isolate()->read_only_heap());
   for (Tagged<HeapObject> o = it.Next(); !o.is_null(); o = it.Next()) {
-    const InstanceType instance_type = o->map(cage_base)->instance_type();
+    const InstanceType instance_type = o->map()->instance_type();
     if (should_rehash()) {
       if (InstanceTypeChecker::IsString(instance_type)) {
         Tagged<String> str = Cast<String>(o);

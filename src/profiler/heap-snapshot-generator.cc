@@ -597,17 +597,16 @@ const SnapshotObjectId HeapObjectsMap::kFirstAvailableNativeId = 2;
 namespace {
 
 const v8::String::ExternalStringResourceBase* GetExternalStringResource(
-    Tagged<ExternalString> object, PtrComprCageBase cage_base) {
-  if (IsExternalOneByteString(object, cage_base)) {
+    Tagged<ExternalString> object) {
+  if (IsExternalOneByteString(object)) {
     return Cast<ExternalOneByteString>(object)->resource();
   }
   return Cast<ExternalTwoByteString>(object)->resource();
 }
 
-int ExternalStringSizeForSnapshot(Tagged<ExternalString> object,
-                                  PtrComprCageBase cage_base) {
+int ExternalStringSizeForSnapshot(Tagged<ExternalString> object) {
   const v8::String::ExternalStringResourceBase* resource =
-      GetExternalStringResource(object, cage_base);
+      GetExternalStringResource(object);
   size_t external_string_size = resource ? resource->EstimateMemoryUsage() : 0;
   if (external_string_size ==
       v8::String::ExternalStringResourceBase::kDefaultMemoryEstimate) {
@@ -617,15 +616,14 @@ int ExternalStringSizeForSnapshot(Tagged<ExternalString> object,
   return base::saturated_cast<int>(external_string_size);
 }
 
-int SizeForSnapshot(Tagged<HeapObject> object, PtrComprCageBase cage_base) {
+int SizeForSnapshot(Tagged<HeapObject> object) {
   // Since read-only space can be shared among Isolates, and JS developers have
   // no control over the size of read-only space, we represent read-only objects
   // as having zero size.
   if (HeapLayout::InReadOnlySpace(object)) return 0;
-  int size = object->Size(cage_base);
-  if (IsExternalString(object, cage_base)) {
-    size +=
-        ExternalStringSizeForSnapshot(Cast<ExternalString>(object), cage_base);
+  int size = object->Size();
+  if (IsExternalString(object)) {
+    size += ExternalStringSizeForSnapshot(Cast<ExternalString>(object));
   }
   return size;
 }
@@ -783,13 +781,12 @@ void HeapObjectsMap::UpdateHeapObjectsMap() {
   }
   heap_->PreciseCollectAllGarbage(GCFlag::kNoFlags,
                                   GarbageCollectionReason::kHeapProfiler);
-  PtrComprCageBase cage_base(heap_->isolate());
   CombinedHeapObjectIterator iterator(heap_);
   for (Tagged<HeapObject> obj = iterator.Next(); !obj.is_null();
        obj = iterator.Next()) {
-    FindOrAddEntry(obj.address(), SizeForSnapshot(obj, cage_base));
+    FindOrAddEntry(obj.address(), SizeForSnapshot(obj));
     if (v8_flags.heap_profiler_trace_objects) {
-      int object_size = obj->Size(cage_base);
+      int object_size = obj->Size();
       PrintF("Update object      : %p %6d. Next address is %p\n",
              reinterpret_cast<void*>(obj.address()), object_size,
              reinterpret_cast<void*>(obj.address() + object_size));
@@ -988,8 +985,7 @@ void V8HeapExplorer::ExtractLocationForJSFunction(HeapEntry* entry,
 }
 
 HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
-  PtrComprCageBase cage_base(isolate());
-  InstanceType instance_type = object->map(cage_base)->instance_type();
+  InstanceType instance_type = object->map()->instance_type();
   if (InstanceTypeChecker::IsJSObject(instance_type)) {
     if (InstanceTypeChecker::IsJSFunction(instance_type)) {
       Tagged<JSFunction> func = Cast<JSFunction>(object);
@@ -1050,9 +1046,9 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
 
   } else if (InstanceTypeChecker::IsString(instance_type)) {
     Tagged<String> string = Cast<String>(object);
-    if (IsConsString(string, cage_base)) {
+    if (IsConsString(string)) {
       return AddEntry(object, HeapEntry::kConsString, "(concatenated string)");
-    } else if (IsSlicedString(string, cage_base)) {
+    } else if (IsSlicedString(string)) {
       return AddEntry(object, HeapEntry::kSlicedString, "(sliced string)");
     } else {
       return AddEntry(object, HeapEntry::kString,
@@ -1102,7 +1098,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
     Tagged<ScopeInfo> scope_info =
         Cast<ScopeInfo>(context->get(Context::SCOPE_INFO_INDEX, kRelaxedLoad));
     SnapshotObjectId scope_info_id = heap_object_map_->FindOrAddEntry(
-        scope_info.address(), SizeForSnapshot(scope_info, cage_base));
+        scope_info.address(), SizeForSnapshot(scope_info));
     return AddEntry(
         object, HeapEntry::kObject,
         names_->GetFormatted("system / Context / scope @%u", scope_info_id));
@@ -1131,7 +1127,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
     Tagged<Foreign> foreign = Cast<Foreign>(object);
     ExternalPointerTag tag = foreign->GetTag();
 
-    size_t size = SizeForSnapshot(object, cage_base);
+    size_t size = SizeForSnapshot(object);
     const char* name = "system / Foreign";
 
     if (kAnyManagedExternalPointerTagRange.Contains(tag)) {
@@ -1161,9 +1157,7 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
 
 HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object,
                                     HeapEntry::Type type, const char* name) {
-  PtrComprCageBase cage_base(isolate());
-  return AddEntry(object.address(), type, name,
-                  SizeForSnapshot(object, cage_base));
+  return AddEntry(object.address(), type, name, SizeForSnapshot(object));
 }
 
 HeapEntry* V8HeapExplorer::AddEntry(Address address, HeapEntry::Type type,
@@ -1335,8 +1329,7 @@ class IndexedReferencesExtractor : public ObjectVisitorWithCageBases {
         generator_(generator),
         parent_obj_(parent_obj),
         parent_start_(parent_obj_->RawMaybeWeakField(0)),
-        parent_end_(
-            parent_obj_->RawMaybeWeakField(parent_obj_->Size(cage_base()))),
+        parent_end_(parent_obj_->RawMaybeWeakField(parent_obj_->Size())),
         parent_(parent),
         next_index_(0) {}
   void VisitPointers(Tagged<HeapObject> host, ObjectSlot start,
@@ -1371,7 +1364,7 @@ class IndexedReferencesExtractor : public ObjectVisitorWithCageBases {
 
   void VisitEmbeddedPointer(Tagged<InstructionStream> host,
                             RelocInfo* rinfo) override {
-    Tagged<HeapObject> object = rinfo->target_object(cage_base());
+    Tagged<HeapObject> object = rinfo->target_object();
     Tagged<Code> code = UncheckedCast<Code>(host->raw_code(kAcquireLoad));
     if (code->IsWeakObject(object)) {
       generator_->SetWeakReference(parent_, next_index_++, object, {});
@@ -1738,7 +1731,7 @@ void V8HeapExplorer::ExtractStringReferences(HeapEntry* entry,
   } else if (IsExternalString(string)) {
     Tagged<ExternalString> es = Cast<ExternalString>(string);
     if (const v8::String::ExternalStringResourceBase* resource =
-            GetExternalStringResource(es, isolate())) {
+            GetExternalStringResource(es)) {
       ExternalStringRecorder recorder(entry, this, generator_, names_);
       resource->EstimateSharedMemoryUsage(&recorder);
     }
@@ -2333,7 +2326,7 @@ void V8HeapExplorer::ExtractFeedbackVectorReferences(
     Tagged<MaybeObject> maybe_entry = *(feedback_vector->slots_start() + i);
     Tagged<HeapObject> entry_obj;
     if (maybe_entry.GetHeapObjectIfStrong(&entry_obj) &&
-        (entry_obj->map(isolate())->instance_type() == WEAK_FIXED_ARRAY_TYPE ||
+        (entry_obj->map()->instance_type() == WEAK_FIXED_ARRAY_TYPE ||
          IsFixedArrayExact(entry_obj))) {
       TagObject(entry_obj, "(feedback)", HeapEntry::kCode);
     }
@@ -2395,8 +2388,7 @@ void V8HeapExplorer::ExtractPropertyReferences(Tagged<JSObject> js_obj,
                                                HeapEntry* entry) {
   Isolate* isolate = Isolate::Current();
   if (js_obj->HasFastProperties()) {
-    Tagged<DescriptorArray> descs =
-        js_obj->map()->instance_descriptors(isolate);
+    Tagged<DescriptorArray> descs = js_obj->map()->instance_descriptors();
     for (InternalIndex i : js_obj->map()->IterateOwnDescriptors()) {
       PropertyDetails details = descs->GetDetails(i);
       switch (details.location()) {
@@ -2604,13 +2596,12 @@ void V8HeapExplorer::ExtractWasmArrayReferences(Tagged<WasmArray> obj,
 
 void V8HeapExplorer::ExtractWasmTrustedInstanceDataReferences(
     Tagged<WasmTrustedInstanceData> trusted_data, HeapEntry* entry) {
-  PtrComprCageBase cage_base(heap_->isolate());
   for (size_t i = 0; i < WasmTrustedInstanceData::kTaggedFieldOffsets.size();
        i++) {
     const uint16_t offset = WasmTrustedInstanceData::kTaggedFieldOffsets[i];
-    SetInternalReference(
-        entry, WasmTrustedInstanceData::kTaggedFieldNames[i],
-        TaggedField<Object>::load(cage_base, trusted_data, offset), offset);
+    SetInternalReference(entry, WasmTrustedInstanceData::kTaggedFieldNames[i],
+                         TaggedField<Object>::load(trusted_data, offset),
+                         offset);
   }
   for (size_t i = 0; i < WasmTrustedInstanceData::kProtectedFieldNames.size();
        i++) {
@@ -2779,14 +2770,13 @@ bool V8HeapExplorer::IterateAndExtractReferences(
   bool interrupted = false;
 
   CombinedHeapObjectIterator iterator(heap_);
-  PtrComprCageBase cage_base(heap_->isolate());
   // Heap iteration need not be finished but progress reporting may depend on
   // it being finished.
   for (Tagged<HeapObject> obj = iterator.Next(); !obj.is_null();
        obj = iterator.Next(), progress_->ProgressStep()) {
     if (interrupted) continue;
 
-    max_pointers_ = obj->Size(cage_base) / kTaggedSize;
+    max_pointers_ = obj->Size() / kTaggedSize;
     if (max_pointers_ > visited_fields_.size()) {
       // Reallocate to right size.
       visited_fields_.resize(max_pointers_, false);
@@ -2806,8 +2796,7 @@ bool V8HeapExplorer::IterateAndExtractReferences(
 
     HeapEntry* entry = GetEntry(obj);
     ExtractReferences(entry, obj);
-    SetInternalReference(entry, "map", obj->map(cage_base),
-                         HeapObject::kMapOffset);
+    SetInternalReference(entry, "map", obj->map(), HeapObject::kMapOffset);
     // Extract unvisited fields as hidden references and restore tags
     // of visited fields.
     IndexedReferencesExtractor refs_extractor(this, obj, entry);
@@ -2840,7 +2829,7 @@ bool V8HeapExplorer::IsEssentialObject(Tagged<Object> object) {
   }
   Isolate* isolate = heap_->isolate();
   ReadOnlyRoots roots(isolate);
-  return !IsAnyHole(object) && !IsOddball(object, isolate) &&
+  return !IsAnyHole(object) && !IsOddball(object) &&
          object != roots.empty_byte_array() &&
          object != roots.empty_fixed_array() &&
          object != roots.empty_weak_fixed_array() &&
@@ -3108,7 +3097,7 @@ void V8HeapExplorer::RecursivelyTagConstantPool(Tagged<Object> obj,
                                                 HeapEntry::Type type,
                                                 int recursion_limit) {
   --recursion_limit;
-  if (IsFixedArrayExact(obj, isolate())) {
+  if (IsFixedArrayExact(obj)) {
     Tagged<FixedArray> arr = Cast<FixedArray>(obj);
     TagObject(arr, tag, type);
     if (recursion_limit <= 0) return;
@@ -3124,8 +3113,7 @@ void V8HeapExplorer::RecursivelyTagConstantPool(Tagged<Object> obj,
     for (uint32_t i = 0; i < arr_len; ++i) {
       RecursivelyTagConstantPool(arr->get(i), tag, type, recursion_limit);
     }
-  } else if (IsNameDictionary(obj, isolate()) ||
-             IsNumberDictionary(obj, isolate())) {
+  } else if (IsNameDictionary(obj) || IsNumberDictionary(obj)) {
     TagObject(obj, tag, type);
   }
 }
@@ -3154,7 +3142,7 @@ class NativeContextEnumerator : public RootVisitor {
     for (TSlot p = start; p < end; ++p) {
       DCHECK(!MapWord::IsPacked(p.Relaxed_Load(isolate_).ptr()));
       Tagged<Object> o = p.load(isolate_);
-      if (!IsNativeContext(o, isolate_)) continue;
+      if (!IsNativeContext(o)) continue;
       handler_(handle(Cast<NativeContext>(o), isolate_));
     }
   }

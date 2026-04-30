@@ -122,7 +122,7 @@ class YoungGenerationMarkingVerifier : public MarkingVerifierBase {
   }
   void VisitEmbeddedPointer(Tagged<InstructionStream> host,
                             RelocInfo* rinfo) override {
-    VerifyHeapObjectImpl(rinfo->target_object(cage_base()));
+    VerifyHeapObjectImpl(rinfo->target_object());
   }
   void VerifyRootPointers(FullObjectSlot start, FullObjectSlot end) override {
     VerifyPointersImpl(start, end);
@@ -783,7 +783,7 @@ void MinorMarkSweepCollector::DrainMarkingWorklist() {
 
     Tagged<HeapObject> heap_object;
     while (marking_worklists_local->Pop(&heap_object)) {
-      DCHECK(!IsFreeSpaceOrFiller(heap_object, cage_base));
+      DCHECK(!IsFreeSpaceOrFiller(heap_object));
       DCHECK(IsHeapObject(heap_object));
       DCHECK(heap_->Contains(heap_object));
       DCHECK(!marking_state_->IsUnmarked(heap_object));

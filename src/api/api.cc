@@ -3522,10 +3522,8 @@ bool ValueSerializer::Delegate::HasCustomHostObject(Isolate* v8_isolate) {
 
 Maybe<bool> ValueSerializer::Delegate::IsHostObject(Isolate* v8_isolate,
                                                     Local<Object> object) {
-  i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
   auto js_object = i::Cast<i::JSObject>(Utils::OpenDirectHandle(*object));
-  return Just<bool>(
-      i::JSObject::GetEmbedderFieldCount(js_object->map(i_isolate)));
+  return Just<bool>(i::JSObject::GetEmbedderFieldCount(js_object->map()));
 }
 
 Maybe<uint32_t> ValueSerializer::Delegate::GetSharedArrayBufferId(
@@ -4979,8 +4977,7 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
       accumulator.GetKeys(static_cast<i::GetKeysConversion>(key_conversion));
   DCHECK(self->map()->EnumLength() == i::kInvalidEnumCacheSentinel ||
          self->map()->EnumLength() == 0 ||
-         self->map()->instance_descriptors(i_isolate)->enum_cache()->keys() !=
-             *value);
+         self->map()->instance_descriptors()->enum_cache()->keys() != *value);
   auto result = i_isolate->factory()->NewJSArrayWithElements(value);
   return api_scope.Escape(Utils::ToLocal(result));
 }
@@ -8298,7 +8295,7 @@ FastIterateResult FastIterateArray(DirectHandle<JSArray> array,
       sorted.reserve(dict->NumberOfElements());
       ReadOnlyRoots roots(isolate);
       for (InternalIndex i : dict->IterateEntries()) {
-        Tagged<Object> key = dict->KeyAt(isolate, i);
+        Tagged<Object> key = dict->KeyAt(i);
         if (!dict->IsKey(roots, key)) continue;
         uint32_t index =
             static_cast<uint32_t>(Object::NumberValue(Cast<Number>(key)));

@@ -133,37 +133,17 @@
 #define DECL_RELAXED_UINT8_ACCESSORS(name) \
   DECL_RELAXED_PRIMITIVE_ACCESSORS(name, uint8_t)
 
-#define DECL_GETTER(name, ...)     \
-  inline __VA_ARGS__ name() const; \
-  inline __VA_ARGS__ name(PtrComprCageBase cage_base) const;
+#define DECL_GETTER(name, ...) inline __VA_ARGS__ name() const;
 
-#define DEF_GETTER(holder, name, ...)                        \
-  __VA_ARGS__ holder::name() const {                         \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this); \
-    return holder::name(cage_base);                          \
-  }                                                          \
-  __VA_ARGS__ holder::name(PtrComprCageBase cage_base) const
+#define DEF_GETTER(holder, name, ...) __VA_ARGS__ holder::name() const
 
-#define DEF_RELAXED_GETTER(holder, name, ...)                \
-  __VA_ARGS__ holder::name(RelaxedLoadTag tag) const {       \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this); \
-    return holder::name(cage_base, tag);                     \
-  }                                                          \
-  __VA_ARGS__ holder::name(PtrComprCageBase cage_base, RelaxedLoadTag) const
+#define DEF_RELAXED_GETTER(holder, name, ...) \
+  __VA_ARGS__ holder::name(RelaxedLoadTag tag) const
 
-#define DEF_ACQUIRE_GETTER(holder, name, ...)                \
-  __VA_ARGS__ holder::name(AcquireLoadTag tag) const {       \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this); \
-    return holder::name(cage_base, tag);                     \
-  }                                                          \
-  __VA_ARGS__ holder::name(PtrComprCageBase cage_base, AcquireLoadTag) const
+#define DEF_ACQUIRE_GETTER(holder, name, ...) \
+  __VA_ARGS__ holder::name(AcquireLoadTag tag) const
 
-#define DEF_HEAP_OBJECT_PREDICATE(holder, name)            \
-  bool name(Tagged<holder> obj) {                          \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(obj); \
-    return name(obj, cage_base);                           \
-  }                                                        \
-  bool name(Tagged<holder> obj, PtrComprCageBase cage_base)
+#define DEF_HEAP_OBJECT_PREDICATE(holder, name) bool name(Tagged<holder> obj)
 
 #define TQ_FIELD_TYPE(name, tq_type) \
   static constexpr const char* k##name##TqFieldType = tq_type;
@@ -181,8 +161,7 @@
   DECL_SETTER(name, __VA_ARGS__)
 
 #define DECL_ACCESSORS_LOAD_TAG(name, type, tag_type) \
-  inline UNPAREN(type) name(tag_type tag) const;      \
-  inline UNPAREN(type) name(PtrComprCageBase cage_base, tag_type) const;
+  inline UNPAREN(type) name(tag_type tag) const;
 
 #define DECL_ACCESSORS_STORE_TAG(name, type, tag_type)  \
   inline void set_##name(UNPAREN(type) value, tag_type, \
@@ -260,7 +239,7 @@
                            set_condition)                               \
   DEF_GETTER(holder, name, UNPAREN(type)) {                             \
     UNPAREN(type)                                                       \
-    value = TaggedField<UNPAREN(type), offset>::load(cage_base, *this); \
+    value = TaggedField<UNPAREN(type), offset>::load(*this);            \
     DCHECK(get_condition);                                              \
     return value;                                                       \
   }                                                                     \
@@ -276,26 +255,9 @@
 #define ACCESSORS(holder, name, type, offset) \
   ACCESSORS_CHECKED(holder, name, type, offset, true)
 
-// TODO(jgruber): Eventually, all accessors should be ported to the NOCAGE
-// variant (which doesn't define a PtrComprCageBase overload). Once that's
-// done, remove the cage-ful macros (e.g. ACCESSORS) and rename the cage-less
-// macros (e.g. ACCESSORS_NOCAGE).
-#define ACCESSORS_NOCAGE(holder, name, type, offset)           \
-  type holder::name() const {                                  \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);   \
-    return TaggedField<type, offset>::load(cage_base, *this);  \
-  }                                                            \
-  void holder::set_##name(type value, WriteBarrierMode mode) { \
-    TaggedField<type, offset>::store(*this, value);            \
-    CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);     \
-  }
-
 #define RENAME_TORQUE_ACCESSORS(holder, name, torque_name, ...)              \
   inline __VA_ARGS__ holder::name() const {                                  \
     return TorqueGeneratedClass::torque_name();                              \
-  }                                                                          \
-  inline __VA_ARGS__ holder::name(PtrComprCageBase cage_base) const {        \
-    return TorqueGeneratedClass::torque_name(cage_base);                     \
   }                                                                          \
   inline void holder::set_##name(__VA_ARGS__ value, WriteBarrierMode mode) { \
     TorqueGeneratedClass::set_##torque_name(value, mode);                    \
@@ -310,11 +272,7 @@
 #define ACCESSORS_RELAXED_CHECKED2(holder, name, type, offset, get_condition, \
                                    set_condition)                             \
   type holder::name() const {                                                 \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                  \
-    return holder::name(cage_base);                                           \
-  }                                                                           \
-  type holder::name(PtrComprCageBase cage_base) const {                       \
-    type value = TaggedField<type, offset>::Relaxed_Load(cage_base, *this);   \
+    type value = TaggedField<type, offset>::Relaxed_Load(*this);              \
     DCHECK(get_condition);                                                    \
     return value;                                                             \
   }                                                                           \
@@ -335,8 +293,7 @@
                                    set_condition)                             \
   DEF_RELAXED_GETTER(holder, name, UNPAREN(type)) {                           \
     UNPAREN(type)                                                             \
-    value =                                                                   \
-        TaggedField<UNPAREN(type), offset>::Relaxed_Load(cage_base, *this);   \
+    value = TaggedField<UNPAREN(type), offset>::Relaxed_Load(*this);          \
     DCHECK(get_condition);                                                    \
     return value;                                                             \
   }                                                                           \
@@ -353,14 +310,13 @@
 #define RELAXED_ACCESSORS(holder, name, type, offset) \
   RELAXED_ACCESSORS_CHECKED(holder, name, type, offset, true)
 
-#define RELEASE_ACQUIRE_GETTER_CHECKED(holder, name, type, offset,          \
-                                       get_condition)                       \
-  DEF_ACQUIRE_GETTER(holder, name, UNPAREN(type)) {                         \
-    UNPAREN(type)                                                           \
-    value =                                                                 \
-        TaggedField<UNPAREN(type), offset>::Acquire_Load(cage_base, *this); \
-    DCHECK(get_condition);                                                  \
-    return value;                                                           \
+#define RELEASE_ACQUIRE_GETTER_CHECKED(holder, name, type, offset,   \
+                                       get_condition)                \
+  DEF_ACQUIRE_GETTER(holder, name, UNPAREN(type)) {                  \
+    UNPAREN(type)                                                    \
+    value = TaggedField<UNPAREN(type), offset>::Acquire_Load(*this); \
+    DCHECK(get_condition);                                           \
+    return value;                                                    \
   }
 
 #define RELEASE_ACQUIRE_SETTER_CHECKED(holder, name, type, offset,   \

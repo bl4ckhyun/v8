@@ -93,8 +93,6 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObject {
   // If source positions have not been collected or an exception has been thrown
   // this will return the empty_trusted_byte_array.
   inline Tagged<TrustedByteArray> SourcePositionTable() const;
-  inline Tagged<TrustedByteArray> SourcePositionTable(
-      PtrComprCageBase cage_base) const;
 
   // Raw accessors to access these fields during code cache deserialization.
   inline Tagged<Union<Smi, TrustedFixedArray>> raw_constant_pool() const;

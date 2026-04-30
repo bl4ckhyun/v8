@@ -690,8 +690,7 @@ void JSFunction::CreateAndAttachFeedbackVector(
       function->closure_feedback_cell_array(), isolate);
   DirectHandle<FeedbackVector> feedback_vector = FeedbackVector::New(
       isolate, shared, closure_feedback_cell_array,
-      direct_handle(function->raw_feedback_cell(isolate), isolate),
-      compiled_scope);
+      direct_handle(function->raw_feedback_cell(), isolate), compiled_scope);
   USE(feedback_vector);
   // EnsureClosureFeedbackCellArray should handle the special case where we need
   // to allocate a new feedback cell. Please look at comment in that function
@@ -1355,7 +1354,7 @@ bool UseFastFunctionNameLookup(Isolate* isolate, Tagged<Map> map) {
   DCHECK(!map->is_dictionary_map());
   Tagged<HeapObject> value;
   ReadOnlyRoots roots(isolate);
-  auto descriptors = map->instance_descriptors(isolate);
+  auto descriptors = map->instance_descriptors();
   InternalIndex kNameIndex{JSFunction::kNameDescriptorIndex};
   if (descriptors->GetKey(kNameIndex) != roots.name_string() ||
       !descriptors->GetValue(kNameIndex)

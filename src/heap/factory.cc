@@ -2754,7 +2754,7 @@ Tagged<Map> Factory::InitializeMap(Tagged<Map> map, InstanceType type,
                           SKIP_WRITE_BARRIER);
   map->set_raw_transitions(Smi::zero(), SKIP_WRITE_BARRIER);
   map->SetInObjectUnusedPropertyFields(inobject_properties);
-  map->SetInstanceDescriptors(isolate(), roots.empty_descriptor_array(), 0,
+  map->SetInstanceDescriptors(roots.empty_descriptor_array(), 0,
                               SKIP_WRITE_BARRIER);
   // Must be called only after |instance_type| and |instance_size| are set.
   map->set_visitor_id(Map::GetVisitorId(map));
@@ -3484,8 +3484,7 @@ Handle<JSGlobalObject> Factory::NewJSGlobalObject(
 
   // The global object might be created from an object template with accessors.
   // Fill these accessors into the dictionary.
-  DirectHandle<DescriptorArray> descs(map->instance_descriptors(isolate()),
-                                      isolate());
+  DirectHandle<DescriptorArray> descs(map->instance_descriptors(), isolate());
   for (InternalIndex i : map->IterateOwnDescriptors()) {
     PropertyDetails details = descs->GetDetails(i);
     // Only accessors are expected.
@@ -3575,7 +3574,7 @@ void Factory::InitializeJSObjectBody(Tagged<JSObject> obj, Tagged<Map> map,
   bool in_progress = map->IsInobjectSlackTrackingInProgress();
   obj->InitializeBody(map, start_offset, in_progress, new_js_object_type);
   if (in_progress) {
-    map->FindRootMap(isolate())->InobjectSlackTrackingStep(isolate());
+    map->FindRootMap()->InobjectSlackTrackingStep(isolate());
   }
 }
 
@@ -4899,8 +4898,7 @@ DirectHandle<Map> Factory::CreateSloppyFunctionMap(
     map->AppendDescriptor(isolate(), &d);
   }
   DCHECK_EQ(inobject_properties_count, field_index);
-  DCHECK_EQ(
-      0, map->instance_descriptors(isolate())->number_of_slack_descriptors());
+  DCHECK_EQ(0, map->instance_descriptors()->number_of_slack_descriptors());
   LOG(isolate(), MapDetails(*map));
   return map;
 }
@@ -4986,8 +4984,7 @@ DirectHandle<Map> Factory::CreateStrictFunctionMap(
     map->AppendDescriptor(isolate(), &d);
   }
   DCHECK_EQ(inobject_properties_count, field_index);
-  DCHECK_EQ(
-      0, map->instance_descriptors(isolate())->number_of_slack_descriptors());
+  DCHECK_EQ(0, map->instance_descriptors()->number_of_slack_descriptors());
   LOG(isolate(), MapDetails(*map));
   return map;
 }

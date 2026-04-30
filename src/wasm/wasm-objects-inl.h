@@ -298,11 +298,7 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
 // Tagged field accessors (replaces ACCESSORS).
 #define WTI_TAGGED_ACCESSORS(name, type, offset)                             \
   type WasmTrustedInstanceData::name() const {                               \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                 \
-    return name(cage_base);                                                  \
-  }                                                                          \
-  type WasmTrustedInstanceData::name(PtrComprCageBase cage_base) const {     \
-    return TaggedField<type, offset>::load(cage_base, *this);                \
+    return TaggedField<type, offset>::load(*this);                           \
   }                                                                          \
   void WasmTrustedInstanceData::set_##name(type value,                       \
                                            WriteBarrierMode mode) {          \
@@ -312,29 +308,20 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
   }
 
 // Optional tagged field accessors (replaces OPTIONAL_ACCESSORS).
-#define WTI_OPTIONAL_TAGGED_ACCESSORS(name, type, offset)                      \
-  bool WasmTrustedInstanceData::has_##name() const {                           \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                   \
-    return has_##name(cage_base);                                              \
-  }                                                                            \
-  bool WasmTrustedInstanceData::has_##name(PtrComprCageBase cage_base) const { \
-    Tagged<Object> value =                                                     \
-        TaggedField<Object, offset>::load(cage_base, *this);                   \
-    return !IsUndefined(value);                                                \
-  }                                                                            \
-  type WasmTrustedInstanceData::name() const {                                 \
-    PtrComprCageBase cage_base = GetPtrComprCageBase(*this);                   \
-    return name(cage_base);                                                    \
-  }                                                                            \
-  type WasmTrustedInstanceData::name(PtrComprCageBase cage_base) const {       \
-    DCHECK(has_##name(cage_base));                                             \
-    return TaggedField<type, offset>::load(cage_base, *this);                  \
-  }                                                                            \
-  void WasmTrustedInstanceData::set_##name(type value,                         \
-                                           WriteBarrierMode mode) {            \
-    TaggedField<type, offset>::store(*this, value);                            \
-    CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset,   \
-                              value, mode);                                    \
+#define WTI_OPTIONAL_TAGGED_ACCESSORS(name, type, offset)                    \
+  bool WasmTrustedInstanceData::has_##name() const {                         \
+    Tagged<Object> value = TaggedField<Object, offset>::load(*this);         \
+    return !IsUndefined(value);                                              \
+  }                                                                          \
+  type WasmTrustedInstanceData::name() const {                               \
+    DCHECK(has_##name());                                                    \
+    return TaggedField<type, offset>::load(*this);                           \
+  }                                                                          \
+  void WasmTrustedInstanceData::set_##name(type value,                       \
+                                           WriteBarrierMode mode) {          \
+    TaggedField<type, offset>::store(*this, value);                          \
+    CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset, \
+                              value, mode);                                  \
   }
 
 // Protected pointer accessors (replaces PROTECTED_POINTER_ACCESSORS).
@@ -1352,8 +1339,8 @@ void WasmStruct::SetTaggedFieldValue(int raw_offset, Tagged<Object> value,
 }
 
 Tagged<Map> WasmStruct::described_rtt() const {
-  Tagged<Map> value = TaggedField<Map, kHeaderSize>::load(
-      GetPtrComprCageBase(Tagged<WasmStruct>(this)), Tagged<WasmStruct>(this));
+  Tagged<Map> value =
+      TaggedField<Map, kHeaderSize>::load(Tagged<WasmStruct>(this));
   DCHECK(GcSafeType(map())->is_descriptor());
   return value;
 }
