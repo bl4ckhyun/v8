@@ -1036,8 +1036,14 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
         result.gp(), StoreType::kI64Store, trapping_load_pc, pinned);
   }
   if (v8_flags.disable_write_barriers) return;
-  // Emit the write barrier.
+
+  // We only need a write barrier if the CAS was successful.
+  // For RISC-V, we need to explicitly compare result with expected to check
+  // if the CAS succeeded.
   Label exit;
+  Branch(&exit, ne, result.gp(), Operand(expected.gp()));
+
+  // Emit the write barrier.
   JumpIfSmi(new_value.gp(), &exit);
   CheckPageFlag(dst_addr, MemoryChunk::kPointersFromHereAreInterestingMask,
                 kZero, &exit);
