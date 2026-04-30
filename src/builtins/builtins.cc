@@ -886,6 +886,7 @@ Builtins::JSBuiltinStateFlags Builtins::GetJSBuiltinState(Builtin builtin) {
 
     // --js-joint-iteration:
     case Builtin::kIteratorZip:
+    case Builtin::kIteratorZipKeyed:
       RETURN_FLAG_DEPENDENT_BUILTIN_STATE(v8_flags.js_joint_iteration);
 
     // --js-upsert

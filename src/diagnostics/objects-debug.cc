@@ -2344,40 +2344,56 @@ void JSSharedArray::JSSharedArrayVerify(Isolate* isolate) {
   }
 }
 
-void JSIteratorMapHelper::JSIteratorMapHelperVerify(Isolate* isolate) {
+// TODO(42203505): Review and improve the verifiers for the hierarchy of
+// iterator helpers.
+
+void JSIteratorHelper::JSIteratorHelperVerify(Isolate* isolate) {
   JSObjectVerify(isolate);
+}
+
+void JSIteratorHelperSimple::JSIteratorHelperSimpleVerify(Isolate* isolate) {
+  JSIteratorHelperVerify(isolate);
+}
+
+void JSIteratorMapHelper::JSIteratorMapHelperVerify(Isolate* isolate) {
+  JSIteratorHelperSimpleVerify(isolate);
   CHECK(IsCallable(mapper()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorFilterHelper::JSIteratorFilterHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperSimpleVerify(isolate);
   CHECK(IsCallable(predicate()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorTakeHelper::JSIteratorTakeHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperSimpleVerify(isolate);
   CHECK_GE(Object::NumberValue(remaining()), 0);
 }
 
 void JSIteratorDropHelper::JSIteratorDropHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperSimpleVerify(isolate);
   CHECK_GE(Object::NumberValue(remaining()), 0);
 }
 
 void JSIteratorFlatMapHelper::JSIteratorFlatMapHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperSimpleVerify(isolate);
   CHECK(IsCallable(mapper()));
   CHECK_GE(Object::NumberValue(counter()), 0);
 }
 
 void JSIteratorConcatHelper::JSIteratorConcatHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperSimpleVerify(isolate);
 }
 
 void JSIteratorZipHelper::JSIteratorZipHelperVerify(Isolate* isolate) {
-  JSObjectVerify(isolate);
+  JSIteratorHelperVerify(isolate);
+}
+
+void JSIteratorZipKeyedHelper::JSIteratorZipKeyedHelperVerify(
+    Isolate* isolate) {
+  JSIteratorZipHelperVerify(isolate);
 }
 
 void WeakCell::WeakCellVerify(Isolate* isolate) {

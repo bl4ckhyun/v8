@@ -2533,12 +2533,23 @@ void JSIteratorConcatHelper::JSIteratorConcatHelperPrint(std::ostream& os) {
   JSObjectPrintBody(os, this);
 }
 
-void JSIteratorZipHelper::JSIteratorZipHelperPrint(std::ostream& os) {
-  JSIteratorHelperPrintHeader(os, "JSIteratorZipHelper");
+void JSIteratorZipHelper::JSIteratorZipHelperPrintHeader(
+    std::ostream& os, const char* helper_name) {
+  JSIteratorHelperPrintHeader(os, helper_name);
   os << "\n - underlying_iterators: " << Brief(underlying_iterators());
   os << "\n - mode: " << mode();
   os << "\n - active_count: " << active_count();
   os << "\n - padding: " << Brief(padding());
+}
+
+void JSIteratorZipHelper::JSIteratorZipHelperPrint(std::ostream& os) {
+  JSIteratorZipHelperPrintHeader(os, "JSIteratorZipHelper");
+  JSObjectPrintBody(os, this);
+}
+
+void JSIteratorZipKeyedHelper::JSIteratorZipKeyedHelperPrint(std::ostream& os) {
+  JSIteratorZipHelperPrintHeader(os, "JSIteratorZipKeyedHelper");
+  os << "\n - keys: " << Brief(keys());
   JSObjectPrintBody(os, this);
 }
 

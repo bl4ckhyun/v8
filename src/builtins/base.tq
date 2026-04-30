@@ -2070,6 +2070,9 @@ extern transitioning runtime CreateDataProperty(
 extern transitioning runtime SetOwnPropertyIgnoreAttributes(
     implicit context: Context)(JSObject, String, JSAny, Smi): void;
 
+extern transitioning runtime GetOwnPropertyKeys(
+    implicit context: Context)(JSReceiver, Smi): JSArray;
+
 namespace runtime {
 extern runtime GetDerivedMap(Context, JSFunction, JSReceiver, JSAny): Map;
 }
