@@ -3067,7 +3067,7 @@ class LiftoffCompiler {
 
     __ PushRegister(kI64, dest_low);
     __ PushRegister(kI64, dest_high);
-#elif V8_TARGET_ARCH_IA32
+#elif V8_TARGET_ARCH_IA32 || V8_TARGET_ARCH_ARM
     __ SpillAllRegisters();
 
     // Compute the lowest address of the four 64bit inputs.
