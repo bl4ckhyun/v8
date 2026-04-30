@@ -172,31 +172,14 @@ class WasmLoweringReducer : public Next {
 
       BIND(convert_to_heap_number_label);
       V<Object> heap_number;
-      const bool is_wasm_in_js_inlining = !__ data() -> is_wasm();
-      if (is_wasm_in_js_inlining) {
-        // We are in the JS pipeline (i.e. Wasm-in-JS inlining). Wasm nodes
-        // are compiled within the JS compiler, so there is no Wasm jump table.
-        // We use regular builtin calls instead.
-        Isolate* isolate = __ data() -> isolate();
-        DCHECK_NOT_NULL(isolate);
-        heap_number =
-            is_shared == SharedFlag::kYes
-                ? __ template CallBuiltin<deprecated::BuiltinCallDescriptor::
-                                              WasmInt32ToSharedHeapNumber>(
-                      isolate, {int_value})
-                : __ template CallBuiltin<
-                      deprecated::BuiltinCallDescriptor::WasmInt32ToHeapNumber>(
-                      isolate, {int_value});
-      } else {
-        heap_number =
-            is_shared == SharedFlag::kYes
-                ? __ template WasmCallBuiltinThroughJumptable<
-                      deprecated::BuiltinCallDescriptor::
-                          WasmInt32ToSharedHeapNumber>({int_value})
-                : __ template WasmCallBuiltinThroughJumptable<
-                      deprecated::BuiltinCallDescriptor::WasmInt32ToHeapNumber>(
-                      {int_value});
-      }
+      heap_number =
+          is_shared == SharedFlag::kYes
+              ? __ template CallWasmBuiltin<deprecated::BuiltinCallDescriptor::
+                                                WasmInt32ToSharedHeapNumber>(
+                    {int_value})
+              : __ template CallWasmBuiltin<
+                    deprecated::BuiltinCallDescriptor::WasmInt32ToHeapNumber>(
+                    {int_value});
       GOTO(end_label, heap_number);
     }
 
@@ -536,23 +519,10 @@ class WasmLoweringReducer : public Next {
           module_->function_is_shared(function_index) == SharedFlag::kYes;
 
       V<WasmFuncRef> from_builtin;
-      const bool is_wasm_in_js_inlining = !__ data() -> is_wasm();
-      if (is_wasm_in_js_inlining) {
-        // We are in the JS pipeline (i.e. Wasm-in-JS inlining). Wasm nodes
-        // are compiled within the JS compiler, so there is no Wasm jump table.
-        // We use regular builtin calls instead.
-        Isolate* isolate = __ data() -> isolate();
-        DCHECK_NOT_NULL(isolate);
-        from_builtin = __ template CallBuiltin<
-            deprecated::BuiltinCallDescriptor::WasmRefFunc>(
-            isolate, {__ Word32Constant(function_index),
-                      __ Word32Constant(extract_shared_data ? 1 : 0)});
-      } else {
-        from_builtin = __ template WasmCallBuiltinThroughJumptable<
-            deprecated::BuiltinCallDescriptor::WasmRefFunc>(
-            {__ Word32Constant(function_index),
-             __ Word32Constant(extract_shared_data ? 1 : 0)});
-      }
+      from_builtin = __ template CallWasmBuiltin<
+          deprecated::BuiltinCallDescriptor::WasmRefFunc>(
+          {__ Word32Constant(function_index),
+           __ Word32Constant(extract_shared_data ? 1 : 0)});
 
       GOTO(done, from_builtin);
     } ELSE {

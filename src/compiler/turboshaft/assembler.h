@@ -3807,6 +3807,29 @@ class AssemblerOpInterface : public Next {
              Descriptor::kEffects));
   }
 
+  // Abstracts over calling a builtin from Wasm code. In the Wasm pipeline, it
+  // calls through the Wasm jump table (since builtins may be too far away for a
+  // relative branch on arm64, for example). In the JS pipeline (when inlining
+  // Wasm-into-JS), there is no Wasm jump table, so it dispatches to
+  // CallBuiltin, which emits a direct call to the builtin's code object loaded
+  // as a heap constant.
+  template <typename Descriptor>
+  detail::index_type_for_t<typename Descriptor::results_t> CallWasmBuiltin(
+      const typename Descriptor::arguments_t& args) {
+    const bool is_wasm_in_js_inlining = !Asm().data()->is_wasm();
+    if (is_wasm_in_js_inlining) {
+      // We are in the JS pipeline. Wasm nodes are compiled within the JS
+      // compiler, so there is no Wasm jump table. We use regular builtin
+      // calls instead.
+      Isolate* isolate = Asm().data()->isolate();
+      DCHECK_NOT_NULL(isolate);
+      return CallBuiltin<Descriptor>(isolate, args);
+    } else {
+      // Wasm pipeline: go through the jump table.
+      return WasmCallBuiltinThroughJumptable<Descriptor>(args);
+    }
+  }
+
 #endif  // V8_ENABLE_WEBASSEMBLY
 
   template <typename Desc>
