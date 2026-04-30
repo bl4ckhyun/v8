@@ -401,8 +401,10 @@ bool WasmShuffleAnalyzer::ProcessShuffleOfShuffle(
                                         shuffle_in_end % kSimd128Size + 1);
         // shuffle_out.shuffle will need to be updated to read the modified
         // shuffle_in.
+        ptrdiff_t window_size = window_end - window_begin;
+        DCHECK_LT(window_size, kSimd128Size);
         shuffles_to_read_shifted_.emplace_back(&shuffle_out, shuffle_out_begin,
-                                               shuffle_out_begin + span,
+                                               shuffle_out_begin + window_size,
                                                shuffle_in_begin);
       }
       // shuffle_in will be reduced.
