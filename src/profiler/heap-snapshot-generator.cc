@@ -242,10 +242,14 @@ HeapSnapshot* HeapGraphEdge::snapshot() const { return to_entry_->snapshot(); }
 HeapEntry::HeapEntry(HeapSnapshot* snapshot, int index, Type type,
                      const char* name, SnapshotObjectId id, size_t self_size,
                      unsigned trace_node_id)
-    : type_(static_cast<unsigned>(type)),
-      index_(index),
+    : type_and_index_(TypeField::encode(static_cast<unsigned>(type)) |
+                       IndexField::encode(index)),
       children_count_(0),
+#ifdef V8_TARGET_ARCH_64_BIT
+      self_size_and_detachedness_(SelfSizeField::encode(self_size)),
+#else
       self_size_(self_size),
+#endif
       snapshot_(snapshot),
       name_(name),
       id_(id),
@@ -271,8 +275,8 @@ const HeapGraphEdge* HeapEntry::child(int i) const {
 }
 
 std::vector<HeapGraphEdge*>::iterator HeapEntry::children_begin() const {
-  return index_ == 0 ? snapshot_->children().begin()
-                     : snapshot_->entries()[index_ - 1].children_end();
+  return index() == 0 ? snapshot_->children().begin()
+                      : snapshot_->entries()[index() - 1].children_end();
 }
 
 std::vector<HeapGraphEdge*>::iterator HeapEntry::children_end() const {
@@ -478,11 +482,7 @@ HeapSnapshot::HeapSnapshot(HeapProfiler* profiler,
   static_assert(kSystemPointerSize != 4 || sizeof(HeapGraphEdge) == 12);
   static_assert(kSystemPointerSize != 8 || sizeof(HeapGraphEdge) == 24);
   static_assert(kSystemPointerSize != 4 || sizeof(HeapEntry) == 32);
-#if V8_CC_MSVC
-  static_assert(kSystemPointerSize != 8 || sizeof(HeapEntry) == 48);
-#else   // !V8_CC_MSVC
   static_assert(kSystemPointerSize != 8 || sizeof(HeapEntry) == 40);
-#endif  // !V8_CC_MSVC
   memset(&gc_subroot_entries_, 0, sizeof(gc_subroot_entries_));
 }
 
