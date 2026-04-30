@@ -10,6 +10,10 @@
 #include "src/heap/code-range.h"
 #include "src/heap/memory-chunk-inl.h"
 
+#if !CONTIGUOUS_COMPRESSED_READ_ONLY_SPACE_BOOL
+#include "src/heap/read-only-spaces.h"
+#endif
+
 namespace v8 {
 namespace internal {
 
