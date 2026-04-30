@@ -1350,6 +1350,16 @@ PostponeInterruptsScope::PostponeInterruptsScope(v8::Isolate* isolate)
 
 PostponeInterruptsScope::~PostponeInterruptsScope() = default;
 
+DisallowGarbageCollectionScope::DisallowGarbageCollectionScope() {
+  new (internal_) i::DisallowGarbageCollectionInRelease();
+}
+
+DisallowGarbageCollectionScope::~DisallowGarbageCollectionScope() {
+  using i::DisallowGarbageCollectionInRelease;
+  reinterpret_cast<DisallowGarbageCollectionInRelease*>(internal_)
+      ->~DisallowGarbageCollectionInRelease();
+}
+
 DisableBreakScope::DisableBreakScope(v8::Isolate* isolate)
     : scope_(std::make_unique<i::DisableBreak>(
           reinterpret_cast<i::Isolate*>(isolate)->debug())) {}
