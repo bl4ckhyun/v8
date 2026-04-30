@@ -14,7 +14,7 @@
 
 #include "src/execution/simulator-base.h"
 #include "src/objects/js-function.h"
-#include "src/objects/objects-inl.h"
+#include "src/objects/object-predicates-inl.h"
 
 namespace v8::internal::compiler::turboshaft {
 
