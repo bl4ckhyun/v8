@@ -39,6 +39,7 @@
 #include "src/base/fpu.h"
 #include "src/base/hashing.h"
 #include "src/base/logging.h"
+#include "src/base/macros.h"
 #include "src/base/platform/memory.h"
 #include "src/base/platform/platform.h"
 #include "src/base/platform/time.h"
@@ -7484,7 +7485,10 @@ int Shell::Main(int argc, char* argv[]) {
         options.apply_priority ? v8::platform::PriorityMode::kApply
                                : v8::platform::PriorityMode::kDontApply);
   }
+  // The platform is owned by wrapper platform despite the `std::move` below.
+  START_IGNORE_LIFETIME_SAFETY_WARNINGS()
   g_default_platform = g_platform.get();
+  END_IGNORE_LIFETIME_SAFETY_WARNINGS()
   if (i::v8_flags.predictable) {
     g_platform = MakePredictablePlatform(std::move(g_platform));
   }
@@ -7811,6 +7815,7 @@ int Shell::Main(int argc, char* argv[]) {
   if (options.trace_enabled) {
     tracing_controller->StopTracing();
   }
+  g_default_platform = nullptr;
   g_platform.reset();
 
 #ifdef V8_TARGET_OS_WIN
