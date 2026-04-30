@@ -126,3 +126,13 @@ To make this clear, V8 will automatically remove any calls to unsupported functi
 
 V8 uses snapshots that are deserialized at startup.
 These snapshots are fully trusted and outside of the attacker model, see the Chrome Security FAQ regarding [physically local attacks](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/faq.md#why-arent-physically_local-attacks-in-chromes-threat-model).
+
+### Bugs reproducing only with `--enable-inspector`
+
+Fields: **component=Platform>DevTools** (componentid:1457055), **Type=Bug**, **Security_Impact-None**
+
+In addition, assignee should be one of the [OWNERS](../../src/inspector/OWNERS).
+
+Rationale: `--enable-inspector` does not accurately represent the production behavior of DevTools.
+`inspector-test` should be used for valid reproductions.
+For more details see [security documentation](../../src/inspector/SECURITY.md).
