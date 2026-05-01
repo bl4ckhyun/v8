@@ -4916,8 +4916,7 @@ void Builtins::Generate_CallApiAccessorImpl(MacroAssembler* masm,
 }
 
 void Builtins::Generate_DirectCEntry(MacroAssembler* masm) {
-  UseScratchRegisterScope temps(masm);
-  Register temp2 = temps.Acquire();
+  // Callers (e.g. RegExpMacroAssemblerPPC) pass the C function address in ip.
   // Place the return address on the stack, making the call
   // GC safe. The RegExp backend also relies on this.
   __ mflr(r0);
@@ -4927,11 +4926,11 @@ void Builtins::Generate_DirectCEntry(MacroAssembler* masm) {
   if (ABI_USES_FUNCTION_DESCRIPTORS) {
     // AIX/PPC64BE Linux use a function descriptor;
     __ LoadU64(ToRegister(ABI_TOC_REGISTER),
-               MemOperand(temp2, kSystemPointerSize));
-    __ LoadU64(temp2, MemOperand(temp2, 0));  // Instruction address
+               MemOperand(ip, kSystemPointerSize));
+    __ LoadU64(ip, MemOperand(ip, 0));  // Instruction address
   }
 
-  __ Call(temp2);  // Call the C++ function.
+  __ Call(ip);  // Call the C++ function.
   __ LoadU64(r0,
              MemOperand(sp, kStackFrameExtraParamSlot * kSystemPointerSize));
   __ mtlr(r0);
