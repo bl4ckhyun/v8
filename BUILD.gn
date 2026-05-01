@@ -1796,7 +1796,14 @@ config("toolchain") {
 
   if (is_clang) {
     cflags += [ "-Wunreachable-code" ]
-    if (v8_current_cpu != "ppc64" && v8_current_cpu != "s390x") {
+
+    # Lifetime safety warnings are still under active development upstream
+    # and become stricter fairly frequently. Enable these warnings only when
+    # not building as part of Chromium, so that the warnings becoming stricter
+    # don't block compiler updates in Chromium. We'll resolve these when
+    # rolling the compiler update into V8 instead.
+    if (!build_with_chromium && v8_current_cpu != "ppc64" &&
+        v8_current_cpu != "s390x") {
       cflags += [ "-Wlifetime-safety-permissive" ]
     }
 
