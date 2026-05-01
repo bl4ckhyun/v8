@@ -2017,8 +2017,8 @@ static void Generate_InterpreterEnterBytecode(MacroAssembler* masm) {
   // Dispatch to the target bytecode.
   UseScratchRegisterScope temps(masm);
   Register scratch = temps.Acquire();
-  __ lbzx(ip, MemOperand(kInterpreterBytecodeArrayRegister,
-                         kInterpreterBytecodeOffsetRegister));
+  __ lbzx(scratch, MemOperand(kInterpreterBytecodeArrayRegister,
+                              kInterpreterBytecodeOffsetRegister));
   __ ShiftLeftU64(scratch, scratch, Operand(kSystemPointerSizeLog2));
   __ LoadU64(kJavaScriptCallCodeStartRegister,
              MemOperand(kInterpreterDispatchTableRegister, scratch));
