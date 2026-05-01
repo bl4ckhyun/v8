@@ -1050,9 +1050,6 @@ class Assembler : public AssemblerBase {
   void bitwise_mov32(Register dst, int32_t value);
   void bitwise_add32(Register dst, Register src, int32_t value);
 
-  // Patch the offset to the return address after Call.
-  void patch_pc_address(Register dst, int pc_offset, int return_address_offset);
-
   // Load the position of the label relative to the generated code object
   // pointer in a register.
   void mov_label_offset(Register dst, Label* label);

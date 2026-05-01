@@ -3209,7 +3209,7 @@ void SwitchStacks(MacroAssembler* masm, ExternalReference fn,
     if (!is_return) {
       __ Move(kCArgRegs[2], sp);
       __ Move(kCArgRegs[3], fp);
-      __ GetLabelAddress(kCArgRegs[4], saved_pc);
+      __ GetLabelAddress(kCArgRegs[4], saved_pc, r0);
     }
     __ Move(kCArgRegs[0], ExternalReference::isolate_address(masm->isolate()));
     __ CallCFunction(fn, num_args);
@@ -3719,7 +3719,7 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
     __ Move(kCArgRegs[0], ExternalReference::isolate_address());
     __ Move(kCArgRegs[1], sp);
     __ Move(kCArgRegs[2], fp);
-    __ GetLabelAddress(kCArgRegs[3], &resume);
+    __ GetLabelAddress(kCArgRegs[3], &resume, r0);
     __ CallCFunction(ExternalReference::wasm_suspend_wasmfx_stack(), 8);
   }
   Register target_stack = r4;
@@ -3778,7 +3778,7 @@ void Builtins::Generate_WasmFXSwitch(MacroAssembler* masm) {
     __ Move(kCArgRegs[0], ExternalReference::isolate_address());
     __ Move(kCArgRegs[1], sp);
     __ Move(kCArgRegs[2], fp);
-    __ GetLabelAddress(kCArgRegs[3], &resume);
+    __ GetLabelAddress(kCArgRegs[3], &resume, r0);
     __ CallCFunction(ExternalReference::wasm_switch_wasmfx_stack(), 9);
   }
 
