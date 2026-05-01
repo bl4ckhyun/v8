@@ -243,17 +243,17 @@ void MacroAssembler::Jump(Handle<Code> code, RelocInfo::Mode rmode,
 }
 
 void MacroAssembler::Jump(const ExternalReference& reference) {
-  UseScratchRegisterScope temps(this);
-  Register scratch = temps.Acquire();
-  Move(scratch, reference);
+  // ELFv2 ABI requires r12 to hold the callee address at the global entry
+  // point so the function can compute its TOC pointer. Use ip (r12)
+  // directly instead of acquiring a scratch register.
+  Move(ip, reference);
   if (ABI_USES_FUNCTION_DESCRIPTORS) {
     // AIX uses a function descriptor. When calling C code be
     // aware of this descriptor and pick up values from it.
-    LoadU64(ToRegister(ABI_TOC_REGISTER),
-            MemOperand(scratch, kSystemPointerSize));
-    LoadU64(scratch, MemOperand(scratch, 0));
+    LoadU64(ToRegister(ABI_TOC_REGISTER), MemOperand(ip, kSystemPointerSize));
+    LoadU64(ip, MemOperand(ip, 0));
   }
-  Jump(scratch);
+  Jump(ip);
 }
 
 void MacroAssembler::Call(Register target) {
