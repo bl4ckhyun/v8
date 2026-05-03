@@ -1143,4 +1143,11 @@
 }],
 # End roll-watcher patch
 ####
+
+####
+# Roll-watcher patch
+[ALWAYS, {
+}],
+# End roll-watcher patch
+####
 ]
