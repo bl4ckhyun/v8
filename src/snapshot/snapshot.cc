@@ -76,14 +76,14 @@ class SnapshotImpl : public AllStatic {
   // [2] checksum
   // [3] read-only snapshot checksum
   // [4] (64 bytes) version string
-  // [5] offset to readonly
+  // [5] offset to startup
   // [6] offset to shared heap
   // [7] offset to context 0
   // [8] offset to context 1
   // ...
   // ... offset to context N - 1
+  // ... read-only snapshot data (first, for alignment)
   // ... startup snapshot data
-  // ... read-only snapshot data
   // ... shared heap snapshot data
   // ... context 0 snapshot data
   // ... context 1 snapshot data
@@ -98,10 +98,10 @@ class SnapshotImpl : public AllStatic {
   static const uint32_t kVersionStringOffset =
       kReadOnlySnapshotChecksumOffset + kUInt32Size;
   static const uint32_t kVersionStringLength = 64;
-  static const uint32_t kReadOnlyOffsetOffset =
+  static const uint32_t kStartupOffsetOffset =
       kVersionStringOffset + kVersionStringLength;
   static const uint32_t kSharedHeapOffsetOffset =
-      kReadOnlyOffsetOffset + kUInt32Size;
+      kStartupOffsetOffset + kUInt32Size;
   static const uint32_t kFirstContextOffsetOffset =
       kSharedHeapOffsetOffset + kUInt32Size;
 
@@ -120,7 +120,8 @@ class SnapshotImpl : public AllStatic {
         data->raw_size - kChecksumStart);
   }
 
-  static uint32_t StartupSnapshotOffset(int num_contexts) {
+  // The read-only snapshot is placed first, right after the header.
+  static uint32_t ReadOnlySnapshotOffset(int num_contexts) {
     return POINTER_SIZE_ALIGN(kFirstContextOffsetOffset +
                               num_contexts * kInt32Size);
   }
@@ -523,11 +524,11 @@ v8::StartupData SnapshotImpl::CreateSnapshotBlob(
 #endif
 
   uint32_t num_contexts = static_cast<uint32_t>(context_snapshots->size());
-  uint32_t startup_snapshot_offset =
-      SnapshotImpl::StartupSnapshotOffset(num_contexts);
-  uint32_t total_length = startup_snapshot_offset;
-  total_length += static_cast<uint32_t>(startup_snapshot->RawData().length());
+  uint32_t read_only_offset =
+      SnapshotImpl::ReadOnlySnapshotOffset(num_contexts);
+  uint32_t total_length = read_only_offset;
   total_length += static_cast<uint32_t>(read_only_snapshot->RawData().length());
+  total_length += static_cast<uint32_t>(startup_snapshot->RawData().length());
   total_length +=
       static_cast<uint32_t>(shared_heap_snapshot->RawData().length());
   for (const auto context_snapshot : *context_snapshots) {
@@ -536,7 +537,7 @@ v8::StartupData SnapshotImpl::CreateSnapshotBlob(
 
   char* data = new char[total_length];
   // Zero out pre-payload data. Part of that is only used for padding.
-  memset(data, 0, SnapshotImpl::StartupSnapshotOffset(num_contexts));
+  memset(data, 0, read_only_offset);
 
   SnapshotImpl::SetHeaderValue(data, SnapshotImpl::kNumberOfContextsOffset,
                                num_contexts);
@@ -550,24 +551,13 @@ v8::StartupData SnapshotImpl::CreateSnapshotBlob(
       base::Vector<char>(data + SnapshotImpl::kVersionStringOffset,
                          SnapshotImpl::kVersionStringLength));
 
-  // Startup snapshot (isolate-specific data).
-  uint32_t payload_offset = startup_snapshot_offset;
-  uint32_t payload_length =
-      static_cast<uint32_t>(startup_snapshot->RawData().length());
-  CopyBytes(data + payload_offset,
-            reinterpret_cast<const char*>(startup_snapshot->RawData().begin()),
-            payload_length);
-  if (v8_flags.serialization_statistics) {
-    // These prints must match the regexp in test/memory/Memory.json
-    PrintF("Snapshot blob consists of:\n");
-    PrintF("%10d bytes for startup\n", payload_length);
-  }
-  payload_offset += payload_length;
+  uint32_t payload_offset = read_only_offset;
 
-  // Read-only.
-  SnapshotImpl::SetHeaderValue(data, SnapshotImpl::kReadOnlyOffsetOffset,
-                               payload_offset);
-  payload_length = read_only_snapshot->RawData().length();
+  // Read-only snapshot first, so it's close to the start of the blob.
+  // When the blob is page-aligned in the executable, this allows the
+  // RO space image within it to also be page-aligned.
+  DCHECK_EQ(payload_offset, read_only_offset);
+  uint32_t payload_length = read_only_snapshot->RawData().length();
   CopyBytes(
       data + payload_offset,
       reinterpret_cast<const char*>(read_only_snapshot->RawData().begin()),
@@ -579,7 +569,20 @@ v8::StartupData SnapshotImpl::CreateSnapshotBlob(
           payload_length)));
   if (v8_flags.serialization_statistics) {
     // These prints must match the regexp in test/memory/Memory.json
+    PrintF("Snapshot blob consists of:\n");
     PrintF("%10d bytes for read-only\n", payload_length);
+  }
+  payload_offset += payload_length;
+
+  // Startup snapshot (isolate-specific data).
+  SnapshotImpl::SetHeaderValue(data, SnapshotImpl::kStartupOffsetOffset,
+                               payload_offset);
+  payload_length = static_cast<uint32_t>(startup_snapshot->RawData().length());
+  CopyBytes(data + payload_offset,
+            reinterpret_cast<const char*>(startup_snapshot->RawData().begin()),
+            payload_length);
+  if (v8_flags.serialization_statistics) {
+    PrintF("%10d bytes for startup\n", payload_length);
   }
   payload_offset += payload_length;
 
@@ -689,17 +692,17 @@ base::Vector<const uint8_t> SnapshotImpl::ExtractStartupData(
     const v8::StartupData* data) {
   DCHECK(Snapshot::SnapshotIsValid(data));
 
-  uint32_t num_contexts = ExtractNumContexts(data);
-  return ExtractData(data, StartupSnapshotOffset(num_contexts),
-                     GetHeaderValue(data, kReadOnlyOffsetOffset));
+  return ExtractData(data, GetHeaderValue(data, kStartupOffsetOffset),
+                     GetHeaderValue(data, kSharedHeapOffsetOffset));
 }
 
 base::Vector<const uint8_t> SnapshotImpl::ExtractReadOnlyData(
     const v8::StartupData* data) {
   DCHECK(Snapshot::SnapshotIsValid(data));
 
-  return ExtractData(data, GetHeaderValue(data, kReadOnlyOffsetOffset),
-                     GetHeaderValue(data, kSharedHeapOffsetOffset));
+  uint32_t num_contexts = ExtractNumContexts(data);
+  return ExtractData(data, ReadOnlySnapshotOffset(num_contexts),
+                     GetHeaderValue(data, kStartupOffsetOffset));
 }
 
 base::Vector<const uint8_t> SnapshotImpl::ExtractSharedHeapData(
