@@ -1212,8 +1212,13 @@ bool ScopeIterator::SetContextExtensionValue(DirectHandle<String> variable_name,
 
 bool ScopeIterator::SetContextVariableValue(DirectHandle<String> variable_name,
                                             DirectHandle<Object> new_value) {
-  int slot_index = context_->scope_info()->ContextSlotIndex(*variable_name);
+  VariableLookupResult lookup_result;
+  int slot_index =
+      context_->scope_info()->ContextSlotIndex(*variable_name, &lookup_result);
   if (slot_index < 0) return false;
+  if (IsPrivateMethodOrAccessorVariableMode(lookup_result.mode)) {
+    return false;
+  }
   Context::Set(context_, slot_index, new_value, isolate_);
   return true;
 }
