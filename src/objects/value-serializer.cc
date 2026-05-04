@@ -2177,10 +2177,12 @@ MaybeDirectHandle<JSArrayBuffer> ValueDeserializer::ReadJSArrayBuffer(
             .Check();
       } else if (resizable_subtag ==
                  static_cast<uint8_t>(WasmMemoryArrayBufferTag::kFixedLength)) {
+        DCHECK(!array_buffer->is_resizable_by_js());
         size_t byte_length;
         if (!ReadVarint<size_t>().To(&byte_length)) return {};
         if (byte_length > array_buffer->byte_length()) return {};
         array_buffer->set_byte_length(byte_length);
+        array_buffer->set_max_byte_length(byte_length);
       } else {
         return {};
       }
