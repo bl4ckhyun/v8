@@ -5121,8 +5121,8 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
 
   // Restore the registers from the last output frame.
   {
-    UseScratchRegisterScope temps(masm);
-    Register scratch = temps.Acquire();
+    // This scratch must stay outside {restored_regs} while we reload them.
+    Register scratch = ip;
     DCHECK(!(restored_regs.has(scratch)));
     __ mr(scratch, r5);
     for (int i = kNumberOfRegisters - 1; i >= 0; i--) {
@@ -5135,8 +5135,8 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
   }
 
   {
-    UseScratchRegisterScope temps(masm);
-    Register is_iterable = temps.Acquire();
+    // Must use ip: all {restored_regs} are live
+    Register is_iterable = ip;
     Register one = r7;
     __ push(one);  // Save the value from the output FrameDescription.
     __ LoadIsolateField(is_iterable, IsolateFieldId::kStackIsIterable);
@@ -5146,8 +5146,8 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
   }
 
   {
-    UseScratchRegisterScope temps(masm);
-    Register scratch = temps.Acquire();
+    // Must use ip: all {restored_regs} are live
+    Register scratch = ip;
     __ pop(scratch);  // get continuation, leave pc on stack
     __ pop(r0);
     __ mtlr(r0);
