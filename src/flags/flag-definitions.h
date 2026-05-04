@@ -997,6 +997,9 @@ DEFINE_NEG_IMPLICATION(jitless, always_sparkplug)
 DEFINE_NEG_IMPLICATION(jitless, maglev)
 #endif  // V8_ENABLE_MAGLEV
 DEFINE_NEG_IMPLICATION(jitless, turbolev)
+DEFINE_NEG_IMPLICATION(jitless, turbolev_future)
+DEFINE_NEG_IMPLICATION(jitless, turboshaft_wasm_in_js_inlining)
+DEFINE_NEG_IMPLICATION(jitless, turbolev_inline_js_wasm_wrappers)
 // Doesn't work without an executable code space.
 DEFINE_NEG_IMPLICATION(jitless, interpreted_frames_native_stack)
 
@@ -1009,6 +1012,11 @@ DEFINE_NEG_IMPLICATION(disable_optimizing_compilers, turbofan)
 DEFINE_NEG_IMPLICATION(disable_optimizing_compilers, turboshaft)
 DEFINE_NEG_IMPLICATION(disable_optimizing_compilers, maglev)
 DEFINE_NEG_IMPLICATION(disable_optimizing_compilers, turbolev)
+DEFINE_NEG_IMPLICATION(disable_optimizing_compilers, turbolev_future)
+DEFINE_NEG_IMPLICATION(disable_optimizing_compilers,
+                       turboshaft_wasm_in_js_inlining)
+DEFINE_NEG_IMPLICATION(disable_optimizing_compilers,
+                       turbolev_inline_js_wasm_wrappers)
 #if V8_ENABLE_WEBASSEMBLY
 // Disable optimizing Wasm compilers. Wasm code must execute with Liftoff.
 DEFINE_IMPLICATION(disable_optimizing_compilers, liftoff)
