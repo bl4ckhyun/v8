@@ -24,6 +24,7 @@
 #include "src/heap/mutable-page.h"
 #include "src/logging/counters.h"
 #include "src/numbers/integer-literal-inl.h"
+#include "src/numbers/math-random.h"
 #include "src/objects/api-callbacks.h"
 #include "src/objects/cell.h"
 #include "src/objects/descriptor-array.h"
@@ -19844,18 +19845,20 @@ void CodeStubAssembler::SetPropertyLength(TNode<Context> context,
                     length);
 }
 
-TNode<Smi> CodeStubAssembler::RefillMathRandom(
+TNode<Smi> CodeStubAssembler::InitializeAndMaybeRefillMathRandom(
     TNode<NativeContext> native_context) {
-  // Cache exhausted, populate the cache. Return value is the new index.
-  const TNode<ExternalReference> refill_math_random =
-      ExternalConstant(ExternalReference::refill_math_random());
+  // Cache exhausted or uninitialized, populate the cache and seed state. Return
+  // value is the new index.
+  const TNode<ExternalReference> initialize_and_maybe_refill_math_random =
+      ExternalConstant(
+          ExternalReference::initialize_and_maybe_refill_math_random());
   const TNode<ExternalReference> isolate_ptr =
       ExternalConstant(ExternalReference::isolate_address());
   MachineType type_tagged = MachineType::AnyTagged();
   MachineType type_ptr = MachineType::Pointer();
 
-  return CAST(CallCFunction(refill_math_random, type_tagged,
-                            std::make_pair(type_ptr, isolate_ptr),
+  return CAST(CallCFunction(initialize_and_maybe_refill_math_random,
+                            type_tagged, std::make_pair(type_ptr, isolate_ptr),
                             std::make_pair(type_tagged, native_context)));
 }
 
@@ -20933,6 +20936,27 @@ TNode<FixedArray> CodeStubAssembler::ArrayListElements(TNode<ArrayList> array) {
   CopyRange(elements, FixedArray::OffsetOfElementAt(0), array,
             ArrayList::OffsetOfElementAt(0), length);
   return elements;
+}
+
+TorqueStructXorShift128State CodeStubAssembler::LoadMathRandomState(
+    TNode<ByteArray> state) {
+  DCHECK(Is64());
+  int offset = PodArray<MathRandom::State>::OffsetOfElementAt(0);
+  TNode<Uint64T> s0 =
+      LoadObjectField<Uint64T>(state, offset + offsetof(MathRandom::State, s0));
+  TNode<Uint64T> s1 =
+      LoadObjectField<Uint64T>(state, offset + offsetof(MathRandom::State, s1));
+  return {s0, s1};
+}
+
+void CodeStubAssembler::StoreMathRandomState(
+    TNode<ByteArray> state, TorqueStructXorShift128State value) {
+  DCHECK(Is64());
+  int offset = PodArray<MathRandom::State>::OffsetOfElementAt(0);
+  StoreObjectFieldNoWriteBarrier<Uint64T>(
+      state, offset + offsetof(MathRandom::State, s0), value.s0);
+  StoreObjectFieldNoWriteBarrier<Uint64T>(
+      state, offset + offsetof(MathRandom::State, s1), value.s1);
 }
 
 TNode<BoolT> CodeStubAssembler::IsMarked(TNode<Object> object) {

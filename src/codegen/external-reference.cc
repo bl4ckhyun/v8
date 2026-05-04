@@ -1307,7 +1307,8 @@ ExternalReference ExternalReference::printf_function() {
   return ExternalReference(Redirect(FUNCTION_ADDR(std::printf)));
 }
 
-FUNCTION_REFERENCE(refill_math_random, MathRandom::RefillCache)
+FUNCTION_REFERENCE(initialize_and_maybe_refill_math_random,
+                   MathRandom::InitializeAndMaybeRefillCache)
 
 template <typename SubjectChar, typename PatternChar>
 ExternalReference ExternalReference::search_string_raw() {

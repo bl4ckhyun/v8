@@ -1293,6 +1293,10 @@ size_t AbstractType::AlignmentLog2() const {
     alignment = kInt32Size;
   } else if (this == TypeOracle::GetFloat64Type()) {
     alignment = kDoubleSize;
+  } else if (this == TypeOracle::GetInt64Type()) {
+    alignment = kInt64Size;
+  } else if (this == TypeOracle::GetUint64Type()) {
+    alignment = kUInt64Size;
   } else if (this == TypeOracle::GetIntPtrType()) {
     alignment = TargetArchitecture::RawPtrSize();
   } else if (this == TypeOracle::GetUIntPtrType()) {
@@ -1381,6 +1385,12 @@ std::optional<std::tuple<size_t, std::string>> SizeOf(const Type* type) {
   } else if (type->IsSubtypeOf(TypeOracle::GetFloat64Type())) {
     size = kDoubleSize;
     size_string = "kDoubleSize";
+  } else if (type->IsSubtypeOf(TypeOracle::GetInt64Type())) {
+    size = kInt64Size;
+    size_string = "kInt64Size";
+  } else if (type->IsSubtypeOf(TypeOracle::GetUint64Type())) {
+    size = kUInt64Size;
+    size_string = "kUInt64Size";
   } else if (type->IsSubtypeOf(TypeOracle::GetIntPtrType())) {
     size = TargetArchitecture::RawPtrSize();
     size_string = "kIntptrSize";

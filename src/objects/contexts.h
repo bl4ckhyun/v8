@@ -289,7 +289,8 @@ enum ContextLookupFlags {
   V(MAP_VALUE_ITERATOR_MAP_INDEX, Map, map_value_iterator_map)                 \
   V(MATH_RANDOM_INDEX_INDEX, Smi, math_random_index)                           \
   V(MATH_RANDOM_STATE_INDEX, ByteArray, math_random_state)                     \
-  V(MATH_RANDOM_CACHE_INDEX, FixedDoubleArray, math_random_cache)              \
+  V(MATH_RANDOM_CACHE_INDEX, (UnionOf<Undefined, FixedDoubleArray>),           \
+    math_random_cache)                                                         \
   V(NORMALIZED_MAP_CACHE_INDEX, Object, normalized_map_cache)                  \
   V(NUMBER_FUNCTION_INDEX, JSFunction, number_function)                        \
   V(OBJECT_FUNCTION_INDEX, JSFunction, object_function)                        \

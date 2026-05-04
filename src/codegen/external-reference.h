@@ -231,7 +231,8 @@ enum class IsolateFieldId : uint8_t;
   V(new_deoptimizer_function, "Deoptimizer::New()")                            \
   V(orderedhashmap_gethash_raw, "orderedhashmap_gethash_raw")                  \
   V(printf_function, "printf")                                                 \
-  V(refill_math_random, "MathRandom::RefillCache")                             \
+  V(initialize_and_maybe_refill_math_random,                                   \
+    "MathRandom::InitializeAndMaybeRefillCache")                               \
   V(search_string_raw_one_one, "search_string_raw_one_one")                    \
   V(search_string_raw_one_two, "search_string_raw_one_two")                    \
   V(search_string_raw_two_one, "search_string_raw_two_one")                    \

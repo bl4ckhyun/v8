@@ -2492,6 +2492,10 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
   // TODO(jgruber): Rename to ArrayListToFixedArray.
   TNode<FixedArray> ArrayListElements(TNode<ArrayList> array);
 
+  TorqueStructXorShift128State LoadMathRandomState(TNode<ByteArray> state);
+  void StoreMathRandomState(TNode<ByteArray> state,
+                            TorqueStructXorShift128State value);
+
   template <typename T>
   bool ClassHasMapConstant() {
     return false;
@@ -4799,7 +4803,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
   // HeapNumber.
   TNode<Object> CloneIfMutablePrimitive(TNode<Object> object);
 
-  TNode<Smi> RefillMathRandom(TNode<NativeContext> native_context);
+  TNode<Smi> InitializeAndMaybeRefillMathRandom(
+      TNode<NativeContext> native_context);
 
   TNode<IntPtrT> FeedbackIteratorEntrySize() {
     return IntPtrConstant(FeedbackIterator::kEntrySize);
