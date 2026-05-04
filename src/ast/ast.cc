@@ -228,6 +228,10 @@ int FunctionLiteral::start_position() const {
 
 int FunctionLiteral::end_position() const { return scope()->end_position(); }
 
+bool FunctionLiteral::is_hoisted_in_context() const {
+  return scope_->is_hoisted_in_context();
+}
+
 LanguageMode FunctionLiteral::language_mode() const {
   return scope()->language_mode();
 }

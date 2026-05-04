@@ -2956,7 +2956,11 @@ FunctionLiteral* Parser::ParseFunctionLiteral(
   DeclarationScope* scope = NewFunctionScope(kind, parse_zone);
   SetLanguageMode(scope, language_mode);
   if (function_syntax_kind == FunctionSyntaxKind::kDeclaration) {
-    scope->set_is_hoisted_in_context(true);
+    if (flags().is_reparse()) {
+      scope->set_is_hoisted_in_context(flags().is_hoisted_in_context());
+    } else {
+      scope->set_is_hoisted_in_context(true);
+    }
   }
   if (is_wrapped) {
     scope->set_is_wrapped_function();
