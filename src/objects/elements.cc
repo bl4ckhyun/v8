@@ -1825,28 +1825,12 @@ class DictionaryElementsAccessor
             ? JSObject::NormalizeElements(isolate, object)
             : direct_handle(Cast<NumberDictionary>(object->elements()),
                             isolate);
-    // If the dictionary needs to grow, use TryEnsureCapacity to avoid a
-    // fatal OOM crash in HashTable::New if the maximum table capacity would
-    // be exceeded.  After this, Add's internal EnsureCapacity is a no-op.
-    // To avoid slowing down the common case we inline the check for whether
-    // the dictionary needs to grow or shrink.
-    if (V8_UNLIKELY(!dictionary->HasSufficientCapacityToAdd(1))) {
-      DirectHandle<NumberDictionary> grown;
-      if (!NumberDictionary::TryEnsureCapacity(isolate, dictionary)
-               .To(&grown)) {
-        THROW_NEW_ERROR_RETURN_VALUE(
-            isolate, NewRangeError(MessageTemplate::kInvalidArrayLength),
-            Nothing<bool>());
-      }
-      object->set_elements(*grown);
-      dictionary = grown;
-    }
     DirectHandle<NumberDictionary> new_dictionary =
         NumberDictionary::Add(isolate, dictionary, index, value, details);
-    DCHECK(dictionary.is_identical_to(new_dictionary));
-    USE(new_dictionary);
-    dictionary->UpdateMaxNumberKey(index, object);
-    if (attributes != NONE) object->RequireSlowElements(*dictionary);
+    new_dictionary->UpdateMaxNumberKey(index, object);
+    if (attributes != NONE) object->RequireSlowElements(*new_dictionary);
+    if (dictionary.is_identical_to(new_dictionary)) return Just(true);
+    object->set_elements(*new_dictionary);
     return Just(true);
   }
 
