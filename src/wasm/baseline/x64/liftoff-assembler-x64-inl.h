@@ -14,13 +14,13 @@
 #include "src/codegen/machine-type.h"
 #include "src/codegen/x64/assembler-x64.h"
 #include "src/codegen/x64/register-x64.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #include "src/compiler/linkage.h"
 #include "src/flags/flags.h"
 #include "src/heap/mutable-page.h"
 #include "src/wasm/baseline/liftoff-assembler.h"
 #include "src/wasm/baseline/parallel-move-inl.h"
 #include "src/wasm/baseline/parallel-move.h"
-#include "src/wasm/simd-shuffle.h"
 #include "src/wasm/wasm-linkage.h"
 #include "src/wasm/wasm-objects.h"
 
@@ -2910,7 +2910,7 @@ void LiftoffAssembler::emit_i8x16_shuffle(LiftoffRegister dst,
   if (is_swizzle) {
     uint32_t imms[4];
     // Shuffles that use just 1 operand are called swizzles, rhs can be ignored.
-    wasm::SimdShuffle::Pack16Lanes(imms, shuffle);
+    compiler::SimdShuffle::Pack16Lanes(imms, shuffle);
     MacroAssembler::Move(kScratchDoubleReg, make_uint64(imms[3], imms[2]),
                          make_uint64(imms[1], imms[0]));
     Pshufb(dst.fp(), lhs.fp(), kScratchDoubleReg);

@@ -2,12 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef V8_WASM_SIMD_SHUFFLE_H_
-#define V8_WASM_SIMD_SHUFFLE_H_
-
-#if !V8_ENABLE_WEBASSEMBLY
-#error This header should only be included if WebAssembly is enabled.
-#endif  // !V8_ENABLE_WEBASSEMBLY
+#ifndef V8_COMPILER_BACKEND_SIMD_SHUFFLE_H_
+#define V8_COMPILER_BACKEND_SIMD_SHUFFLE_H_
 
 #include "src/base/macros.h"
 #include "src/common/globals.h"
@@ -15,7 +11,7 @@
 
 namespace v8 {
 namespace internal {
-namespace wasm {
+namespace compiler {
 
 #ifdef V8_TARGET_ARCH_X64
 template <int simd_size,
@@ -486,8 +482,8 @@ class V8_EXPORT_PRIVATE SimdSwizzle {
   static bool AllInRangeOrTopBitSet(std::array<uint8_t, kSimd128Size> shuffle);
 };
 
-}  // namespace wasm
+}  // namespace compiler
 }  // namespace internal
 }  // namespace v8
 
-#endif  // V8_WASM_SIMD_SHUFFLE_H_
+#endif  // V8_COMPILER_BACKEND_SIMD_SHUFFLE_H_

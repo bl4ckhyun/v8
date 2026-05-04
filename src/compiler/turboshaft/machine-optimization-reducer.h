@@ -41,7 +41,7 @@
 #include "src/numbers/ieee754.h"
 
 #if V8_ENABLE_WEBASSEMBLY
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #endif
 
 namespace v8::internal::compiler::turboshaft {
@@ -2526,8 +2526,8 @@ class MachineOptimizationReducer : public Next {
           const uint8_t* shuffle2 = shuffles[1]->shuffle;
           const uint8_t* shuffle3 = shuffles[2]->shuffle;
           const uint8_t* shuffle4 = shuffles[3]->shuffle;
-          if (wasm::SimdShuffle::TryMatch8x16UpperToLowerReduce(
-                  shuffle1, shuffle2, shuffle3, shuffle4)) {
+          if (SimdShuffle::TryMatch8x16UpperToLowerReduce(shuffle1, shuffle2,
+                                                          shuffle3, shuffle4)) {
             V<Simd128> reduce = __ Simd128Reduce(
                 reduce_input, Simd128ReduceOp::Kind::kI8x16AddReduce);
             return __ Simd128ExtractLane(reduce, kind, 0);
@@ -2540,8 +2540,8 @@ class MachineOptimizationReducer : public Next {
           const uint8_t* shuffle1 = shuffles[0]->shuffle;
           const uint8_t* shuffle2 = shuffles[1]->shuffle;
           const uint8_t* shuffle3 = shuffles[2]->shuffle;
-          if (wasm::SimdShuffle::TryMatch16x8UpperToLowerReduce(
-                  shuffle1, shuffle2, shuffle3)) {
+          if (SimdShuffle::TryMatch16x8UpperToLowerReduce(shuffle1, shuffle2,
+                                                          shuffle3)) {
             V<Simd128> reduce = __ Simd128Reduce(
                 reduce_input, Simd128ReduceOp::Kind::kI16x8AddReduce);
             return __ Simd128ExtractLane(reduce, kind, 0);
@@ -2553,8 +2553,7 @@ class MachineOptimizationReducer : public Next {
         if (shuffles.size() == 2) {
           const uint8_t* shuffle1 = shuffles[0]->shuffle;
           const uint8_t* shuffle2 = shuffles[1]->shuffle;
-          if (wasm::SimdShuffle::TryMatch32x4UpperToLowerReduce(shuffle1,
-                                                                shuffle2)) {
+          if (SimdShuffle::TryMatch32x4UpperToLowerReduce(shuffle1, shuffle2)) {
             V<Simd128> reduce = __ Simd128Reduce(
                 reduce_input, Simd128ReduceOp::Kind::kI32x4AddReduce);
             return __ Simd128ExtractLane(reduce, kind, 0);
@@ -2566,8 +2565,7 @@ class MachineOptimizationReducer : public Next {
         if (shuffles.size() == 2) {
           const uint8_t* shuffle1 = shuffles[0]->shuffle;
           const uint8_t* shuffle2 = shuffles[1]->shuffle;
-          if (wasm::SimdShuffle::TryMatch32x4PairwiseReduce(shuffle1,
-                                                            shuffle2)) {
+          if (SimdShuffle::TryMatch32x4PairwiseReduce(shuffle1, shuffle2)) {
             V<Simd128> reduce = __ Simd128Reduce(
                 reduce_input, Simd128ReduceOp::Kind::kF32x4AddReduce);
             return __ Simd128ExtractLane(reduce, kind, 0);
@@ -2579,9 +2577,9 @@ class MachineOptimizationReducer : public Next {
       case MachineRepresentation::kFloat64: {
         if (shuffles.size() == 1) {
           uint8_t shuffle64x2[2];
-          if (wasm::SimdShuffle::TryMatch64x2Shuffle(shuffles[0]->shuffle,
-                                                     shuffle64x2) &&
-              wasm::SimdShuffle::TryMatch64x2Reduce(shuffle64x2)) {
+          if (SimdShuffle::TryMatch64x2Shuffle(shuffles[0]->shuffle,
+                                               shuffle64x2) &&
+              SimdShuffle::TryMatch64x2Reduce(shuffle64x2)) {
             V<Simd128> reduce =
                 rep == MachineRepresentation::kWord64
                     ? __ Simd128Reduce(reduce_input,

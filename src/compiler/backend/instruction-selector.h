@@ -25,7 +25,7 @@
 #include "src/zone/zone-containers.h"
 
 #if V8_ENABLE_WEBASSEMBLY
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 namespace v8 {
@@ -1460,7 +1460,7 @@ class V8_EXPORT_PRIVATE InstructionSelector final
     bool needs_swap;
     bool inputs_equal =
         GetVirtualRegister(view.input(0)) == GetVirtualRegister(view.input(1));
-    wasm::SimdShuffle::CanonicalizeShuffle<simd_size, shuffle_size>(
+    SimdShuffle::CanonicalizeShuffle<simd_size, shuffle_size>(
         inputs_equal, shuffle, &needs_swap, is_swizzle);
     if (needs_swap) {
       SwapShuffleInputs(view);

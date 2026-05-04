@@ -15,6 +15,7 @@
 #include "src/codegen/macro-assembler-inl.h"
 #include "src/codegen/register-configuration.h"
 #include "src/compiler/access-builder.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #include "src/compiler/wasm-compiler.h"
 #include "src/logging/counters.h"
 #include "src/logging/log.h"
@@ -30,7 +31,6 @@
 #include "src/wasm/compilation-environment-inl.h"
 #include "src/wasm/function-body-decoder-impl.h"
 #include "src/wasm/function-compiler.h"
-#include "src/wasm/simd-shuffle.h"
 #include "src/wasm/wasm-code-coverage.h"
 #include "src/wasm/wasm-debug.h"
 #include "src/wasm/wasm-engine.h"
@@ -5737,8 +5737,8 @@ class LiftoffCompiler {
     memcpy(shuffle, imm.value, sizeof(shuffle));
     bool is_swizzle;
     bool needs_swap;
-    wasm::SimdShuffle::CanonicalizeShuffle(lhs == rhs, shuffle, &needs_swap,
-                                           &is_swizzle);
+    compiler::SimdShuffle::CanonicalizeShuffle(lhs == rhs, shuffle, &needs_swap,
+                                               &is_swizzle);
     if (needs_swap) {
       std::swap(lhs, rhs);
     }

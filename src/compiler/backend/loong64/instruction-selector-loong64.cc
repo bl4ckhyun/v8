@@ -3214,22 +3214,22 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
     return;
   }
 
-  if (wasm::SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
+  if (SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
     InstructionOperand temps2[] = {g.TempSimd128Register(),
                                    g.TempSimd128Register()};
     Emit(kLoong64S32x4Shuffle, g.DefineAsRegister(node),
          g.UseUniqueRegister(input0), g.UseUniqueRegister(input1),
-         g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle32x4)),
+         g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle32x4)),
          arraysize(temps2), temps2);
     return;
   }
   Emit(kLoong64I8x16Shuffle, g.DefineAsRegister(node),
        g.UseUniqueRegister(input0), g.UseUniqueRegister(input1),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 4)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 8)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 12)),
-       arraysize(temps), temps);
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 4)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 8)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 12)), arraysize(temps),
+       temps);
 }
 #else
 void InstructionSelector::VisitI8x16Shuffle(OpIndex node) { UNREACHABLE(); }

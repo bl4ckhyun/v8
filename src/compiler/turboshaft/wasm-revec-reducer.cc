@@ -7,8 +7,8 @@
 #include <optional>
 
 #include "src/base/logging.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #include "src/compiler/turboshaft/opmasks.h"
-#include "src/wasm/simd-shuffle.h"
 
 #define TRACE(...)                                  \
   do {                                              \
@@ -572,8 +572,8 @@ ShufflePackNode* SLPTree::Try256ShuffleMatchLoad8x8U(
   bool need_swap, is_swizzle;
 
 #define CANONICALIZE_SHUFFLE(n)                                                \
-  wasm::SimdShuffle::CanonicalizeShuffle(false, shuffle_copy##n, &need_swap,   \
-                                         &is_swizzle);                         \
+  SimdShuffle::CanonicalizeShuffle(false, shuffle_copy##n, &need_swap,         \
+                                   &is_swizzle);                               \
   if (is_swizzle) {                                                            \
     TRACE("Shuffle couldn't be swizzle.\n");                                   \
     return nullptr;                                                            \
@@ -664,9 +664,9 @@ ShufflePackNode* SLPTree::X64TryMatch256Shuffle(const NodeGroup& node_group,
     }
 
     if (uint8_t shuffle32x8[8];
-        wasm::SimdShuffle::TryMatch32x8Shuffle(shuffle8x32, shuffle32x8)) {
+        SimdShuffle::TryMatch32x8Shuffle(shuffle8x32, shuffle32x8)) {
       uint8_t control;
-      if (wasm::SimdShuffle::TryMatchVpshufd(shuffle32x8, &control)) {
+      if (SimdShuffle::TryMatchVpshufd(shuffle32x8, &control)) {
         ShufflePackNode* pnode = NewShufflePackNode(
             node_group, ShufflePackNode::SpecificInfo::Kind::kShufd);
         pnode->info().set_shufd_control(control);
@@ -689,9 +689,8 @@ ShufflePackNode* SLPTree::X64TryMatch256Shuffle(const NodeGroup& node_group,
       }
     }
 
-    if (const wasm::ShuffleEntry<kSimd256Size>* arch_shuffle;
-        wasm::SimdShuffle::TryMatchArchShuffle(shuffle8x32, false,
-                                               &arch_shuffle)) {
+    if (const compiler::ShuffleEntry<kSimd256Size>* arch_shuffle;
+        SimdShuffle::TryMatchArchShuffle(shuffle8x32, false, &arch_shuffle)) {
       ShufflePackNode::SpecificInfo::Kind kind;
       switch (arch_shuffle->opcode) {
         case kX64S32x8UnpackHigh:
@@ -705,10 +704,10 @@ ShufflePackNode* SLPTree::X64TryMatch256Shuffle(const NodeGroup& node_group,
       }
       ShufflePackNode* pnode = NewShufflePackNode(node_group, kind);
       return pnode;
-    } else if (uint8_t shuffle32x8[8]; wasm::SimdShuffle::TryMatch32x8Shuffle(
-                   shuffle8x32, shuffle32x8)) {
+    } else if (uint8_t shuffle32x8[8];
+               SimdShuffle::TryMatch32x8Shuffle(shuffle8x32, shuffle32x8)) {
       uint8_t control;
-      if (wasm::SimdShuffle::TryMatchShufps256(shuffle32x8, &control)) {
+      if (SimdShuffle::TryMatchShufps256(shuffle32x8, &control)) {
         ShufflePackNode* pnode = NewShufflePackNode(
             node_group, ShufflePackNode::SpecificInfo::Kind::kShufps);
         pnode->info().set_shufps_control(control);
@@ -1343,14 +1342,14 @@ PackNode* SLPTree::BuildTreeRec(const NodeGroup& node_group,
           // 5. Load32Splat256(base, index, offset=4)
           // 6. Store256(3,4,7,offset=0)
           int index;
-          if (wasm::SimdShuffle::TryMatchSplat<4>(shuffle0, &index) &&
+          if (SimdShuffle::TryMatchSplat<4>(shuffle0, &index) &&
               graph_.Get(op0.input(index >> 2)).opcode == Opcode::kLoad) {
             ShufflePackNode* pnode = NewShufflePackNode(
                 node_group,
                 ShufflePackNode::SpecificInfo::Kind::kS256Load32Transform);
             pnode->info().set_splat_index(index);
             return pnode;
-          } else if (wasm::SimdShuffle::TryMatchSplat<2>(shuffle0, &index) &&
+          } else if (SimdShuffle::TryMatchSplat<2>(shuffle0, &index) &&
                      graph_.Get(op0.input(index >> 1)).opcode ==
                          Opcode::kLoad) {
             ShufflePackNode* pnode = NewShufflePackNode(

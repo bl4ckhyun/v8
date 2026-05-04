@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 
 #include <algorithm>
 
@@ -10,7 +10,7 @@
 
 namespace v8 {
 namespace internal {
-namespace wasm {
+namespace compiler {
 
 namespace {
 
@@ -478,7 +478,7 @@ int32_t SimdShuffle::Pack4Lanes(const uint8_t* shuffle) {
 
 void SimdShuffle::Pack16Lanes(uint32_t* dst, const uint8_t* shuffle) {
   for (int i = 0; i < 4; i++) {
-    dst[i] = wasm::SimdShuffle::Pack4Lanes(shuffle + (i * 4));
+    dst[i] = SimdShuffle::Pack4Lanes(shuffle + (i * 4));
   }
 }
 
@@ -527,6 +527,6 @@ bool SimdSwizzle::AllInRangeOrTopBitSet(
                      [](auto i) { return (i < kSimd128Size) || (i & 0x80); });
 }
 
-}  // namespace wasm
+}  // namespace compiler
 }  // namespace internal
 }  // namespace v8

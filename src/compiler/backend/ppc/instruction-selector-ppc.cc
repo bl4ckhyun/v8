@@ -2649,10 +2649,10 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
   }
   Emit(kPPC_I8x16Shuffle, g.DefineAsRegister(node), g.UseRegister(input0),
        g.UseRegister(input1),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle_remapped)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle_remapped + 4)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle_remapped + 8)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle_remapped + 12)));
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle_remapped)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle_remapped + 4)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle_remapped + 8)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle_remapped + 12)));
 }
 
 void InstructionSelector::VisitSetStackPointer(OpIndex node) {

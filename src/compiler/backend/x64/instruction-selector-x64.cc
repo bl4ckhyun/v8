@@ -30,7 +30,7 @@
 #include "src/roots/roots-inl.h"
 
 #if V8_ENABLE_WEBASSEMBLY
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 #if V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
@@ -5460,12 +5460,11 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
   uint8_t shuffle32x4[4];
   uint8_t shuffle16x8[8];
   int index;
-  const wasm::ShuffleEntry<kSimd128Size>* arch_shuffle;
+  const compiler::ShuffleEntry<kSimd128Size>* arch_shuffle;
   bool needs_swap;
-  if (wasm::SimdShuffle::TryMatchConcat(shuffle, &offset)) {
-    if (wasm::SimdShuffle::TryMatch32x4Rotate(shuffle, shuffle32x4,
-                                              is_swizzle)) {
-      uint8_t shuffle_mask = wasm::SimdShuffle::PackShuffle4(shuffle32x4);
+  if (SimdShuffle::TryMatchConcat(shuffle, &offset)) {
+    if (SimdShuffle::TryMatch32x4Rotate(shuffle, shuffle32x4, is_swizzle)) {
+      uint8_t shuffle_mask = SimdShuffle::PackShuffle4(shuffle32x4);
       opcode = kX64S32x4Rotate;
       imms[imm_count++] = shuffle_mask;
     } else {
@@ -5479,8 +5478,8 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
       // palignr takes a single imm8 offset.
       imms[imm_count++] = offset;
     }
-  } else if (wasm::SimdShuffle::TryMatchArchShuffle(shuffle, is_swizzle,
-                                                    &arch_shuffle)) {
+  } else if (SimdShuffle::TryMatchArchShuffle(shuffle, is_swizzle,
+                                              &arch_shuffle)) {
     opcode = arch_shuffle->opcode;
     src0_needs_reg = arch_shuffle->src0_needs_reg;
     // SSE can't take advantage of both operands in registers and needs
@@ -5488,10 +5487,10 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
     src1_needs_reg = arch_shuffle->src1_needs_reg;
     no_same_as_first =
         IsSupported(AVX) && arch_shuffle->no_same_as_first_if_avx;
-  } else if (wasm::SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
-    uint8_t shuffle_mask = wasm::SimdShuffle::PackShuffle4(shuffle32x4);
+  } else if (SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
+    uint8_t shuffle_mask = SimdShuffle::PackShuffle4(shuffle32x4);
     if (is_swizzle) {
-      if (wasm::SimdShuffle::TryMatchIdentity(shuffle)) {
+      if (SimdShuffle::TryMatchIdentity(shuffle)) {
         // Bypass normal shuffle code generation in this case.
         OpIndex input = view.input(0);
         // EmitIdentity
@@ -5512,14 +5511,14 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
     } else {
       // 2 operand shuffle
       // A blend is more efficient than a general 32x4 shuffle; try it first.
-      if (wasm::SimdShuffle::TryMatchBlend(shuffle)) {
+      if (SimdShuffle::TryMatchBlend(shuffle)) {
         opcode = kX64S16x8Blend;
-        uint8_t blend_mask = wasm::SimdShuffle::PackBlend4(shuffle32x4);
+        uint8_t blend_mask = SimdShuffle::PackBlend4(shuffle32x4);
         imms[imm_count++] = blend_mask;
         no_same_as_first = CpuFeatures::IsSupported(AVX);
       } else if (TryMatchShufps(shuffle32x4)) {
         opcode = kX64Shufps;
-        uint8_t mask = wasm::SimdShuffle::PackShuffle4(shuffle32x4);
+        uint8_t mask = SimdShuffle::PackShuffle4(shuffle32x4);
         imms[imm_count++] = mask;
         src1_needs_reg = true;
         no_same_as_first = IsSupported(AVX);
@@ -5532,18 +5531,18 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
         src0_needs_reg = true;
         src1_needs_reg = true;
         imms[imm_count++] = shuffle_mask;
-        uint8_t blend_mask = wasm::SimdShuffle::PackBlend4(shuffle32x4);
+        uint8_t blend_mask = SimdShuffle::PackBlend4(shuffle32x4);
         imms[imm_count++] = blend_mask;
       }
     }
-  } else if (wasm::SimdShuffle::TryMatch16x8Shuffle(shuffle, shuffle16x8)) {
+  } else if (SimdShuffle::TryMatch16x8Shuffle(shuffle, shuffle16x8)) {
     uint8_t blend_mask;
-    if (wasm::SimdShuffle::TryMatchBlend(shuffle)) {
+    if (SimdShuffle::TryMatchBlend(shuffle)) {
       opcode = kX64S16x8Blend;
-      blend_mask = wasm::SimdShuffle::PackBlend8(shuffle16x8);
+      blend_mask = SimdShuffle::PackBlend8(shuffle16x8);
       imms[imm_count++] = blend_mask;
       no_same_as_first = CpuFeatures::IsSupported(AVX);
-    } else if (wasm::SimdShuffle::TryMatchSplat<8>(shuffle, &index)) {
+    } else if (SimdShuffle::TryMatchSplat<8>(shuffle, &index)) {
       opcode = kX64S16x8Dup;
       src0_needs_reg = false;
       imms[imm_count++] = index;
@@ -5552,13 +5551,13 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
       // Half-shuffles don't need DefineSameAsFirst or UseRegister(src0).
       no_same_as_first = true;
       src0_needs_reg = false;
-      uint8_t mask_lo = wasm::SimdShuffle::PackShuffle4(shuffle16x8);
-      uint8_t mask_hi = wasm::SimdShuffle::PackShuffle4(shuffle16x8 + 4);
+      uint8_t mask_lo = SimdShuffle::PackShuffle4(shuffle16x8);
+      uint8_t mask_hi = SimdShuffle::PackShuffle4(shuffle16x8 + 4);
       imms[imm_count++] = mask_lo;
       imms[imm_count++] = mask_hi;
       if (!is_swizzle) imms[imm_count++] = blend_mask;
     }
-  } else if (wasm::SimdShuffle::TryMatchSplat<16>(shuffle, &index)) {
+  } else if (SimdShuffle::TryMatchSplat<16>(shuffle, &index)) {
     opcode = kX64S8x16Dup;
     no_same_as_first = false;
     src0_needs_reg = true;
@@ -5572,7 +5571,7 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
         shuffle[i] ^= kSimd128Size;
       }
     }
-    if (wasm::SimdShuffle::TryMatchByteToDwordZeroExtend(shuffle)) {
+    if (SimdShuffle::TryMatchByteToDwordZeroExtend(shuffle)) {
       opcode = kX64I32X4ShiftZeroExtendI8x16;
       no_same_as_first = true;
       src0_needs_reg = true;
@@ -5593,10 +5592,10 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
     // Use same-as-first for general swizzle, but not shuffle.
     no_same_as_first = !is_swizzle;
     src0_needs_reg = !no_same_as_first;
-    imms[imm_count++] = wasm::SimdShuffle::Pack4Lanes(shuffle);
-    imms[imm_count++] = wasm::SimdShuffle::Pack4Lanes(shuffle + 4);
-    imms[imm_count++] = wasm::SimdShuffle::Pack4Lanes(shuffle + 8);
-    imms[imm_count++] = wasm::SimdShuffle::Pack4Lanes(shuffle + 12);
+    imms[imm_count++] = SimdShuffle::Pack4Lanes(shuffle);
+    imms[imm_count++] = SimdShuffle::Pack4Lanes(shuffle + 4);
+    imms[imm_count++] = SimdShuffle::Pack4Lanes(shuffle + 8);
+    imms[imm_count++] = SimdShuffle::Pack4Lanes(shuffle + 12);
     temps[temp_count++] = g.TempSimd128Register();
   }
 
@@ -5647,7 +5646,7 @@ void InstructionSelector::VisitI8x16Swizzle(OpIndex node) {
       // top bit is set, then we can avoid the paddusb in the codegen and simply
       // emit a pshufb.
       opcode |=
-          MiscField::encode(wasm::SimdSwizzle::AllInRangeOrTopBitSet(imms));
+          MiscField::encode(compiler::SimdSwizzle::AllInRangeOrTopBitSet(imms));
     }
   }
 

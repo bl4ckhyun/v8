@@ -3319,12 +3319,12 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
   uint8_t shuffle32x4[4];
   ArmOperandGenerator g(this);
   int index = 0;
-  if (wasm::SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
-    if (wasm::SimdShuffle::TryMatchSplat<4>(shuffle, &index)) {
+  if (SimdShuffle::TryMatch32x4Shuffle(shuffle, shuffle32x4)) {
+    if (SimdShuffle::TryMatchSplat<4>(shuffle, &index)) {
       DCHECK_GT(4, index);
       Emit(kArmS128Dup, g.DefineAsRegister(node), g.UseRegister(input0),
            g.UseImmediate(Neon32), g.UseImmediate(index % 4));
-    } else if (wasm::SimdShuffle::TryMatchIdentity(shuffle)) {
+    } else if (SimdShuffle::TryMatchIdentity(shuffle)) {
       // Bypass normal shuffle code generation in this case.
       // EmitIdentity
       MarkAsUsed(input0);
@@ -3336,17 +3336,17 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
       InstructionOperand src0 = g.UseUniqueRegister(input0);
       InstructionOperand src1 = is_swizzle ? src0 : g.UseUniqueRegister(input1);
       Emit(kArmS32x4Shuffle, g.DefineAsRegister(node), src0, src1,
-           g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle32x4)));
+           g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle32x4)));
     }
     return;
   }
-  if (wasm::SimdShuffle::TryMatchSplat<8>(shuffle, &index)) {
+  if (SimdShuffle::TryMatchSplat<8>(shuffle, &index)) {
     DCHECK_GT(8, index);
     Emit(kArmS128Dup, g.DefineAsRegister(node), g.UseRegister(input0),
          g.UseImmediate(Neon16), g.UseImmediate(index % 8));
     return;
   }
-  if (wasm::SimdShuffle::TryMatchSplat<16>(shuffle, &index)) {
+  if (SimdShuffle::TryMatchSplat<16>(shuffle, &index)) {
     DCHECK_GT(16, index);
     Emit(kArmS128Dup, g.DefineAsRegister(node), g.UseRegister(input0),
          g.UseImmediate(Neon8), g.UseImmediate(index % 16));
@@ -3359,7 +3359,7 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
     return;
   }
   uint8_t offset;
-  if (wasm::SimdShuffle::TryMatchConcat(shuffle, &offset)) {
+  if (SimdShuffle::TryMatchConcat(shuffle, &offset)) {
     Emit(kArmS8x16Concat, g.DefineAsRegister(node), g.UseRegister(input0),
          g.UseRegister(input1), g.UseImmediate(offset));
     return;
@@ -3368,10 +3368,10 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
   InstructionOperand src0, src1;
   ArrangeShuffleTable(&g, input0, input1, &src0, &src1);
   Emit(kArmI8x16Shuffle, g.DefineAsRegister(node), src0, src1,
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 4)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 8)),
-       g.UseImmediate(wasm::SimdShuffle::Pack4Lanes(shuffle + 12)));
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 4)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 8)),
+       g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 12)));
 }
 
 void InstructionSelector::VisitSetStackPointer(OpIndex node) {

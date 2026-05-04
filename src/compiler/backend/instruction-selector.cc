@@ -27,7 +27,7 @@
 #include "src/zone/zone-containers.h"
 
 #if V8_ENABLE_WEBASSEMBLY
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 namespace v8 {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "src/wasm/simd-shuffle.h"
+#include "src/compiler/backend/simd-shuffle.h"
 
 #include "test/unittests/test-utils.h"
 #include "testing/gmock-support.h"
@@ -11,8 +11,8 @@ using ::testing::ElementsAre;
 
 namespace v8 {
 namespace internal {
-namespace wasm {
-// Helper to make calls to private wasm shuffle functions.
+namespace compiler {
+// Helper to make calls to private shuffle functions.
 class SimdShuffleTest : public ::testing::Test {
  public:
   template <int Size, typename = std::enable_if_t<Size == kSimd128HalfSize ||
@@ -875,6 +875,6 @@ TEST_F(SimdShuffleTest, TryMatchShufps256) {
 
 #endif  // V8_TARGET_ARCH_X64
 
-}  // namespace wasm
+}  // namespace compiler
 }  // namespace internal
 }  // namespace v8
