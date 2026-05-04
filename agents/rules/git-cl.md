@@ -12,6 +12,8 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
 - **Always Format**: Run `git cl format` before creating a commit or uploading a
   CL.
 - **Uploading to Gerrit**:
+  - **Wrap Commit Message**: Ensure commit message descriptions are strictly
+    wrapped at 78 characters.
   - **Always use `-t` and/or `--commit-description`** for `git cl upload`
     instead of the deprecated `-m` flag, to avoid interactive editors.
   - **Ensure Non-Interactive Behavior**: When committing, amending, or uploading
@@ -35,7 +37,12 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
     CL description **out-of-date** or inaccurate, you **MUST** explicitly update
     it by passing `--commit-description="New cohesive description content"`.
   - Verify `git diff` is not empty before uploading.
-- **Safeguards**:
+- **Safeguards & Code Quality**:
+  - **No Trailing Whitespace**: NEVER add trailing whitespace in any file you
+    create or modify.
+  - **Always Test Before Upload**: Always run tests (at least in release mode)
+    before uploading, unless conditional testing (e.g., via `gm.py` or
+    `check_and_test.sh`) indicates that it is unnecessary.
   - **ALWAYS keep CLs separate**: Use standard `git worktree` to create an
     isolated workspace for each independent task or CL. NEVER upload a CL from a
     workspace containing unrelated modifications. Always verify that the diff
@@ -43,23 +50,24 @@ These rules ensure correct usage of the Chromium-specific `git cl` tool in V8.
   - **Consult user on external changes**: When `git cl upload` detects external
     changes on Gerrit and prompts to fetch them or override, the agent MUST stop
     and ask the user for guidance, unless explicitly instructed otherwise.
-  - Before performing any CL operations, ensure you have consulted the user
-    regarding the isolation strategy as defined in the `v8-workflow` skill
-    (e.g., branch vs. worktree).
-  - Preserve the issue number when reusing a CL instead of running
-    `git cl issue 0`.
-  - Before uploading, run `git cl status` to verify the Issue Description
-    matches your task.
-  - Review the modified files (`git show --stat`) or run
-    `git diff --name-only origin/main..HEAD` to ensure no unrelated files are
-    included. If you see commits or files that are not part of your specific
+  - **Verify Isolation Strategy**: Before performing any CL operations, ensure
+    you have consulted the user regarding the isolation strategy as defined in
+    the `v8-workflow` skill (e.g., branch vs. worktree).
+  - **Preserve Issue Number**: Preserve the issue number when reusing a CL
+    instead of running `git cl issue 0`.
+  - **Verify Issue Description**: Before uploading, run `git cl status` to
+    verify the Issue Description matches your task.
+  - **Review Modified Files**: Review the modified files (`git show --stat`) or
+    run `git diff --name-only origin/main..HEAD` to ensure no unrelated files
+    are included. If you see commits or files that are not part of your specific
     task, reset your branch to `origin/main` and cherry-pick only your intended
     commits instead of uploading.
-  - **Verify alignment** of the subsystem/context in `git cl status` before
-    proceeding, and consult the user if it seems mismatched.
-  - For CLs intended to contain ONLY process/documentation changes, verify that
-    no code files (e.g., `.cc`, `.h`, `.js`, `.py`) are modified using
-    `git diff --name-only origin/main`.
+  - **Verify Alignment**: Verify alignment of the subsystem/context in
+    `git cl status` before proceeding, and consult the user if it seems
+    mismatched.
+  - **Process-Only CLs**: For CLs intended to contain ONLY process/documentation
+    changes, verify that no code files (e.g., `.cc`, `.h`, `.js`, `.py`) are
+    modified using `git diff --name-only origin/main`.
 - **Proactive Alert Handling**: Always run `git cl status` after uploading. If
   you identify failing checks or try jobs, proactively suggest addressing these
   alerts to the user.
