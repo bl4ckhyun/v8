@@ -738,6 +738,13 @@ bool IC::UpdatePolymorphicIC(DirectHandle<Name> name,
           return false;
         }
 
+        // If the receiver type is a dictionary map and the handler is
+        // different, it means the dictionary rehashed. Go MEGAMORPHIC to
+        // prevent deopt loops.
+        if (map->is_dictionary_map()) {
+          return false;
+        }
+
         // If the receiver type is already in the polymorphic IC, this indicates
         // there was a prototoype chain failure. In that case, just overwrite
         // the handler.
@@ -1203,7 +1210,8 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
               MaybeObjectDirectHandle::Weak(lookup->GetPropertyCell())));
         }
         smi_handler =
-            LoadHandler::LoadNormal(isolate(), lookup->dictionary_entry());
+            LoadHandler::LoadNormal(isolate(), lookup->dictionary_entry(),
+                                    lookup->state() == LookupIterator::DATA);
 
         if (holder_is_lookup_start_object) {
           TRACE_HANDLER_STATS(isolate(), LoadIC_LoadNormalDH);
@@ -1260,7 +1268,8 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
         }
 
         smi_handler =
-            LoadHandler::LoadNormal(isolate(), lookup->dictionary_entry());
+            LoadHandler::LoadNormal(isolate(), lookup->dictionary_entry(),
+                                    lookup->state() == LookupIterator::DATA);
         if (holder_is_lookup_start_object) {
           TRACE_HANDLER_STATS(isolate(), LoadIC_LoadNormalDH);
           return MaybeObjectHandle(smi_handler);

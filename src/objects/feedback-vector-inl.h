@@ -598,8 +598,9 @@ void FeedbackNexus::IterateMapsWithUnclearedHandler(F function) const {
   // map/handler in the feedback array on-demand).
   for (FeedbackIterator it(this); !it.done(); it.Advance()) {
     DirectHandle<Map> map = config()->NewHandle(it.map());
-    if (!it.handler().IsCleared()) {
-      function(map);
+    Tagged<MaybeObject> handler_obj = it.handler();
+    if (!handler_obj.IsCleared()) {
+      function(map, handler_obj);
     }
   }
 }

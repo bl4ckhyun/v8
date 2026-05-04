@@ -4791,6 +4791,33 @@ void LoadNamedFromSuperGeneric::GenerateCode(MaglevAssembler* masm,
   masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
 }
 
+int LoadDictionaryField::MaxCallStackArgs() const {
+  return LoadWithVectorDescriptor::GetStackParameterCount();
+}
+void LoadDictionaryField::SetValueLocationConstraints() {
+  UseFixed(ContextInput(), kContextRegister);
+#if !defined(V8_TARGET_ARCH_X64) && !defined(V8_TARGET_ARCH_ARM64)
+  UseFixed(ObjectInput(), LoadDescriptor::ReceiverRegister());
+#else
+  UseRegister(ObjectInput());
+#endif
+  DefineAsRegister(this);
+}
+
+#if !defined(V8_TARGET_ARCH_X64) && !defined(V8_TARGET_ARCH_ARM64)
+void LoadDictionaryField::GenerateCode(MaglevAssembler* masm,
+                                       const ProcessingState& state) {
+  SaveRegisterStateForCall save_register_state(masm, register_snapshot());
+
+  __ CallBuiltin<Builtin::kLoadIC>(
+      ContextInput(), ObjectInput(), name().object(),
+      TaggedIndex::FromIntptr(feedback().index()), feedback().vector);
+  masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
+
+  __ Move(ToRegister(result()), kReturnRegister0);
+}
+#endif
+
 int SetNamedGeneric::MaxCallStackArgs() const {
   using D = CallInterfaceDescriptorFor<Builtin::kStoreIC>::type;
   return D::GetStackParameterCount();
@@ -8759,6 +8786,11 @@ void LoadNamedGeneric::PrintParams(std::ostream& os) const {
 
 void LoadNamedFromSuperGeneric::PrintParams(std::ostream& os) const {
   os << "(" << *name_.object() << ")";
+}
+
+void LoadDictionaryField::PrintParams(std::ostream& os) const {
+  os << " " << name().object();
+  os << " index=" << dictionary_index();
 }
 
 void SetNamedGeneric::PrintParams(std::ostream& os) const {

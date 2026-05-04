@@ -1049,8 +1049,8 @@ class V8_EXPORT_PRIVATE FeedbackNexus final {
       MapsAndHandlers* maps_and_handlers,
       TryUpdateHandler map_handler = TryUpdateHandler()) const;
   MaybeObjectDirectHandle FindHandlerForMap(DirectHandle<Map> map) const;
-  // Used to obtain maps. This is used by compilers to get all the feedback
-  // stored in the vector.
+  // Used to obtain maps and handlers. This is used by compilers to get all the
+  // feedback stored in the vector.
   template <typename F>
   void IterateMapsWithUnclearedHandler(F) const;
 

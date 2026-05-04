@@ -1525,6 +1525,12 @@ ProcessResult MaglevGraphOptimizer::VisitLoadNamedGeneric(
   return ProcessResult::kContinue;
 }
 
+ProcessResult MaglevGraphOptimizer::VisitLoadDictionaryField(
+    LoadDictionaryField* node, const ProcessingState& state) {
+  // TODO(b/424157317): Optimize.
+  return ProcessResult::kContinue;
+}
+
 ProcessResult MaglevGraphOptimizer::VisitLoadNamedFromSuperGeneric(
     LoadNamedFromSuperGeneric* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.

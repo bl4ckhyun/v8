@@ -5458,7 +5458,8 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildStoreField(
 
 MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyLoad(
     ValueNode* receiver, ValueNode* lookup_start_object, compiler::NameRef name,
-    compiler::PropertyAccessInfo const& access_info) {
+    compiler::PropertyAccessInfo const& access_info,
+    compiler::FeedbackSource const& feedback_source) {
   if (access_info.holder().has_value() && !access_info.HasDictionaryHolder()) {
     broker()->dependencies()->DependOnStablePrototypeChains(
         access_info.lookup_start_object_maps(), kStartAtPrototype,
@@ -5478,6 +5479,20 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyLoad(
       RecordKnownProperty(lookup_start_object, name, result,
                           AccessInfoGuaranteedConst(access_info),
                           compiler::AccessMode::kLoad);
+      return result;
+    }
+    case compiler::PropertyAccessInfo::kDictionaryDataField: {
+      ValueNode* load_source;
+      if (access_info.holder().has_value()) {
+        load_source = GetConstant(access_info.holder().value());
+      } else {
+        load_source = lookup_start_object;
+      }
+      ValueNode* result;
+      GET_VALUE_OR_ABORT(result, AddNewNode<LoadDictionaryField>(
+                                     {GetContext(), load_source}, name,
+                                     access_info.dictionary_index().as_int(),
+                                     feedback_source));
       return result;
     }
     case compiler::PropertyAccessInfo::kDictionaryProtoDataConstant: {
@@ -5561,6 +5576,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyStore(
     }
     case compiler::PropertyAccessInfo::kInvalid:
     case compiler::PropertyAccessInfo::kNotFound:
+    case compiler::PropertyAccessInfo::kDictionaryDataField:
     case compiler::PropertyAccessInfo::kDictionaryProtoDataConstant:
     case compiler::PropertyAccessInfo::kDictionaryProtoAccessorConstant:
     case compiler::PropertyAccessInfo::kModuleExport:
@@ -5574,11 +5590,12 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyStore(
 MaybeReduceResult MaglevGraphBuilder::TryBuildPropertyAccess(
     ValueNode* receiver, ValueNode* lookup_start_object, compiler::NameRef name,
     compiler::PropertyAccessInfo const& access_info,
-    compiler::AccessMode access_mode) {
+    compiler::AccessMode access_mode,
+    compiler::FeedbackSource const& feedback_source) {
   switch (access_mode) {
     case compiler::AccessMode::kLoad:
       return TryBuildPropertyLoad(receiver, lookup_start_object, name,
-                                  access_info);
+                                  access_info, feedback_source);
     case compiler::AccessMode::kStore:
     case compiler::AccessMode::kStoreInLiteral:
     case compiler::AccessMode::kDefine:
@@ -5680,8 +5697,17 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildNamedAccess(
       return {};
     }
 
-    compiler::PropertyAccessInfo access_info =
-        broker()->GetPropertyAccessInfo(map, feedback.name(), access_mode);
+    compiler::OptionalObjectRef handler;
+    auto it = std::find(feedback.maps().begin(), feedback.maps().end(), map);
+    if (it != feedback.maps().end()) {
+      size_t idx = std::distance(feedback.maps().begin(), it);
+      if (idx < feedback.handlers().size()) {
+        handler = feedback.handlers()[idx];
+      }
+    }
+
+    compiler::PropertyAccessInfo access_info = broker()->GetPropertyAccessInfo(
+        map, feedback.name(), access_mode, handler);
     access_infos_for_feedback.push_back(access_info);
   }
 
@@ -5718,13 +5744,14 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildNamedAccess(
 
     // Generate the actual property
     return TryBuildPropertyAccess(receiver, lookup_start_object,
-                                  feedback.name(), access_info, access_mode);
+                                  feedback.name(), access_info, access_mode,
+                                  feedback_source);
   } else {
     // TODO(victorgomes): Unify control flow logic with
     // TryBuildPolymorphicElementAccess.
     return TryBuildPolymorphicPropertyAccess(
-        receiver, lookup_start_object, feedback, access_mode, access_infos,
-        build_generic_access);
+        receiver, lookup_start_object, feedback, feedback_source, access_mode,
+        access_infos, build_generic_access);
   }
 }
 
@@ -6890,6 +6917,7 @@ template <typename GenericAccessFunc>
 MaybeReduceResult MaglevGraphBuilder::TryBuildPolymorphicPropertyAccess(
     ValueNode* receiver, ValueNode* lookup_start_object,
     compiler::NamedAccessFeedback const& feedback,
+    compiler::FeedbackSource const& feedback_source,
     compiler::AccessMode access_mode,
     const ZoneVector<compiler::PropertyAccessInfo>& access_infos,
     GenericAccessFunc&& build_generic_access) {
@@ -7021,8 +7049,9 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPolymorphicPropertyAccess(
       result = TryBuildPropertyStore(receiver, lookup_start_object,
                                      feedback.name(), access_info, access_mode);
     } else {
-      result = TryBuildPropertyLoad(receiver, lookup_start_object,
-                                    feedback.name(), access_info);
+      result =
+          TryBuildPropertyLoad(receiver, lookup_start_object, feedback.name(),
+                               access_info, feedback_source);
     }
 
     switch (result.kind()) {

@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "src/base/compiler-specific.h"
+#include "src/base/hashing.h"
 #include "src/base/macros.h"
 #include "src/base/platform/mutex.h"
 #include "src/codegen/optimized-compilation-info.h"
@@ -63,20 +64,20 @@ struct PropertyAccessTarget {
   MapRef map;
   NameRef name;
   AccessMode mode;
+  OptionalObjectRef handler;
 
   struct Hash {
     size_t operator()(const PropertyAccessTarget& pair) const {
-      return base::hash_combine(
-          base::hash_combine(pair.map.object().address(),
-                             pair.name.object().address()),
-          static_cast<int>(pair.mode));
+      return base::Hasher::Combine(
+          pair.map.object().address(), pair.name.object().address(), pair.mode,
+          pair.handler.has_value() ? pair.handler->object().address() : 0);
     }
   };
   struct Equal {
     bool operator()(const PropertyAccessTarget& lhs,
                     const PropertyAccessTarget& rhs) const {
       return lhs.map.equals(rhs.map) && lhs.name.equals(rhs.name) &&
-             lhs.mode == rhs.mode;
+             lhs.mode == rhs.mode && lhs.handler == rhs.handler;
     }
   };
 };
@@ -248,8 +249,9 @@ class V8_EXPORT_PRIVATE JSHeapBroker {
 
   OptionalNameRef GetNameFeedback(FeedbackNexus const& nexus);
 
-  PropertyAccessInfo GetPropertyAccessInfo(MapRef map, NameRef name,
-                                           AccessMode access_mode);
+  PropertyAccessInfo GetPropertyAccessInfo(
+      MapRef map, NameRef name, AccessMode access_mode,
+      OptionalObjectRef handler = OptionalObjectRef());
 
   StringRef GetTypedArrayStringTag(ElementsKind kind);
 

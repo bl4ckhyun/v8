@@ -316,6 +316,7 @@ class ExceptionHandlerInfo;
   V(LoadGlobal)                                                       \
   V(LoadNamedGeneric)                                                 \
   V(LoadNamedFromSuperGeneric)                                        \
+  V(LoadDictionaryField)                                              \
   V(MaybeGrowFastElements)                                            \
   V(MigrateMapIfNeeded)                                               \
   V(SetNamedGeneric)                                                  \
@@ -9339,6 +9340,47 @@ class LoadNamedFromSuperGeneric
 
  private:
   const compiler::NameRef name_;
+  const compiler::FeedbackSource feedback_;
+};
+
+class LoadDictionaryField
+    : public FixedInputValueNodeT<2, LoadDictionaryField> {
+ public:
+  explicit LoadDictionaryField(uint64_t bitfield, compiler::NameRef name,
+                               int dictionary_index,
+                               compiler::FeedbackSource feedback)
+      : Base(bitfield),
+        name_(name),
+        dictionary_index_(dictionary_index),
+        feedback_(feedback) {
+    set_temporaries_needed(3);
+  }
+
+  static constexpr OpProperties kProperties =
+#if !defined(V8_TARGET_ARCH_X64) && !defined(V8_TARGET_ARCH_ARM64)
+      OpProperties::Call() |
+#endif
+      OpProperties::CanCallUserCode() | OpProperties::DeferredCall();
+
+  DECLARE_INPUTS(Context, Object)
+  DECLARE_INPUT_TYPES(Tagged, Tagged)
+
+  int MaxCallStackArgs() const;
+  void SetValueLocationConstraints();
+  void GenerateCode(MaglevAssembler* masm, const ProcessingState& state);
+  void PrintParams(std::ostream& os) const;
+
+  compiler::NameRef name() const { return name_; }
+  int dictionary_index() const { return dictionary_index_; }
+  compiler::FeedbackSource feedback() const { return feedback_; }
+
+  auto options() const {
+    return std::tuple{name_, dictionary_index_, feedback_};
+  }
+
+ private:
+  const compiler::NameRef name_;
+  const int dictionary_index_;
   const compiler::FeedbackSource feedback_;
 };
 

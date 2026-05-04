@@ -57,6 +57,7 @@
 #include "src/maglev/maglev-ir-inl.h"
 #include "src/maglev/maglev-ir.h"
 #include "src/objects/contexts.h"
+#include "src/objects/dictionary.h"
 #include "src/objects/elements-kind.h"
 #include "src/objects/heap-object.h"
 #include "src/objects/js-array-buffer.h"
@@ -2163,6 +2164,65 @@ class GraphBuildingNodeProcessor {
 
     GENERATE_AND_MAP_BUILTIN_CALL(node, Builtin::kLoadIC, frame_state,
                                   base::VectorOf(arguments));
+    return maglev::ProcessResult::kContinue;
+  }
+  maglev::ProcessResult Process(maglev::LoadDictionaryField* node,
+                                const maglev::ProcessingState& state) {
+    GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());
+
+    V<Object> object = Map(node->ObjectInput());
+    V<Name> name = __ HeapConstant(node->name().object());
+
+    Label<Object> done(this);
+
+    V<HeapObject> properties = __ LoadTaggedField<HeapObject>(
+        object, offsetof(JSReceiver, properties_or_hash_));
+
+    if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
+      UNREACHABLE();
+    } else {
+      int entry_index = NameDictionary::kElementsStartIndex +
+                        node->dictionary_index() * NameDictionary::kEntrySize;
+      int max_index = entry_index + NameDictionary::kEntrySize - 1;
+
+      V<Word32> length = V<Word32>::Cast(__ Load(
+          properties, LoadOp::Kind::TaggedBase(),
+          MemoryRepresentation::Uint32(), FixedArrayBase::kLengthOffset));
+
+      IF (LIKELY(__ Uint32LessThan(__ Word32Constant(max_index), length))) {
+        int key_offset = NameDictionary::OffsetOfElementAt(
+            entry_index + NameDictionary::kEntryKeyIndex);
+        V<Object> key = __ LoadTaggedField(properties, key_offset);
+
+        IF (LIKELY(__ TaggedEqual(key, name))) {
+          int details_offset = NameDictionary::OffsetOfElementAt(
+              entry_index + NameDictionary::kEntryDetailsIndex);
+          V<Object> details = __ LoadTaggedField(properties, details_offset);
+
+          V<Word32> details_int = __ UntagSmi(V<Smi>::Cast(details));
+          V<Word32> kind = __ Word32BitwiseAnd(
+              details_int, PropertyDetails::KindField::kMask);
+          IF (LIKELY(__ Word32Equal(kind, PropertyDetails::KindField::encode(
+                                              PropertyKind::kData)))) {
+            int value_offset = NameDictionary::OffsetOfElementAt(
+                entry_index + NameDictionary::kEntryValueIndex);
+            V<Object> value = __ LoadTaggedField(properties, value_offset);
+            GOTO(done, value);
+          }
+        }
+      }
+    }
+
+    OpIndex arguments[] = {
+        object, name, __ TaggedIndexConstant(node->feedback().index()),
+        __ HeapConstant(node->feedback().vector), Map(node->ContextInput())};
+
+    V<Object> fallback_result = V<Object>::Cast(GenerateBuiltinCall(
+        node, Builtin::kLoadIC, frame_state, base::VectorOf(arguments)));
+    GOTO(done, fallback_result);
+
+    BIND(done, result);
+    SetMap(node, result);
     return maglev::ProcessResult::kContinue;
   }
 
