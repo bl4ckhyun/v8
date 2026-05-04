@@ -2232,8 +2232,10 @@ bool TryEmitUbfx(InstructionSelector* selector, Arm64OperandGenerator& g,
       selector->CanCover(node, bitwise_and.left()) &&
       selector->MatchUnsignedIntegralConstant(bitwise_and.right(), &mask)) {
     const auto& shift = lhs.Cast<ShiftOp>();
-    bool is_shr = (shift.kind == ShiftOp::Kind::kShiftRightLogical ||
-                   shift.kind == ShiftOp::Kind::kShiftRightArithmetic);
+    bool is_shr =
+        (shift.kind == ShiftOp::Kind::kShiftRightLogical ||
+         shift.kind == ShiftOp::Kind::kShiftRightArithmetic ||
+         shift.kind == ShiftOp::Kind::kShiftRightArithmeticShiftOutZeros);
     if (!is_shr) {
       return false;
     }
@@ -2250,7 +2252,8 @@ bool TryEmitUbfx(InstructionSelector* selector, Arm64OperandGenerator& g,
         // For arithmetic right shifts, we can only use ubfx if the mask does
         // not include any of the sign bits introduced by the shift.
         bool is_arithmetic =
-            (shift.kind == ShiftOp::Kind::kShiftRightArithmetic);
+            (shift.kind == ShiftOp::Kind::kShiftRightArithmetic ||
+             shift.kind == ShiftOp::Kind::kShiftRightArithmeticShiftOutZeros);
         uint32_t lsb = static_cast<uint32_t>(shift_by & kBitLengthMask);
         if (is_arithmetic && lsb + mask_width > bit_length) {
           return false;

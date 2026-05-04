@@ -1647,14 +1647,20 @@ class MachineLoweringReducer : public Next {
       case TruncateJSPrimitiveToUntaggedOp::UntaggedKind::kInt32: {
         if (input_assumptions ==
             TruncateJSPrimitiveToUntaggedOp::InputAssumptions::kSmiOrHole) {
-          ScopedVar<Word32> result(this);
+          // Merge in the tagged domain and untag once at the end. This keeps
+          // the UntagSmi out of the Smi-branch so consumers see a single
+          // ShiftRightArithmeticShiftOutZeros (untag) feeding their own shift
+          // or mask, enabling the consecutive-shift fold and the Ubfx pattern
+          // in arm64 instruction selection.
+          // Hole -> undefined -> NaN -> truncates to zero, which equals
+          // UntagSmi(Smi::zero()).
+          ScopedVar<Object> tagged(this);
           IF (LIKELY(__ ObjectIsSmi(object))) {
-            result = __ UntagSmi(V<Smi>::Cast(object));
+            tagged = object;
           } ELSE {
-            // Hole -> undefined -> NaN -> truncates to zero.
-            result = __ Word32Constant(0);
+            tagged = __ SmiZeroConstant();
           }
-          return result;
+          return __ UntagSmi(V<Smi>::Cast(V<Object>(tagged)));
         }
 
         DCHECK_EQ(input_assumptions,

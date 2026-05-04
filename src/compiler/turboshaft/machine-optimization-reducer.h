@@ -1983,6 +1983,49 @@ class MachineOptimizationReducer : public Next {
           }
         }
       }
+      // Fold consecutive right shifts of the same kind:
+      //   (x >> a) >> b  =>  x >> (a + b)  if a + b < rep.bit_width()
+      // For arithmetic shifts we also handle the
+      // `kShiftRightArithmeticShiftOutZeros` variant: this kind requires that
+      // the shifted-out bits are zero, which we cannot in general prove for a
+      // composed shift. So if either input is plain `kShiftRightArithmetic`
+      // we demote the result to plain `kShiftRightArithmetic`; only when both
+      // inputs are `kShiftRightArithmeticShiftOutZeros` do we keep that kind.
+      // Mixing logical and arithmetic shifts is unsafe (different sign
+      // behaviour for the bits between `a` and `a+b`), so we only fold
+      // logical+logical and arithmetic+arithmetic.
+      if (kind == any_of(Kind::kShiftRightArithmetic,
+                         Kind::kShiftRightArithmeticShiftOutZeros,
+                         Kind::kShiftRightLogical)) {
+        V<Word> x;
+        ShiftOp::Kind inner_kind;
+        WordRepresentation inner_rep;
+        int inner_amount;
+        if (matcher_.MatchConstantShift(left, &x, &inner_kind, &inner_rep,
+                                        &inner_amount) &&
+            inner_rep == rep && inner_amount + amount < rep.bit_width()) {
+          bool inner_is_arith =
+              inner_kind == Kind::kShiftRightArithmetic ||
+              inner_kind == Kind::kShiftRightArithmeticShiftOutZeros;
+          bool outer_is_arith =
+              kind == Kind::kShiftRightArithmetic ||
+              kind == Kind::kShiftRightArithmeticShiftOutZeros;
+          if (inner_is_arith && outer_is_arith) {
+            Kind combined_kind =
+                (inner_kind == Kind::kShiftRightArithmeticShiftOutZeros &&
+                 kind == Kind::kShiftRightArithmeticShiftOutZeros)
+                    ? Kind::kShiftRightArithmeticShiftOutZeros
+                    : Kind::kShiftRightArithmetic;
+            return __ Shift(x, inner_amount + amount, combined_kind, rep);
+          }
+          if (inner_kind == Kind::kShiftRightLogical &&
+              kind == Kind::kShiftRightLogical) {
+            return __ Shift(x, inner_amount + amount, Kind::kShiftRightLogical,
+                            rep);
+          }
+          // Mixed logical/arithmetic: skip for safety.
+        }
+      }
       if (rep == WordRepresentation::Word32() &&
           SupportedOperations::word32_shift_is_safe()) {
         // Remove the explicit 'and' with 0x1F if the shift provided by the
