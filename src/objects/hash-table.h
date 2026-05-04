@@ -236,6 +236,14 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
       IsolateT* isolate, HandleType<Derived> table, int n = 1,
       AllocationType allocation = AllocationType::kYoung);
 
+  // Like EnsureCapacity, but returns an empty handle instead of reporting a
+  // fatal OOM error when the maximum table capacity is exceeded.
+  template <typename IsolateT, template <typename> typename HandleType>
+    requires(std::is_convertible_v<HandleType<Derived>, DirectHandle<Derived>>)
+  V8_WARN_UNUSED_RESULT static typename HandleType<Derived>::MaybeType
+  TryEnsureCapacity(IsolateT* isolate, HandleType<Derived> table, int n = 1,
+                    AllocationType allocation = AllocationType::kYoung);
+
   // Returns true if this table has sufficient capacity for adding n elements.
   bool HasSufficientCapacityToAdd(int number_of_additional_elements);
 
@@ -299,44 +307,53 @@ class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) HashTable
   void Swap(InternalIndex entry1, InternalIndex entry2, WriteBarrierMode mode);
 };
 
-#define EXTERN_DECLARE_HASH_TABLE(DERIVED, SHAPE)                            \
-  extern template class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)           \
-      HashTable<class DERIVED, SHAPE>;                                       \
-                                                                             \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                 \
-      MaybeHandle<DERIVED>                                                   \
-      HashTable<DERIVED, SHAPE>::TryNew(Isolate*, uint32_t, AllocationType,  \
-                                        MinimumCapacity);                    \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                 \
-      MaybeHandle<DERIVED>                                                   \
-      HashTable<DERIVED, SHAPE>::TryNew(LocalIsolate*, uint32_t,             \
-                                        AllocationType, MinimumCapacity);    \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED> \
-  HashTable<DERIVED, SHAPE>::New(Isolate*, uint32_t, AllocationType,         \
-                                 MinimumCapacity);                           \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED> \
-  HashTable<DERIVED, SHAPE>::New(LocalIsolate*, uint32_t, AllocationType,    \
-                                 MinimumCapacity);                           \
-                                                                             \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED> \
-  HashTable<DERIVED, SHAPE>::EnsureCapacity(Isolate*, Handle<DERIVED>, int,  \
-                                            AllocationType);                 \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED> \
-  HashTable<DERIVED, SHAPE>::EnsureCapacity(LocalIsolate*, Handle<DERIVED>,  \
-                                            int, AllocationType);            \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                 \
-      DirectHandle<DERIVED>                                                  \
-      HashTable<DERIVED, SHAPE>::EnsureCapacity(                             \
-          Isolate*, DirectHandle<DERIVED>, int, AllocationType);             \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                 \
-      DirectHandle<DERIVED>                                                  \
-      HashTable<DERIVED, SHAPE>::EnsureCapacity(                             \
-          LocalIsolate*, DirectHandle<DERIVED>, int, AllocationType);        \
-                                                                             \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED> \
-  HashTable<DERIVED, SHAPE>::Shrink(Isolate*, Handle<DERIVED>, int);         \
-  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                 \
-      DirectHandle<DERIVED>                                                  \
+#define EXTERN_DECLARE_HASH_TABLE(DERIVED, SHAPE)                             \
+  extern template class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)            \
+      HashTable<class DERIVED, SHAPE>;                                        \
+                                                                              \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      MaybeHandle<DERIVED>                                                    \
+      HashTable<DERIVED, SHAPE>::TryNew(Isolate*, uint32_t, AllocationType,   \
+                                        MinimumCapacity);                     \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      MaybeHandle<DERIVED>                                                    \
+      HashTable<DERIVED, SHAPE>::TryNew(LocalIsolate*, uint32_t,              \
+                                        AllocationType, MinimumCapacity);     \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED>  \
+  HashTable<DERIVED, SHAPE>::New(Isolate*, uint32_t, AllocationType,          \
+                                 MinimumCapacity);                            \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED>  \
+  HashTable<DERIVED, SHAPE>::New(LocalIsolate*, uint32_t, AllocationType,     \
+                                 MinimumCapacity);                            \
+                                                                              \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED>  \
+  HashTable<DERIVED, SHAPE>::EnsureCapacity(Isolate*, Handle<DERIVED>, int,   \
+                                            AllocationType);                  \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED>  \
+  HashTable<DERIVED, SHAPE>::EnsureCapacity(LocalIsolate*, Handle<DERIVED>,   \
+                                            int, AllocationType);             \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      DirectHandle<DERIVED>                                                   \
+      HashTable<DERIVED, SHAPE>::EnsureCapacity(                              \
+          Isolate*, DirectHandle<DERIVED>, int, AllocationType);              \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      DirectHandle<DERIVED>                                                   \
+      HashTable<DERIVED, SHAPE>::EnsureCapacity(                              \
+          LocalIsolate*, DirectHandle<DERIVED>, int, AllocationType);         \
+                                                                              \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      MaybeHandle<DERIVED>                                                    \
+      HashTable<DERIVED, SHAPE>::TryEnsureCapacity(Isolate*, Handle<DERIVED>, \
+                                                   int, AllocationType);      \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      MaybeDirectHandle<DERIVED>                                              \
+      HashTable<DERIVED, SHAPE>::TryEnsureCapacity(                           \
+          Isolate*, DirectHandle<DERIVED>, int, AllocationType);              \
+                                                                              \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE) Handle<DERIVED>  \
+  HashTable<DERIVED, SHAPE>::Shrink(Isolate*, Handle<DERIVED>, int);          \
+  extern template EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)                  \
+      DirectHandle<DERIVED>                                                   \
       HashTable<DERIVED, SHAPE>::Shrink(Isolate*, DirectHandle<DERIVED>, int);
 
 // HashTableKey is an abstract superclass for virtual key behavior.
