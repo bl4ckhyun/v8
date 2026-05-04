@@ -7416,9 +7416,6 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
         RecordTrapInfoIfNeeded(zone(), this, opcode, instr, __ pc_offset());
         __ lock();
         __ cmpxchgl(i.MemoryOperand(2), i.InputRegister(1));
-        // Decompress pointer if not yet decompressed. (It is already
-        // decompressed if the compared value matches the memory location.)
-        __ orq(i.OutputRegister(0), kPtrComprCageBaseRegister);
       } else {
         __ movq(written_value, i.InputRegister(1));
         RecordTrapInfoIfNeeded(zone(), this, opcode, instr, __ pc_offset());
@@ -7426,25 +7423,31 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
         __ cmpxchgq(i.MemoryOperand(2), i.InputRegister(1));
       }
 
-      if (v8_flags.disable_write_barriers) break;
-
       // Emit write barrier.
-      auto ool = zone()->New<OutOfLineRecordWrite>(
-          this, object, i.MemoryOperand(2), written_value, scratch0, scratch1,
-          RecordWriteMode::kValueIsAny, DetermineStubCallMode());
-      __ j(not_equal, ool->exit());
-      __ JumpIfSmi(written_value, ool->exit());
+      if (!v8_flags.disable_write_barriers) {
+        auto ool = zone()->New<OutOfLineRecordWrite>(
+            this, object, i.MemoryOperand(2), written_value, scratch0, scratch1,
+            RecordWriteMode::kValueIsAny, DetermineStubCallMode());
+        __ j(not_equal, ool->exit());
+        __ JumpIfSmi(written_value, ool->exit());
 #if V8_ENABLE_STICKY_MARK_BITS_BOOL
-      __ CheckPageFlag(object, scratch0, MemoryChunk::kIncrementalMarking,
-                       not_zero, ool->stub_call());
-      __ CheckMarkBit(object, scratch0, scratch1, carry, ool->entry());
+        __ CheckPageFlag(object, scratch0, MemoryChunk::kIncrementalMarking,
+                         not_zero, ool->stub_call());
+        __ CheckMarkBit(object, scratch0, scratch1, carry, ool->entry());
 #else   // !V8_ENABLE_STICKY_MARK_BITS_BOOL
-      static_assert(WriteBarrier::kUninterestingPagesCanBeSkipped);
-      __ CheckPageFlag(object, scratch0,
-                       MemoryChunk::kPointersFromHereAreInterestingMask,
-                       not_zero, ool->entry());
+        static_assert(WriteBarrier::kUninterestingPagesCanBeSkipped);
+        __ CheckPageFlag(object, scratch0,
+                         MemoryChunk::kPointersFromHereAreInterestingMask,
+                         not_zero, ool->entry());
 #endif  // !V8_ENABLE_STICKY_MARK_BITS_BOOL
-      __ bind(ool->exit());
+        __ bind(ool->exit());
+      }
+
+      if constexpr (COMPRESS_POINTERS_BOOL) {
+        // Decompress pointer if not yet decompressed. (It is already
+        // decompressed if the compared value matches the memory location.)
+        __ orq(i.OutputRegister(0), kPtrComprCageBaseRegister);
+      }
       break;
     }
     case kX64Word64AtomicExchangeUint64: {
