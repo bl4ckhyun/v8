@@ -1344,31 +1344,23 @@ void LiftoffAssembler::AtomicCompareExchange(
       case StoreType::kI64Store8:
       case StoreType::kI32Store8:
         DCHECK_NULL(trapping_load_pc);
-        if (result.gp() != expected.gp()) {
-          mov(result.gp().W(), expected.gp().W());
-        }
+        mov(result.gp().W(), expected.gp().W());
         casalb(result.gp().W(), new_value.gp().W(), MemOperand(actual_addr));
         break;
       case StoreType::kI64Store16:
       case StoreType::kI32Store16:
         DCHECK_NULL(trapping_load_pc);
-        if (result.gp() != expected.gp()) {
-          mov(result.gp().W(), expected.gp().W());
-        }
+        mov(result.gp().W(), expected.gp().W());
         casalh(result.gp().W(), new_value.gp().W(), MemOperand(actual_addr));
         break;
       case StoreType::kI64Store32:
       case StoreType::kI32Store:
-        if (result.gp() != expected.gp()) {
-          mov(result.gp().W(), expected.gp().W());
-        }
+        mov(result.gp().W(), expected.gp().W());
         if (trapping_load_pc) *trapping_load_pc = pc_offset();
         casal(result.gp().W(), new_value.gp().W(), MemOperand(actual_addr));
         break;
       case StoreType::kI64Store:
-        if (result.gp() != expected.gp()) {
-          mov(result.gp().X(), expected.gp().X());
-        }
+        mov(result.gp().X(), expected.gp().X());
         if (trapping_load_pc) *trapping_load_pc = pc_offset();
         casal(result.gp().X(), new_value.gp().X(), MemOperand(actual_addr));
         break;
