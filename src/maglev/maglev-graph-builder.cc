@@ -5765,6 +5765,9 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildHomomorphicNamedAccess(
   GET_VALUE_OR_ABORT(
       result, BuildLoadTaggedField(holder, kTaggedSize * offset_in_words));
   if (is_double) {
+    RETURN_IF_ABORT(
+        AddNewNode<CheckInstanceType>({result}, CheckType::kCheckHeapObject,
+                                      HEAP_NUMBER_TYPE, HEAP_NUMBER_TYPE));
     result = AddNewNodeNoInputConversion<LoadFloat64>(
         {result}, static_cast<int>(offsetof(HeapNumber, value_)));
   }

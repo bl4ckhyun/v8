@@ -2333,7 +2333,7 @@ void CheckHomomorphicMap::GenerateCode(MaglevAssembler* masm,
 
     // Reading the array entry clobbers the array.
     Register array_entry = array;
-    __ LoadTaggedFieldByIndex(array_entry, array, cache_index, kTaggedSizeLog2,
+    __ LoadTaggedFieldByIndex(array_entry, array, cache_index, kTaggedSize,
                               OFFSET_OF_DATA_START(WeakHomomorphicFixedArray));
 
     Register weak_map = scratch;  // reuse cache_index register

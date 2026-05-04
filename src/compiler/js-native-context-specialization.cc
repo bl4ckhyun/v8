@@ -1874,6 +1874,21 @@ Reduction JSNativeContextSpecialization::ReduceHomomorphicAccess(
       holder, effect, control);
 
   if (is_double) {
+    // With in-place field representation changes it is possible that this is
+    // no longer a heap number without map transitions (generalized from Double
+    // to Tagged in-place). So we need to verify the loaded value is a heap
+    // number.
+    result = effect = graph()->NewNode(simplified()->CheckHeapObject(), result,
+                                       effect, control);
+    Node* map = effect =
+        graph()->NewNode(simplified()->LoadField(AccessBuilder::ForMap()),
+                         result, effect, control);
+    Node* is_heap_number = graph()->NewNode(simplified()->ReferenceEqual(), map,
+                                            jsgraph()->HeapNumberMapConstant());
+    effect = graph()->NewNode(
+        simplified()->CheckIf(DeoptimizeReason::kNotAHeapNumber),
+        is_heap_number, effect, control);
+
     result = effect = graph()->NewNode(
         simplified()->LoadField(AccessBuilder::ForHeapNumberValue()), result,
         effect, control);
