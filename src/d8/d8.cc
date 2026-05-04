@@ -6467,7 +6467,12 @@ bool Shell::SetOptions(int argc, char* argv[]) {
         check_d8_flag_contradictions = true;
         exit_on_flag_contradictions = false;
       }
-    } else if (FlagMatches("--fuzzing", &argv[i], /*keep_flag=*/true)) {
+    } else if (FlagMatches("--fuzzing", &argv[i], /*keep_flag=*/true) ||
+               FlagMatches("--sandbox-fuzzing", &argv[i], /*keep_flag=*/true)) {
+      // Set v8_flags.fuzzing early because this is tested in some locations to
+      // decide how to handle conflicting flags (it would later be set by
+      // implications but we need it being set earlier).
+      i::v8_flags.fuzzing = true;
       if (!flag_processing_mode_explicitly_set) {
         check_d8_flag_contradictions = false;
       }

@@ -1237,6 +1237,9 @@ void FlagList::ResolveContradictionsWhenFuzzing() {
       CONTRADICTION(disable_optimizing_compilers, stress_maglev),
       CONTRADICTION(disable_optimizing_compilers,
                     turboshaft_wasm_in_js_inlining),
+      CONTRADICTION(disable_optimizing_compilers, turbolev_future),
+      CONTRADICTION(disable_optimizing_compilers,
+                    turbolev_inline_js_wasm_wrappers),
       CONTRADICTION(jit_fuzzing, max_lazy),
       CONTRADICTION(jitless, maglev_as_top_tier),
       CONTRADICTION(jitless, maglev_future),
@@ -1247,6 +1250,12 @@ void FlagList::ResolveContradictionsWhenFuzzing() {
       CONTRADICTION(jitless, turbolev_inline_js_wasm_wrappers),
       CONTRADICTION(jitless, turboshaft_wasm_in_js_inlining),
       CONTRADICTION(jitless, verify_turboshaft),
+#if V8_ENABLE_WEBASSEMBLY
+      CONTRADICTION(wasm_jitless_if_available_for_testing, turbolev),
+      CONTRADICTION(wasm_jitless_if_available_for_testing, turbolev_future),
+      CONTRADICTION(wasm_jitless_if_available_for_testing,
+                    turbolev_inline_js_wasm_wrappers),
+#endif  // V8_ENABLE_WEBASSEMBLY
       CONTRADICTION(lite_mode, maglev_as_top_tier),
       CONTRADICTION(lite_mode, maglev_future),
       CONTRADICTION(lite_mode, predictable_gc_schedule),
