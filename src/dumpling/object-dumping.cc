@@ -56,8 +56,7 @@ void JSObjectFuzzingPrintInternalIndexRange(Tagged<JSObject> obj,
   Isolate* isolate = Isolate::Current();
 
   HandleScope scope(isolate);
-  Tagged<DescriptorArray> descriptors =
-      obj->map()->instance_descriptors(isolate);
+  Tagged<DescriptorArray> descriptors = obj->map()->instance_descriptors();
 
   std::optional<Tagged<NameDictionary>> dict;
   std::optional<ReadOnlyRoots> roots;
@@ -286,7 +285,7 @@ void JSObjectFuzzingPrintElements(Tagged<JSObject> obj,
       sorted.reserve(dict->NumberOfElements());
 
       for (InternalIndex i : dict->IterateEntries()) {
-        Tagged<Object> key = dict->KeyAt(isolate, i);
+        Tagged<Object> key = dict->KeyAt(i);
         if (!dict->IsKey(roots, key)) continue;
         int index = Object::NumberValue(Cast<Number>(key));
         sorted.push_back({index, i});
