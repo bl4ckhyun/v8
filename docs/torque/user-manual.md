@@ -196,10 +196,8 @@ ClassDeclaration :
 
 ClassAnnotation :
   @doNotGenerateCppClass
-  @generatePrint
   @abstract
   @export
-  @noVerifier
   @hasSameInstanceTypeAsParent
   @highestInstanceTypeWithinParentClassRange
   @lowestInstanceTypeWithinParentClassRange
@@ -213,7 +211,6 @@ ClassFieldDeclaration :
   ClassFieldAnnotation* weak opt const opt FieldDeclaration;
 
 ClassFieldAnnotation :
-  @noVerifier
   @if ( Identifier )
   @ifnot ( Identifier )
 
