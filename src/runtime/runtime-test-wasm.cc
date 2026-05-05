@@ -680,8 +680,8 @@ RUNTIME_FUNCTION(Runtime_WasmTraceMemory) {
   // Find the caller wasm frame.
   wasm::WasmCodeRefScope wasm_code_ref_scope;
   DebuggableStackFrameIterator it(isolate);
-  CHECK(!it.done());
-  CHECK(it.is_wasm());
+  DCHECK(!it.done());
+  DCHECK(it.is_wasm());
 #if V8_ENABLE_DRUMBRAKE
   DCHECK(!it.is_wasm_interpreter_entry());
 #endif  // V8_ENABLE_DRUMBRAKE
