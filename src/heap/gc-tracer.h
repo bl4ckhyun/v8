@@ -377,9 +377,10 @@ class V8_EXPORT_PRIVATE GCTracer {
 #endif
 
   // Sample and accumulate bytes allocated since the last GC.
-  void SampleAllocation(base::TimeTicks current, size_t new_space_counter_bytes,
-                        size_t old_generation_counter_bytes,
-                        size_t embedder_counter_bytes);
+  void SampleAllocation(base::TimeTicks current,
+                        uint64_t new_space_counter_bytes,
+                        uint64_t old_generation_counter_bytes,
+                        uint64_t embedder_counter_bytes);
 
   void AddCompactionEvent(double duration, size_t live_bytes_compacted);
 
@@ -572,9 +573,9 @@ class V8_EXPORT_PRIVATE GCTracer {
 
   // Timestamp and allocation counter at the last sampled allocation event.
   base::TimeTicks allocation_time_;
-  size_t new_space_allocation_counter_bytes_ = 0;
-  size_t old_generation_allocation_counter_bytes_ = 0;
-  size_t embedder_allocation_counter_bytes_ = 0;
+  uint64_t new_space_allocation_counter_bytes_ = 0;
+  uint64_t old_generation_allocation_counter_bytes_ = 0;
+  uint64_t embedder_allocation_counter_bytes_ = 0;
 
   std::optional<double> combined_mark_compact_speed_cache_;
 

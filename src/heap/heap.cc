@@ -971,8 +971,8 @@ void Heap::GarbageCollectionPrologueInSafepoint(GarbageCollector collector) {
   }
 }
 
-size_t Heap::NewSpaceAllocationCounter() const {
-  size_t counter = new_space_allocation_counter_;
+uint64_t Heap::NewSpaceAllocationCounter() const {
+  uint64_t counter = new_space_allocation_counter_;
   if (new_space_) {
     DCHECK(!allocator()->new_space_allocator()->IsLabValid());
     counter += new_space()->AllocatedSinceLastGC();
@@ -7359,7 +7359,7 @@ bool Heap::AllowedToBeMigrated(Tagged<Map> map, Tagged<HeapObject> object,
   UNREACHABLE();
 }
 
-size_t Heap::EmbedderAllocationCounter() const {
+uint64_t Heap::EmbedderAllocationCounter() const {
   return cpp_heap_ ? CppHeap::From(cpp_heap_)->allocated_size() : 0;
 }
 
