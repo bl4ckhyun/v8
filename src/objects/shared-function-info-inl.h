@@ -928,17 +928,6 @@ Tagged<BytecodeArray> SharedFunctionInfo::GetActiveBytecodeArray(
   if (Tagged<BytecodeArray> bytecode_array; TryCast(data, &bytecode_array)) {
     return bytecode_array;
   }
-  if (!Is<InterpreterData>(data)) {
-    // See https://crbug.com/442277757
-    InstanceType type = static_cast<InstanceType>(-1);
-    if (Is<HeapObject>(data)) {
-      type = Cast<HeapObject>(data)->map()->instance_type();
-    }
-    isolate->PushStackTraceAndDie(
-        reinterpret_cast<void*>(data.ptr()),
-        reinterpret_cast<void*>(GetTrustedData(isolate).ptr()),
-        reinterpret_cast<void*>(type));
-  }
   return SbxCast<InterpreterData>(data)->bytecode_array();
 }
 
