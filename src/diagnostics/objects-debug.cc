@@ -2926,7 +2926,7 @@ void CheckArrayBufferViewTrackingConsistency(Tagged<JSArrayBuffer> ab,
     CHECK_EQ(views, Smi::zero());
     return;
   }
-  if (views == JSArrayBuffer::kNoView) {
+  if (views == JSArrayBuffer::kNoView || views.IsCleared()) {
     CHECK(view->WasDetached());
   } else if (views != JSArrayBuffer::kManyViews) {
     CHECK_EQ(views.GetHeapObjectAssumeWeak(), view);
