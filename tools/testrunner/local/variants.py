@@ -399,6 +399,8 @@ INCOMPATIBLE_FLAGS_PER_EXTRA_FLAG = {
     "--turboshaft-assert-types": [
         "--concurrent-recompilation", "--stress-concurrent-inlining"
     ],
+    "--wasm-generate-compilation-hints": ["--single-threaded"],
+    "--trace-wasm-generate-compilation-hints": ["--single-threaded"],
 }
 
 SLOW_VARIANTS = set([
