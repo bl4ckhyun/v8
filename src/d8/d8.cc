@@ -6456,18 +6456,16 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       options.simulate_errors = true;
     } else if (FlagWithArgMatches("--flag-processing-mode", &flag_value, argc,
                                   argv, &i, /*keep_flag=*/true)) {
-      if (!flag_processing_mode_explicitly_set) {
-        flag_processing_mode_explicitly_set = true;
-        if (strcmp(flag_value, "exit-on-error") == 0) {
-          check_d8_flag_contradictions = true;
-          exit_on_flag_contradictions = true;
-        } else if (strcmp(flag_value, "ignore-contradictions") == 0) {
-          check_d8_flag_contradictions = false;
-          exit_on_flag_contradictions = false;
-        } else if (strcmp(flag_value, "abort-on-error") == 0) {
-          check_d8_flag_contradictions = true;
-          exit_on_flag_contradictions = false;
-        }
+      flag_processing_mode_explicitly_set = true;
+      if (strcmp(flag_value, "exit-on-error") == 0) {
+        check_d8_flag_contradictions = true;
+        exit_on_flag_contradictions = true;
+      } else if (strcmp(flag_value, "ignore-contradictions") == 0) {
+        check_d8_flag_contradictions = false;
+        exit_on_flag_contradictions = false;
+      } else if (strcmp(flag_value, "abort-on-error") == 0) {
+        check_d8_flag_contradictions = true;
+        exit_on_flag_contradictions = false;
       }
     } else if (FlagMatches("--fuzzing", &argv[i], /*keep_flag=*/true) ||
                FlagMatches("--sandbox-fuzzing", &argv[i], /*keep_flag=*/true)) {
