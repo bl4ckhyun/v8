@@ -2157,6 +2157,11 @@ class TurboshaftGraphBuildingInterface
         }
       }
     }
+    Variable result_var;
+    if (sig->return_count()) {
+      result_var = __ NewVariable(RepresentationFor(sig->GetReturn()));
+      __ SetVariable(result_var, ret_val);
+    }
     Label<> done(&asm_);
     GOTO(done);
     BIND(value_out_of_range);
@@ -2164,10 +2169,13 @@ class TurboshaftGraphBuildingInterface
         BuildImportedFunctionTargetAndImplicitArg(decoder, imm.index);
     BuildWasmCall(decoder, imm.sig, target, implicit_arg, args, returns,
                   compiler::kWasmIndirectFunction);
-    __ Unreachable();
+    if (sig->return_count()) {
+      __ SetVariable(result_var, returns[0].op);
+    }
+    GOTO(done);
     BIND(done);
     if (sig->return_count()) {
-      returns[0].op = ret_val;
+      returns[0].op = __ GetVariable(result_var);
     }
   }
 
