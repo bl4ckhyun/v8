@@ -68,8 +68,8 @@ void JSObjectFuzzingPrintInternalIndexRange(Tagged<JSObject> obj,
       indices.push_back(i);
     }
   } else {
-    CHECK(!IsJSGlobalObject(*obj));
-    CHECK(!IsJSGlobalProxy(*obj));
+    CHECK(!IsJSGlobalObject(obj));
+    CHECK(!IsJSGlobalProxy(obj));
     roots = GetReadOnlyRoots();
     dict = obj->property_dictionary();
     // We want to print out the properties in the same order they'd be in e.g.,
