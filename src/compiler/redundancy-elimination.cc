@@ -247,6 +247,7 @@ Subsumption CheckSubsumes(Node const* a, Node const* b,
           break;
         }
         case IrOpcode::kCheckedInt32ToTaggedSigned:
+        case IrOpcode::kCheckedInt32ToUint64:
         case IrOpcode::kCheckedInt64ToInt32:
         case IrOpcode::kCheckedInt64ToAdditiveSafeInteger:
         case IrOpcode::kCheckedInt64ToTaggedSigned:
