@@ -676,7 +676,12 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
 
     __ bind(&loop_copy_param_ref);
     __ Lw(valuetype, MemOperand(valuetypes_array_ptr, 0));
-    __ Branch(&load_ref_param, ne, valuetype, Operand(1));
+    // Test bit 0 (reference type indicator): valuetype & 1
+    {
+      Register tmp = scratch;
+      __ And(tmp, valuetype, Operand(1));
+      __ Branch(&load_ref_param, ne, tmp, Operand(zero_reg));
+    }
 
     // Initialize non-ref type slots to zero since they can be visited by GC
     // when converting wasm numbers into heap numbers.
@@ -762,9 +767,14 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
     __ SmiTag(param);
   } else {
     // Double the return value to test if it can be a Smi.
-    __ Add32(scratch, param, Operand(param));
-    // If there was overflow, convert the return value to a HeapNumber.
-    __ Branch(&convert_param, lt, scratch, Operand(0));
+    // Overflow detection: (doubled XOR param) < 0
+    Register doubled = scratch;
+    Register sign_diff = t0;  // temporary register for XOR result
+    __ Add32(doubled, param, Operand(param));
+    __ Xor(sign_diff, doubled, param);
+    // If overflow occurred (sign changed), convert the return value to a
+    // HeapNumber.
+    __ Branch(&convert_param, lt, sign_diff, Operand(zero_reg));
     // If there was no overflow, we can convert to Smi.
     __ SmiTag(param);
   }
@@ -782,7 +792,11 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
 
   // Skip Ref params. We already copied reference params in the first loop.
   __ bind(&check_ref_param);
-  __ Branch(&convert_param, eq, valuetype, Operand(1));
+  {
+    Register tmp = scratch;
+    __ And(tmp, valuetype, Operand(1));
+    __ Branch(&convert_param, eq, tmp, Operand(zero_reg));
+  }
 
   __ bind(&skip_ref_param);
   __ AddWord(param_index, param_index, Operand(1));
@@ -1030,7 +1044,12 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
   __ Branch(&return_kWasmF64, eq, valuetype,
             Operand(wasm::kWasmF64.raw_bit_field()));
 
-  __ Branch(&return_kWasmRef, ne, valuetype, Operand(1));
+  // Test bit 0 (reference type indicator): valuetype & 1
+  {
+    Register tmp = scratch;
+    __ And(tmp, valuetype, Operand(1));
+    __ Branch(&return_kWasmRef, ne, tmp, Operand(zero_reg));
+  }
 
   // Invalid type. JavaScript cannot return Simd results to WebAssembly.
   __ DebugBreak();
@@ -1147,7 +1166,12 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
   __ bind(&copy_return_if_ref);
   __ Lw(valuetype, MemOperand(valuetypes_array_ptr, 0));
 
-  __ Branch(&copy_return_ref, ne, valuetype, Operand(1));
+  // Test bit 0 (reference type indicator): valuetype & 1
+  {
+    Register tmp = scratch;
+    __ And(tmp, valuetype, Operand(1));
+    __ Branch(&copy_return_ref, ne, tmp, Operand(zero_reg));
+  }
 
   Label inc_result_32bit;
   __ Branch(&inc_result_32bit, eq, valuetype,
