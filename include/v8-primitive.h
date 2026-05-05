@@ -5,6 +5,8 @@
 #ifndef INCLUDE_V8_PRIMITIVE_H_
 #define INCLUDE_V8_PRIMITIVE_H_
 
+#include <string_view>
+
 #include "v8-data.h"          // NOLINT(build/include_directory)
 #include "v8-internal.h"      // NOLINT(build/include_directory)
 #include "v8-local-handle.h"  // NOLINT(build/include_directory)
@@ -620,6 +622,7 @@ class V8_EXPORT String : public Name {
     char* operator*() { return str_; }
     const char* operator*() const { return str_; }
     size_t length() const { return length_; }
+    std::string_view as_view() const { return std::string_view(str_, length_); }
 
     // Disallow copying and assigning.
     Utf8Value(const Utf8Value&) = delete;

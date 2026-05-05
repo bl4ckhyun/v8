@@ -2016,7 +2016,7 @@ THREADED_TEST(BigIntObject) {
   CHECK(unboxed_bigint->BooleanValue(isolate));
   v8::Local<v8::String> string =
       unboxed_bigint->ToString(context).ToLocalChecked();
-  CHECK_EQ(0, strcmp("42", *v8::String::Utf8Value(isolate, string)));
+  CHECK_EQ(v8::String::Utf8Value(isolate, string).as_view(), "42");
 
   // IntegerValue throws.
   CHECK(unboxed_bigint->IntegerValue(context).IsNothing());
@@ -6624,10 +6624,10 @@ void TryCatchMixedNestingCheck(v8::TryCatch* try_catch) {
   CHECK(try_catch->HasCaught());
   Local<Message> message = try_catch->Message();
   Local<Value> resource = message->GetScriptOrigin().ResourceName();
-  CHECK_EQ(
-      0, strcmp(*v8::String::Utf8Value(CcTest::isolate(), resource), "inner"));
-  CHECK_EQ(0, strcmp(*v8::String::Utf8Value(CcTest::isolate(), message->Get()),
-                     "Uncaught Error: a"));
+  CHECK_EQ(v8::String::Utf8Value(CcTest::isolate(), resource).as_view(),
+           "inner");
+  CHECK_EQ(v8::String::Utf8Value(CcTest::isolate(), message->Get()).as_view(),
+           "Uncaught Error: a");
   CHECK_EQ(1, message->GetLineNumber(CcTest::isolate()->GetCurrentContext())
                   .FromJust());
   CHECK_EQ(0, message->GetStartColumn(CcTest::isolate()->GetCurrentContext())
@@ -17382,8 +17382,8 @@ TEST(EvalWithSourceURLInMessageScriptResourceNameOrSourceURL) {
 
   Local<v8::Message> message = try_catch.Message();
   Local<Value> sourceURL = message->GetScriptOrigin().ResourceName();
-  CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context.isolate(), sourceURL),
-                     "source_url"));
+  CHECK_EQ(v8::String::Utf8Value(context.isolate(), sourceURL).as_view(),
+           "source_url");
 }
 
 
@@ -17406,8 +17406,8 @@ TEST(RecursionWithSourceURLInMessageScriptResourceNameOrSourceURL) {
 
   Local<v8::Message> message = try_catch.Message();
   Local<Value> sourceURL = message->GetScriptOrigin().ResourceName();
-  CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context.isolate(), sourceURL),
-                     "source_url"));
+  CHECK_EQ(v8::String::Utf8Value(context.isolate(), sourceURL).as_view(),
+           "source_url");
 }
 
 
@@ -18240,9 +18240,9 @@ THREADED_TEST(ScriptOrigin) {
       env->Global()->Get(env.local(), v8_str("g")).ToLocalChecked());
 
   v8::ScriptOrigin script_origin_f = f->GetScriptOrigin();
-  CHECK_EQ(0,
-           strcmp("test", *v8::String::Utf8Value(
-                              env.isolate(), script_origin_f.ResourceName())));
+  CHECK_EQ(v8::String::Utf8Value(env.isolate(), script_origin_f.ResourceName())
+               .as_view(),
+           "test");
   CHECK_EQ(1, script_origin_f.LineOffset());
   CHECK(script_origin_f.Options().IsSharedCrossOrigin());
   CHECK(script_origin_f.Options().IsOpaque());
@@ -18252,20 +18252,20 @@ THREADED_TEST(ScriptOrigin) {
             ->Get(isolate, 0)
             ->IsSymbol());
 
-  CHECK_EQ(0, strcmp("http://sourceMapUrl",
-                     *v8::String::Utf8Value(env.isolate(),
-                                            script_origin_f.SourceMapUrl())));
+  CHECK_EQ(v8::String::Utf8Value(env.isolate(), script_origin_f.SourceMapUrl())
+               .as_view(),
+           "http://sourceMapUrl");
 
   v8::ScriptOrigin script_origin_g = g->GetScriptOrigin();
-  CHECK_EQ(0,
-           strcmp("test", *v8::String::Utf8Value(
-                              env.isolate(), script_origin_g.ResourceName())));
+  CHECK_EQ(v8::String::Utf8Value(env.isolate(), script_origin_g.ResourceName())
+               .as_view(),
+           "test");
   CHECK_EQ(1, script_origin_g.LineOffset());
   CHECK(script_origin_g.Options().IsSharedCrossOrigin());
   CHECK(script_origin_g.Options().IsOpaque());
-  CHECK_EQ(0, strcmp("http://sourceMapUrl",
-                     *v8::String::Utf8Value(env.isolate(),
-                                            script_origin_g.SourceMapUrl())));
+  CHECK_EQ(v8::String::Utf8Value(env.isolate(), script_origin_g.SourceMapUrl())
+               .as_view(),
+           "http://sourceMapUrl");
   CHECK(script_origin_g.GetHostDefinedOptions()
             .As<v8::PrimitiveArray>()
             ->Get(isolate, 0)
@@ -18286,8 +18286,8 @@ THREADED_TEST(FunctionGetInferredName) {
       .ToLocalChecked();
   v8::Local<v8::Function> f = v8::Local<v8::Function>::Cast(
       env->Global()->Get(env.local(), v8_str("f")).ToLocalChecked());
-  CHECK_EQ(0, strcmp("foo.bar.baz", *v8::String::Utf8Value(
-                                        env.isolate(), f->GetInferredName())));
+  CHECK_EQ(v8::String::Utf8Value(env.isolate(), f->GetInferredName()).as_view(),
+           "foo.bar.baz");
 }
 
 
