@@ -1808,13 +1808,22 @@ Reduction JSNativeContextSpecialization::ReduceHomomorphicAccess(
     Node* node, Node* value, HomomorphicPropertyAccessFeedback const& feedback,
     AccessMode access_mode, Node* key) {
   DCHECK(node->opcode() == IrOpcode::kJSLoadNamed ||
-         node->opcode() == IrOpcode::kJSLoadProperty);
+         node->opcode() == IrOpcode::kJSLoadProperty ||
+         node->opcode() == IrOpcode::kJSLoadNamedFromSuper);
   if (access_mode != AccessMode::kLoad) return NoChange();
 
   Node* effect = NodeProperties::GetEffectInput(node);
   Node* control = NodeProperties::GetControlInput(node);
 
-  Node* lookup_start_object = NodeProperties::GetValueInput(node, 0);
+  Node* lookup_start_object;
+  if (node->opcode() == IrOpcode::kJSLoadNamedFromSuper) {
+    DCHECK(v8_flags.super_ic);
+    JSLoadNamedFromSuperNode n(node);
+    lookup_start_object = effect =
+        BuildLoadPrototypeFromObject(n.home_object(), effect, control);
+  } else {
+    lookup_start_object = NodeProperties::GetValueInput(node, 0);
+  }
 
   Tagged<Smi> handler = feedback.handler();
   bool is_inobject = LoadHandler::IsInobjectBits::decode(handler.value());
