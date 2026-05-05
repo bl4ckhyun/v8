@@ -105,6 +105,22 @@ Invalid ("bogus") `DCHECK`s should still be fixed or removed.
 
 Note: `CHECK`s must not be behind special builds or phases, such as `--verify-*`.
 
+### Sandbox: Reliance on libc++ hardening
+
+V8's sandbox security boundary relies on libc++ hardening (specifically
+`_LIBCPP_HARDENING_MODE`) to prevent out-of-bounds accesses in standard
+containers like `std::vector` and `std::span`.
+
+Rationale: If a logic flaw allows an attacker to corrupt an index used for a
+`std::vector::operator[]` access, the hardened STL will perform a bounds check
+at runtime and safely trap (crash) even in release builds. Running into a
+hardened libc++ check after an in-sandbox corruption is not a sandbox escape
+and is not even considered a bug.
+
+Note: Developers should still prefer using `SBXCHECK` or similar V8-specific
+hardened checks for untrusted inputs to provide better diagnostics and explicit
+intent.
+
 ### Sandbox: Read-only bypasses
 
 Fields: **Type=Bug**, **Security_Impact-None**
