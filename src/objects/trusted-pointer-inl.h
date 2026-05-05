@@ -12,6 +12,7 @@
 
 #include "src/heap/heap-write-barrier-inl.h"
 #include "src/objects/heap-object.h"
+#include "src/objects/tagged-field-inl.h"
 #include "src/objects/trusted-object.h"
 #include "src/sandbox/indirect-pointer-inl.h"
 #include "src/sandbox/trusted-pointer-table-inl.h"

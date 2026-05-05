@@ -14,7 +14,7 @@
 #include "src/common/ptr-compr-inl.h"
 #include "src/objects/heap-object.h"
 #include "src/objects/map.h"
-#include "src/objects/objects.h"
+#include "src/objects/objects-inl.h"
 #include "src/objects/tagged.h"
 #include "src/sandbox/isolate-inl.h"
 #include "src/utils/memcopy.h"
