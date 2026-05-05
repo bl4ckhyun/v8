@@ -368,6 +368,7 @@
   'random-bit-correlations': [SLOW],
   'regress/regress-crbug-941743': [SKIP],
   'regress/regress-crbug-1041232': [SKIP],
+  'regress/regress-499721612': [SKIP],
   'regress/wasm/regress-1010272': [SKIP],
   'wasm/atomics-stress': [SKIP],
   'wasm/atomics64-stress': [SKIP],
