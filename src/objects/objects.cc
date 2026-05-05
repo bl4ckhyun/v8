@@ -5592,9 +5592,24 @@ HandleType<Derived>::MaybeType BaseNameDictionary<Derived, Shape>::Add(
     THROW_NEW_ERROR(isolate,
                     NewRangeError(MessageTemplate::kTooManyProperties));
   }
+  // If the dictionary needs to grow, use TryEnsureCapacity to avoid a
+  // fatal OOM crash in HashTable::New if the maximum table capacity would
+  // be exceeded.  After this, the EnsureCapacity inside Dictionary::Add
+  // is a no-op.
+  if (V8_UNLIKELY(!dictionary->HasSufficientCapacityToAdd(1))) {
+    if (!Derived::TryEnsureCapacity(isolate, dictionary).To(&dictionary)) {
+      THROW_NEW_ERROR(isolate,
+                      NewRangeError(MessageTemplate::kTooManyProperties));
+    }
+  }
   details = details.set_index(index);
+  HandleType<Derived> original_dictionary = dictionary;
   dictionary = AddNoUpdateNextEnumerationIndex(isolate, dictionary, key, value,
                                                details, entry_out);
+  // AddNoUpdateNextEnumerationIndex should not have reallocated the dictionary
+  // since we ensured capacity above.
+  DCHECK(original_dictionary.is_identical_to(dictionary));
+  USE(original_dictionary);
   // Update enumeration index here in order to avoid potential modification of
   // the canonical empty dictionary which lives in read only space.
   dictionary->set_next_enumeration_index(index + 1);
