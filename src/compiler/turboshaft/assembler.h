@@ -5336,6 +5336,9 @@ class AssemblerOpInterface : public Next {
     return ReduceIfReachableStringPrepareForGetCodeUnit(string);
   }
 
+#endif  // V8_ENABLE_WEBASSEMBLY
+
+#ifdef V8_ENABLE_SIMD128
   V<Simd128> Simd128Constant(const uint8_t value[kSimd128Size]) {
     return ReduceIfReachableSimd128Constant(value);
   }
@@ -5423,7 +5426,7 @@ class AssemblerOpInterface : public Next {
   }
 
   // SIMD256
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
   V<Simd256> Simd256Constant(const uint8_t value[kSimd256Size]) {
     return ReduceIfReachableSimd256Constant(value);
   }
@@ -5495,8 +5498,10 @@ class AssemblerOpInterface : public Next {
     return ReduceIfReachableSimd256Unpack(left, right, kind);
   }
 #endif  // V8_TARGET_ARCH_X64
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
 
+#ifdef V8_ENABLE_WEBASSEMBLY
   V<WasmTrustedInstanceData> WasmInstanceDataParameter() {
     return Parameter(wasm::kWasmInstanceDataParameterIndex,
                      RegisterRepresentation::Tagged());

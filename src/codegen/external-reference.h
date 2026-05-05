@@ -434,7 +434,7 @@ enum class IsolateFieldId : uint8_t;
   V(address_of_wasm_i16x8_splat_0x0001, "wasm_16x8_splat_0x0001")              \
   V(address_of_wasm_f64x2_convert_low_i32x4_u_int_mask,                        \
     "wasm_f64x2_convert_low_i32x4_u_int_mask")                                 \
-  V(supports_wasm_simd_128_address, "wasm::supports_wasm_simd_128_address")    \
+  V(supports_simd_128_address, "CpuFeatures::supports_simd_128_address")       \
   V(address_of_wasm_double_2_power_52, "wasm_double_2_power_52")               \
   V(address_of_wasm_int32_max_as_double, "wasm_int32_max_as_double")           \
   V(address_of_wasm_uint32_max_as_double, "wasm_uint32_max_as_double")         \

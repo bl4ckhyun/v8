@@ -29,9 +29,9 @@
 #include "src/objects/slots-inl.h"
 #include "src/roots/roots-inl.h"
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 #include "src/compiler/backend/simd-shuffle.h"
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 #if V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
 #include "src/sandbox/code-sandboxing-mode.h"
@@ -307,7 +307,7 @@ TryMatchBaseWithScaledIndexAndDisplacement64(InstructionSelector* selector,
     return result;
   } else if (op.Is<WordBinopOp>()) {
     // Nothing to do here, fall into the case below.
-#ifdef V8_ENABLE_WEBASSEMBLY
+#ifdef V8_ENABLE_SIMD128
   } else if (const Simd128LaneMemoryOp* lane_op =
                  op.TryCast<Simd128LaneMemoryOp>()) {
     result.base = lane_op->base();
@@ -333,7 +333,7 @@ TryMatchBaseWithScaledIndexAndDisplacement64(InstructionSelector* selector,
     result.scale = 0;
     DCHECK(!load_transform_128->load_kind.tagged_base);
     return result;
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
   } else if (const Simd256LoadTransformOp* load_transform_256 =
                  op.TryCast<Simd256LoadTransformOp>()) {
     result.base = load_transform_256->base();
@@ -343,8 +343,8 @@ TryMatchBaseWithScaledIndexAndDisplacement64(InstructionSelector* selector,
     result.displacement = 0;
     DCHECK(!load_transform_256->load_kind.tagged_base);
     return result;
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
   } else {
     return std::nullopt;
   }
@@ -1112,7 +1112,7 @@ void InstructionSelector::VisitSwitchSandboxMode(OpIndex node) {
 }
 #endif  // V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
 
-#ifdef V8_ENABLE_WEBASSEMBLY
+#ifdef V8_ENABLE_SIMD128
 void InstructionSelector::VisitLoadLane(OpIndex node) {
   const Simd128LaneMemoryOp& load = this->Get(node).Cast<Simd128LaneMemoryOp>();
   InstructionCode opcode = kArchNop;
@@ -1208,7 +1208,7 @@ void InstructionSelector::VisitLoadTransform(OpIndex node) {
   VisitLoad(node, node, code);
 }
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
 void InstructionSelector::VisitS256Const(OpIndex node) {
   X64OperandGenerator g(this);
   static const int kUint32Immediates = kSimd256Size / sizeof(uint32_t);
@@ -1369,8 +1369,8 @@ void InstructionSelector::VisitSimdPack128To256(OpIndex node) {
 }
 #endif  // V8_TARGET_ARCH_X64
 
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitLoad(OpIndex node, OpIndex value,
                                     InstructionCode opcode) {
@@ -1616,7 +1616,7 @@ void InstructionSelector::VisitUnalignedLoad(OpIndex node) { UNREACHABLE(); }
 // Architecture supports unaligned access, therefore VisitStore is used instead
 void InstructionSelector::VisitUnalignedStore(OpIndex node) { UNREACHABLE(); }
 
-#ifdef V8_ENABLE_WEBASSEMBLY
+#ifdef V8_ENABLE_SIMD128
 void InstructionSelector::VisitStoreLane(OpIndex node) {
   X64OperandGenerator g(this);
   const Simd128LaneMemoryOp& store = Get(node).Cast<Simd128LaneMemoryOp>();
@@ -1653,7 +1653,7 @@ void InstructionSelector::VisitStoreLane(OpIndex node) {
   Emit(opcode, 0, nullptr, input_count, inputs);
 }
 
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 // Shared routine for multiple binary operations.
 static void VisitBinop(InstructionSelector* selector, OpIndex node,
@@ -2993,8 +2993,8 @@ void VisitFloatUnop(InstructionSelector* selector, OpIndex node, OpIndex input,
   V(TruncateFloat32ToInt32, kSSEFloat32ToInt32)                        \
   V(TruncateFloat32ToUint32, kSSEFloat32ToUint32)
 
-#ifdef V8_ENABLE_WEBASSEMBLY
-#define RR_OP_T_LIST_WEBASSEMBLY(V)                                       \
+#ifdef V8_ENABLE_SIMD128
+#define RR_OP_T_LIST_SIMD128(V)                                           \
   V(F16x8Ceil, kX64F16x8Round | MiscField::encode(kRoundUp))              \
   V(F16x8Floor, kX64F16x8Round | MiscField::encode(kRoundDown))           \
   V(F16x8Trunc, kX64F16x8Round | MiscField::encode(kRoundToZero))         \
@@ -3012,8 +3012,8 @@ void VisitFloatUnop(InstructionSelector* selector, OpIndex node, OpIndex input,
   V(F64x2Trunc, kX64F64x2Round | MiscField::encode(kRoundToZero))         \
   V(F64x2NearestInt, kX64F64x2Round | MiscField::encode(kRoundToNearest))
 #else
-#define RR_OP_T_LIST_WEBASSEMBLY(V)
-#endif  // V8_ENABLE_WEBASSEMBLY
+#define RR_OP_T_LIST_SIMD128(V)
+#endif  // V8_ENABLE_SIMD128
 
 #define RR_OP_T_LIST(V)                                                       \
   V(TruncateFloat64ToUint32, kSSEFloat64ToUint32 | MiscField::encode(0))      \
@@ -3028,7 +3028,7 @@ void VisitFloatUnop(InstructionSelector* selector, OpIndex node, OpIndex input,
     kSSEFloat32Round | MiscField::encode(kRoundToNearest))                    \
   V(Float64RoundTiesEven,                                                     \
     kSSEFloat64Round | MiscField::encode(kRoundToNearest))                    \
-  RR_OP_T_LIST_WEBASSEMBLY(V)
+  RR_OP_T_LIST_SIMD128(V)
 
 #define RO_VISITOR(Name, opcode)                        \
   void InstructionSelector::Visit##Name(OpIndex node) { \
@@ -4421,7 +4421,7 @@ VISIT_ATOMIC_BINOP(Or)
 VISIT_ATOMIC_BINOP(Xor)
 #undef VISIT_ATOMIC_BINOP
 
-#ifdef V8_ENABLE_WEBASSEMBLY
+#ifdef V8_ENABLE_SIMD128
 #define SIMD_BINOP_SSE_AVX_LIST(V) \
   V(I64x2ExtMulLowI32x4S)          \
   V(I64x2ExtMulHighI32x4S)         \
@@ -4797,7 +4797,7 @@ void InstructionSelector::VisitF16x8Splat(OpIndex node) {
 }
 
 void InstructionSelector::VisitF64x4Splat(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256SplatOp& op = Cast<Simd256SplatOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -4810,7 +4810,7 @@ void InstructionSelector::VisitF64x4Splat(OpIndex node) {
 }
 
 void InstructionSelector::VisitF32x8Splat(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256SplatOp& op = Cast<Simd256SplatOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -4823,7 +4823,7 @@ void InstructionSelector::VisitF32x8Splat(OpIndex node) {
 }
 
 void InstructionSelector::VisitF16x16Splat(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256SplatOp& op = Cast<Simd256SplatOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5125,7 +5125,7 @@ void InstructionSelector::VisitS128Select(OpIndex node) {
 }
 
 void InstructionSelector::VisitS256Select(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256TernaryOp& op = Cast<Simd256TernaryOp>(node);
   Emit(kX64SSelect | VectorLengthField::encode(kV256), g.DefineAsRegister(node),
@@ -5147,7 +5147,7 @@ void InstructionSelector::VisitS128AndNot(OpIndex node) {
 }
 
 void InstructionSelector::VisitS256AndNot(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256BinopOp& op = Cast<Simd256BinopOp>(node);
   DCHECK_EQ(op.input_count, 2);
@@ -5217,12 +5217,12 @@ VISIT_SIMD_QFMOP(F64x2Qfms)
 VISIT_SIMD_QFMOP(F32x4Qfma)
 VISIT_SIMD_QFMOP(F32x4Qfms)
 
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
 VISIT_SIMD_QFMOP(F64x4Qfma)
 VISIT_SIMD_QFMOP(F64x4Qfms)
 VISIT_SIMD_QFMOP(F32x8Qfma)
 VISIT_SIMD_QFMOP(F32x8Qfms)
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
 #undef VISIT_SIMD_QFMOP
 
 #define VISIT_SIMD_F16x8_QFMOP(Opcode)                                        \
@@ -5285,7 +5285,7 @@ void InstructionSelector::VisitI64x2Mul(OpIndex node) {
 }
 
 void InstructionSelector::VisitI64x4Mul(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256BinopOp& op = Cast<Simd256BinopOp>(node);
   DCHECK_EQ(op.input_count, 2);
@@ -5309,7 +5309,7 @@ void InstructionSelector::VisitI32x4SConvertF32x4(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8SConvertF32x8(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5331,7 +5331,7 @@ void InstructionSelector::VisitI32x4UConvertF32x4(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8UConvertF32x8(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5344,7 +5344,7 @@ void InstructionSelector::VisitI32x8UConvertF32x8(OpIndex node) {
 #endif
 }
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
 void InstructionSelector::VisitF32x8UConvertI32x8(OpIndex node) {
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
@@ -5379,8 +5379,8 @@ void InstructionSelector::VisitExtractF128(OpIndex node) {
 }
 
 void InstructionSelector::VisitI8x32Shuffle(OpIndex node) { UNREACHABLE(); }
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
-#endif
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitInt32AbsWithOverflow(OpIndex node) {
   UNREACHABLE();
@@ -5390,7 +5390,7 @@ void InstructionSelector::VisitInt64AbsWithOverflow(OpIndex node) {
   UNREACHABLE();
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 namespace {
 
 // Returns true if shuffle can be decomposed into two 16x4 half shuffles
@@ -5695,7 +5695,7 @@ void InstructionSelector::VisitI64x2RelaxedLaneSelect(OpIndex node) {
                          kX64Blendvpd | VectorLengthField::encode(kV128));
 }
 
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
 void InstructionSelector::VisitI8x32RelaxedLaneSelect(OpIndex node) {
   VisitRelaxedLaneSelect(this, node,
                          kX64Pblendvb | VectorLengthField::encode(kV256));
@@ -5714,7 +5714,7 @@ void InstructionSelector::VisitI64x4RelaxedLaneSelect(OpIndex node) {
   VisitRelaxedLaneSelect(this, node,
                          kX64Blendvpd | VectorLengthField::encode(kV256));
 }
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
 
 void InstructionSelector::VisitF16x8Pmin(OpIndex node) {
   X64OperandGenerator g(this);
@@ -5815,7 +5815,7 @@ void InstructionSelector::VisitI32x4ExtAddPairwiseI16x8S(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8ExtAddPairwiseI16x16S(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5837,7 +5837,7 @@ void InstructionSelector::VisitI32x4ExtAddPairwiseI16x8U(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8ExtAddPairwiseI16x16U(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5858,7 +5858,7 @@ void InstructionSelector::VisitI16x8ExtAddPairwiseI8x16S(OpIndex node) {
 }
 
 void InstructionSelector::VisitI16x16ExtAddPairwiseI8x32S(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
@@ -5880,7 +5880,7 @@ void InstructionSelector::VisitI16x8ExtAddPairwiseI8x16U(OpIndex node) {
 }
 
 void InstructionSelector::VisitI16x16ExtAddPairwiseI8x32U(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
   X64OperandGenerator g(this);
@@ -5966,7 +5966,7 @@ void InstructionSelector::VisitI32x4RelaxedTruncF32x4U(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8RelaxedTruncF32x8S(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
   VisitFloatUnop(this, node, op.input(),
@@ -5977,7 +5977,7 @@ void InstructionSelector::VisitI32x8RelaxedTruncF32x8S(OpIndex node) {
 }
 
 void InstructionSelector::VisitI32x8RelaxedTruncF32x8U(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   const Simd256UnaryOp& op = Cast<Simd256UnaryOp>(node);
   DCHECK_EQ(op.input_count, 1);
   DCHECK(CpuFeatures::IsSupported(AVX) && CpuFeatures::IsSupported(AVX2));
@@ -6035,7 +6035,7 @@ void InstructionSelector::VisitI64x2GeS(OpIndex node) {
 }
 
 void InstructionSelector::VisitI64x4GeS(OpIndex node) {
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
   X64OperandGenerator g(this);
   const Simd256BinopOp& op = Cast<Simd256BinopOp>(node);
   DCHECK_EQ(op.input_count, 2);
@@ -6119,7 +6119,7 @@ void InstructionSelector::VisitI32x4DotI8x16I7x16AddS(OpIndex node) {
   }
 }
 
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
 void InstructionSelector::VisitI16x16DotI8x32I7x32S(OpIndex node) {
   X64OperandGenerator g(this);
   const Simd256BinopOp& op = Cast<Simd256BinopOp>(node);
@@ -6145,6 +6145,9 @@ void InstructionSelector::VisitI32x8DotI8x32I7x32AddS(OpIndex node) {
 }
 #endif
 
+#endif  // V8_ENABLE_SIMD128
+
+#if V8_ENABLE_WEBASSEMBLY
 void InstructionSelector::VisitSetStackPointer(OpIndex node) {
   X64OperandGenerator g(this);
   const SetStackPointerOp& op = Cast<SetStackPointerOp>(node);
@@ -6152,10 +6155,9 @@ void InstructionSelector::VisitSetStackPointer(OpIndex node) {
   auto input = g.UseAny(op.value());
   Emit(kArchSetStackPointer, 0, nullptr, 1, &input);
 }
-
 #endif  // V8_ENABLE_WEBASSEMBLY
 
-#ifndef V8_ENABLE_WEBASSEMBLY
+#ifndef V8_ENABLE_SIMD128
 #define VISIT_UNSUPPORTED_OP(op) \
   void InstructionSelector::Visit##op(OpIndex) { UNREACHABLE(); }
 MACHINE_SIMD128_OP_LIST(VISIT_UNSUPPORTED_OP)

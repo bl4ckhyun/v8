@@ -210,7 +210,7 @@ void VisitRRR(InstructionSelector* selector, InstructionCode opcode,
                  g.UseRegister(op.input(1)));
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void VisitRR(InstructionSelector* selector, InstructionCode opcode,
              OpIndex node) {
   Arm64OperandGenerator g(selector);
@@ -353,7 +353,7 @@ void VisitRRII(InstructionSelector* selector, InstructionCode opcode,
                  g.UseRegister(op.from()), g.UseImmediate(op.from_lane),
                  g.UseImmediate(op.into_lane));
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void VisitRRO(InstructionSelector* selector, ArchOpcode opcode, OpIndex node,
               ImmediateMode operand_mode) {
@@ -1079,7 +1079,7 @@ void EmitLoad(InstructionSelector* selector, OpIndex node,
   selector->Emit(opcode, 1, &output_op, input_count, inputs);
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 namespace {
 // Manually add base and index into a register to get the actual address.
 // This should be used prior to instructions that only support
@@ -1231,7 +1231,9 @@ void InstructionSelector::VisitLoadTransform(OpIndex node) {
     Emit(extend_opcode, g.DefineSameAsFirst(node), outputs[0]);
   }
 }
+#endif  // V8_ENABLE_SIMD128
 
+#if V8_ENABLE_WEBASSEMBLY
 void InstructionSelector::VisitMemoryCopy(OpIndex node) {
   DCHECK(CpuFeatures::IsSupported(MOPS));
   Arm64OperandGenerator g(this);
@@ -1275,7 +1277,6 @@ void InstructionSelector::VisitMemoryFill(OpIndex node) {
 
   Emit(kArm64Set, arraysize(outputs), outputs, arraysize(inputs), inputs);
 }
-
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 std::tuple<InstructionCode, ImmediateMode> GetLoadOpcodeAndImmediate(
@@ -2667,18 +2668,18 @@ void InstructionSelector::VisitWord64Ror(OpIndex node) {
   V(Word64ReverseBits, kArm64Rbit)                            \
   V(Word32ReverseBytes, kArm64Rev32)                          \
   V(Word64ReverseBytes, kArm64Rev)                            \
-  IF_WASM(V, F16x8Ceil, kArm64Float16RoundUp)                 \
-  IF_WASM(V, F16x8Floor, kArm64Float16RoundDown)              \
-  IF_WASM(V, F16x8Trunc, kArm64Float16RoundTruncate)          \
-  IF_WASM(V, F16x8NearestInt, kArm64Float16RoundTiesEven)     \
-  IF_WASM(V, F32x4Ceil, kArm64Float32RoundUp)                 \
-  IF_WASM(V, F32x4Floor, kArm64Float32RoundDown)              \
-  IF_WASM(V, F32x4Trunc, kArm64Float32RoundTruncate)          \
-  IF_WASM(V, F32x4NearestInt, kArm64Float32RoundTiesEven)     \
-  IF_WASM(V, F64x2Ceil, kArm64Float64RoundUp)                 \
-  IF_WASM(V, F64x2Floor, kArm64Float64RoundDown)              \
-  IF_WASM(V, F64x2Trunc, kArm64Float64RoundTruncate)          \
-  IF_WASM(V, F64x2NearestInt, kArm64Float64RoundTiesEven)
+  IF_SIMD128(V, F16x8Ceil, kArm64Float16RoundUp)              \
+  IF_SIMD128(V, F16x8Floor, kArm64Float16RoundDown)           \
+  IF_SIMD128(V, F16x8Trunc, kArm64Float16RoundTruncate)       \
+  IF_SIMD128(V, F16x8NearestInt, kArm64Float16RoundTiesEven)  \
+  IF_SIMD128(V, F32x4Ceil, kArm64Float32RoundUp)              \
+  IF_SIMD128(V, F32x4Floor, kArm64Float32RoundDown)           \
+  IF_SIMD128(V, F32x4Trunc, kArm64Float32RoundTruncate)       \
+  IF_SIMD128(V, F32x4NearestInt, kArm64Float32RoundTiesEven)  \
+  IF_SIMD128(V, F64x2Ceil, kArm64Float64RoundUp)              \
+  IF_SIMD128(V, F64x2Floor, kArm64Float64RoundDown)           \
+  IF_SIMD128(V, F64x2Trunc, kArm64Float64RoundTruncate)       \
+  IF_SIMD128(V, F64x2NearestInt, kArm64Float64RoundTiesEven)
 
 #define RRR_OP_T_LIST(V)          \
   V(Int32Div, kArm64Idiv32)       \
@@ -2699,7 +2700,7 @@ void InstructionSelector::VisitWord64Ror(OpIndex node) {
   V(Float64Max, kArm64Float64Max) \
   V(Float32Min, kArm64Float32Min) \
   V(Float64Min, kArm64Float64Min) \
-  IF_WASM(V, I8x16Swizzle, kArm64I8x16Swizzle)
+  IF_SIMD128(V, I8x16Swizzle, kArm64I8x16Swizzle)
 
 #define RR_VISITOR(Name, opcode)                        \
   void InstructionSelector::Visit##Name(OpIndex node) { \
@@ -2930,7 +2931,7 @@ void InstructionSelector::VisitUint64Add128(OpIndex node) {
   this->Emit(kArm64Add128, output_count, outputs, input_count, inputs);
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 namespace {
 void VisitExtMul(InstructionSelector* selector, ArchOpcode opcode, OpIndex node,
                  LaneSize dst_lane_size) {
@@ -2987,9 +2988,7 @@ void InstructionSelector::VisitI64x2ExtMulLowI32x4U(OpIndex node) {
 void InstructionSelector::VisitI64x2ExtMulHighI32x4U(OpIndex node) {
   VisitExtMul(this, kArm64Umull2, node, LaneSize::kL64);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
 
-#if V8_ENABLE_WEBASSEMBLY
 namespace {
 void VisitExtAddPairwise(InstructionSelector* selector, ArchOpcode opcode,
                          OpIndex node, LaneSize dst_lane_size) {
@@ -3014,7 +3013,7 @@ void InstructionSelector::VisitI16x8ExtAddPairwiseI8x16S(OpIndex node) {
 void InstructionSelector::VisitI16x8ExtAddPairwiseI8x16U(OpIndex node) {
   VisitExtAddPairwise(this, kArm64Uaddlp, node, LaneSize::kL16);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitInt32MulHigh(OpIndex node) {
   Arm64OperandGenerator g(this);
@@ -5104,7 +5103,7 @@ void InstructionSelector::VisitInt64AbsWithOverflow(OpIndex node) {
   UNREACHABLE();
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 #define SIMD_UNOP_LIST(V)                                       \
   V(F64x2ConvertLowI32x4S, kArm64F64x2ConvertLowI32x4S)         \
   V(F64x2ConvertLowI32x4U, kArm64F64x2ConvertLowI32x4U)         \
@@ -5665,7 +5664,6 @@ MulWithDup TryMatchMulWithDup(InstructionSelector* selector, OpIndex node) {
   OpIndex dup_node;
 
   int index = 0;
-#if V8_ENABLE_WEBASSEMBLY
   const Simd128BinopOp& mul = selector->Get(node).Cast<Simd128BinopOp>();
   const Operation& left = selector->Get(mul.left());
   const Operation& right = selector->Get(mul.right());
@@ -5689,7 +5687,6 @@ MulWithDup TryMatchMulWithDup(InstructionSelector* selector, OpIndex node) {
     dup_node = right.input(index < LANES ? 0 : 1);
     input = mul.left();
   }
-#endif  // V8_ENABLE_WEBASSEMBLY
 
   // Canonicalization would get rid of this too.
   index %= LANES;
@@ -6856,13 +6853,15 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
        g.UseImmediate(SimdShuffle::Pack4Lanes(&shuffle[12])));
 }
 
+#endif  // V8_ENABLE_SIMD128
+
+#if V8_ENABLE_WEBASSEMBLY
 void InstructionSelector::VisitSetStackPointer(OpIndex node) {
   OperandGenerator g(this);
   const SetStackPointerOp& op = Cast<SetStackPointerOp>(node);
   auto input = g.UseRegister(op.value());
   Emit(kArchSetStackPointer, 0, nullptr, 1, &input);
 }
-
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 void InstructionSelector::VisitSignExtendWord8ToInt32(OpIndex node) {
@@ -6885,7 +6884,7 @@ void InstructionSelector::VisitSignExtendWord32ToInt64(OpIndex node) {
   VisitRR(this, kArm64Sxtw, node);
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 namespace {
 void VisitPminOrPmax(InstructionSelector* selector, ArchOpcode opcode,
                      OpIndex node, int lane_size) {
@@ -7009,7 +7008,7 @@ void InstructionSelector::VisitSimd128LoadPairDeinterleave(OpIndex node) {
   Emit(opcode, arraysize(outputs), outputs, arraysize(inputs), inputs);
 }
 
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::AddOutputToSelectContinuation(OperandGenerator* g,
                                                         int first_input_index,

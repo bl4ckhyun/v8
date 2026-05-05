@@ -105,7 +105,7 @@ void VisitRRR(InstructionSelector* selector, InstructionCode opcode,
                  g.UseRegister(op.input(1)));
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void VisitSimdShiftRRR(InstructionSelector* selector, ArchOpcode opcode,
                        OpIndex node, int width) {
   ArmOperandGenerator g(selector);
@@ -155,7 +155,7 @@ void VisitRRIR(InstructionSelector* selector, ArchOpcode opcode, OpIndex node) {
   selector->Emit(opcode, g.DefineAsRegister(node), g.UseRegister(op.into()),
                  g.UseImmediate(op.lane), g.UseUniqueRegister(op.new_lane()));
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 template <typename OpmaskT, int kImmMin, int kImmMax, AddressingMode kImmMode,
           AddressingMode kRegMode>
@@ -537,7 +537,7 @@ void InstructionSelector::VisitAbortCSADcheck(OpIndex node) {
        g.UseFixed(Cast<AbortCSADcheckOp>(node).message(), r1));
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 namespace {
 MachineRepresentation MachineRepresentationOf(
     Simd128LaneMemoryOp::LaneKind lane_kind) {
@@ -646,7 +646,7 @@ void InstructionSelector::VisitLoadTransform(OpIndex node) {
   EmitAddBeforeS128LoadStore(this, &opcode, &input_count, &inputs[0]);
   Emit(opcode, 1, &output, input_count, inputs);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitLoad(OpIndex node) {
   LoadView load = load_view(node);
@@ -1712,24 +1712,24 @@ void InstructionSelector::VisitUint32Mod(OpIndex node) {
   V(Float64Sqrt, kArmVsqrtF64)                       \
   V(Word32Clz, kArmClz)
 
-#define RR_OP_T_LIST_V8(V)                         \
-  V(Float32RoundDown, kArmVrintmF32)               \
-  V(Float64RoundDown, kArmVrintmF64)               \
-  V(Float32RoundUp, kArmVrintpF32)                 \
-  V(Float64RoundUp, kArmVrintpF64)                 \
-  V(Float32RoundTruncate, kArmVrintzF32)           \
-  V(Float64RoundTruncate, kArmVrintzF64)           \
-  V(Float64RoundTiesAway, kArmVrintaF64)           \
-  V(Float32RoundTiesEven, kArmVrintnF32)           \
-  V(Float64RoundTiesEven, kArmVrintnF64)           \
-  IF_WASM(V, F64x2Ceil, kArmF64x2Ceil)             \
-  IF_WASM(V, F64x2Floor, kArmF64x2Floor)           \
-  IF_WASM(V, F64x2Trunc, kArmF64x2Trunc)           \
-  IF_WASM(V, F64x2NearestInt, kArmF64x2NearestInt) \
-  IF_WASM(V, F32x4Ceil, kArmVrintpF32)             \
-  IF_WASM(V, F32x4Floor, kArmVrintmF32)            \
-  IF_WASM(V, F32x4Trunc, kArmVrintzF32)            \
-  IF_WASM(V, F32x4NearestInt, kArmVrintnF32)
+#define RR_OP_T_LIST_V8(V)                            \
+  V(Float32RoundDown, kArmVrintmF32)                  \
+  V(Float64RoundDown, kArmVrintmF64)                  \
+  V(Float32RoundUp, kArmVrintpF32)                    \
+  V(Float64RoundUp, kArmVrintpF64)                    \
+  V(Float32RoundTruncate, kArmVrintzF32)              \
+  V(Float64RoundTruncate, kArmVrintzF64)              \
+  V(Float64RoundTiesAway, kArmVrintaF64)              \
+  V(Float32RoundTiesEven, kArmVrintnF32)              \
+  V(Float64RoundTiesEven, kArmVrintnF64)              \
+  IF_SIMD128(V, F64x2Ceil, kArmF64x2Ceil)             \
+  IF_SIMD128(V, F64x2Floor, kArmF64x2Floor)           \
+  IF_SIMD128(V, F64x2Trunc, kArmF64x2Trunc)           \
+  IF_SIMD128(V, F64x2NearestInt, kArmF64x2NearestInt) \
+  IF_SIMD128(V, F32x4Ceil, kArmVrintpF32)             \
+  IF_SIMD128(V, F32x4Floor, kArmVrintmF32)            \
+  IF_SIMD128(V, F32x4Trunc, kArmVrintzF32)            \
+  IF_SIMD128(V, F32x4NearestInt, kArmVrintnF32)
 
 #define RRR_OP_T_LIST(V)        \
   V(Float64Div, kArmVdivF64)    \
@@ -2899,7 +2899,7 @@ void InstructionSelector::VisitWord32AtomicPairCompareExchange(OpIndex node) {
   V(S128Xor, kArmS128Xor)                             \
   V(S128AndNot, kArmS128AndNot)
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void InstructionSelector::VisitI32x4DotI16x8S(OpIndex node) {
   ArmOperandGenerator g(this);
   const Simd128BinopOp& binop = Cast<Simd128BinopOp>(node);
@@ -2962,13 +2962,13 @@ void InstructionSelector::VisitI32x4Splat(OpIndex node) {
 void InstructionSelector::VisitI16x8Splat(OpIndex node) {
   VisitRR(this, kArmI16x8Splat, node);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitI8x16Splat(OpIndex node) {
   VisitRR(this, kArmI8x16Splat, node);
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 #define SIMD_VISIT_EXTRACT_LANE(Type, Sign)                                \
   void InstructionSelector::Visit##Type##ExtractLane##Sign(OpIndex node) { \
     VisitRRI(this, kArm##Type##ExtractLane##Sign, node);                   \
@@ -3374,12 +3374,6 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
        g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle + 12)));
 }
 
-void InstructionSelector::VisitSetStackPointer(OpIndex node) {
-  OperandGenerator g(this);
-  auto input = g.UseRegister(Cast<SetStackPointerOp>(node).value());
-  Emit(kArchSetStackPointer, 0, nullptr, 1, &input);
-}
-
 void InstructionSelector::VisitI8x16Swizzle(OpIndex node) {
   ArmOperandGenerator g(this);
   const Simd128BinopOp& binop = Cast<Simd128BinopOp>(node);
@@ -3387,6 +3381,15 @@ void InstructionSelector::VisitI8x16Swizzle(OpIndex node) {
   // modify output twice (low and high), and need to keep the table the same.
   Emit(kArmI8x16Swizzle, g.DefineAsRegister(node),
        g.UseUniqueRegister(binop.left()), g.UseRegister(binop.right()));
+}
+
+#endif  // V8_ENABLE_SIMD128
+
+#if V8_ENABLE_WEBASSEMBLY
+void InstructionSelector::VisitSetStackPointer(OpIndex node) {
+  OperandGenerator g(this);
+  auto input = g.UseRegister(Cast<SetStackPointerOp>(node).value());
+  Emit(kArchSetStackPointer, 0, nullptr, 1, &input);
 }
 
 #endif  // V8_ENABLE_WEBASSEMBLY
@@ -3426,7 +3429,7 @@ void InstructionSelector::VisitI8x16BitMask(OpIndex node) {
   VisitBitMask<kArmI8x16BitMask>(this, node);
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void InstructionSelector::VisitI16x8BitMask(OpIndex node) {
   VisitBitMask<kArmI16x8BitMask>(this, node);
 }
@@ -3564,7 +3567,7 @@ void InstructionSelector::VisitI32x4RelaxedTruncF64x2SZero(OpIndex node) {
 void InstructionSelector::VisitI32x4RelaxedTruncF64x2UZero(OpIndex node) {
   VisitI32x4TruncSatF64x2UZero(node);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitTruncateFloat32ToInt32(OpIndex node) {
   ArmOperandGenerator g(this);

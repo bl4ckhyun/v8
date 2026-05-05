@@ -67,7 +67,7 @@ static CpuFeatureSet CpuFeaturesImpliedByCompiler() {
   return answer;
 }
 
-bool CpuFeatures::SupportsWasmSimd128() {
+bool CpuFeatures::SupportsSimd128() {
   // TODO(mips64): enable wasm simd after turboshaft isel supports simd
   // instructions.
   return false;
@@ -102,7 +102,7 @@ void CpuFeatures::ProbeImpl(bool cross_compile) {
   // This variable is only used for certain archs to query SupportWasmSimd128()
   // at runtime in builtins using an extern ref. Other callers should use
   // CpuFeatures::SupportWasmSimd128().
-  CpuFeatures::supports_wasm_simd_128_ = CpuFeatures::SupportsWasmSimd128();
+  CpuFeatures::supports_simd_128_ = CpuFeatures::SupportsSimd128();
 }
 
 void CpuFeatures::PrintTarget() {}

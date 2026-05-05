@@ -2837,7 +2837,7 @@ void MacroAssembler::SaveVectorRegisters(const Simd128RegList& reg_list) {
   bool generating_builtins =
       isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
   if (generating_builtins) {
-    li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+    li(kScratchReg, ExternalReference::supports_simd_128_address());
     Lb(kScratchReg, MemOperand(kScratchReg, 0));
     // If != 0, then simd is available.
     Branch(&not_simd, eq, kScratchReg, Operand(zero_reg),
@@ -2860,7 +2860,7 @@ void MacroAssembler::SaveVectorRegisters(const Simd128RegList& reg_list) {
     // If we're not generating builtins, we can assume that the machine has
     // simd128 support, since otherwise we wouldn't be able to run the code at
     // all.
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       VU.SetSimd128(E8);
       for (VRegister vector_reg : reg_list) {
         SubWord(sp, sp, Operand(kSimd128Size));
@@ -2881,7 +2881,7 @@ void MacroAssembler::RestoreVectorRegisters(const Simd128RegList& reg_list) {
   bool generating_builtins =
       isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
   if (generating_builtins) {
-    li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+    li(kScratchReg, ExternalReference::supports_simd_128_address());
     Lb(kScratchReg, MemOperand(kScratchReg, 0));
     // If != 0, then simd is available.
     Branch(&not_simd, eq, kScratchReg, Operand(zero_reg),
@@ -2905,7 +2905,7 @@ void MacroAssembler::RestoreVectorRegisters(const Simd128RegList& reg_list) {
     // If we're not generating builtins, we can assume that the machine has
     // simd128 support, since otherwise we wouldn't be able to run the code at
     // all.
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       VU.SetSimd128(E8);
       for (VRegister vector_reg : base::Reversed(reg_list)) {
         vl(vector_reg, sp, 0, E8);
@@ -5391,7 +5391,7 @@ void MacroAssembler::CallBuiltin(Builtin builtin) {
     int old_offset = pc_offset_for_safepoint();
     // Check that the builtin didn't leave the rounding mode in a bad state.
     Label done;
-    li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+    li(kScratchReg, ExternalReference::supports_simd_128_address());
     // If != 0, then simd is available.
     Branch(&done, eq, kScratchReg, Operand(zero_reg), Label::Distance::kNear);
 

@@ -2878,7 +2878,7 @@ void Builtins::Generate_WasmLiftoffFrameSetup(MacroAssembler* masm) {
     // Check if machine has simd enabled, if so push vector registers. If not
     // then only push double registers.
     Label push_doubles, simd_pushed;
-    __ li(a1, ExternalReference::supports_wasm_simd_128_address());
+    __ li(a1, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(a1, MemOperand(a1));
     __ Branch(&push_doubles, le, a1, Operand(zero_reg));
@@ -2912,7 +2912,7 @@ void Builtins::Generate_WasmLiftoffFrameSetup(MacroAssembler* masm) {
   {
     // Restore registers.
     Label pop_doubles, simd_popped;
-    __ li(a1, ExternalReference::supports_wasm_simd_128_address());
+    __ li(a1, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(a1, MemOperand(a1));
     __ Branch(&pop_doubles, le, a1, Operand(zero_reg));
@@ -2954,7 +2954,7 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
     // Check if machine has simd enabled, if so push vector registers. If not
     // then only push double registers.
     Label push_doubles, simd_pushed;
-    __ li(a1, ExternalReference::supports_wasm_simd_128_address());
+    __ li(a1, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(a1, MemOperand(a1));
     __ Branch(&push_doubles, le, a1, Operand(zero_reg));
@@ -2982,7 +2982,7 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
 
     // Restore registers.
     Label pop_doubles, simd_popped;
-    __ li(a1, ExternalReference::supports_wasm_simd_128_address());
+    __ li(a1, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(a1, MemOperand(a1));
     __ Branch(&pop_doubles, le, a1, Operand(zero_reg));
@@ -3697,7 +3697,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
     UseScratchRegisterScope temps(masm);
     Register scratch = temps.Acquire();
 
-    __ li(scratch, ExternalReference::supports_wasm_simd_128_address());
+    __ li(scratch, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(scratch, MemOperand(scratch));
     __ Branch(&no_simd, le, scratch, Operand(zero_reg));
@@ -3794,7 +3794,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
     UseScratchRegisterScope temps(masm);
     Register scratch = temps.Acquire();
 
-    __ li(scratch, ExternalReference::supports_wasm_simd_128_address());
+    __ li(scratch, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(scratch, MemOperand(scratch));
     __ Branch(&no_simd, le, scratch, Operand(zero_reg));
@@ -3896,7 +3896,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
     UseScratchRegisterScope temps(masm);
     Register scratch = temps.Acquire();
 
-    __ li(scratch, ExternalReference::supports_wasm_simd_128_address());
+    __ li(scratch, ExternalReference::supports_simd_128_address());
     // If > 0 then simd is available.
     __ Lbu(scratch, MemOperand(scratch));
     __ Branch(&no_simd, le, scratch, Operand(zero_reg));

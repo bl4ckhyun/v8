@@ -4724,7 +4724,7 @@ class TurboshaftGraphBuildingInterface
 
     // Try to use the largest types first for the transfer.
     base::SmallVector<MemoryRepresentation, 5> memory_reps;
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       memory_reps = base::SmallVector<MemoryRepresentation, 5>(
           {MemoryRepresentation::Simd128(), MemoryRepresentation::Uint64(),
            MemoryRepresentation::Uint32(), MemoryRepresentation::Uint16(),
@@ -4870,14 +4870,14 @@ class TurboshaftGraphBuildingInterface
         __ Word32BitwiseOr(__ Word32ShiftLeft(scalar_val, 16), scalar_val);
 
     OpIndex simd_val =
-        CpuFeatures::SupportsWasmSimd128()
+        CpuFeatures::SupportsSimd128()
             ? __ Simd128Splat(
                   value, compiler::turboshaft::Simd128SplatOp::Kind::kI8x16)
             : OpIndex::Invalid();
 
     // Use Simd128 if possible and for the vast bulk of the work.
     base::SmallVector<MemoryRepresentation, 4> memory_reps;
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       memory_reps = base::SmallVector<MemoryRepresentation, 4>(
           {MemoryRepresentation::Simd128(), MemoryRepresentation::Uint32(),
            MemoryRepresentation::Uint16(), MemoryRepresentation::Uint8()});

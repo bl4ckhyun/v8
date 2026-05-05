@@ -1768,6 +1768,9 @@ const RegisterRepresentation& RepresentationFor(wasm::ValueType type) {
   }
 }
 
+#endif  // V8_ENABLE_WEBASSEMBLY
+
+#if V8_ENABLE_SIMD128
 namespace {
 template <size_t size>
 void PrintSimdValue(std::ostream& os, const uint8_t (&value)[size]) {
@@ -2016,8 +2019,9 @@ void Simd128LoadPairDeinterleaveOp::PrintOptions(std::ostream& os) const {
   }
   os << ']';
 }
+#endif  // V8_ENABLE_SIMD128
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
 void Simd256ConstantOp::PrintOptions(std::ostream& os) const {
   PrintSimdValue(os, value);
 }
@@ -2112,7 +2116,9 @@ std::ostream& operator<<(std::ostream& os, Simd256UnpackOp::Kind kind) {
 #undef PRINT_KIND
 }
 #endif  // V8_TARGET_ARCH_X64
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
+
+#if V8_ENABLE_WEBASSEMBLY
 
 void WasmAllocateArrayOp::PrintOptions(std::ostream& os) const {
   os << '[' << array_type->element_type()

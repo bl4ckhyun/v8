@@ -882,7 +882,7 @@ class LiftoffCompiler {
     DCHECK(!supported_types_.contains(kind));
 
     // Lazily update {supported_types_}; then check again.
-    if (CpuFeatures::SupportsWasmSimd128()) supported_types_.Add(kS128);
+    if (CpuFeatures::SupportsSimd128()) supported_types_.Add(kS128);
     if (supported_types_.contains(kind)) return true;
 
     LiftoffBailoutReason bailout_reason;
@@ -4886,7 +4886,7 @@ class LiftoffCompiler {
 
   void SimdOp(FullDecoder* decoder, WasmOpcode opcode, const Value* /* args */,
               Value* /* result */) {
-    CHECK(CpuFeatures::SupportsWasmSimd128());
+    CHECK(CpuFeatures::SupportsSimd128());
     switch (opcode) {
       case wasm::kExprI8x16Swizzle:
         return EmitI8x16Swizzle(false);
@@ -5631,7 +5631,7 @@ class LiftoffCompiler {
   void SimdLaneOp(FullDecoder* decoder, WasmOpcode opcode,
                   const SimdLaneImmediate& imm,
                   base::Vector<const Value> inputs, Value* result) {
-    CHECK(CpuFeatures::SupportsWasmSimd128());
+    CHECK(CpuFeatures::SupportsSimd128());
     switch (opcode) {
 #define CASE_SIMD_EXTRACT_LANE_OP(opcode, kind, fn)      \
   case wasm::kExpr##opcode:                              \
@@ -5705,7 +5705,7 @@ class LiftoffCompiler {
 
   void S128Const(FullDecoder* decoder, const Simd128Immediate& imm,
                  Value* result) {
-    CHECK(CpuFeatures::SupportsWasmSimd128());
+    CHECK(CpuFeatures::SupportsSimd128());
     constexpr RegClass result_rc = reg_class_for(kS128);
     LiftoffRegister dst = __ GetUnusedRegister(result_rc, {});
     bool all_zeroes = std::all_of(std::begin(imm.value), std::end(imm.value),
@@ -5726,7 +5726,7 @@ class LiftoffCompiler {
   void Simd8x16ShuffleOp(FullDecoder* decoder, const Simd128Immediate& imm,
                          const Value& input0, const Value& input1,
                          Value* result) {
-    CHECK(CpuFeatures::SupportsWasmSimd128());
+    CHECK(CpuFeatures::SupportsSimd128());
     static constexpr RegClass result_rc = reg_class_for(kS128);
     LiftoffRegList pinned;
     LiftoffRegister rhs = pinned.set(__ PopToRegister(pinned));
@@ -10736,7 +10736,7 @@ class LiftoffCompiler {
       case kF64:
         return __ LoadConstant(reg, WasmValue(double{0.0}));
       case kS128:
-        DCHECK(CpuFeatures::SupportsWasmSimd128());
+        DCHECK(CpuFeatures::SupportsSimd128());
         return __ emit_s128_xor(reg, reg, reg);
       case kRefNull:
         return LoadNullValue(reg.gp(), type);

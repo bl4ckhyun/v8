@@ -148,12 +148,16 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(StringAsWtf16)                        \
   V(StringPrepareForGetCodeUnit)          \
   V(ProcessWasmArgument)
+#else
+#define TURBOSHAFT_WASM_OPERATION_LIST(V)
+#endif  // V8_ENABLE_WEBASSEMBLY
 
+#ifdef V8_ENABLE_SIMD128
 #define TURBOSHAFT_DEINTERLEAVED_OPERATION_LIST(V) \
   V(Simd128LoadPairDeinterleave)
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
-#define TURBOSHAFT_SIMD256_COMMOM_OPERATION_LIST(V) \
+#ifdef V8_ENABLE_SIMD256
+#define TURBOSHAFT_SIMD256_COMMON_OPERATION_LIST(V) \
   V(Simd256Constant)                                \
   V(Simd256Extract128Lane)                          \
   V(Simd256LoadTransform)                           \
@@ -171,16 +175,16 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(Simd256Unpack)
 
 #define TURBOSHAFT_SIMD256_OPERATION_LIST(V)  \
-  TURBOSHAFT_SIMD256_COMMOM_OPERATION_LIST(V) \
+  TURBOSHAFT_SIMD256_COMMON_OPERATION_LIST(V) \
   TURBOSHAFT_SIMD256_X64_OPERATION_LIST(V)
 #else
 #define TURBOSHAFT_SIMD256_OPERATION_LIST(V) \
-  TURBOSHAFT_SIMD256_COMMOM_OPERATION_LIST(V)
+  TURBOSHAFT_SIMD256_COMMON_OPERATION_LIST(V)
 #endif  // V8_TARGET_ARCH_X64
 
 #else
 #define TURBOSHAFT_SIMD256_OPERATION_LIST(V)
-#endif
+#endif  // V8_ENABLE_SIMD256
 
 #define TURBOSHAFT_SIMD_OPERATION_LIST(V) \
   V(Simd128Constant)                      \
@@ -199,11 +203,9 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(Simd128Shuffle)                       \
   TURBOSHAFT_SIMD256_OPERATION_LIST(V)    \
   TURBOSHAFT_DEINTERLEAVED_OPERATION_LIST(V)
-
 #else
-#define TURBOSHAFT_WASM_OPERATION_LIST(V)
 #define TURBOSHAFT_SIMD_OPERATION_LIST(V)
-#endif
+#endif  // V8_ENABLE_SIMD128
 
 #define TURBOSHAFT_OPERATION_LIST_BLOCK_TERMINATOR(V) \
   V(CheckException)                                   \
@@ -527,10 +529,10 @@ class InputsRepFactory {
       MaybeRegisterRepresentation::Compressed(),
       MaybeRegisterRepresentation::Simd128(),
       MaybeRegisterRepresentation::Simd128(),
-#ifdef V8_ENABLE_WASM_SIMD256_REVEC
+#ifdef V8_ENABLE_SIMD256
       MaybeRegisterRepresentation::Simd256(),
       MaybeRegisterRepresentation::Simd256(),
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
   };
 };
 
@@ -8378,6 +8380,10 @@ struct StringPrepareForGetCodeUnitOp
   auto options() const { return std::tuple{}; }
 };
 
+#endif  // V8_ENABLE_WEBASSEMBLY
+
+#if V8_ENABLE_SIMD128
+
 struct Simd128ConstantOp : FixedArityOperationT<0, Simd128ConstantOp> {
   static constexpr uint8_t kZero[kSimd128Size] = {};
   uint8_t value[kSimd128Size];
@@ -9486,7 +9492,7 @@ struct Simd128LoadPairDeinterleaveOp
   void PrintOptions(std::ostream& os) const;
 };
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
 
 struct Simd256ConstantOp : FixedArityOperationT<0, Simd256ConstantOp> {
   static constexpr uint8_t kZero[kSimd256Size] = {};
@@ -10082,7 +10088,10 @@ struct Simd256UnpackOp : FixedArityOperationT<2, Simd256UnpackOp> {
 std::ostream& operator<<(std::ostream& os, Simd256UnpackOp::Kind kind);
 #endif  // V8_TARGET_ARCH_X64
 
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
+
+#if V8_ENABLE_WEBASSEMBLY
 
 struct LoadStackPointerOp : FixedArityOperationT<0, LoadStackPointerOp> {
   // TODO(nicohartmann@): Review effects.
@@ -10238,17 +10247,19 @@ inline OpEffects Operation::Effects() const {
       return Cast<ArrayAtomicRMWOp>().Effects();
     case Opcode::kArrayLength:
       return Cast<ArrayLengthOp>().Effects();
+#endif  // V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     case Opcode::kSimd128LaneMemory:
       return Cast<Simd128LaneMemoryOp>().Effects();
     case Opcode::kSimd128LoadTransform:
       return Cast<Simd128LoadTransformOp>().Effects();
     case Opcode::kSimd128LoadPairDeinterleave:
       return Cast<Simd128LoadPairDeinterleaveOp>().Effects();
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
     case Opcode::kSimd256LoadTransform:
       return Cast<Simd256LoadTransformOp>().Effects();
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
-#endif
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
     default:
       UNREACHABLE();
   }

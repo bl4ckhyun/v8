@@ -26,9 +26,9 @@
 #include "src/numbers/conversions-inl.h"
 #include "src/zone/zone-containers.h"
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 #include "src/compiler/backend/simd-shuffle.h"
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 namespace v8 {
 namespace internal {
@@ -1044,16 +1044,16 @@ Instruction* InstructionSelector::EmitWithContinuation(
 }
 
 bool InstructionSelector::IsTrappingLoad(turboshaft::OpIndex node) const {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
   if (Get(node).opcode == turboshaft::Opcode::kSimd128LoadTransform) {
     return true;
   }
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
   if (Get(node).opcode == turboshaft::Opcode::kSimd256LoadTransform) {
     return true;
   }
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
 
   if (!IsLoadOrLoadImmutable(node)) return false;
 
@@ -1379,16 +1379,18 @@ bool InstructionSelector::IsSourcePositionUsed(OpIndex node) {
     if (const AtomicRMWOp* rmw = operation.TryCast<AtomicRMWOp>()) {
       return rmw->memory_access_kind == MemoryAccessKind::kTrapping;
     }
+#endif  // V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     if (const Simd128LoadTransformOp* lt =
             operation.TryCast<Simd128LoadTransformOp>()) {
       return lt->load_kind.with_trap_handler;
     }
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
     if (const Simd256LoadTransformOp* lt =
             operation.TryCast<Simd256LoadTransformOp>()) {
       return lt->load_kind.with_trap_handler;
     }
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
     if (const Simd128LaneMemoryOp* lm =
             operation.TryCast<Simd128LaneMemoryOp>()) {
       return lm->kind.with_trap_handler;
@@ -1397,7 +1399,7 @@ bool InstructionSelector::IsSourcePositionUsed(OpIndex node) {
             operation.TryCast<Simd128LoadPairDeinterleaveOp>()) {
       return dl->load_kind.with_trap_handler;
     }
-#endif
+#endif  // V8_ENABLE_SIMD128
     if (additional_trapping_instructions_->Contains(node.id())) {
       return true;
     }
@@ -1472,7 +1474,7 @@ void InstructionSelector::VisitBlock(const Block* block) {
     if (!source_positions_) return true;
 
     SourcePosition source_position;
-#if V8_ENABLE_WEBASSEMBLY && V8_TARGET_ARCH_X64
+#if V8_ENABLE_SIMD128 && V8_TARGET_ARCH_X64
     if (const Simd128UnaryOp* op =
             TryCast<Opmask::kSimd128F64x2PromoteLowF32x4>(node);
         V8_UNLIKELY(op)) {
@@ -1486,7 +1488,7 @@ void InstructionSelector::VisitBlock(const Block* block) {
         node = op->input();
       }
     }
-#endif  // V8_ENABLE_WEBASSEMBLY && V8_TARGET_ARCH_X64
+#endif  // V8_ENABLE_SIMD128 && V8_TARGET_ARCH_X64
     source_position = (*source_positions_)[node];
     if (source_position.IsKnown() && IsSourcePositionUsed(node)) {
       sequence()->SetSourcePosition(instructions_.back(), source_position);
@@ -1614,11 +1616,11 @@ void InstructionSelector::ConsumeEqualZero(OpIndex* user, OpIndex* value,
   }
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void InstructionSelector::VisitI8x16RelaxedSwizzle(OpIndex node) {
   return VisitI8x16Swizzle(node);
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 void InstructionSelector::VisitStackPointerGreaterThan(OpIndex node) {
   FlagsContinuation cont =
@@ -1953,8 +1955,8 @@ VISIT_UNSUPPORTED_OP(Word64AtomicCompareExchange)
 
 #if !V8_TARGET_ARCH_IA32 && !V8_TARGET_ARCH_ARM && !V8_TARGET_ARCH_RISCV32
 // This is only needed on 32-bit to split the 64-bit value into two operands.
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2SplatI32Pair)
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2ReplaceLaneI32Pair)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2SplatI32Pair)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2ReplaceLaneI32Pair)
 #endif  // !V8_TARGET_ARCH_IA32 && !V8_TARGET_ARCH_ARM &&
         // !V8_TARGET_ARCH_RISCV32
 
@@ -1963,9 +1965,9 @@ IF_WASM(VISIT_UNSUPPORTED_OP, I64x2ReplaceLaneI32Pair)
 #if !V8_TARGET_ARCH_MIPS64 && !V8_TARGET_ARCH_LOONG64 && \
     !V8_TARGET_ARCH_RISCV32 && !V8_TARGET_ARCH_RISCV64
 
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2Splat)
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2ExtractLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2ReplaceLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2Splat)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2ExtractLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2ReplaceLane)
 
 #endif  // !V8_TARGET_ARCH_MIPS64 && !V8_TARGET_ARCH_LOONG64 &&
         // !V8_TARGET_ARCH_RISCV64 && !V8_TARGET_ARCH_RISCV32
@@ -1974,34 +1976,34 @@ IF_WASM(VISIT_UNSUPPORTED_OP, I64x2ReplaceLane)
 
 #if !V8_TARGET_ARCH_ARM64
 
-IF_WASM(VISIT_UNSUPPORTED_OP, Simd128LoadPairDeinterleave)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, Simd128LoadPairDeinterleave)
 
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x16AddReduce)
-IF_WASM(VISIT_UNSUPPORTED_OP, I16x8AddReduce)
-IF_WASM(VISIT_UNSUPPORTED_OP, I32x4AddReduce)
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2AddReduce)
-IF_WASM(VISIT_UNSUPPORTED_OP, F32x4AddReduce)
-IF_WASM(VISIT_UNSUPPORTED_OP, F64x2AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x16AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I16x8AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I32x4AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, F32x4AddReduce)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, F64x2AddReduce)
 
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x1Shuffle)
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x2Shuffle)
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x4Shuffle)
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x8Shuffle)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x1Shuffle)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x2Shuffle)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x4Shuffle)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x8Shuffle)
 
 IF_WASM(VISIT_UNSUPPORTED_OP, MemoryCopy)
 IF_WASM(VISIT_UNSUPPORTED_OP, MemoryFill)
 
-IF_WASM(VISIT_UNSUPPORTED_OP, I32x4AddPairwise)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I32x4AddPairwise)
 
-IF_WASM(VISIT_UNSUPPORTED_OP, I8x16MoveLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, I16x8MoveLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, I32x4MoveLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, I64x2MoveLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, F32x4MoveLane)
-IF_WASM(VISIT_UNSUPPORTED_OP, F64x2MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I8x16MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I16x8MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I32x4MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, I64x2MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, F32x4MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, F64x2MoveLane)
 #endif  // !V8_TARGET_ARCH_ARM64
 
-IF_WASM(VISIT_UNSUPPORTED_OP, F16x8MoveLane)
+IF_SIMD128(VISIT_UNSUPPORTED_OP, F16x8MoveLane)
 
 void InstructionSelector::VisitParameter(OpIndex node) {
   const ParameterOp& parameter = Cast<ParameterOp>(node);
@@ -2086,10 +2088,10 @@ void InstructionSelector::VisitProjection(OpIndex node) {
     UNREACHABLE();
   } else if (value_op.Is<AtomicWord32PairOp>()) {
     // Nothing to do here.
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
   } else if (value_op.Is<Simd128LoadPairDeinterleaveOp>()) {
     MarkAsUsed(projection.input());
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
   } else {
     UNIMPLEMENTED();
   }
@@ -3686,7 +3688,7 @@ void InstructionSelector::VisitNode(OpIndex node) {
     case Opcode::kComment:
       return VisitComment(node);
 
-#ifdef V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     case Opcode::kSimd128Constant: {
       const Simd128ConstantOp& constant = op.Cast<Simd128ConstantOp>();
       MarkAsSimd128(node);
@@ -3891,7 +3893,7 @@ void InstructionSelector::VisitNode(OpIndex node) {
     }
 
     // SIMD256
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
     case Opcode::kSimd256Constant: {
       const Simd256ConstantOp& constant = op.Cast<Simd256ConstantOp>();
       MarkAsSimd256(node);
@@ -3979,8 +3981,10 @@ void InstructionSelector::VisitNode(OpIndex node) {
       return VisitSimdPack128To256(node);
     }
 #endif  // V8_TARGET_ARCH_X64
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
+#endif  // V8_ENABLE_SIMD128
 
+#if V8_ENABLE_WEBASSEMBLY
     case Opcode::kLoadStackPointer:
       return VisitLoadStackPointer(node);
 
@@ -4134,12 +4138,12 @@ FrameStateDescriptor* InstructionSelector::GetFrameStateDescriptor(
   return desc;
 }
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 // static
 void InstructionSelector::SwapShuffleInputs(SimdShuffleView& view) {
   view.SwapInputs();
 }
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 InstructionSelector InstructionSelector::ForTurboshaft(
     Zone* zone, size_t node_count, Linkage* linkage,

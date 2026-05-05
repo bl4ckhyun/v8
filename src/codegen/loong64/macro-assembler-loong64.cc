@@ -61,7 +61,7 @@ int MacroAssembler::RequiredStackSizeForCallerSaved(SaveFPRegsMode fp_mode,
 #if V8_ENABLE_WEBASSEMBLY
     bool generating_builtins =
         isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
-    if (generating_builtins || CpuFeatures::SupportsWasmSimd128()) {
+    if (generating_builtins || CpuFeatures::SupportsSimd128()) {
       bytes += kCallerSavedFPU.Count() * kSimd128Size;
     } else {
       bytes += kCallerSavedFPU.Count() * kDoubleSize;
@@ -93,7 +93,7 @@ int MacroAssembler::PushCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
       UseScratchRegisterScope temps(this);
       Register scratch = temps.Acquire();
 
-      li(scratch, ExternalReference::supports_wasm_simd_128_address());
+      li(scratch, ExternalReference::supports_simd_128_address());
       // If > 0 then simd is available.
       Ld_bu(scratch, MemOperand(scratch, 0));
       Branch(&no_simd, le, scratch, Operand(zero_reg));
@@ -113,7 +113,7 @@ int MacroAssembler::PushCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
       bind(&done);
       bytes += kCallerSavedFPU.Count() * kSimd128Size;
     } else {
-      if (CpuFeatures::SupportsWasmSimd128()) {
+      if (CpuFeatures::SupportsSimd128()) {
         MultiPushLSX(kCallerSavedFPU);
         bytes += kCallerSavedFPU.Count() * kSimd128Size;
       } else {
@@ -144,7 +144,7 @@ int MacroAssembler::PopCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
       UseScratchRegisterScope temps(this);
       Register scratch = temps.Acquire();
 
-      li(scratch, ExternalReference::supports_wasm_simd_128_address());
+      li(scratch, ExternalReference::supports_simd_128_address());
       // If > 0 then simd is available.
       Ld_bu(scratch, MemOperand(scratch, 0));
       Branch(&no_simd, le, scratch, Operand(zero_reg));
@@ -164,7 +164,7 @@ int MacroAssembler::PopCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
       bind(&done);
       bytes += kCallerSavedFPU.Count() * kSimd128Size;
     } else {
-      if (CpuFeatures::SupportsWasmSimd128()) {
+      if (CpuFeatures::SupportsSimd128()) {
         MultiPopLSX(kCallerSavedFPU);
         bytes += kCallerSavedFPU.Count() * kSimd128Size;
       } else {

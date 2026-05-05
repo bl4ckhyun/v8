@@ -164,7 +164,7 @@ static bool supportsSTFLE() {
 #endif
 }
 
-bool CpuFeatures::SupportsWasmSimd128() {
+bool CpuFeatures::SupportsSimd128() {
 #if V8_ENABLE_WEBASSEMBLY
   return true;
 #else
@@ -284,7 +284,7 @@ void CpuFeatures::ProbeImpl(bool cross_compile) {
   // This variable is only used for certain archs to query SupportWasmSimd128()
   // at runtime in builtins using an extern ref. Other callers should use
   // CpuFeatures::SupportWasmSimd128().
-  CpuFeatures::supports_wasm_simd_128_ = CpuFeatures::SupportsWasmSimd128();
+  CpuFeatures::supports_simd_128_ = CpuFeatures::SupportsSimd128();
 }
 
 void CpuFeatures::PrintTarget() {

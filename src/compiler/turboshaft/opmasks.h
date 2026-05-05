@@ -337,7 +337,7 @@ using kTaggedBitcastSmi =
 using kTaggedBitcastHeapObject =
     TaggedBitcastKindMask::For<TaggedBitcastOp::Kind::kHeapObject>;
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 
 using Simd128BinopMask =
     MaskBuilder<Simd128BinopOp, FIELD(Simd128BinopOp, kind)>;
@@ -379,7 +379,7 @@ using Simd128ReplaceLaneMask =
 using kSimd128ReplaceLaneF32x4 =
     Simd128ReplaceLaneMask::For<Simd128ReplaceLaneOp::Kind::kF32x4>;
 
-#if V8_ENABLE_WASM_SIMD256_REVEC
+#if V8_ENABLE_SIMD256
 using Simd256UnaryMask =
     MaskBuilder<Simd256UnaryOp, FIELD(Simd256UnaryOp, kind)>;
 #define SIMD256_UNARY_MASK(kind) \
@@ -387,9 +387,9 @@ using Simd256UnaryMask =
 FOREACH_SIMD_256_UNARY_OPCODE(SIMD256_UNARY_MASK)
 #undef SIMD256_UNARY_MASK
 
-#endif  // V8_ENABLE_WASM_SIMD256_REVEC
+#endif  // V8_ENABLE_SIMD256
 
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 
 #undef FIELD
 

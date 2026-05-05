@@ -5024,7 +5024,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
   __ AllocateStackSpace(kSimd128RegsSize);
 
   Label done_push_simd128;
-  __ li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+  __ li(kScratchReg, ExternalReference::supports_simd_128_address());
   __ Lb(kScratchReg, MemOperand(kScratchReg, 0));
   // If != 0, then simd is available.
   __ Branch(&done_push_simd128, eq, kScratchReg, Operand(zero_reg),
@@ -5132,7 +5132,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
     __ StoreDouble(ft0, MemOperand(a1, dst_offset));
   }
 
-  __ li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+  __ li(kScratchReg, ExternalReference::supports_simd_128_address());
   __ Lb(kScratchReg, MemOperand(kScratchReg, 0));
   // If != 0, then simd is available.
   Label done_pop_simd128;
@@ -5230,7 +5230,7 @@ void Generate_DeoptimizationEntry(MacroAssembler* masm,
   // In case of a failed STUB, we have to restore the double and simd128.
   // registers.
   Label done_restore_simd128;
-  __ li(kScratchReg, ExternalReference::supports_wasm_simd_128_address());
+  __ li(kScratchReg, ExternalReference::supports_simd_128_address());
   __ Lb(kScratchReg, MemOperand(kScratchReg, 0));
   // If != 0, then simd is available.
   __ Branch(&done_restore_simd128, eq, kScratchReg, Operand(zero_reg),

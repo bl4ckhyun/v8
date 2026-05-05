@@ -666,7 +666,7 @@ void MacroAssembler::MultiPushF64OrV128(DoubleRegList dregs, Register scratch,
       isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
   if (generating_builtins) {
     Label push_doubles, simd_pushed;
-    Move(r1, ExternalReference::supports_wasm_simd_128_address());
+    Move(r1, ExternalReference::supports_simd_128_address());
     LoadU8(r1, MemOperand(r1));
     LoadAndTestP(r1, r1);  // If > 0 then simd is available.
     ble(&push_doubles, Label::kNear);
@@ -681,7 +681,7 @@ void MacroAssembler::MultiPushF64OrV128(DoubleRegList dregs, Register scratch,
     lay(sp, MemOperand(sp, -(dregs.Count() * kDoubleSize)));
     bind(&simd_pushed);
   } else {
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       MultiPushV128(dregs, scratch);
     } else {
       MultiPushDoubles(dregs);
@@ -700,7 +700,7 @@ void MacroAssembler::MultiPopF64OrV128(DoubleRegList dregs, Register scratch,
       isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
   if (generating_builtins) {
     Label pop_doubles, simd_popped;
-    Move(r1, ExternalReference::supports_wasm_simd_128_address());
+    Move(r1, ExternalReference::supports_simd_128_address());
     LoadU8(r1, MemOperand(r1));
     LoadAndTestP(r1, r1);  // If > 0 then simd is available.
     ble(&pop_doubles, Label::kNear);
@@ -713,7 +713,7 @@ void MacroAssembler::MultiPopF64OrV128(DoubleRegList dregs, Register scratch,
     MultiPopDoubles(dregs);
     bind(&simd_popped);
   } else {
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       MultiPopV128(dregs, scratch);
     } else {
       lay(sp, MemOperand(sp, dregs.Count() * kDoubleSize));

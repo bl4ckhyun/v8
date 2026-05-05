@@ -99,7 +99,7 @@ static CpuFeatureSet SimulatorFeatures() {
 }
 #endif
 
-bool CpuFeatures::SupportsWasmSimd128() { return IsSupported(RISCV_SIMD); }
+bool CpuFeatures::SupportsSimd128() { return IsSupported(RISCV_SIMD); }
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {
   supported_ |= CpuFeaturesImpliedByCompiler();
@@ -140,13 +140,13 @@ void CpuFeatures::ProbeImpl(bool cross_compile) {
   // This variable is only used for certain archs to query SupportWasmSimd128()
   // at runtime in builtins using an extern ref. Other callers should use
   // CpuFeatures::SupportWasmSimd128().
-  CpuFeatures::supports_wasm_simd_128_ = CpuFeatures::SupportsWasmSimd128();
+  CpuFeatures::supports_simd_128_ = CpuFeatures::SupportsSimd128();
 }
 
 void CpuFeatures::PrintTarget() {}
 void CpuFeatures::PrintFeatures() {
-  printf("supports_wasm_simd_128=%d", CpuFeatures::SupportsWasmSimd128());
-  if (CpuFeatures::SupportsWasmSimd128()) {
+  printf("supports_simd_128=%d", CpuFeatures::SupportsSimd128());
+  if (CpuFeatures::SupportsSimd128()) {
     printf(", vlen=%u", CpuFeatures::vlen());
   }
   printf("\n");

@@ -620,7 +620,7 @@ void MacroAssembler::MultiPushF64AndV128(DoubleRegList dregs,
     // sure to also save them when Simd is enabled.
     // Check the comments under crrev.com/c/2645694 for more details.
     Label push_empty_simd, simd_pushed;
-    Move(scratch1, ExternalReference::supports_wasm_simd_128_address());
+    Move(scratch1, ExternalReference::supports_simd_128_address());
     LoadU8(scratch1, MemOperand(scratch1), scratch2);
     cmpi(scratch1, Operand::Zero());  // If > 0 then simd is available.
     ble(&push_empty_simd);
@@ -633,7 +633,7 @@ void MacroAssembler::MultiPushF64AndV128(DoubleRegList dregs,
          Operand(-static_cast<int8_t>(simd_regs.Count()) * kSimd128Size));
     bind(&simd_pushed);
   } else {
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       MultiPushV128(simd_regs, scratch1);
     } else {
       addi(sp, sp,
@@ -652,7 +652,7 @@ void MacroAssembler::MultiPopF64AndV128(DoubleRegList dregs,
       isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
   if (generating_builtins) {
     Label pop_empty_simd, simd_popped;
-    Move(scratch1, ExternalReference::supports_wasm_simd_128_address());
+    Move(scratch1, ExternalReference::supports_simd_128_address());
     LoadU8(scratch1, MemOperand(scratch1), scratch2);
     cmpi(scratch1, Operand::Zero());  // If > 0 then simd is available.
     ble(&pop_empty_simd);
@@ -663,7 +663,7 @@ void MacroAssembler::MultiPopF64AndV128(DoubleRegList dregs,
          Operand(static_cast<int8_t>(simd_regs.Count()) * kSimd128Size));
     bind(&simd_popped);
   } else {
-    if (CpuFeatures::SupportsWasmSimd128()) {
+    if (CpuFeatures::SupportsSimd128()) {
       MultiPopV128(simd_regs, scratch1);
     } else {
       addi(sp, sp,

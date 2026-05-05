@@ -994,9 +994,9 @@ ExternalReference::address_of_wasm_f64x2_convert_low_i32x4_u_int_mask() {
       reinterpret_cast<Address>(&wasm_f64x2_convert_low_i32x4_u_int_mask));
 }
 
-ExternalReference ExternalReference::supports_wasm_simd_128_address() {
+ExternalReference ExternalReference::supports_simd_128_address() {
   return ExternalReference(
-      reinterpret_cast<Address>(&CpuFeatures::supports_wasm_simd_128_));
+      reinterpret_cast<Address>(&CpuFeatures::supports_simd_128_));
 }
 
 ExternalReference ExternalReference::address_of_wasm_double_2_power_52() {
