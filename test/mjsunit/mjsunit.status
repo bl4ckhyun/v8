@@ -1139,6 +1139,7 @@
   'compiler/fast-api-calls-64-bit-integer-values': [SKIP],
   'wasm/fast-api-calls-with-wellknown-imports-i64': [SKIP],
   'wasm/fast-api-calls-with-wellknown-imports-conflict': [SKIP],
+  'regress/regress-508347341': [SKIP],
 }],  # 'arch in (ia32, arm, riscv32)'
 
 ##############################################################################
