@@ -98,8 +98,7 @@ void JSFunction::TraceOptimizationStatus(const char* format, ...) {
         PrintF(" .");
       } else {
         Tagged<Code> code =
-            Tagged<CodeWrapper>::cast(value.GetHeapObjectAssumeWeak())
-                ->code(isolate);
+            Cast<CodeWrapper>(value.GetHeapObjectAssumeWeak())->code(isolate);
         PrintF(" %i:", code->osr_offset().ToInt());
         if (code->kind() == CodeKind::MAGLEV) {
           PrintF("m");
@@ -270,14 +269,14 @@ void JSFunction::RequestOptimization(Isolate* isolate, CodeKind target_kind,
     if (tiering_in_progress()) {
       if (v8_flags.trace_concurrent_recompilation) {
         PrintF("  ** Not marking ");
-        ShortPrint(Tagged<HeapObject>(this));
+        ShortPrint(this);
         PrintF(" -- already in optimization queue.\n");
       }
       return;
     }
     if (v8_flags.trace_concurrent_recompilation) {
       PrintF("  ** Marking ");
-      ShortPrint(Tagged<HeapObject>(this));
+      ShortPrint(this);
       PrintF(" for concurrent %s recompilation.\n",
              CodeKindToString(target_kind));
     }
@@ -322,7 +321,7 @@ void JSFunction::SetInterruptBudget(
     std::optional<CodeKind> override_active_tier) {
   int32_t current = raw_feedback_cell()->interrupt_budget();
   int32_t new_budget =
-      TieringManager::InterruptBudgetFor(isolate, *this, override_active_tier);
+      TieringManager::InterruptBudgetFor(isolate, this, override_active_tier);
   switch (kind) {
     case BudgetModification::kRaise:
       new_budget = std::max(current, new_budget);

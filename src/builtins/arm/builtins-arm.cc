@@ -2303,7 +2303,7 @@ void Builtins::Generate_CallOrConstructVarargs(MacroAssembler* masm,
     // Allow r2 to be a FixedArray, or a FixedDoubleArray if r4 == 0.
     Label ok, fail;
     __ AssertNotSmi(r2);
-    __ ldr(scratch, FieldMemOperand(r2, HeapObject::kMapOffset));
+    __ ldr(scratch, FieldMemOperand(r2, offsetof(HeapObject, map_)));
     __ ldrh(r6, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
     __ cmp(r6, Operand(FIXED_ARRAY_TYPE));
     __ b(eq, &ok);
@@ -2387,7 +2387,7 @@ void Builtins::Generate_CallOrConstructForwardVarargs(MacroAssembler* masm,
   if (mode == CallOrConstructMode::kConstruct) {
     Label new_target_constructor, new_target_not_constructor;
     __ JumpIfSmi(r3, &new_target_not_constructor);
-    __ ldr(scratch, FieldMemOperand(r3, HeapObject::kMapOffset));
+    __ ldr(scratch, FieldMemOperand(r3, offsetof(HeapObject, map_)));
     __ ldrb(scratch, FieldMemOperand(scratch, Map::kBitFieldOffset));
     __ tst(scratch, Operand(Map::Bits1::IsConstructorBit::kMask));
     __ b(ne, &new_target_constructor);
@@ -2722,7 +2722,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   __ JumpIfSmi(target, &non_constructor);
 
   // Check if target has a [[Construct]] internal method.
-  __ ldr(map, FieldMemOperand(target, HeapObject::kMapOffset));
+  __ ldr(map, FieldMemOperand(target, offsetof(HeapObject, map_)));
   {
     Register flags = r2;
     DCHECK(!AreAliased(r0, target, map, instance_type, flags));
@@ -3161,7 +3161,8 @@ class RegisterAllocator {
 // depending on the data's type, and places the result in the input register.
 void GetContextFromImplicitArg(MacroAssembler* masm, Register data,
                                Register scratch) {
-  __ LoadTaggedField(scratch, FieldMemOperand(data, HeapObject::kMapOffset));
+  __ LoadTaggedField(scratch,
+                     FieldMemOperand(data, offsetof(HeapObject, map_)));
   __ CompareInstanceType(scratch, scratch, WASM_TRUSTED_INSTANCE_DATA_TYPE);
   Label instance;
   Label end;

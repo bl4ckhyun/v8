@@ -35,7 +35,7 @@ FieldAccess AccessBuilder::ForExternalIntPtr() {
 
 // static
 FieldAccess AccessBuilder::ForMap(WriteBarrierKind write_barrier) {
-  FieldAccess access = {kTaggedBase,           HeapObject::kMapOffset,
+  FieldAccess access = {kTaggedBase,           offsetof(HeapObject, map_),
                         MaybeHandle<Name>(),   OptionalMapRef(),
                         Type::OtherInternal(), MachineType::MapInHeader(),
                         write_barrier,         "Map"};

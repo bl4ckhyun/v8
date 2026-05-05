@@ -3197,7 +3197,7 @@ Tagged<Object> Isolate::UnwindAndFindHandler() {
           // return address of the fast call. If so, then we tell the
           // deoptimizer of the exception and just return the Deoptimization
           // Entry. Otherwise we iterate the stack further to find a handler.
-          HandlerTable table(caller_code->UnsafeCastToCode());
+          HandlerTable table(TrustedCast<Code>(caller_code));
           int handler_offset = table.LookupReturn(caller_offset);
           if (handler_offset < 0) {
             // No handler was registered for the fast call. The stack iteration
@@ -3392,7 +3392,7 @@ Isolate::CatchType PredictExceptionCatchAtFrame(
     }
 
     case StackFrame::STUB: {
-      Tagged<Code> code = *frame->LookupCode();
+      Tagged<Code> code = frame->LookupCode();
       if (code->kind() != CodeKind::BUILTIN || !code->has_handler_table() ||
           !code->is_turbofanned()) {
         break;
@@ -3402,7 +3402,7 @@ Isolate::CatchType PredictExceptionCatchAtFrame(
     }
 
     case StackFrame::JAVASCRIPT_BUILTIN_CONTINUATION_WITH_CATCH: {
-      Tagged<Code> code = *frame->LookupCode();
+      Tagged<Code> code = frame->LookupCode();
       return ToCatchType(CatchPredictionFor(code->builtin_id()));
     }
 
@@ -4170,7 +4170,7 @@ bool Isolate::WalkCallStackAndPromiseTree(
       if (summary.IsJavaScript()) {
         const auto& info = summary.AsJavaScript().function()->shared();
         if (info->IsSubjectToDebugging()) {
-          callback({*info, false});
+          callback({info, false});
           debuggable = true;
         }
       }

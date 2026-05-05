@@ -340,7 +340,7 @@ std::shared_ptr<BackingStore> JSArrayBuffer::RemoveExtension() {
 }
 
 Handle<JSArrayBuffer> JSTypedArray::GetBuffer(Isolate* isolate) {
-  DirectHandle<JSTypedArray> self(*this, isolate);
+  DirectHandle<JSTypedArray> self(this, isolate);
   DCHECK(IsTypedArrayOrRabGsabTypedArrayElementsKind(self->GetElementsKind()));
   Handle<JSArrayBuffer> array_buffer(Cast<JSArrayBuffer>(self->buffer()),
                                      isolate);

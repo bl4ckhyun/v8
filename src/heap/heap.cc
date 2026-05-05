@@ -6523,7 +6523,7 @@ void Heap::CompactWeakArrayLists() {
     HeapObjectIterator iterator(this);
     for (Tagged<HeapObject> o = iterator.Next(); !o.is_null();
          o = iterator.Next()) {
-      if (IsPrototypeInfo(*o)) {
+      if (IsPrototypeInfo(o)) {
         Tagged<PrototypeInfo> prototype_info = Cast<PrototypeInfo>(o);
         if (IsWeakArrayList(prototype_info->prototype_users())) {
           prototype_infos.emplace_back(handle(prototype_info, isolate()));
@@ -7436,7 +7436,7 @@ std::optional<Tagged<GcSafeCode>> Heap::GcSafeTryFindCodeForInnerPointer(
 }
 
 Tagged<Code> Heap::FindCodeForInnerPointer(Address inner_pointer) {
-  return GcSafeFindCodeForInnerPointer(inner_pointer)->UnsafeCastToCode();
+  return TrustedCast<Code>(GcSafeFindCodeForInnerPointer(inner_pointer));
 }
 
 Tagged<GcSafeCode> Heap::GcSafeFindCodeForInnerPointer(Address inner_pointer) {
@@ -7455,7 +7455,7 @@ std::optional<Tagged<Code>> Heap::TryFindCodeForInnerPointerForPrinting(
     std::optional<Tagged<GcSafeCode>> maybe_code =
         GcSafeTryFindCodeForInnerPointer(inner_pointer);
     if (maybe_code.has_value()) {
-      return maybe_code.value()->UnsafeCastToCode();
+      return TrustedCast<Code>(maybe_code.value());
     }
   }
   return {};

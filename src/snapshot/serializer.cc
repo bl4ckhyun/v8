@@ -750,7 +750,7 @@ void Serializer::ObjectSerializer::SerializeExternalStringAsSequentialString() {
   SerializePrologue(space, allocation_size, map);
 
   // Output the rest of the imaginary string.
-  int bytes_to_output = allocation_size - HeapObject::kHeaderSize;
+  int bytes_to_output = allocation_size - sizeof(HeapObject);
   DCHECK(IsAligned(bytes_to_output, kTaggedSize));
   int slots_to_output = bytes_to_output >> kTaggedSizeLog2;
 
@@ -760,7 +760,7 @@ void Serializer::ObjectSerializer::SerializeExternalStringAsSequentialString() {
 
   // Serialize string header (except for map).
   uint8_t* string_start = reinterpret_cast<uint8_t*>(string->address());
-  for (size_t i = sizeof(HeapObjectLayout); i < sizeof(SeqString); i++) {
+  for (size_t i = sizeof(HeapObject); i < sizeof(SeqString); i++) {
     sink_->Put(string_start[i], "StringHeader");
   }
 

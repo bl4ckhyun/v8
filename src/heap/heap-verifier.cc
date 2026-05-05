@@ -907,7 +907,7 @@ void HeapVerifier::VerifyObjectLayoutChange(Heap* heap,
     VerifySafeMapTransition(heap, object, new_map);
   } else {
     CHECK_EQ(pending_layout_change_object, object);
-    pending_layout_change_object = HeapObject();
+    pending_layout_change_object = {};
   }
 }
 

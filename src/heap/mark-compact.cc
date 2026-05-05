@@ -1665,7 +1665,7 @@ class EvacuateVisitorBase : public HeapObjectVisitor {
       WritableJitAllocation jit_allocation =
           WritableJitAllocation::ForInstructionStream(
               TrustedCast<InstructionStream>(src));
-      jit_allocation.WriteHeaderSlot<MapWord, HeapObject::kMapOffset>(
+      jit_allocation.WriteHeaderSlot<MapWord, offsetof(HeapObject, map_)>(
           MapWord::FromForwardingAddress(src, dst));
     }
   }

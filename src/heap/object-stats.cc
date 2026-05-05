@@ -710,7 +710,7 @@ void ObjectStatsCollectorImpl::RecordVirtualJSObjectDetails(
   // Uncompiled JSFunction has a separate type.
   if (IsJSFunction(object) &&
       !Cast<JSFunction>(object)->is_compiled(isolate())) {
-    RecordSimpleVirtualObjectStats(HeapObject(), object,
+    RecordSimpleVirtualObjectStats({}, object,
                                    StatsEnum::JS_UNCOMPILED_FUNCTION_TYPE);
   }
 
@@ -865,7 +865,7 @@ void ObjectStatsCollectorImpl::RecordVirtualFeedbackVectorDetails(
 void ObjectStatsCollectorImpl::RecordVirtualFixedArrayDetails(
     Tagged<FixedArray> array) {
   if (IsCowArray(array)) {
-    RecordVirtualObjectStats(HeapObject(), array, StatsEnum::COW_ARRAY_TYPE,
+    RecordVirtualObjectStats({}, array, StatsEnum::COW_ARRAY_TYPE,
                              array->Size(), ObjectStats::kNoOverAllocation,
                              kIgnoreCow);
   }
@@ -947,20 +947,19 @@ void ObjectStatsCollectorImpl::CollectGlobalStatistics() {
   }
 
   // FixedArray.
-  RecordSimpleVirtualObjectStats(HeapObject(), heap_->serialized_objects(),
+  RecordSimpleVirtualObjectStats({}, heap_->serialized_objects(),
                                  StatsEnum::SERIALIZED_OBJECTS_TYPE);
-  RecordSimpleVirtualObjectStats(HeapObject(), heap_->smi_string_cache(),
+  RecordSimpleVirtualObjectStats({}, heap_->smi_string_cache(),
                                  StatsEnum::NUMBER_STRING_CACHE_TYPE);
-  RecordSimpleVirtualObjectStats(HeapObject(), heap_->double_string_cache(),
+  RecordSimpleVirtualObjectStats({}, heap_->double_string_cache(),
                                  StatsEnum::NUMBER_STRING_CACHE_TYPE);
-  RecordSimpleVirtualObjectStats(HeapObject(), heap_->string_split_cache(),
+  RecordSimpleVirtualObjectStats({}, heap_->string_split_cache(),
                                  StatsEnum::STRING_SPLIT_CACHE_TYPE);
-  RecordSimpleVirtualObjectStats(HeapObject(), heap_->regexp_multiple_cache(),
+  RecordSimpleVirtualObjectStats({}, heap_->regexp_multiple_cache(),
                                  StatsEnum::REGEXP_MULTIPLE_CACHE_TYPE);
 
   // WeakArrayList.
-  RecordSimpleVirtualObjectStats(HeapObject(),
-                                 Cast<WeakArrayList>(heap_->script_list()),
+  RecordSimpleVirtualObjectStats({}, Cast<WeakArrayList>(heap_->script_list()),
                                  StatsEnum::SCRIPT_LIST_TYPE);
 }
 
@@ -1005,24 +1004,20 @@ void ObjectStatsCollectorImpl::RecordVirtualMapDetails(Tagged<Map> map) {
   // using MAP_TYPE for regular maps that aren't special in any way.
   if (map->is_prototype_map()) {
     if (map->is_dictionary_map()) {
-      RecordSimpleVirtualObjectStats(HeapObject(), map,
+      RecordSimpleVirtualObjectStats({}, map,
                                      StatsEnum::MAP_PROTOTYPE_DICTIONARY_TYPE);
     } else if (map->is_abandoned_prototype_map()) {
-      RecordSimpleVirtualObjectStats(HeapObject(), map,
+      RecordSimpleVirtualObjectStats({}, map,
                                      StatsEnum::MAP_ABANDONED_PROTOTYPE_TYPE);
     } else {
-      RecordSimpleVirtualObjectStats(HeapObject(), map,
-                                     StatsEnum::MAP_PROTOTYPE_TYPE);
+      RecordSimpleVirtualObjectStats({}, map, StatsEnum::MAP_PROTOTYPE_TYPE);
     }
   } else if (map->is_deprecated()) {
-    RecordSimpleVirtualObjectStats(HeapObject(), map,
-                                   StatsEnum::MAP_DEPRECATED_TYPE);
+    RecordSimpleVirtualObjectStats({}, map, StatsEnum::MAP_DEPRECATED_TYPE);
   } else if (map->is_dictionary_map()) {
-    RecordSimpleVirtualObjectStats(HeapObject(), map,
-                                   StatsEnum::MAP_DICTIONARY_TYPE);
+    RecordSimpleVirtualObjectStats({}, map, StatsEnum::MAP_DICTIONARY_TYPE);
   } else if (map->is_stable()) {
-    RecordSimpleVirtualObjectStats(HeapObject(), map,
-                                   StatsEnum::MAP_STABLE_TYPE);
+    RecordSimpleVirtualObjectStats({}, map, StatsEnum::MAP_STABLE_TYPE);
   } else {
     // This will be logged as MAP_TYPE in Phase2.
   }
@@ -1121,7 +1116,7 @@ void ObjectStatsCollectorImpl::RecordVirtualSharedFunctionInfoDetails(
   // Uncompiled SharedFunctionInfo gets its own category.
   if (!info->is_compiled()) {
     RecordSimpleVirtualObjectStats(
-        HeapObject(), info, StatsEnum::UNCOMPILED_SHARED_FUNCTION_INFO_TYPE);
+        {}, info, StatsEnum::UNCOMPILED_SHARED_FUNCTION_INFO_TYPE);
   }
 }
 
@@ -1192,7 +1187,7 @@ void ObjectStatsCollectorImpl::RecordVirtualCodeDetails(
     Tagged<InstructionStream> istream) {
   Tagged<Code> code;
   if (!istream->TryGetCode(&code, kAcquireLoad)) return;
-  RecordSimpleVirtualObjectStats(HeapObject(), istream,
+  RecordSimpleVirtualObjectStats({}, istream,
                                  CodeKindToVirtualInstanceType(code->kind()));
   RecordSimpleVirtualObjectStats(istream, istream->relocation_info(),
                                  StatsEnum::RELOC_INFO_TYPE);
@@ -1235,8 +1230,7 @@ void ObjectStatsCollectorImpl::RecordVirtualContext(Tagged<Context> context) {
   } else if (context->IsFunctionContext()) {
     RecordObjectStats(context, FUNCTION_CONTEXT_TYPE, context->Size());
   } else {
-    RecordSimpleVirtualObjectStats(HeapObject(), context,
-                                   StatsEnum::OTHER_CONTEXT_TYPE);
+    RecordSimpleVirtualObjectStats({}, context, StatsEnum::OTHER_CONTEXT_TYPE);
   }
 }
 

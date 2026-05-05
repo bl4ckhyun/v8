@@ -78,7 +78,7 @@ enum class CreateSourcePositions { kNo, kYes };
 // +-------------------------------+
 // | Inner PreparseData N          |
 // +-------------------------------+
-V8_OBJECT class PreparseData : public HeapObjectLayout {
+V8_OBJECT class PreparseData : public HeapObject {
  public:
   int32_t data_length() const { return data_length_; }
   void set_data_length(int32_t value) { data_length_ = value; }
@@ -259,7 +259,7 @@ using NameOrScopeInfoT = UnionOf<Smi, String, ScopeInfo>;
 
 // SharedFunctionInfo describes the JSFunction information that can be
 // shared by multiple instances of the function.
-V8_OBJECT class SharedFunctionInfo : public HeapObjectLayout {
+V8_OBJECT class SharedFunctionInfo : public HeapObject {
  public:
   DEFINE_TORQUE_GENERATED_SHARED_FUNCTION_INFO_FLAGS()
   DEFINE_TORQUE_GENERATED_SHARED_FUNCTION_INFO_FLAGS2()
@@ -1099,7 +1099,7 @@ class V8_NODISCARD IsBaselineCompiledScope {
 
 std::ostream& operator<<(std::ostream& os, const SourceCodeOf& v);
 
-V8_OBJECT class OnHeapBasicBlockProfilerData : public HeapObjectLayout {
+V8_OBJECT class OnHeapBasicBlockProfilerData : public HeapObject {
  public:
   inline Tagged<ByteArray> block_ids() const;
   inline void set_block_ids(Tagged<ByteArray> value,

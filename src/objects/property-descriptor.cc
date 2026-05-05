@@ -46,7 +46,7 @@ bool ToPropertyDescriptorFastPath(Isolate* isolate,
   {
     DisallowGarbageCollection no_gc;
     Tagged<JSReceiver> raw_obj = *obj;
-    if (!IsJSObject(*raw_obj)) return false;
+    if (!IsJSObject(raw_obj)) return false;
     Tagged<Map> raw_map = raw_obj->map();
     if (raw_map->instance_type() != JS_OBJECT_TYPE) return false;
     if (raw_map->is_access_check_needed()) return false;

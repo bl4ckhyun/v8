@@ -464,7 +464,7 @@ void LateLoadEliminationAnalyzer::ProcessStore(OpIndex op_idx,
   }
 
   // If we just stored a map, invalidate all object_maps_.
-  if (store.offset == HeapObject::kMapOffset && !store.index().valid()) {
+  if (store.offset == offsetof(HeapObject, map_) && !store.index().valid()) {
     // TODO(dmercadier): can we only do this for objects that are potentially
     // aliasing with the `base` (based on their maps and the maps of `base`)?
     // Also, it might be worth to record a new map if this is actually a map

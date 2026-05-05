@@ -46,7 +46,7 @@ class Null;
 
 // JSReceiver includes types on which properties can be defined, i.e.,
 // JSObject and JSProxy.
-V8_OBJECT class JSReceiver : public HeapObjectLayout {
+V8_OBJECT class JSReceiver : public HeapObject {
  public:
   using Properties =
       UnionOf<SwissNameDictionary, FixedArrayBase, PropertyArray>;
@@ -389,7 +389,7 @@ V8_OBJECT class JSObject : public JSReceiver {
   static const int kElementsOffset;
   static const int kEndOfStrongFieldsOffset;
   static const int kHeaderSize;
-  static constexpr int kMapOffset = HeapObject::kMapOffset;
+  static constexpr int kMapOffset = offsetof(HeapObject, map_);
 
   // Mirror the JSReceiver::IntegrityLevel type alias so method signatures
   // that take `IntegrityLevel` parameters can be declared on JSObject.

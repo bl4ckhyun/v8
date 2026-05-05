@@ -5552,7 +5552,8 @@ struct VirtualHeapObjectShape {
   static constexpr bool kInstancesHaveStaticSize = true;
   static constexpr vobj::ObjectType kObjectType = vobj::ObjectType::kDefault;
   static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kNone;
-#define FIELD_LIST(V) V(map, HeapObject::kMapOffset, vobj::FieldType::kTagged)
+#define FIELD_LIST(V) \
+  V(map, offsetof(HeapObject, map_), vobj::FieldType::kTagged)
   DEF_SHAPE(vobj::VirtualHeapObjectShapeBase, FIELD_LIST);
 #undef FIELD_LIST
 };

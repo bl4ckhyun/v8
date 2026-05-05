@@ -86,7 +86,7 @@ V8_OBJECT class EnumCache : public Struct {
 // The "value" fields store either values or field types. A field type is either
 // FieldType::None(), FieldType::Any() or a weak reference to a Map. All other
 // references are strong.
-V8_OBJECT class DescriptorArray : public HeapObjectLayout {
+V8_OBJECT class DescriptorArray : public HeapObject {
  public:
   // Do linear search for small arrays, and for searches in the background
   // thread.
@@ -377,14 +377,13 @@ static_assert(alignof(std::atomic<uint16_t>) == 2);
 static_assert(sizeof(std::atomic<uint32_t>) == 4);
 static_assert(alignof(std::atomic<uint32_t>) == 4);
 static_assert(offsetof(DescriptorArray, number_of_all_descriptors_) ==
-              HeapObject::kHeaderSize);
+              sizeof(HeapObject));
 static_assert(offsetof(DescriptorArray, number_of_descriptors_) ==
-              HeapObject::kHeaderSize + sizeof(uint16_t));
+              sizeof(HeapObject) + sizeof(uint16_t));
 static_assert(offsetof(DescriptorArray, raw_gc_state_) ==
-              HeapObject::kHeaderSize + 2 * sizeof(uint16_t));
-static_assert(offsetof(DescriptorArray, flags_) == HeapObject::kHeaderSize +
-                                                       2 * sizeof(uint16_t) +
-                                                       sizeof(uint32_t));
+              sizeof(HeapObject) + 2 * sizeof(uint16_t));
+static_assert(offsetof(DescriptorArray, flags_) ==
+              sizeof(HeapObject) + 2 * sizeof(uint16_t) + sizeof(uint32_t));
 
 // A DescriptorArray where all values are held strongly. Bodyless subclass with
 // identical layout and BodyDescriptor. The distinct instance type routes to

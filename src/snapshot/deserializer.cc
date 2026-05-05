@@ -1211,7 +1211,7 @@ int Deserializer<IsolateT>::ReadStartupObjectCache(uint8_t data,
       main_thread_isolate()->startup_object_cache()->at(cache_index));
   if (v8_flags.trace_deserialization) {
     PrintF("%*sStartupObjectCache [%u] : ", depth_, "", cache_index);
-    ShortPrint(*heap_object);
+    ShortPrint(heap_object);
     PrintF("\n");
   }
   return WriteHeapPointer(slot_accessor, heap_object,
@@ -1327,7 +1327,7 @@ int Deserializer<IsolateT>::ReadResolvePendingForwardRef(
   // Pending forward refs can only be resolved after the heap object's map
   // field is deserialized; currently they only appear immediately after
   // the map field or after the 'self' indirect pointer for trusted objects.
-  DCHECK(slot_accessor.offset() == HeapObject::kHeaderSize ||
+  DCHECK(slot_accessor.offset() == sizeof(HeapObject) ||
          slot_accessor.offset() == ExposedTrustedObject::kHeaderSize);
   DirectHandle<HeapObject> obj = slot_accessor.object();
   int index = source_.GetUint30();

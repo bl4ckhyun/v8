@@ -190,7 +190,8 @@ void TaggedIndex::TaggedIndexVerify(Tagged<TaggedIndex> obj, Isolate* isolate) {
 }
 
 void HeapObject::HeapObjectVerify(Isolate* isolate) {
-  CHECK(IsHeapObject(*this));
+  // Cast away heapobject-ness so that the IsHeapObject test is non-trivial.
+  CHECK(IsHeapObject(Tagged<Object>(this)));
 
   Object::VerifyPointer(isolate, map());
   CHECK(IsMap(map()));
@@ -198,25 +199,25 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
   CHECK(CheckRequiredAlignment());
 
   // Only TrustedObjects live in trusted space. See also TrustedObjectVerify.
-  CHECK_IMPLIES(!IsTrustedObject(*this) && !IsFreeSpaceOrFiller(*this),
-                !TrustedHeapLayout::InTrustedSpace(*this));
+  CHECK_IMPLIES(!IsTrustedObject(this) && !IsFreeSpaceOrFiller(this),
+                !TrustedHeapLayout::InTrustedSpace(this));
 
   switch (map()->instance_type()) {
 #define STRING_TYPE_CASE(TYPE, size, name, CamelName) case TYPE:
     STRING_TYPE_LIST(STRING_TYPE_CASE)
 #undef STRING_TYPE_CASE
-    if (IsConsString(*this)) {
-      Cast<ConsString>(*this)->ConsStringVerify(isolate);
-    } else if (IsSlicedString(*this)) {
-      Cast<SlicedString>(*this)->SlicedStringVerify(isolate);
-    } else if (IsThinString(*this)) {
-      Cast<ThinString>(*this)->ThinStringVerify(isolate);
-    } else if (IsSeqString(*this)) {
-      Cast<SeqString>(*this)->SeqStringVerify(isolate);
-    } else if (IsExternalString(*this)) {
-      Cast<ExternalString>(*this)->ExternalStringVerify(isolate);
+    if (IsConsString(this)) {
+      Cast<ConsString>(this)->ConsStringVerify(isolate);
+    } else if (IsSlicedString(this)) {
+      Cast<SlicedString>(this)->SlicedStringVerify(isolate);
+    } else if (IsThinString(this)) {
+      Cast<ThinString>(this)->ThinStringVerify(isolate);
+    } else if (IsSeqString(this)) {
+      Cast<SeqString>(this)->SeqStringVerify(isolate);
+    } else if (IsExternalString(this)) {
+      Cast<ExternalString>(this)->ExternalStringVerify(isolate);
     } else {
-      Cast<String>(*this)->StringVerify(isolate);
+      Cast<String>(this)->StringVerify(isolate);
     }
     break;
     // FixedArray types
@@ -232,7 +233,7 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
     case SIMPLE_NAME_DICTIONARY_TYPE:
     case SIMPLE_NUMBER_DICTIONARY_TYPE:
     case EPHEMERON_HASH_TABLE_TYPE:
-      Cast<FixedArray>(*this)->FixedArrayVerify(isolate);
+      Cast<FixedArray>(this)->FixedArrayVerify(isolate);
       break;
     case AWAIT_CONTEXT_TYPE:
     case BLOCK_CONTEXT_TYPE:
@@ -243,17 +244,17 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
     case MODULE_CONTEXT_TYPE:
     case SCRIPT_CONTEXT_TYPE:
     case WITH_CONTEXT_TYPE:
-      Cast<Context>(*this)->ContextVerify(isolate);
+      Cast<Context>(this)->ContextVerify(isolate);
       break;
     case NATIVE_CONTEXT_TYPE:
-      Cast<NativeContext>(*this)->NativeContextVerify(isolate);
+      Cast<NativeContext>(this)->NativeContextVerify(isolate);
       break;
     case TRANSITION_ARRAY_TYPE:
-      Cast<TransitionArray>(*this)->TransitionArrayVerify(isolate);
+      Cast<TransitionArray>(this)->TransitionArrayVerify(isolate);
       break;
 
     case INSTRUCTION_STREAM_TYPE:
-      TrustedCast<InstructionStream>(*this)->InstructionStreamVerify(isolate);
+      TrustedCast<InstructionStream>(this)->InstructionStreamVerify(isolate);
       break;
     case JS_API_OBJECT_TYPE:
     case JS_ARRAY_ITERATOR_PROTOTYPE_TYPE:
@@ -269,51 +270,51 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
     case JS_SPECIAL_API_OBJECT_TYPE:
     case JS_STRING_ITERATOR_PROTOTYPE_TYPE:
     case JS_TYPED_ARRAY_PROTOTYPE_TYPE:
-      Cast<JSObject>(*this)->JSObjectVerify(isolate);
+      Cast<JSObject>(this)->JSObjectVerify(isolate);
       break;
 #if V8_ENABLE_WEBASSEMBLY
     case WASM_TRUSTED_INSTANCE_DATA_TYPE:
-      TrustedCast<WasmTrustedInstanceData>(*this)
-          ->WasmTrustedInstanceDataVerify(isolate);
+      TrustedCast<WasmTrustedInstanceData>(this)->WasmTrustedInstanceDataVerify(
+          isolate);
       break;
     case WASM_DISPATCH_TABLE_TYPE:
-      TrustedCast<WasmDispatchTable>(*this)->WasmDispatchTableVerify(isolate);
+      TrustedCast<WasmDispatchTable>(this)->WasmDispatchTableVerify(isolate);
       break;
     case WASM_DISPATCH_TABLE_FOR_IMPORTS_TYPE:
-      TrustedCast<WasmDispatchTableForImports>(*this)
+      TrustedCast<WasmDispatchTableForImports>(this)
           ->WasmDispatchTableForImportsVerify(isolate);
       break;
     case WASM_VALUE_OBJECT_TYPE:
-      Cast<WasmValueObject>(*this)->WasmValueObjectVerify(isolate);
+      Cast<WasmValueObject>(this)->WasmValueObjectVerify(isolate);
       break;
     case WASM_EXCEPTION_PACKAGE_TYPE:
-      Cast<WasmExceptionPackage>(*this)->WasmExceptionPackageVerify(isolate);
+      Cast<WasmExceptionPackage>(this)->WasmExceptionPackageVerify(isolate);
       break;
 #endif  // V8_ENABLE_WEBASSEMBLY
     case JS_SET_KEY_VALUE_ITERATOR_TYPE:
     case JS_SET_VALUE_ITERATOR_TYPE:
-      Cast<JSSetIterator>(*this)->JSSetIteratorVerify(isolate);
+      Cast<JSSetIterator>(this)->JSSetIteratorVerify(isolate);
       break;
     case JS_MAP_KEY_ITERATOR_TYPE:
     case JS_MAP_KEY_VALUE_ITERATOR_TYPE:
     case JS_MAP_VALUE_ITERATOR_TYPE:
-      Cast<JSMapIterator>(*this)->JSMapIteratorVerify(isolate);
+      Cast<JSMapIterator>(this)->JSMapIteratorVerify(isolate);
       break;
     case FILLER_TYPE:
       break;
     case CODE_TYPE:
-      TrustedCast<Code>(*this)->CodeVerify(isolate);
+      TrustedCast<Code>(this)->CodeVerify(isolate);
       break;
     case CODE_WRAPPER_TYPE:
-      Cast<CodeWrapper>(*this)->CodeWrapperVerify(isolate);
+      Cast<CodeWrapper>(this)->CodeWrapperVerify(isolate);
       break;
     case DOUBLE_STRING_CACHE_TYPE:
-      Cast<DoubleStringCache>(*this)->DoubleStringCacheVerify(isolate);
+      Cast<DoubleStringCache>(this)->DoubleStringCacheVerify(isolate);
       break;
 
-#define MAKE_TORQUE_CASE(Name, TYPE)                 \
-  case TYPE:                                         \
-    TrustedCast<Name>(*this)->Name##Verify(isolate); \
+#define MAKE_TORQUE_CASE(Name, TYPE)                \
+  case TYPE:                                        \
+    TrustedCast<Name>(this)->Name##Verify(isolate); \
     break;
       // Every class that has its fields defined in a .tq file and corresponds
       // to exactly one InstanceType value is included in the following list.
@@ -322,39 +323,39 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
 #undef MAKE_TORQUE_CASE
 
     case HOLE_TYPE:
-      Cast<Hole>(*this)->HoleVerify(isolate);
+      Cast<Hole>(this)->HoleVerify(isolate);
       break;
 
     case TUPLE2_TYPE:
-      Cast<Tuple2>(*this)->Tuple2Verify(isolate);
+      Cast<Tuple2>(this)->Tuple2Verify(isolate);
       break;
 
     case CLASS_POSITIONS_TYPE:
-      Cast<ClassPositions>(*this)->ClassPositionsVerify(isolate);
+      Cast<ClassPositions>(this)->ClassPositionsVerify(isolate);
       break;
 
     case ACCESSOR_PAIR_TYPE:
-      Cast<AccessorPair>(*this)->AccessorPairVerify(isolate);
+      Cast<AccessorPair>(this)->AccessorPairVerify(isolate);
       break;
 
     case ALLOCATION_SITE_TYPE:
-      Cast<AllocationSite>(*this)->AllocationSiteVerify(isolate);
+      Cast<AllocationSite>(this)->AllocationSiteVerify(isolate);
       break;
 
     case LOAD_HANDLER_TYPE:
-      Cast<LoadHandler>(*this)->LoadHandlerVerify(isolate);
+      Cast<LoadHandler>(this)->LoadHandlerVerify(isolate);
       break;
 
     case STORE_HANDLER_TYPE:
-      Cast<StoreHandler>(*this)->StoreHandlerVerify(isolate);
+      Cast<StoreHandler>(this)->StoreHandlerVerify(isolate);
       break;
 
     case BIG_INT_BASE_TYPE:
-      Cast<BigIntBase>(*this)->BigIntBaseVerify(isolate);
+      Cast<BigIntBase>(this)->BigIntBaseVerify(isolate);
       break;
 
     case FREE_SPACE_TYPE:
-      Cast<FreeSpace>(*this)->FreeSpaceVerify(isolate);
+      Cast<FreeSpace>(this)->FreeSpaceVerify(isolate);
       break;
 
     case JS_CLASS_CONSTRUCTOR_TYPE:
@@ -365,7 +366,7 @@ void HeapObject::HeapObjectVerify(Isolate* isolate) {
   case TYPE##_TYPED_ARRAY_CONSTRUCTOR_TYPE:
       TYPED_ARRAYS(TYPED_ARRAY_CONSTRUCTORS_SWITCH)
 #undef TYPED_ARRAY_CONSTRUCTORS_SWITCH
-      Cast<JSFunction>(*this)->JSFunctionVerify(isolate);
+      Cast<JSFunction>(this)->JSFunctionVerify(isolate);
       break;
     case JS_LAST_DUMMY_API_OBJECT_TYPE:
       UNREACHABLE();
@@ -1660,8 +1661,7 @@ void JSFunction::JSFunctionVerify(Isolate* isolate) {
             entrypoint == code_from_table->instruction_start());
 #undef CASE
 
-
-  DirectHandle<JSFunction> function(*this, isolate);
+  DirectHandle<JSFunction> function(this, isolate);
   LookupIterator it(isolate, function, isolate->factory()->prototype_string(),
                     LookupIterator::OWN_SKIP_INTERCEPTOR);
   if (IsJSFunctionWithPrototype(this)) {
@@ -1924,7 +1924,7 @@ void TrustedObject::TrustedObjectVerify(Isolate* isolate) {
 #if defined(V8_ENABLE_SANDBOX)
   // All trusted objects must live in trusted space.
   // TODO(saelo): Some objects are trusted but do not yet live in trusted space.
-  CHECK(TrustedHeapLayout::InTrustedSpace(*this) || IsCode(*this));
+  CHECK(TrustedHeapLayout::InTrustedSpace(this) || IsCode(this));
 #endif
 }
 
@@ -1936,7 +1936,7 @@ void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
   IndirectPointerTag tag;
   if (IsPublished(isolate)) {
     InstanceType instance_type = map()->instance_type();
-    SharedFlag shared = SharedFlag(HeapLayout::InAnySharedSpace(*this));
+    SharedFlag shared = SharedFlag(HeapLayout::InAnySharedSpace(this));
     tag = IndirectPointerTagFromInstanceType(instance_type, shared);
   } else {
     tag = kUnpublishedIndirectPointerTag;
@@ -1956,16 +1956,16 @@ void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
     // not marked as an internal read-only space.
     bool is_space_read_only =
         space == isolate->read_only_heap()->code_pointer_space();
-    CHECK_EQ(is_space_read_only, HeapLayout::InReadOnlySpace(*this));
+    CHECK_EQ(is_space_read_only, HeapLayout::InReadOnlySpace(this));
   } else {
-    CHECK(!HeapLayout::InReadOnlySpace(*this));
+    CHECK(!HeapLayout::InReadOnlySpace(this));
   }
 #endif
 }
 
 void Code::CodeVerify(Isolate* isolate) {
   ExposedTrustedObjectVerify(isolate);
-  CHECK(IsCode(*this));
+  CHECK(IsCode(this));
   if (has_instruction_stream()) {
     Tagged<InstructionStream> istream = instruction_stream();
     CHECK_EQ(istream->code(kAcquireLoad), Tagged{this});
@@ -2582,7 +2582,7 @@ void JSPromise::JSPromiseVerify(Isolate* isolate) {
 template <typename Derived>
 void SmallOrderedHashTableImpl<Derived>::SmallOrderedHashTableVerify(
     Isolate* isolate) {
-  CHECK(IsSmallOrderedHashTable(*this));
+  CHECK(IsSmallOrderedHashTable(this));
 
   int capacity = Capacity();
   CHECK_GE(capacity, kMinCapacity);
@@ -2619,7 +2619,7 @@ void SmallOrderedHashTableImpl<Derived>::SmallOrderedHashTableVerify(
 }
 
 void SmallOrderedHashMap::SmallOrderedHashMapVerify(Isolate* isolate) {
-  CHECK(IsSmallOrderedHashMap(*this));
+  CHECK(IsSmallOrderedHashMap(this));
   SmallOrderedHashTableImpl<SmallOrderedHashMap>::SmallOrderedHashTableVerify(
       isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
@@ -2632,7 +2632,7 @@ void SmallOrderedHashMap::SmallOrderedHashMapVerify(Isolate* isolate) {
 }
 
 void SmallOrderedHashSet::SmallOrderedHashSetVerify(Isolate* isolate) {
-  CHECK(IsSmallOrderedHashSet(*this));
+  CHECK(IsSmallOrderedHashSet(this));
   SmallOrderedHashTableImpl<SmallOrderedHashSet>::SmallOrderedHashTableVerify(
       isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
@@ -2646,7 +2646,7 @@ void SmallOrderedHashSet::SmallOrderedHashSetVerify(Isolate* isolate) {
 
 void SmallOrderedNameDictionary::SmallOrderedNameDictionaryVerify(
     Isolate* isolate) {
-  CHECK(IsSmallOrderedNameDictionary(*this));
+  CHECK(IsSmallOrderedNameDictionary(this));
   SmallOrderedHashTableImpl<
       SmallOrderedNameDictionary>::SmallOrderedHashTableVerify(isolate);
   for (int entry = NumberOfElements(); entry < NumberOfDeletedElements();
@@ -2740,7 +2740,7 @@ void JSMessageObject::JSMessageObjectVerify(Isolate* isolate) {
 }
 
 void JSRegExp::JSRegExpVerify(Isolate* isolate) {
-  Tagged<Object> flags = TaggedField<Object>::load(*this, kFlagsOffset);
+  Tagged<Object> flags = TaggedField<Object>::load(this, kFlagsOffset);
   CHECK(IsSmi(flags) || IsUndefined(flags));
   if (!has_data()) return;
 
@@ -3327,12 +3327,12 @@ void WasmTableObject::WasmTableObjectVerify(Isolate* isolate) {
 
 void WasmValueObject::WasmValueObjectVerify(Isolate* isolate) {
   JSObjectVerify(isolate);
-  CHECK(IsWasmValueObject(*this));
+  CHECK(IsWasmValueObject(this));
 }
 
 void WasmExceptionPackage::WasmExceptionPackageVerify(Isolate* isolate) {
   JSObjectVerify(isolate);
-  CHECK(IsWasmExceptionPackage(*this));
+  CHECK(IsWasmExceptionPackage(this));
 }
 
 void WasmExceptionTag::WasmExceptionTagVerify(Isolate* isolate) {

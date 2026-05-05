@@ -1758,8 +1758,8 @@ std::optional<Node*> JSCreateLowering::TryAllocateFastLiteral(
   MapRef boilerplate_map = boilerplate.map(broker());
   // Protect against concurrent changes to the boilerplate object by checking
   // for an identical value at the end of the compilation.
-  dependencies()->DependOnObjectSlotValue(boilerplate, HeapObject::kMapOffset,
-                                          boilerplate_map);
+  dependencies()->DependOnObjectSlotValue(
+      boilerplate, offsetof(HeapObject, map_), boilerplate_map);
   {
     OptionalMapRef current_boilerplate_map =
         boilerplate.map_direct_read(broker());
@@ -1934,8 +1934,8 @@ std::optional<Node*> JSCreateLowering::TryAllocateFastLiteralElements(
   MapRef elements_map = boilerplate_elements.map(broker());
   // Protect against concurrent changes to the boilerplate object by checking
   // for an identical value at the end of the compilation.
-  dependencies()->DependOnObjectSlotValue(boilerplate_elements,
-                                          HeapObject::kMapOffset, elements_map);
+  dependencies()->DependOnObjectSlotValue(
+      boilerplate_elements, offsetof(HeapObject, map_), elements_map);
   if (boilerplate_elements.length() == 0 ||
       elements_map.IsFixedCowArrayMap(broker())) {
     if (allocation == AllocationType::kOld &&

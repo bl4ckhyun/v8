@@ -1764,7 +1764,7 @@ Handle<Map> Map::AddMissingTransitions(
     // be treated as detached.
     InstallDescriptors(isolate, map, new_map, i, descriptors,
                        /* force_connect */ true);
-    DCHECK_EQ(*new_map->GetBackPointer(), *map);
+    DCHECK_EQ(new_map->GetBackPointer(), *map);
     map = new_map;
   }
   map->NotifyLeafMapLayoutChange(isolate);
@@ -2745,7 +2745,7 @@ MaybeHandle<Map> NormalizedMapCache::Get(Isolate* isolate,
                                          PropertyNormalizationMode mode) {
   DisallowGarbageCollection no_gc;
   Tagged<MaybeObject> value =
-      WeakFixedArray::get(GetIndex(isolate, *fast_map, *prototype));
+      WeakFixedArray::get(GetIndex(isolate, *fast_map, prototype));
   Tagged<HeapObject> heap_object;
   if (!value.GetHeapObjectIfWeak(&heap_object)) {
     return MaybeHandle<Map>();

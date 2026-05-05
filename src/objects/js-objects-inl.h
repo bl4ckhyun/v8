@@ -367,15 +367,15 @@ int JSObject::GetEmbedderFieldOffset(int index) {
 }
 
 Tagged<Object> JSObject::GetEmbedderField(int index) {
-  return EmbedderDataSlot(Tagged(*this), index).load_tagged();
+  return EmbedderDataSlot(this, index).load_tagged();
 }
 
 void JSObject::SetEmbedderField(int index, Tagged<Object> value) {
-  EmbedderDataSlot::store_tagged(Tagged(*this), index, value);
+  EmbedderDataSlot::store_tagged(this, index, value);
 }
 
 void JSObject::SetEmbedderField(int index, Tagged<Smi> value) {
-  EmbedderDataSlot(Tagged(*this), index).store_smi(value);
+  EmbedderDataSlot(this, index).store_smi(value);
 }
 
 // static
@@ -405,7 +405,7 @@ bool JSObject::IsDroppableApiObject() const {
 // whatever narrower type they actually expect) at the use site.
 Tagged<JSAny> JSObject::RawFastPropertyAt(FieldIndex index) const {
   if (index.is_inobject()) {
-    return TaggedField<JSAny>::Relaxed_Load(*this, index.offset());
+    return TaggedField<JSAny>::Relaxed_Load(this, index.offset());
   } else {
     return UncheckedCast<JSAny>(
         property_array()->get(index.outobject_array_index()));
@@ -419,7 +419,7 @@ Tagged<JSAny> JSObject::RawFastPropertyAt(FieldIndex index) const {
 Tagged<JSAny> JSObject::RawFastPropertyAt(FieldIndex index,
                                           SeqCstAccessTag tag) const {
   if (index.is_inobject()) {
-    return TaggedField<JSAny>::SeqCst_Load(*this, index.offset());
+    return TaggedField<JSAny>::SeqCst_Load(this, index.offset());
   } else {
     return UncheckedCast<JSAny>(
         property_array()->get(index.outobject_array_index(), tag));
@@ -456,7 +456,7 @@ std::optional<Tagged<Object>> JSObject::RawInobjectPropertyAt(
   // value, but it will be within the bounds of the objects instance size as
   // given by the map and it will be a valid Smi or object pointer.
   Tagged<Object> maybe_tagged_object =
-      TaggedField<Object>::Acquire_Load(*this, index.offset());
+      TaggedField<Object>::Acquire_Load(this, index.offset());
   if (original_map != map(kAcquireLoad)) return {};
   return maybe_tagged_object;
 }
@@ -466,8 +466,8 @@ void JSObject::RawFastInobjectPropertyAtPut(FieldIndex index,
                                             WriteBarrierMode mode) {
   DCHECK(index.is_inobject());
   int offset = index.offset();
-  RELAXED_WRITE_FIELD(*this, offset, value);
-  CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);
+  RELAXED_WRITE_FIELD(this, offset, value);
+  CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);
 }
 
 void JSObject::RawFastInobjectPropertyAtPut(FieldIndex index,
@@ -475,8 +475,8 @@ void JSObject::RawFastInobjectPropertyAtPut(FieldIndex index,
                                             SeqCstAccessTag tag) {
   DCHECK(index.is_inobject());
   DCHECK(IsShared(value));
-  SEQ_CST_WRITE_FIELD(*this, index.offset(), value);
-  CONDITIONAL_WRITE_BARRIER(*this, index.offset(), value, UPDATE_WRITE_BARRIER);
+  SEQ_CST_WRITE_FIELD(this, index.offset(), value);
+  CONDITIONAL_WRITE_BARRIER(this, index.offset(), value, UPDATE_WRITE_BARRIER);
 }
 
 void JSObject::FastPropertyAtPut(FieldIndex index, Tagged<Object> value,
@@ -532,8 +532,8 @@ Tagged<Object> JSObject::RawFastInobjectPropertyAtSwap(FieldIndex index,
   DCHECK(index.is_inobject());
   DCHECK(IsShared(value));
   int offset = index.offset();
-  Tagged<Object> old_value = SEQ_CST_SWAP_FIELD(*this, offset, value);
-  CONDITIONAL_WRITE_BARRIER(*this, offset, value, UPDATE_WRITE_BARRIER);
+  Tagged<Object> old_value = SEQ_CST_SWAP_FIELD(this, offset, value);
+  CONDITIONAL_WRITE_BARRIER(this, offset, value, UPDATE_WRITE_BARRIER);
   return old_value;
 }
 
@@ -552,9 +552,9 @@ Tagged<Object> JSObject::RawFastInobjectPropertyAtCompareAndSwap(
   DCHECK(index.is_inobject());
   DCHECK(IsShared(value));
   Tagged<Object> previous_value =
-      SEQ_CST_COMPARE_AND_SWAP_FIELD(*this, index.offset(), expected, value);
+      SEQ_CST_COMPARE_AND_SWAP_FIELD(this, index.offset(), expected, value);
   if (previous_value == expected) {
-    CONDITIONAL_WRITE_BARRIER(*this, index.offset(), value,
+    CONDITIONAL_WRITE_BARRIER(this, index.offset(), value,
                               UPDATE_WRITE_BARRIER);
   }
   return previous_value;
@@ -577,7 +577,7 @@ int JSObject::GetInObjectPropertyOffset(int index) {
 Tagged<Object> JSObject::InObjectPropertyAtOffset(int offset) {
   DCHECK_GE(offset, GetInObjectPropertyOffset(0));
   DCHECK_LT(offset, Size());
-  return TaggedField<Object>::load(*this, offset);
+  return TaggedField<Object>::load(this, offset);
 }
 
 Tagged<Object> JSObject::InObjectPropertyPutAtIndex(int index,
@@ -593,8 +593,8 @@ Tagged<Object> JSObject::InObjectPropertyPutAtOffset(int offset,
                                                      WriteBarrierMode mode) {
   DCHECK_GE(offset, GetInObjectPropertyOffset(0));
   DCHECK_LT(offset, Size());
-  WRITE_FIELD(*this, offset, value);
-  CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);
+  WRITE_FIELD(this, offset, value);
+  CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);
   return value;
 }
 
@@ -625,9 +625,9 @@ void JSObject::InitializeBody(Tagged<Map> map, int start_offset,
         // Unfortunately, this currently results in performance regressions.
         while (current_offset < end_offset) {
 #if V8_STATIC_ROOTS_BOOL
-          RELAXED_WRITE_UINT32_FIELD(*this, current_offset, filler);
+          RELAXED_WRITE_UINT32_FIELD(this, current_offset, filler);
 #else   // !STATIC_ROOTS_BOOL
-          WRITE_FIELD(*this, current_offset, filler);
+          WRITE_FIELD(this, current_offset, filler);
 #endif  // !STATIC_ROOTS_BOOL
           current_offset += kTaggedSize;
         }
@@ -648,8 +648,8 @@ void JSObject::InitializeBody(Tagged<Map> map, int start_offset,
     DCHECK_EQ(current_offset, embedder_field_start);
     for (int i = 0; i < GetEmbedderFieldCount(map); i++) {
       // TODO(v8): consider initializing embedded data slots with Smi::zero().
-      EmbedderDataSlot(Tagged<JSObject>(*this), i)
-          .Initialize(GetReadOnlyRoots().undefined_value());
+      EmbedderDataSlot(this, i).Initialize(
+          GetReadOnlyRoots().undefined_value());
       current_offset += kEmbedderDataSlotSize;
     }
   }
@@ -879,7 +879,7 @@ DEF_GETTER(JSObject, GetElementsKind, ElementsKind) {
   ElementsKind kind = map()->elements_kind();
 #if VERIFY_HEAP && DEBUG
   Tagged<FixedArrayBase> fixed_array = UncheckedCast<FixedArrayBase>(
-      TaggedField<HeapObject, kElementsOffset>::load(*this));
+      TaggedField<HeapObject, kElementsOffset>::load(this));
 
   // If a GC was caused while constructing this object, the elements
   // pointer may point to a one pointer filler map.
@@ -1073,7 +1073,7 @@ DEF_GETTER(JSReceiver, HasFastProperties, bool) {
 }
 
 DEF_GETTER(JSReceiver, property_dictionary, Tagged<NameDictionary>) {
-  DCHECK(!IsJSGlobalObject(*this));
+  DCHECK(!IsJSGlobalObject(this));
   DCHECK(!HasFastProperties());
   DCHECK(!V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL);
 
@@ -1085,7 +1085,7 @@ DEF_GETTER(JSReceiver, property_dictionary, Tagged<NameDictionary>) {
 }
 
 DEF_GETTER(JSReceiver, property_dictionary_swiss, Tagged<SwissNameDictionary>) {
-  DCHECK(!IsJSGlobalObject(*this));
+  DCHECK(!IsJSGlobalObject(this));
   DCHECK(!HasFastProperties());
   DCHECK(V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL);
 
@@ -1210,7 +1210,7 @@ Tagged<NativeContext> JSGlobalObject::native_context() {
 }
 
 bool JSGlobalObject::IsDetached() {
-  return global_proxy()->IsDetachedFrom(*this);
+  return global_proxy()->IsDetachedFrom(this);
 }
 
 bool JSGlobalProxy::IsDetachedFrom(Tagged<JSGlobalObject> global) const {

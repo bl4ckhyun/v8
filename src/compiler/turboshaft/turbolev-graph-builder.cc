@@ -3613,7 +3613,7 @@ class GraphBuildingNodeProcessor {
                                 const maglev::ProcessingState& state) {
     __ Store(Map(node->ValueInput()), __ HeapConstant(node->map().object()),
              StoreOp::Kind::TaggedBase(), MemoryRepresentation::TaggedPointer(),
-             WriteBarrierKind::kMapWriteBarrier, HeapObject::kMapOffset,
+             WriteBarrierKind::kMapWriteBarrier, offsetof(HeapObject, map_),
              /*maybe_initializing_or_transitioning*/ true);
     return maglev::ProcessResult::kContinue;
   }

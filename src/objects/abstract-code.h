@@ -55,9 +55,6 @@ class AbstractCode : public HeapObject {
   inline Tagged<Code> GetCode();
   inline Tagged<BytecodeArray> GetBytecodeArray();
   inline Tagged<Union<Code, BytecodeArray>> ToUnionType();
-
- private:
-  OBJECT_CONSTRUCTORS(AbstractCode, HeapObject);
 };
 
 // Currently we must use full-pointer comparisons (instead of
@@ -68,7 +65,7 @@ class AbstractCode : public HeapObject {
 static_assert(!kAllCodeObjectsLiveInTrustedSpace);
 constexpr bool operator==(const Tagged<AbstractCode> lhs,
                           const Tagged<AbstractCode> rhs) {
-  return lhs->ptr() == rhs->ptr();
+  return lhs.ptr() == rhs.ptr();
 }
 
 }  // namespace internal

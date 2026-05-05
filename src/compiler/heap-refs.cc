@@ -737,7 +737,8 @@ void JSFunctionData::Cache(JSHeapBroker* broker) {
         // have initial maps in RO space, which can be accessed directly.
         initial_map_ = prototype_or_initial_map_;
 
-        MapRef initial_map_ref = TryMakeRef<Map>(broker, initial_map_).value();
+        MapRef initial_map_ref =
+            TryMakeRefFromData<Map>(broker, initial_map_).value();
         if (initial_map_ref.IsInobjectSlackTrackingInProgress()) {
           initial_map_instance_size_with_min_slack_ =
               InstanceSizeWithMinSlack(broker, initial_map_ref);

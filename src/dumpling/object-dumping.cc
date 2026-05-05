@@ -177,7 +177,7 @@ void JSObjectFuzzingPrintDictProperties(Tagged<JSObject> obj,
 
 void JSObjectFuzzingPrintPrototype(Tagged<Map> map, StringStream* accumulator,
                                    int depth) {
-  Tagged<HeapObject> proto = Tagged<HeapObject>::cast(map->prototype());
+  Tagged<HeapObject> proto = Cast<HeapObject>(map->prototype());
 
   // This is to avoid printing Object.prototype
   if (proto->map()->instance_type() == JS_OBJECT_PROTOTYPE_TYPE) {
@@ -560,7 +560,7 @@ std::string DifferentialFuzzingPrint(Tagged<Object> obj, int depth) {
     double number = Cast<HeapNumber>(obj)->value();
     os << DoubleToStringView(number, buffer);
   } else {
-    HeapObjectFuzzingPrint(Tagged<HeapObject>::cast(obj), depth, os);
+    HeapObjectFuzzingPrint(Cast<HeapObject>(obj), depth, os);
   }
   return os.str();
 }

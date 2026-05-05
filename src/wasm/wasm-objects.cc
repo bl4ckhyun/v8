@@ -2140,7 +2140,7 @@ wasm::WasmValue WasmStruct::GetFieldValue(uint32_t index) {
           base::ReadUnalignedValue<uint16_t>(field_address)));
     case wasm::kRef:
     case wasm::kRefNull: {
-      DirectHandle<Object> ref(TaggedField<Object>::load(*this, field_offset),
+      DirectHandle<Object> ref(TaggedField<Object>::load(this, field_offset),
                                Isolate::Current());
       return wasm::WasmValue(ref, field_type);
     }
@@ -2170,7 +2170,7 @@ wasm::WasmValue WasmArray::GetElement(uint32_t index) {
           base::ReadUnalignedValue<uint16_t>(element_address)));
     case wasm::kRef:
     case wasm::kRefNull: {
-      DirectHandle<Object> ref(TaggedField<Object>::load(*this, element_offset),
+      DirectHandle<Object> ref(TaggedField<Object>::load(this, element_offset),
                                Isolate::Current());
       return wasm::WasmValue(ref, element_type);
     }
@@ -2308,7 +2308,7 @@ void WasmDispatchTable::SetForNonWrapper(
 #endif  // V8_ENABLE_DRUMBRAKE
     WasmDispatchTable::NewOrExistingEntry new_or_existing) {
   return ::v8::internal::SetForNonWrapper<WasmDispatchTable>(
-      *this, index, implicit_arg, call_target, sig_id,
+      this, index, implicit_arg, call_target, sig_id,
 #if V8_ENABLE_DRUMBRAKE
       function_index,
 #endif
@@ -2323,7 +2323,7 @@ void WasmDispatchTableForImports::SetForNonWrapper(
 #endif  // V8_ENABLE_DRUMBRAKE
     WasmDispatchTable::NewOrExistingEntry new_or_existing) {
   return ::v8::internal::SetForNonWrapper<WasmDispatchTableForImports>(
-      *this, index, implicit_arg, call_target, sig_id,
+      this, index, implicit_arg, call_target, sig_id,
 #if V8_ENABLE_DRUMBRAKE
       function_index,
 #endif
@@ -2384,7 +2384,7 @@ void WasmDispatchTable::SetForWrapper(
 #endif  // V8_ENABLE_DRUMBRAKE
     WasmDispatchTable::NewOrExistingEntry new_or_existing) {
   return ::v8::internal::SetForWrapper<WasmDispatchTable>(
-      *this, index, implicit_arg, wrapper_handle, sig_id,
+      this, index, implicit_arg, wrapper_handle, sig_id,
 #if V8_ENABLE_DRUMBRAKE
       function_index,
 #endif  // V8_ENABLE_DRUMBRAKE
@@ -2400,7 +2400,7 @@ void WasmDispatchTableForImports::SetForWrapper(
 #endif  // V8_ENABLE_DRUMBRAKE
     WasmDispatchTable::NewOrExistingEntry new_or_existing) {
   return ::v8::internal::SetForWrapper<WasmDispatchTableForImports>(
-      *this, index, implicit_arg, wrapper_handle, sig_id,
+      this, index, implicit_arg, wrapper_handle, sig_id,
 #if V8_ENABLE_DRUMBRAKE
       function_index,
 #endif  // V8_ENABLE_DRUMBRAKE
@@ -2431,7 +2431,7 @@ void DispatchTableClear(Tagged<DispatchTable> dispatch_table, int index,
 
 void WasmDispatchTable::Clear(
     int index, WasmDispatchTable::NewOrExistingEntry new_or_existing) {
-  DispatchTableClear<WasmDispatchTable>(*this, index, new_or_existing);
+  DispatchTableClear<WasmDispatchTable>(this, index, new_or_existing);
 #if V8_ENABLE_DRUMBRAKE
   if (v8_flags.wasm_jitless &&
       new_or_existing == WasmDispatchTable::kExistingEntry) {
@@ -2456,8 +2456,7 @@ void WasmDispatchTable::Clear(
 }
 void WasmDispatchTableForImports::Clear(
     int index, WasmDispatchTable::NewOrExistingEntry new_or_existing) {
-  DispatchTableClear<WasmDispatchTableForImports>(*this, index,
-                                                  new_or_existing);
+  DispatchTableClear<WasmDispatchTableForImports>(this, index, new_or_existing);
 }
 
 std::optional<std::shared_ptr<wasm::WasmWrapperHandle>>
@@ -2565,7 +2564,7 @@ DirectHandle<WasmDispatchTable> WasmDispatchTable::Grow(
   DCHECK_LE(old_capacity, wasm::max_table_size());
 
   if (new_length < old_capacity) {
-    RELEASE_WRITE_INT32_FIELD(*old_table, kLengthOffset, new_length);
+    RELEASE_WRITE_INT32_FIELD(old_table, kLengthOffset, new_length);
     // All fields within the old capacity are already cleared (see below).
     return old_table;
   }

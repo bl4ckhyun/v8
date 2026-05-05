@@ -576,8 +576,8 @@ class V8_NODISCARD JSHeapBrokerScopeForTesting {
 };
 
 template <class T>
-OptionalRef<typename ref_traits<T>::ref_type> TryMakeRef(JSHeapBroker* broker,
-                                                         ObjectData* data)
+OptionalRef<typename ref_traits<T>::ref_type> TryMakeRefFromData(
+    JSHeapBroker* broker, ObjectData* data)
   requires(is_subtype_v<T, Object>)
 {
   if (data == nullptr) return {};
@@ -601,7 +601,7 @@ OptionalRef<typename ref_traits<T>::ref_type> TryMakeRef(
   if (data == nullptr) {
     TRACE_BROKER_MISSING(broker, "ObjectData for " << Brief(object));
   }
-  return TryMakeRef<T>(broker, data);
+  return TryMakeRefFromData<T>(broker, data);
 }
 
 template <class T>
@@ -614,7 +614,7 @@ OptionalRef<typename ref_traits<T>::ref_type> TryMakeRef(
     DCHECK_EQ(flags & kCrashOnError, 0);
     TRACE_BROKER_MISSING(broker, "ObjectData for " << Brief(*object));
   }
-  return TryMakeRef<T>(broker, data);
+  return TryMakeRefFromData<T>(broker, data);
 }
 
 template <class T>

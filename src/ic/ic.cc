@@ -3743,7 +3743,7 @@ bool CanFastCloneObjectToObjectLiteral(DirectHandle<Map> source_map,
   DCHECK_EQ(target_map->GetConstructor(), *isolate->object_function());
   DCHECK_IMPLIES(
       !null_proto_literal,
-      *target_map->prototype() == *isolate->object_function_prototype());
+      target_map->prototype() == *isolate->object_function_prototype());
 
   // Ensure source and target have identical binary representation of properties
   // and elements as the IC relies on copying the raw bytes. This also excludes

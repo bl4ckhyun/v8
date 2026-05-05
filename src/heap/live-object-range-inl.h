@@ -59,7 +59,7 @@ bool LiveObjectRange::iterator::AdvanceToNextMarkedObject() {
     // up and including the end address. This works for one word fillers as
     // well as other objects.
     Address next_object = current_object_.address() + current_size_;
-    current_object_ = HeapObject();
+    current_object_ = {};
     if (MemoryChunk::IsAligned(next_object)) {
       return false;
     }

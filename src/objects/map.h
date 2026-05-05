@@ -255,7 +255,7 @@ using MapHandlesSpan = v8::MemorySpan<DirectHandle<Map>>;
 // |               |   [raw_transitions]                             |
 // +---------------+-------------------------------------------------+
 
-V8_OBJECT class Map : public HeapObjectLayout {
+V8_OBJECT class Map : public HeapObject {
  public:
   // Instance size.
   // Size in bytes or kVariableSizeSentinel if instances do not have

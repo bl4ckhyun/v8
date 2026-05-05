@@ -28,7 +28,7 @@ class HeapLayout final : public AllStatic {
   static V8_INLINE bool InYoungGeneration(Tagged<Object> object);
   static V8_INLINE bool InYoungGeneration(Tagged<HeapObject> object);
   static V8_INLINE bool InYoungGeneration(Tagged<MaybeObject> object);
-  static V8_INLINE bool InYoungGeneration(const HeapObjectLayout* object);
+  static V8_INLINE bool InYoungGeneration(const HeapObject* object);
   static V8_INLINE bool InYoungGeneration(const MemoryChunk* chunk,
                                           Tagged<HeapObject> object);
 

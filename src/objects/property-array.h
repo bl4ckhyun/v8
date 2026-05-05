@@ -15,7 +15,7 @@ namespace internal {
 
 #include "torque-generated/src/objects/property-array-tq.inc"
 
-V8_OBJECT class PropertyArray : public HeapObjectLayout {
+V8_OBJECT class PropertyArray : public HeapObject {
  public:
   // [length]: length of the array.
   // The function returns an alias instead of uint32_t to force conversion at

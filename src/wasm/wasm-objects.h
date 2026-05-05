@@ -1689,7 +1689,7 @@ inline constexpr int WasmInternalFunction::kHeaderSize =
     sizeof(WasmInternalFunction);
 inline constexpr int WasmInternalFunction::kSize = sizeof(WasmInternalFunction);
 
-V8_OBJECT class WasmFuncRef : public HeapObjectLayout {
+V8_OBJECT class WasmFuncRef : public HeapObject {
  public:
   inline Tagged<WasmInternalFunction> internal(IsolateForSandbox isolate) const;
   inline Tagged<WasmInternalFunction> internal(IsolateForSandbox isolate,
@@ -1746,7 +1746,7 @@ inline constexpr int WasmCapiFunctionData::kHeaderSize =
     sizeof(WasmCapiFunctionData);
 inline constexpr int WasmCapiFunctionData::kSize = sizeof(WasmCapiFunctionData);
 
-V8_OBJECT class WasmResumeData : public HeapObjectLayout {
+V8_OBJECT class WasmResumeData : public HeapObject {
  public:
   inline Tagged<WasmSuspenderObject> trusted_suspender(
       IsolateForSandbox isolate) const;
@@ -1904,7 +1904,7 @@ V8_OBJECT class AsmWasmData : public Struct {
   TaggedMember<HeapNumber> uses_bitset_;
 } V8_OBJECT_END;
 
-V8_OBJECT class WasmTypeInfo : public HeapObjectLayout {
+V8_OBJECT class WasmTypeInfo : public HeapObject {
  public:
   inline uint32_t canonical_type() const;
   inline void set_canonical_type(uint32_t value);
@@ -2175,7 +2175,7 @@ inline constexpr int WasmSuspendingObject::kHeaderSize =
 
 // The continuation object is a token used during resume & suspend
 // See: https://github.com/WebAssembly/stack-switching.
-V8_OBJECT class WasmContinuationObject : public HeapObjectLayout {
+V8_OBJECT class WasmContinuationObject : public HeapObject {
  public:
   inline Tagged<WasmStackObject> stack_obj() const;
   inline void set_stack_obj(Tagged<WasmStackObject> value,
@@ -2200,7 +2200,7 @@ inline constexpr int WasmContinuationObject::kHeaderSize =
 inline constexpr int WasmContinuationObject::kSize =
     sizeof(WasmContinuationObject);
 
-V8_OBJECT class WasmStackObject : public HeapObjectLayout {
+V8_OBJECT class WasmStackObject : public HeapObject {
  public:
   DECL_EXTERNAL_POINTER_ACCESSORS(stack, wasm::StackMemory*)
 
@@ -2221,7 +2221,7 @@ inline constexpr int WasmStackObject::kStackOffset =
 inline constexpr int WasmStackObject::kHeaderSize = sizeof(WasmStackObject);
 inline constexpr int WasmStackObject::kSize = sizeof(WasmStackObject);
 
-V8_OBJECT class WasmFastApiCallData : public HeapObjectLayout {
+V8_OBJECT class WasmFastApiCallData : public HeapObject {
  public:
   inline Tagged<HeapObject> signature() const;
   inline void set_signature(Tagged<HeapObject> value,
@@ -2258,7 +2258,7 @@ inline constexpr int WasmFastApiCallData::kCallbackDataOffset =
 inline constexpr int WasmFastApiCallData::kCachedMapOffset =
     offsetof(WasmFastApiCallData, cached_map_);
 
-V8_OBJECT class WasmStringViewIter : public HeapObjectLayout {
+V8_OBJECT class WasmStringViewIter : public HeapObject {
  public:
   inline Tagged<String> string() const;
   inline void set_string(Tagged<String> value,
@@ -2281,7 +2281,7 @@ V8_OBJECT class WasmStringViewIter : public HeapObjectLayout {
 #endif  // TAGGED_SIZE_8_BYTES
 } V8_OBJECT_END;
 
-V8_OBJECT class WasmNull : public HeapObjectLayout {
+V8_OBJECT class WasmNull : public HeapObject {
  public:
 #if V8_STATIC_ROOTS_BOOL || V8_STATIC_ROOTS_GENERATION_BOOL
   // TODO(manoskouk): Make it smaller if able and needed.

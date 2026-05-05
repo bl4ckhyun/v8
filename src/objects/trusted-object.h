@@ -30,7 +30,7 @@ namespace internal {
 // would be unsafe: an attacker could corrupt any (direct) pointer to these
 // objects stored inside the sandbox. However, ExposedTrustedObject can be
 // referenced via indirect pointers, which guarantee memory-safe access.
-V8_OBJECT class TrustedObject : public HeapObjectLayout {
+V8_OBJECT class TrustedObject : public HeapObject {
  public:
   DECL_VERIFIER(TrustedObject)
 
@@ -65,7 +65,7 @@ V8_OBJECT class TrustedObject : public HeapObjectLayout {
 #endif
 
   // Back-compat alias: TrustedObject adds no fields on top of HeapObject.
-  static constexpr int kHeaderSize = sizeof(HeapObjectLayout);
+  static constexpr int kHeaderSize = sizeof(HeapObject);
 } V8_OBJECT_END;
 
 // A trusted object that can safely be referenced from untrusted objects.

@@ -3467,7 +3467,7 @@ void ReloadParentStack(MacroAssembler* masm, Register promise,
 // depending on the data's type, and places the result in the input register.
 void GetContextFromImplicitArg(MacroAssembler* masm, Register data) {
   __ LoadTaggedField(kScratchRegister,
-                     FieldOperand(data, HeapObject::kMapOffset));
+                     FieldOperand(data, offsetof(HeapObject, map_)));
   __ CmpInstanceType(kScratchRegister, WASM_TRUSTED_INSTANCE_DATA_TYPE);
   Label instance;
   Label end;

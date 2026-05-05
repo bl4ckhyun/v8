@@ -253,7 +253,7 @@ class EncodeRelocationsVisitor final : public ObjectVisitor {
   }
 
   void VisitMapPointer(Tagged<HeapObject> host) override {
-    ProcessSlot(host->RawMaybeWeakField(HeapObject::kMapOffset));
+    ProcessSlot(host->RawMaybeWeakField(offsetof(HeapObject, map_)));
   }
 
   // Sanity-checks:
@@ -431,8 +431,8 @@ class ReadOnlyHeapImageSerializer {
                free_space->Size() - static_cast<int>(sizeof(FreeSpace))}};
     }
     if (Tagged<Hole> hole; TryCast<Hole>(obj, &hole)) {
-      return {{hole.address() + HeapObject::kHeaderSize,
-               sizeof(Hole) - HeapObject::kHeaderSize}};
+      return {{hole.address() + sizeof(HeapObject),
+               sizeof(Hole) - sizeof(HeapObject)}};
     }
 #ifdef V8_ENABLE_WEBASSEMBLY
     if (Tagged<WasmNull> wasm_null; TryCast<WasmNull>(obj, &wasm_null)) {

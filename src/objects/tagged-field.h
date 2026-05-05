@@ -39,33 +39,33 @@ class TaggedMember : public TaggedMemberBase {
   constexpr TaggedMember() = default;
 
   inline Tagged<T> load() const;
-  inline void store(HeapObjectLayout* host, Tagged<T> value,
+  inline void store(HeapObject* host, Tagged<T> value,
                     WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void store_no_write_barrier(Tagged<T> value);
 
   inline Tagged<T> Relaxed_Load() const;
-  inline void Relaxed_Store(HeapObjectLayout* host, Tagged<T> value,
+  inline void Relaxed_Store(HeapObject* host, Tagged<T> value,
                             WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void Relaxed_Store_no_write_barrier(Tagged<T> value);
 
   inline Tagged<T> Acquire_Load() const;
-  inline void Release_Store(HeapObjectLayout* host, Tagged<T> value,
+  inline void Release_Store(HeapObject* host, Tagged<T> value,
                             WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void Release_Store_no_write_barrier(Tagged<T> value);
 
   inline Tagged<T> SeqCst_Load() const;
-  inline void SeqCst_Store(HeapObjectLayout* host, Tagged<T> value,
+  inline void SeqCst_Store(HeapObject* host, Tagged<T> value,
                            WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline void SeqCst_Store_no_write_barrier(Tagged<T> value);
 
-  inline Tagged<T> SeqCst_Swap(HeapObjectLayout* host, Tagged<T> value,
+  inline Tagged<T> SeqCst_Swap(HeapObject* host, Tagged<T> value,
                                WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   inline Tagged<T> SeqCst_CompareAndSwap(
-      HeapObjectLayout* host, Tagged<T> expected_value, Tagged<T> value,
+      HeapObject* host, Tagged<T> expected_value, Tagged<T> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
  private:
-  inline void WriteBarrier(HeapObjectLayout* host, Tagged<T> value,
+  inline void WriteBarrier(HeapObject* host, Tagged<T> value,
                            WriteBarrierMode mode);
   static inline Address tagged_to_full(Tagged_t tagged_value);
   static inline Tagged_t full_to_tagged(Address value);
@@ -101,7 +101,7 @@ static_assert(alignof(UnalignedDoubleMember) == alignof(Tagged_t));
 static_assert(sizeof(UnalignedDoubleMember) == sizeof(double));
 
 // JSDispatchHandleMember stores a 32-bit JSDispatchHandle as a member of a
-// HeapObjectLayout subclass. Explicit padding must be added to the containing
+// HeapObject subclass. Explicit padding must be added to the containing
 // class on builds with kTaggedSize == 8.
 class JSDispatchHandleMember {
  public:
@@ -118,7 +118,7 @@ class JSDispatchHandleMember {
   inline void Relaxed_Clear();
 
   // Stores a new handle and emits the JSDispatchHandle write barrier.
-  inline void Relaxed_Store(HeapObjectLayout* host, JSDispatchHandle handle,
+  inline void Relaxed_Store(HeapObject* host, JSDispatchHandle handle,
                             WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
   // Allocates a new dispatch-table entry, release-stores it into this member

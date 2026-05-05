@@ -171,9 +171,9 @@ struct FieldAccess {
             maybe_initializing_or_transitioning_store),
         is_immutable(is_immutable) {
     DCHECK_GE(offset, 0);
-    DCHECK_IMPLIES(
-        machine_type.IsMapWord(),
-        offset == HeapObject::kMapOffset && base_is_tagged != kUntaggedBase);
+    DCHECK_IMPLIES(machine_type.IsMapWord(),
+                   offset == offsetof(HeapObject, map_) &&
+                       base_is_tagged != kUntaggedBase);
     DCHECK_IMPLIES(machine_type.IsMapWord(),
                    (write_barrier_kind == kMapWriteBarrier ||
                     write_barrier_kind == kNoWriteBarrier ||

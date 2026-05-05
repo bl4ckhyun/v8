@@ -494,7 +494,7 @@ enum ContextLookupFlags {
 // Script contexts from all top-level scripts are gathered in
 // ScriptContextTable.
 
-V8_OBJECT class Context : public HeapObjectLayout {
+V8_OBJECT class Context : public HeapObject {
  public:
   inline int length() const;
   inline void set_length(int value);
@@ -919,14 +919,14 @@ class ScriptContextTable
 
   class BodyDescriptor;
 
-  static constexpr uint32_t kCapacityOffset = HeapObject::kHeaderSize;
+  static constexpr uint32_t kCapacityOffset = sizeof(HeapObject);
   static constexpr uint32_t kLengthOffset = kCapacityOffset + kApiInt32Size;
   static constexpr uint32_t kHeaderSize = kLengthOffset + kApiInt32Size;
 };
 
 using ContextField = Context::Field;
 
-V8_OBJECT class ContextCell : public HeapObjectLayout {
+V8_OBJECT class ContextCell : public HeapObject {
  public:
   enum State : int32_t {
     kConst = 0,

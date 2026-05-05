@@ -4821,12 +4821,13 @@ void MacroAssembler::Abort(AbortReason reason) {
 
 void MacroAssembler::LoadMap(Register destination, Register object) {
   ASM_CODE_COMMENT(this);
-  LoadTaggedField(destination, FieldMemOperand(object, HeapObject::kMapOffset));
+  LoadTaggedField(destination,
+                  FieldMemOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadCompressedMap(Register dst, Register object) {
   ASM_CODE_COMMENT(this);
-  Ld_w(dst, FieldMemOperand(object, HeapObject::kMapOffset));
+  Ld_w(dst, FieldMemOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadFeedbackCell(Register dst, Register closure) {
@@ -4843,7 +4844,7 @@ void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
       dst, FieldMemOperand(feedback_cell, offsetof(FeedbackCell, value_)));
 
   // Check if feedback vector is valid.
-  LoadTaggedField(scratch, FieldMemOperand(dst, HeapObject::kMapOffset));
+  LoadTaggedField(scratch, FieldMemOperand(dst, offsetof(HeapObject, map_)));
   Ld_hu(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
   Branch(&done, eq, scratch, Operand(FEEDBACK_VECTOR_TYPE));
 

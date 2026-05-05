@@ -1990,38 +1990,30 @@ void CallableTask::BriefPrintDetails(std::ostream& os) {
   os << " callable=" << Brief(callable());
 }
 
-int HeapObjectLayout::SizeFromMap(Tagged<Map> map) const {
-  return Tagged<HeapObject>(this)->SizeFromMap(map);
-}
-
-SafeHeapObjectSize HeapObjectLayout::SafeSizeFromMap(Tagged<Map> map) const {
-  return Tagged<HeapObject>(this)->SafeSizeFromMap(map);
-}
-
 int HeapObject::SizeFromMap(Tagged<Map> map) const {
   int instance_size = map->instance_size();
   if (instance_size != kVariableSizeSentinel) return instance_size;
   // Only inline the most frequent cases.
   InstanceType instance_type = map->instance_type();
   if (InstanceTypeChecker::IsMap(instance_type)) {
-    return UncheckedCast<Map>(*this)->AllocatedSize();
+    return UncheckedCast<Map>(this)->AllocatedSize();
   }
   if (base::IsInRange(instance_type, FIRST_FIXED_ARRAY_TYPE,
                       LAST_FIXED_ARRAY_TYPE)) {
-    return UncheckedCast<FixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<FixedArray>(this)->AllocatedSize();
   }
-#define CASE(TypeCamelCase, TYPE_UPPER_CASE)                     \
-  if (instance_type == TYPE_UPPER_CASE##_TYPE) {                 \
-    return UncheckedCast<TypeCamelCase>(*this)->AllocatedSize(); \
+#define CASE(TypeCamelCase, TYPE_UPPER_CASE)                    \
+  if (instance_type == TYPE_UPPER_CASE##_TYPE) {                \
+    return UncheckedCast<TypeCamelCase>(this)->AllocatedSize(); \
   }
   SIMPLE_HEAP_OBJECT_LIST2(CASE)
 #undef CASE
   if (instance_type == SLOPPY_ARGUMENTS_ELEMENTS_TYPE) {
-    return UncheckedCast<SloppyArgumentsElements>(*this)->AllocatedSize();
+    return UncheckedCast<SloppyArgumentsElements>(this)->AllocatedSize();
   }
   if (base::IsInRange(instance_type, FIRST_CONTEXT_TYPE, LAST_CONTEXT_TYPE)) {
     if (instance_type == NATIVE_CONTEXT_TYPE) return NativeContext::kSize;
-    return Context::SizeFor(UncheckedCast<Context>(*this)->length());
+    return Context::SizeFor(UncheckedCast<Context>(this)->length());
   }
   if (instance_type == SEQ_ONE_BYTE_STRING_TYPE ||
       instance_type == INTERNALIZED_ONE_BYTE_STRING_TYPE ||
@@ -2029,14 +2021,14 @@ int HeapObject::SizeFromMap(Tagged<Map> map) const {
     // Strings may get concurrently truncated, hence we have to access its
     // length synchronized.
     return SeqOneByteString::SizeFor(
-        UncheckedCast<SeqOneByteString>(*this)->length(kAcquireLoad));
+        UncheckedCast<SeqOneByteString>(this)->length(kAcquireLoad));
   }
   if (instance_type == BYTECODE_ARRAY_TYPE) {
     return BytecodeArray::SizeFor(
-        UncheckedCast<BytecodeArray>(*this)->length(kAcquireLoad));
+        UncheckedCast<BytecodeArray>(this)->length(kAcquireLoad));
   }
   if (instance_type == FREE_SPACE_TYPE) {
-    return UncheckedCast<FreeSpace>(*this)->size(kRelaxedLoad);
+    return UncheckedCast<FreeSpace>(this)->size(kRelaxedLoad);
   }
   if (instance_type == SEQ_TWO_BYTE_STRING_TYPE ||
       instance_type == INTERNALIZED_TWO_BYTE_STRING_TYPE ||
@@ -2044,127 +2036,127 @@ int HeapObject::SizeFromMap(Tagged<Map> map) const {
     // Strings may get concurrently truncated, hence we have to access its
     // length synchronized.
     return SeqTwoByteString::SizeFor(
-        UncheckedCast<SeqTwoByteString>(*this)->length(kAcquireLoad));
+        UncheckedCast<SeqTwoByteString>(this)->length(kAcquireLoad));
   }
   if (instance_type == FIXED_DOUBLE_ARRAY_TYPE) {
-    return UncheckedCast<FixedDoubleArray>(*this)->AllocatedSize();
+    return UncheckedCast<FixedDoubleArray>(this)->AllocatedSize();
   }
   if (instance_type == TRUSTED_FIXED_ARRAY_TYPE) {
-    return UncheckedCast<TrustedFixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<TrustedFixedArray>(this)->AllocatedSize();
   }
   if (instance_type == PROTECTED_FIXED_ARRAY_TYPE) {
-    return UncheckedCast<ProtectedFixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<ProtectedFixedArray>(this)->AllocatedSize();
   }
   if (instance_type == PROTECTED_WEAK_FIXED_ARRAY_TYPE) {
-    return UncheckedCast<ProtectedWeakFixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<ProtectedWeakFixedArray>(this)->AllocatedSize();
   }
   if (instance_type == TRUSTED_WEAK_FIXED_ARRAY_TYPE) {
-    return UncheckedCast<TrustedWeakFixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<TrustedWeakFixedArray>(this)->AllocatedSize();
   }
   if (instance_type == TRUSTED_BYTE_ARRAY_TYPE) {
-    return UncheckedCast<TrustedByteArray>(*this)->AllocatedSize();
+    return UncheckedCast<TrustedByteArray>(this)->AllocatedSize();
   }
   if (instance_type == FEEDBACK_METADATA_TYPE) {
-    return UncheckedCast<FeedbackMetadata>(*this)->AllocatedSize();
+    return UncheckedCast<FeedbackMetadata>(this)->AllocatedSize();
   }
   if (base::IsInRange(instance_type, FIRST_DESCRIPTOR_ARRAY_TYPE,
                       LAST_DESCRIPTOR_ARRAY_TYPE)) {
     return DescriptorArray::SizeFor(
-        UncheckedCast<DescriptorArray>(*this)->number_of_all_descriptors());
+        UncheckedCast<DescriptorArray>(this)->number_of_all_descriptors());
   }
   if (base::IsInRange(instance_type, FIRST_WEAK_FIXED_ARRAY_TYPE,
                       LAST_WEAK_FIXED_ARRAY_TYPE)) {
-    return UncheckedCast<WeakFixedArray>(*this)->AllocatedSize();
+    return UncheckedCast<WeakFixedArray>(this)->AllocatedSize();
   }
   if (instance_type == WEAK_ARRAY_LIST_TYPE) {
-    return UncheckedCast<WeakArrayList>(*this)->AllocatedSize();
+    return UncheckedCast<WeakArrayList>(this)->AllocatedSize();
   }
   if (instance_type == SMALL_ORDERED_HASH_SET_TYPE) {
     return SmallOrderedHashSet::SizeFor(
-        UncheckedCast<SmallOrderedHashSet>(*this)->Capacity());
+        UncheckedCast<SmallOrderedHashSet>(this)->Capacity());
   }
   if (instance_type == SMALL_ORDERED_HASH_MAP_TYPE) {
     return SmallOrderedHashMap::SizeFor(
-        UncheckedCast<SmallOrderedHashMap>(*this)->Capacity());
+        UncheckedCast<SmallOrderedHashMap>(this)->Capacity());
   }
   if (instance_type == SMALL_ORDERED_NAME_DICTIONARY_TYPE) {
     return SmallOrderedNameDictionary::SizeFor(
-        UncheckedCast<SmallOrderedNameDictionary>(*this)->Capacity());
+        UncheckedCast<SmallOrderedNameDictionary>(this)->Capacity());
   }
   if (instance_type == SWISS_NAME_DICTIONARY_TYPE) {
     return SwissNameDictionary::SizeFor(
-        UncheckedCast<SwissNameDictionary>(*this)->Capacity());
+        UncheckedCast<SwissNameDictionary>(this)->Capacity());
   }
   if (instance_type == PROPERTY_ARRAY_TYPE) {
     return PropertyArray::SizeFor(
-        UncheckedCast<PropertyArray>(*this)->length(kAcquireLoad).value());
+        UncheckedCast<PropertyArray>(this)->length(kAcquireLoad).value());
   }
   if (instance_type == SCOPE_INFO_TYPE) {
-    return UncheckedCast<ScopeInfo>(*this)->AllocatedSize();
+    return UncheckedCast<ScopeInfo>(this)->AllocatedSize();
   }
   if (instance_type == FEEDBACK_VECTOR_TYPE) {
     return FeedbackVector::SizeFor(
-        UncheckedCast<FeedbackVector>(*this)->length());
+        UncheckedCast<FeedbackVector>(this)->length());
   }
   if (instance_type == BIGINT_TYPE) {
-    return BigInt::SizeFor(UncheckedCast<BigInt>(*this)->length());
+    return BigInt::SizeFor(UncheckedCast<BigInt>(this)->length());
   }
   if (instance_type == PREPARSE_DATA_TYPE) {
-    Tagged<PreparseData> data = UncheckedCast<PreparseData>(*this);
+    Tagged<PreparseData> data = UncheckedCast<PreparseData>(this);
     return PreparseData::SizeFor(data->data_length(), data->children_length());
   }
   if (instance_type == INSTRUCTION_STREAM_TYPE) {
-    return UncheckedCast<InstructionStream>(*this)->Size();
+    return UncheckedCast<InstructionStream>(this)->Size();
   }
   if (instance_type == COVERAGE_INFO_TYPE) {
     return CoverageInfo::SizeFor(
-        UncheckedCast<CoverageInfo>(*this)->slot_count());
+        UncheckedCast<CoverageInfo>(this)->slot_count());
   }
 #if V8_ENABLE_WEBASSEMBLY
   if (instance_type == WASM_TYPE_INFO_TYPE) {
     return WasmTypeInfo::SizeFor(
-        UncheckedCast<WasmTypeInfo>(*this)->supertypes_length());
+        UncheckedCast<WasmTypeInfo>(this)->supertypes_length());
   }
   if (instance_type == WASM_STRUCT_TYPE) {
     return WasmStruct::GcSafeSize(map);
   }
   if (instance_type == WASM_ARRAY_TYPE) {
-    return WasmArray::SizeFor(map, UncheckedCast<WasmArray>(*this)->length());
+    return WasmArray::SizeFor(map, UncheckedCast<WasmArray>(this)->length());
   }
   if (instance_type == WASM_NULL_TYPE) {
     return WasmNull::kSize;
   }
   if (instance_type == WASM_DISPATCH_TABLE_TYPE) {
     return WasmDispatchTable::SizeFor(
-        UncheckedCast<WasmDispatchTable>(*this)->capacity());
+        UncheckedCast<WasmDispatchTable>(this)->capacity());
   }
   if (instance_type == WASM_DISPATCH_TABLE_FOR_IMPORTS_TYPE) {
     return WasmDispatchTableForImports::SizeFor(
-        UncheckedCast<WasmDispatchTableForImports>(*this)->length());
+        UncheckedCast<WasmDispatchTableForImports>(this)->length());
   }
 #endif  // V8_ENABLE_WEBASSEMBLY
   if (instance_type == DOUBLE_STRING_CACHE_TYPE) {
     return DoubleStringCache::SizeFor(
-        UncheckedCast<DoubleStringCache>(*this)->capacity());
+        UncheckedCast<DoubleStringCache>(this)->capacity());
   }
   if (instance_type == EMBEDDER_DATA_ARRAY_TYPE) {
     return EmbedderDataArray::SizeFor(
-        UncheckedCast<EmbedderDataArray>(*this)->length());
+        UncheckedCast<EmbedderDataArray>(this)->length());
   }
   if (instance_type == HOLE_TYPE) {
     return sizeof(Hole);
   }
   if (instance_type == TURBOSHAFT_WORD32_SET_TYPE_TYPE) {
     return TurboshaftWord32SetType::SizeFor(
-        UncheckedCast<TurboshaftWord32SetType>(*this)->set_size());
+        UncheckedCast<TurboshaftWord32SetType>(this)->set_size());
   }
   if (instance_type == TURBOSHAFT_WORD64_SET_TYPE_TYPE) {
     return TurboshaftWord64SetType::SizeFor(
-        UncheckedCast<TurboshaftWord64SetType>(*this)->set_size());
+        UncheckedCast<TurboshaftWord64SetType>(this)->set_size());
   }
   if (instance_type == TURBOSHAFT_FLOAT64_SET_TYPE_TYPE) {
     return TurboshaftFloat64SetType::SizeFor(
-        UncheckedCast<TurboshaftFloat64SetType>(*this)->set_size());
+        UncheckedCast<TurboshaftFloat64SetType>(this)->set_size());
   }
   UNREACHABLE();
 }
@@ -2186,9 +2178,9 @@ bool HeapObject::NeedsRehashing(InstanceType instance_type) const {
   switch (instance_type) {
     case DESCRIPTOR_ARRAY_TYPE:
     case STRONG_DESCRIPTOR_ARRAY_TYPE:
-      return Cast<DescriptorArray>(*this)->number_of_descriptors() > 1;
+      return Cast<DescriptorArray>(this)->number_of_descriptors() > 1;
     case TRANSITION_ARRAY_TYPE:
-      return Cast<TransitionArray>(*this)->number_of_transitions() > 1;
+      return Cast<TransitionArray>(this)->number_of_transitions() > 1;
     case ORDERED_HASH_MAP_TYPE:
     case ORDERED_HASH_SET_TYPE:
       return false;  // We'll rehash from the JSMap or JSSet referencing them.
@@ -2237,11 +2229,11 @@ bool HeapObject::CanBeRehashed() const {
     case TRANSITION_ARRAY_TYPE:
       return true;
     case SMALL_ORDERED_HASH_MAP_TYPE:
-      return Cast<SmallOrderedHashMap>(*this)->NumberOfElements() == 0;
+      return Cast<SmallOrderedHashMap>(this)->NumberOfElements() == 0;
     case SMALL_ORDERED_HASH_SET_TYPE:
-      return Cast<SmallOrderedHashMap>(*this)->NumberOfElements() == 0;
+      return Cast<SmallOrderedHashMap>(this)->NumberOfElements() == 0;
     case SMALL_ORDERED_NAME_DICTIONARY_TYPE:
-      return Cast<SmallOrderedNameDictionary>(*this)->NumberOfElements() == 0;
+      return Cast<SmallOrderedNameDictionary>(this)->NumberOfElements() == 0;
     default:
       return false;
   }
@@ -2252,65 +2244,65 @@ template <typename IsolateT>
 void HeapObject::RehashBasedOnMap(IsolateT* isolate) {
   switch (map()->instance_type()) {
     case HASH_TABLE_TYPE:
-      Cast<ObjectHashTable>(*this)->Rehash();
+      Cast<ObjectHashTable>(this)->Rehash();
       break;
     case NAME_DICTIONARY_TYPE:
-      Cast<NameDictionary>(*this)->Rehash();
+      Cast<NameDictionary>(this)->Rehash();
       break;
     case NAME_TO_INDEX_HASH_TABLE_TYPE:
-      Cast<NameToIndexHashTable>(*this)->Rehash();
+      Cast<NameToIndexHashTable>(this)->Rehash();
       break;
     case REGISTERED_SYMBOL_TABLE_TYPE:
-      Cast<RegisteredSymbolTable>(*this)->Rehash();
+      Cast<RegisteredSymbolTable>(this)->Rehash();
       break;
     case SWISS_NAME_DICTIONARY_TYPE:
-      Cast<SwissNameDictionary>(*this)->Rehash(isolate);
+      Cast<SwissNameDictionary>(this)->Rehash(isolate);
       break;
     case GLOBAL_DICTIONARY_TYPE:
-      Cast<GlobalDictionary>(*this)->Rehash();
+      Cast<GlobalDictionary>(this)->Rehash();
       break;
     case NUMBER_DICTIONARY_TYPE:
-      Cast<NumberDictionary>(*this)->Rehash();
+      Cast<NumberDictionary>(this)->Rehash();
       break;
     case SIMPLE_NAME_DICTIONARY_TYPE:
-      Cast<SimpleNameDictionary>(*this)->Rehash();
+      Cast<SimpleNameDictionary>(this)->Rehash();
       break;
     case SIMPLE_NUMBER_DICTIONARY_TYPE:
-      Cast<SimpleNumberDictionary>(*this)->Rehash();
+      Cast<SimpleNumberDictionary>(this)->Rehash();
       break;
     case DESCRIPTOR_ARRAY_TYPE:
     case STRONG_DESCRIPTOR_ARRAY_TYPE:
-      DCHECK_LE(1, Cast<DescriptorArray>(*this)->number_of_descriptors());
-      Cast<DescriptorArray>(*this)->Sort();
+      DCHECK_LE(1, Cast<DescriptorArray>(this)->number_of_descriptors());
+      Cast<DescriptorArray>(this)->Sort();
       break;
     case TRANSITION_ARRAY_TYPE:
-      Cast<TransitionArray>(*this)->Sort(true);
+      Cast<TransitionArray>(this)->Sort(true);
       break;
     case SMALL_ORDERED_HASH_MAP_TYPE:
-      DCHECK_EQ(0, Cast<SmallOrderedHashMap>(*this)->NumberOfElements());
+      DCHECK_EQ(0, Cast<SmallOrderedHashMap>(this)->NumberOfElements());
       break;
     case SMALL_ORDERED_HASH_SET_TYPE:
-      DCHECK_EQ(0, Cast<SmallOrderedHashSet>(*this)->NumberOfElements());
+      DCHECK_EQ(0, Cast<SmallOrderedHashSet>(this)->NumberOfElements());
       break;
     case ORDERED_HASH_MAP_TYPE:
     case ORDERED_HASH_SET_TYPE:
       UNREACHABLE();  // We'll rehash from the JSMap or JSSet referencing them.
     case JS_MAP_TYPE: {
-      Cast<JSMap>(*this)->Rehash(isolate->AsIsolate());
+      Cast<JSMap>(this)->Rehash(isolate->AsIsolate());
       break;
     }
     case JS_SET_TYPE: {
-      Cast<JSSet>(*this)->Rehash(isolate->AsIsolate());
+      Cast<JSSet>(this)->Rehash(isolate->AsIsolate());
       break;
     }
     case SMALL_ORDERED_NAME_DICTIONARY_TYPE:
-      DCHECK_EQ(0, Cast<SmallOrderedNameDictionary>(*this)->NumberOfElements());
+      DCHECK_EQ(0, Cast<SmallOrderedNameDictionary>(this)->NumberOfElements());
       break;
     case INTERNALIZED_ONE_BYTE_STRING_TYPE:
     case INTERNALIZED_TWO_BYTE_STRING_TYPE:
       // Rare case, rehash read-only space strings before they are sealed.
-      DCHECK(ReadOnlyHeap::Contains(*this));
-      Cast<String>(*this)->EnsureHash();
+      DCHECK(ReadOnlyHeap::Contains(this));
+      Cast<String>(this)->EnsureHash();
       break;
     default:
       // TODO(ishell): remove once b/326043780 is no longer an issue.
@@ -4579,7 +4571,7 @@ bool JSArray::SetLengthWouldNormalize(uint32_t new_length) {
   uint32_t new_capacity;
   return JSArray::SetLengthWouldNormalize(Isolate::Current()->heap(),
                                           new_length) &&
-         ShouldConvertToSlowElements(*this, capacity, new_length - 1,
+         ShouldConvertToSlowElements(this, capacity, new_length - 1,
                                      &new_capacity);
 }
 

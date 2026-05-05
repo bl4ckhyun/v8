@@ -1013,7 +1013,7 @@ class ObjectSlotValueDependency final : public CompilationDependency {
 
   bool IsValid(JSHeapBroker* broker) const override {
     Tagged<Object> current_value =
-        offset_ == HeapObject::kMapOffset
+        offset_ == offsetof(HeapObject, map_)
             ? object_->map()
             : TaggedField<Object>::Relaxed_Load(*object_, offset_);
     return *value_ == current_value;

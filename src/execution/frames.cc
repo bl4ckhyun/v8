@@ -796,13 +796,13 @@ std::pair<Tagged<GcSafeCode>, int> StackFrame::GcSafeLookupCodeAndOffset()
 
 Tagged<Code> StackFrame::LookupCode() const {
   DCHECK_NE(isolate()->heap()->gc_state(), Heap::MARK_COMPACT);
-  return GcSafeLookupCode()->UnsafeCastToCode();
+  return TrustedCast<Code>(GcSafeLookupCode());
 }
 
 std::pair<Tagged<Code>, int> StackFrame::LookupCodeAndOffset() const {
   DCHECK_NE(isolate()->heap()->gc_state(), Heap::MARK_COMPACT);
   auto gc_safe_pair = GcSafeLookupCodeAndOffset();
-  return {gc_safe_pair.first->UnsafeCastToCode(), gc_safe_pair.second};
+  return {TrustedCast<Code>(gc_safe_pair.first), gc_safe_pair.second};
 }
 
 void StackFrame::IteratePc(RootVisitor* v, Address* constant_pool_address,
@@ -2501,7 +2501,7 @@ FrameSummaries CommonFrameWithJSLinkage::Summarize(bool never_allocate) const {
   Tagged<GcSafeCode> gcsafe_code;
   int offset = -1;
   std::tie(gcsafe_code, offset) = GcSafeLookupCodeAndOffset();
-  DirectHandle<Code> code(gcsafe_code->UnsafeCastToCode(), isolate());
+  DirectHandle<Code> code(TrustedCast<Code>(gcsafe_code), isolate());
 #if V8_ENABLE_WEBASSEMBLY
   if (code->kind() == CodeKind::BUILTIN &&
       code->builtin_id() == Builtin::kWasmMethodWrapper) {

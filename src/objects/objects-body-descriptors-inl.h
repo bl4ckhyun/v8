@@ -214,7 +214,7 @@ template <typename ObjectVisitor>
 DISABLE_CFI_PERF void BodyDescriptorBase::IteratePointers(
     Tagged<HeapObject> obj, int start_offset, int end_offset,
     ObjectVisitor* v) {
-  if (start_offset == HeapObject::kMapOffset) {
+  if (start_offset == offsetof(HeapObject, map_)) {
     v->VisitMapPointer(obj);
     start_offset += kTaggedSize;
   }
@@ -224,7 +224,7 @@ DISABLE_CFI_PERF void BodyDescriptorBase::IteratePointers(
 template <typename ObjectVisitor>
 void BodyDescriptorBase::IteratePointer(Tagged<HeapObject> obj, int offset,
                                         ObjectVisitor* v) {
-  DCHECK_NE(offset, HeapObject::kMapOffset);
+  DCHECK_NE(offset, offsetof(HeapObject, map_));
   v->VisitPointer(obj, obj->RawField(offset));
 }
 
@@ -239,7 +239,7 @@ DISABLE_CFI_PERF void BodyDescriptorBase::IterateMaybeWeakPointers(
 template <typename ObjectVisitor>
 void BodyDescriptorBase::IterateMaybeWeakPointer(Tagged<HeapObject> obj,
                                                  int offset, ObjectVisitor* v) {
-  DCHECK_NE(offset, HeapObject::kMapOffset);
+  DCHECK_NE(offset, offsetof(HeapObject, map_));
   v->VisitPointer(obj, obj->RawMaybeWeakField(offset));
 }
 
@@ -679,7 +679,7 @@ class WeakCell::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, HeapObject::kHeaderSize, kTargetOffset, v);
+    IteratePointers(obj, sizeof(HeapObject), kTargetOffset, v);
     IterateCustomWeakPointer(obj, kTargetOffset, v);
     IterateCustomWeakPointer(obj, kUnregisterTokenOffset, v);
     IteratePointers(obj, kUnregisterTokenOffset + kTaggedSize, object_size, v);
@@ -743,7 +743,7 @@ class JSFinalizationRegistry::BodyDescriptor final : public BodyDescriptorBase {
 
 class AllocationSite::BodyDescriptor final : public BodyDescriptorBase {
  public:
-  static constexpr int kCommonPointerFieldsStart = sizeof(HeapObjectLayout);
+  static constexpr int kCommonPointerFieldsStart = sizeof(HeapObject);
   static constexpr int kCommonPointerFieldsEnd =
       offsetof(AllocationSite, dependent_code_) + kTaggedSize;
 
@@ -1189,7 +1189,7 @@ class PrototypeInfo::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, HeapObject::kHeaderSize, object_size, v);
+    IteratePointers(obj, sizeof(HeapObject), object_size, v);
   }
 
   static inline int SizeOf(Tagged<Map> map, Tagged<HeapObject> obj) {
@@ -1712,7 +1712,7 @@ class CoverageInfo::BodyDescriptor final : public DataOnlyBodyDescriptor {
 
 class InstructionStream::BodyDescriptor final : public BodyDescriptorBase {
  public:
-  static_assert(static_cast<int>(HeapObject::kHeaderSize) ==
+  static_assert(static_cast<int>(sizeof(HeapObject)) ==
                 static_cast<int>(kCodeOffset));
   static_assert(kCodeOffset + kTaggedSize == kRelocationInfoOffset);
   static_assert(kRelocationInfoOffset + kTaggedSize == kDataStart);
@@ -1929,7 +1929,7 @@ class AccessorInfo::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, HeapObject::kHeaderSize,
+    IteratePointers(obj, sizeof(HeapObject),
                     AccessorInfo::kEndOfStrongFieldsOffset, v);
     v->VisitExternalPointer(
         obj, obj->RawExternalPointerField(AccessorInfo::kGetterOffset,
@@ -1968,7 +1968,7 @@ class InterceptorInfo::BodyDescriptor final : public BodyDescriptorBase {
   template <typename ObjectVisitor>
   static inline void IterateBody(Tagged<Map> map, Tagged<HeapObject> obj,
                                  int object_size, ObjectVisitor* v) {
-    IteratePointers(obj, HeapObject::kHeaderSize,
+    IteratePointers(obj, sizeof(HeapObject),
                     InterceptorInfo::kEndOfStrongFieldsOffset, v);
 
     const bool is_named = Cast<InterceptorInfo>(obj)->is_named();

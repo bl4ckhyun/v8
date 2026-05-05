@@ -2736,8 +2736,8 @@ Tagged<Map> Factory::InitializeMap(Tagged<Map> map, InstanceType type,
                    ReadOnlyHeap::Contains(map));
     // Shared space JS objects have fixed layout and can have RO maps. No other
     // JS objects have RO maps.
-    DCHECK_IMPLIES(!IsMaybeReadOnlyJSObjectMap(*map) &&
-                       !IsAlwaysSharedSpaceJSObjectMap(*map),
+    DCHECK_IMPLIES(!IsMaybeReadOnlyJSObjectMap(map) &&
+                       !IsAlwaysSharedSpaceJSObjectMap(map),
                    !ReadOnlyHeap::Contains(map));
     map->SetInObjectPropertiesStartInWords(instance_size / kTaggedSize -
                                            inobject_properties);

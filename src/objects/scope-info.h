@@ -56,7 +56,7 @@ struct VariableLookupResult {
 
 // This object provides quick access to scope info details for runtime
 // routines.
-V8_OBJECT class ScopeInfo : public HeapObjectLayout {
+V8_OBJECT class ScopeInfo : public HeapObject {
  public:
   DEFINE_TORQUE_GENERATED_SCOPE_FLAGS()
 

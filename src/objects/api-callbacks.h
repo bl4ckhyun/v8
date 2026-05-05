@@ -29,7 +29,7 @@ class StructBodyDescriptor;
 // If the accessor in the prototype has the READ_ONLY property attribute, then
 // a new value is added to the derived object when the property is set.
 // This shadows the accessor in the prototype.
-V8_OBJECT class AccessorInfo : public HeapObjectLayout {
+V8_OBJECT class AccessorInfo : public HeapObject {
  public:
   inline Tagged<Object> data() const;
   inline void set_data(Tagged<Object> value,
@@ -190,7 +190,7 @@ V8_OBJECT class AccessCheckInfo : public Struct {
   COMMON_INTERCEPTOR_INFO_CALLBACK_LIST(V)        \
   V(IndexOf, index_of)
 
-V8_OBJECT class InterceptorInfo : public HeapObjectLayout {
+V8_OBJECT class InterceptorInfo : public HeapObject {
  public:
   inline Tagged<Object> data() const;
   inline void set_data(Tagged<Object> value,

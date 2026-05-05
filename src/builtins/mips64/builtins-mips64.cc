@@ -2406,7 +2406,7 @@ void Builtins::Generate_CallOrConstructForwardVarargs(MacroAssembler* masm,
   if (mode == CallOrConstructMode::kConstruct) {
     Label new_target_constructor, new_target_not_constructor;
     __ JumpIfSmi(a3, &new_target_not_constructor);
-    __ ld(t1, FieldMemOperand(a3, HeapObject::kMapOffset));
+    __ ld(t1, FieldMemOperand(a3, offsetof(HeapObject, map_)));
     __ lbu(t1, FieldMemOperand(t1, Map::kBitFieldOffset));
     __ And(t1, t1, Operand(Map::Bits1::IsConstructorBit::kMask));
     __ Branch(&new_target_constructor, ne, t1, Operand(zero_reg));
@@ -2756,7 +2756,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   __ JumpIfSmi(target, &non_constructor);
 
   // Check if target has a [[Construct]] internal method.
-  __ ld(map, FieldMemOperand(target, HeapObject::kMapOffset));
+  __ ld(map, FieldMemOperand(target, offsetof(HeapObject, map_)));
   {
     Register flags = t3;
     __ Lbu(flags, FieldMemOperand(map, Map::kBitFieldOffset));

@@ -6734,12 +6734,13 @@ void MacroAssembler::CompareObjectTypeAndJump(Register object, Register map,
 
 void MacroAssembler::LoadMap(Register destination, Register object) {
   ASM_CODE_COMMENT(this);
-  LoadTaggedField(destination, FieldMemOperand(object, HeapObject::kMapOffset));
+  LoadTaggedField(destination,
+                  FieldMemOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadCompressedMap(Register dst, Register object) {
   ASM_CODE_COMMENT(this);
-  Lw(dst, FieldMemOperand(object, HeapObject::kMapOffset));
+  Lw(dst, FieldMemOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadNativeContextSlot(Register dst, int index) {
@@ -8266,7 +8267,7 @@ void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
       dst, FieldMemOperand(feedback_cell, offsetof(FeedbackCell, value_)));
 
   // Check if feedback vector is valid.
-  LoadTaggedField(scratch, FieldMemOperand(dst, HeapObject::kMapOffset));
+  LoadTaggedField(scratch, FieldMemOperand(dst, offsetof(HeapObject, map_)));
   Lhu(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
   Branch(&done, eq, scratch, Operand(FEEDBACK_VECTOR_TYPE));
 

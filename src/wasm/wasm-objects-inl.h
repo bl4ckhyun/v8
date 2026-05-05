@@ -39,20 +39,19 @@ namespace v8::internal {
 
 #include "torque-generated/src/wasm/wasm-objects-tq-inl.inc"
 
-#define OPTIONAL_ACCESSORS(holder, name, type, offset)       \
-  DEF_GETTER(holder, has_##name, bool) {                     \
-    Tagged<Object> value =                                   \
-        TaggedField<Object, offset>::load(cage_base, *this); \
-    return !IsUndefined(value);                              \
-  }                                                          \
+#define OPTIONAL_ACCESSORS(holder, name, type, offset)                         \
+  DEF_GETTER(holder, has_##name, bool) {                                       \
+    Tagged<Object> value = TaggedField<Object, offset>::load(cage_base, this); \
+    return !IsUndefined(value);                                                \
+  }                                                                            \
   ACCESSORS_CHECKED2(holder, name, type, offset, !IsUndefined(value), true)
 
-#define PRIMITIVE_ACCESSORS(holder, name, type, offset)               \
-  type holder::name() const {                                         \
-    return ReadMaybeUnalignedValue<type>(FIELD_ADDR(*this, offset));  \
-  }                                                                   \
-  void holder::set_##name(type value) {                               \
-    WriteMaybeUnalignedValue<type>(FIELD_ADDR(*this, offset), value); \
+#define PRIMITIVE_ACCESSORS(holder, name, type, offset)              \
+  type holder::name() const {                                        \
+    return ReadMaybeUnalignedValue<type>(FIELD_ADDR(this, offset));  \
+  }                                                                  \
+  void holder::set_##name(type value) {                              \
+    WriteMaybeUnalignedValue<type>(FIELD_ADDR(this, offset), value); \
   }
 
 // WasmModuleObject
@@ -291,18 +290,18 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_start, uint8_t*,
 PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
                     kMemory0SizeOffset)
 // ACCESSORS/OPTIONAL_ACCESSORS/PROTECTED_POINTER_ACCESSORS all use
-// CONDITIONAL_*_WRITE_BARRIER(*this, ...) which expands to (object)->... —
-// arrow access that fails for HeapObjectLayout value types.  Spell out the
+// CONDITIONAL_*_WRITE_BARRIER(this, ...) which expands to (object)->... —
+// arrow access that fails for HeapObject value types.  Spell out the
 // impls manually using *Tagged<WasmTrustedInstanceData>(this) instead.
 
 // Tagged field accessors (replaces ACCESSORS).
 #define WTI_TAGGED_ACCESSORS(name, type, offset)                             \
   type WasmTrustedInstanceData::name() const {                               \
-    return TaggedField<type, offset>::load(*this);                           \
+    return TaggedField<type, offset>::load(this);                            \
   }                                                                          \
   void WasmTrustedInstanceData::set_##name(type value,                       \
                                            WriteBarrierMode mode) {          \
-    TaggedField<type, offset>::store(*this, value);                          \
+    TaggedField<type, offset>::store(this, value);                           \
     CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset, \
                               value, mode);                                  \
   }
@@ -310,16 +309,16 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
 // Optional tagged field accessors (replaces OPTIONAL_ACCESSORS).
 #define WTI_OPTIONAL_TAGGED_ACCESSORS(name, type, offset)                    \
   bool WasmTrustedInstanceData::has_##name() const {                         \
-    Tagged<Object> value = TaggedField<Object, offset>::load(*this);         \
+    Tagged<Object> value = TaggedField<Object, offset>::load(this);          \
     return !IsUndefined(value);                                              \
   }                                                                          \
   type WasmTrustedInstanceData::name() const {                               \
     DCHECK(has_##name());                                                    \
-    return TaggedField<type, offset>::load(*this);                           \
+    return TaggedField<type, offset>::load(this);                            \
   }                                                                          \
   void WasmTrustedInstanceData::set_##name(type value,                       \
                                            WriteBarrierMode mode) {          \
-    TaggedField<type, offset>::store(*this, value);                          \
+    TaggedField<type, offset>::store(this, value);                           \
     CONDITIONAL_WRITE_BARRIER(Tagged<WasmTrustedInstanceData>(this), offset, \
                               value, mode);                                  \
   }
@@ -328,22 +327,21 @@ PRIMITIVE_ACCESSORS(WasmTrustedInstanceData, memory0_size, size_t,
 // PROTECTED_POINTER_ACCESSORS requires a TrustedObject base; spell out
 // the impls manually now that WasmTrustedInstanceData derives from
 // ExposedTrustedObject.
-#define WTI_PROTECTED_POINTER_ACCESSORS(name, type, offset)           \
-  Tagged<type> WasmTrustedInstanceData::name() const {                \
-    DCHECK(has_##name());                                             \
-    return ReadProtectedPointerField<type>(offset);                   \
-  }                                                                   \
-  void WasmTrustedInstanceData::set_##name(Tagged<type> value,        \
-                                           WriteBarrierMode mode) {   \
-    WriteProtectedPointerField(offset, value);                        \
-    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(                      \
-        *Tagged<WasmTrustedInstanceData>(this), offset, value, mode); \
-  }                                                                   \
-  bool WasmTrustedInstanceData::has_##name() const {                  \
-    return !IsProtectedPointerFieldEmpty(offset);                     \
-  }                                                                   \
-  void WasmTrustedInstanceData::clear_##name() {                      \
-    ClearProtectedPointerField(offset);                               \
+#define WTI_PROTECTED_POINTER_ACCESSORS(name, type, offset)                 \
+  Tagged<type> WasmTrustedInstanceData::name() const {                      \
+    DCHECK(has_##name());                                                   \
+    return ReadProtectedPointerField<type>(offset);                         \
+  }                                                                         \
+  void WasmTrustedInstanceData::set_##name(Tagged<type> value,              \
+                                           WriteBarrierMode mode) {         \
+    WriteProtectedPointerField(offset, value);                              \
+    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, offset, value, mode); \
+  }                                                                         \
+  bool WasmTrustedInstanceData::has_##name() const {                        \
+    return !IsProtectedPointerFieldEmpty(offset);                           \
+  }                                                                         \
+  void WasmTrustedInstanceData::clear_##name() {                            \
+    ClearProtectedPointerField(offset);                                     \
   }
 
 WTI_PROTECTED_POINTER_ACCESSORS(managed_native_module,
@@ -514,8 +512,8 @@ ImportedFunctionEntry::ImportedFunctionEntry(
 // WasmDispatchTable
 
 // TODO(jgruber): Spelled out (not PROTECTED_POINTER_ACCESSORS) because the
-// macro expands to CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, ...),
-// which is not valid on a V8_OBJECT / HeapObjectLayout holder. The macro
+// macro expands to CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, ...),
+// which is not valid on a V8_OBJECT / HeapObject holder. The macro
 // needs a Tagged<T>-wrapped self; spell the accessors out until the barrier
 // macro is updated.
 Tagged<TrustedManaged<WasmDispatchTableData>>
@@ -528,8 +526,7 @@ void WasmDispatchTable::set_protected_offheap_data(
     Tagged<TrustedManaged<WasmDispatchTableData>> value,
     WriteBarrierMode mode) {
   WriteProtectedPointerField(kProtectedOffheapDataOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*Tagged<WasmDispatchTable>(this),
-                                              kProtectedOffheapDataOffset,
+  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, kProtectedOffheapDataOffset,
                                               value, mode);
 }
 bool WasmDispatchTable::has_protected_offheap_data() const {
@@ -540,7 +537,7 @@ void WasmDispatchTable::clear_protected_offheap_data() {
 }
 // TODO(jgruber): See the WasmDispatchTable block above:
 // PROTECTED_POINTER_ACCESSORS expands to
-// CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, ...) which does not
+// CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, ...) which does not
 // work on a V8_OBJECT holder; spell the accessors out until the barrier
 // macro is updated.
 Tagged<TrustedManaged<WasmDispatchTableData>>
@@ -553,9 +550,8 @@ void WasmDispatchTableForImports::set_protected_offheap_data(
     Tagged<TrustedManaged<WasmDispatchTableData>> value,
     WriteBarrierMode mode) {
   WriteProtectedPointerField(kProtectedOffheapDataOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(
-      *Tagged<WasmDispatchTableForImports>(this), kProtectedOffheapDataOffset,
-      value, mode);
+  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, kProtectedOffheapDataOffset,
+                                              value, mode);
 }
 bool WasmDispatchTableForImports::has_protected_offheap_data() const {
   return !IsProtectedPointerFieldEmpty(kProtectedOffheapDataOffset);
@@ -581,8 +577,8 @@ Tagged<ProtectedWeakFixedArray> WasmDispatchTable::protected_uses() const {
 void WasmDispatchTable::set_protected_uses(
     Tagged<ProtectedWeakFixedArray> value, WriteBarrierMode mode) {
   WriteProtectedPointerField(kProtectedUsesOffset, value);
-  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(
-      *Tagged<WasmDispatchTable>(this), kProtectedUsesOffset, value, mode);
+  CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, kProtectedUsesOffset, value,
+                                              mode);
 }
 bool WasmDispatchTable::has_protected_uses() const {
   return !IsProtectedPointerFieldEmpty(kProtectedUsesOffset);
@@ -601,10 +597,10 @@ void WasmDispatchTable::set_table_type(wasm::CanonicalValueType type) {
 }
 
 int WasmDispatchTable::length(AcquireLoadTag) const {
-  return ACQUIRE_READ_INT32_FIELD(*this, kLengthOffset);
+  return ACQUIRE_READ_INT32_FIELD(this, kLengthOffset);
 }
 int WasmDispatchTableForImports::length(AcquireLoadTag) const {
-  return ACQUIRE_READ_INT32_FIELD(*this, kLengthOffset);
+  return ACQUIRE_READ_INT32_FIELD(this, kLengthOffset);
 }
 
 int WasmDispatchTable::length() const { return ReadField<int>(kLengthOffset); }

@@ -777,7 +777,7 @@ bool SharedFunctionInfo::is_compiled() const {
 
 template <typename IsolateT>
 IsCompiledScope SharedFunctionInfo::is_compiled_scope(IsolateT* isolate) const {
-  return IsCompiledScope(*this, isolate);
+  return IsCompiledScope(this, isolate);
 }
 
 IsCompiledScope::IsCompiledScope(const Tagged<SharedFunctionInfo> shared,

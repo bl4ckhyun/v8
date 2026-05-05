@@ -394,12 +394,12 @@ void* ExtractEmbedderDataBackref(Isolate* isolate, CppHeap& cpp_heap,
 
   Tagged<JSObject> js_object = Cast<JSObject>(*v8_object);
   // Not every object that can have embedder fields is actually a JSApiWrapper.
-  if (!IsJSApiWrapperObject(*js_object)) {
+  if (!IsJSApiWrapperObject(js_object)) {
     return nullptr;
   }
   // Wrapper using cpp_heap_wrappable field.
-  return CppHeapObjectWrapper(*js_object)
-      .GetCppHeapWrappable(isolate, kAnyCppHeapPointer);
+  return CppHeapObjectWrapper(js_object).GetCppHeapWrappable(
+      isolate, kAnyCppHeapPointer);
 }
 
 // The following implements a snapshotting algorithm for C++ objects that also

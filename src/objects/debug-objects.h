@@ -253,7 +253,7 @@ inline constexpr int CoverageInfoSlot::kPaddingOffset =
     offsetof(CoverageInfoSlot, padding);
 
 // Holds information related to block code coverage.
-V8_OBJECT class CoverageInfo : public HeapObjectLayout {
+V8_OBJECT class CoverageInfo : public HeapObject {
  public:
   inline int32_t slot_count() const;
   inline void set_slot_count(int32_t value);

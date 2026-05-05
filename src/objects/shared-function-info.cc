@@ -286,7 +286,7 @@ void SharedFunctionInfo::CopyFrom(Tagged<SharedFunctionInfo> other,
 }
 
 bool SharedFunctionInfo::HasDebugInfo(Isolate* isolate) const {
-  return isolate->debug()->HasDebugInfo(*this);
+  return isolate->debug()->HasDebugInfo(this);
 }
 
 // Needs to be kept in sync with Scope::UniqueIdInScript and
@@ -305,24 +305,24 @@ int SharedFunctionInfo::UniqueIdInScript() const {
 }
 
 Tagged<DebugInfo> SharedFunctionInfo::GetDebugInfo(Isolate* isolate) const {
-  return isolate->debug()->TryGetDebugInfo(*this).value();
+  return isolate->debug()->TryGetDebugInfo(this).value();
 }
 
 std::optional<Tagged<DebugInfo>> SharedFunctionInfo::TryGetDebugInfo(
     Isolate* isolate) const {
-  return isolate->debug()->TryGetDebugInfo(*this);
+  return isolate->debug()->TryGetDebugInfo(this);
 }
 
 bool SharedFunctionInfo::HasBreakInfo(Isolate* isolate) const {
-  return isolate->debug()->HasBreakInfo(*this);
+  return isolate->debug()->HasBreakInfo(this);
 }
 
 bool SharedFunctionInfo::BreakAtEntry(Isolate* isolate) const {
-  return isolate->debug()->BreakAtEntry(*this);
+  return isolate->debug()->BreakAtEntry(this);
 }
 
 bool SharedFunctionInfo::HasCoverageInfo(Isolate* isolate) const {
-  return isolate->debug()->HasCoverageInfo(*this);
+  return isolate->debug()->HasCoverageInfo(this);
 }
 
 Tagged<CoverageInfo> SharedFunctionInfo::GetCoverageInfo(
@@ -393,7 +393,7 @@ void SharedFunctionInfo::DiscardCompiledMetadata(
     if (v8_flags.trace_flush_code) {
       CodeTracer::Scope scope(isolate->GetCodeTracer());
       PrintF(scope.file(), "[discarding compiled metadata for ");
-      ShortPrint(Tagged<HeapObject>(this), scope.file());
+      ShortPrint(this, scope.file());
       PrintF(scope.file(), "]\n");
     }
 
@@ -404,7 +404,7 @@ void SharedFunctionInfo::DiscardCompiledMetadata(
       // task of decompiling.
       set_raw_outer_scope_info_or_feedback_metadata(outer_scope_info);
       gc_notify_updated_slot(
-          *this,
+          this,
           RawField(SharedFunctionInfo::kOuterScopeInfoOrFeedbackMetadataOffset),
           outer_scope_info);
     } else {
@@ -548,7 +548,7 @@ void SharedFunctionInfo::DisableOptimization(Isolate* isolate,
   if (v8_flags.trace_opt) {
     CodeTracer::Scope scope(isolate->GetCodeTracer());
     PrintF(scope.file(), "[disabled optimization for ");
-    ShortPrint(Tagged<HeapObject>(this), scope.file());
+    ShortPrint(this, scope.file());
     PrintF(scope.file(), ", reason: %s]\n", GetBailoutReason(reason));
   }
 }

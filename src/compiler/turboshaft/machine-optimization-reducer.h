@@ -2283,7 +2283,7 @@ class MachineOptimizationReducer : public Next {
       const ConstantOp& base = matcher_.Cast<ConstantOp>(base_idx);
       if (base.kind == any_of(ConstantOp::Kind::kHeapObject,
                               ConstantOp::Kind::kCompressedHeapObject)) {
-        if (offset == HeapObject::kMapOffset) {
+        if (offset == offsetof(HeapObject, map_)) {
           // Only few loads should be loading the map from a ConstantOp
           // HeapObject, so unparking the JSHeapBroker here rather than before
           // the optimization pass itself it probably more efficient.

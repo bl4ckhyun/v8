@@ -24,12 +24,11 @@ namespace internal {
 #include "torque-generated/src/objects/js-regexp-tq-inl.inc"
 
 Tagged<Object> JSRegExp::last_index() const {
-  return TaggedField<Object, kLastIndexOffset>::load(*this);
+  return TaggedField<Object, kLastIndexOffset>::load(this);
 }
 void JSRegExp::set_last_index(Tagged<Object> value, WriteBarrierMode mode) {
-  TaggedField<Object, kLastIndexOffset>::store(*this, value);
-  CONDITIONAL_WRITE_BARRIER(Tagged<HeapObject>(this), kLastIndexOffset, value,
-                            mode);
+  TaggedField<Object, kLastIndexOffset>::store(this, value);
+  CONDITIONAL_WRITE_BARRIER(this, kLastIndexOffset, value, mode);
 }
 
 Tagged<String> JSRegExp::source(IsolateForSandbox isolate) const {

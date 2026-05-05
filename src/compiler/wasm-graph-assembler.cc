@@ -317,9 +317,9 @@ Node* WasmGraphAssembler::IsSmi(Node* object) {
 
 // Maps and their contents.
 Node* WasmGraphAssembler::LoadMap(Node* object) {
-  Node* map_word =
-      LoadImmutableFromObject(MachineType::TaggedPointer(), object,
-                              HeapObject::kMapOffset - kHeapObjectTag);
+  Node* map_word = LoadImmutableFromObject(
+      MachineType::TaggedPointer(), object,
+      static_cast<int>(offsetof(HeapObject, map_)) - kHeapObjectTag);
 #ifdef V8_MAP_PACKING
   return UnpackMapWord(map_word);
 #else
@@ -332,8 +332,9 @@ void WasmGraphAssembler::StoreMap(Node* heap_object, Node* map) {
 #ifdef V8_MAP_PACKING
   map = PackMapWord(TNode<Map>::UncheckedCast(map));
 #endif
-  InitializeImmutableInObject(access, heap_object,
-                              HeapObject::kMapOffset - kHeapObjectTag, map);
+  InitializeImmutableInObject(
+      access, heap_object,
+      static_cast<int>(offsetof(HeapObject, map_)) - kHeapObjectTag, map);
 }
 
 Node* WasmGraphAssembler::LoadInstanceType(Node* map) {

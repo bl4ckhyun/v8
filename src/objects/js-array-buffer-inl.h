@@ -55,7 +55,7 @@ void JSArrayBuffer::set_max_byte_length(size_t value) {
 }
 
 void* JSArrayBuffer::backing_store() const {
-  return backing_store(GetPtrComprCageBase(*this));
+  return backing_store(GetPtrComprCageBase(this));
 }
 
 void* JSArrayBuffer::backing_store(PtrComprCageBase cage_base) const {
@@ -368,7 +368,7 @@ void JSTypedArray::set_base_pointer(Tagged<Object> value, ReleaseStoreTag,
 }
 
 Address JSTypedArray::external_pointer() const {
-  return external_pointer(GetPtrComprCageBase(*this));
+  return external_pointer(GetPtrComprCageBase(this));
 }
 
 Address JSTypedArray::external_pointer(PtrComprCageBase cage_base) const {
@@ -546,7 +546,7 @@ MaybeDirectHandle<JSTypedArray> JSTypedArray::Validate(
 //
 
 void* JSDataViewOrRabGsabDataView::data_pointer() const {
-  return data_pointer(GetPtrComprCageBase(*this));
+  return data_pointer(GetPtrComprCageBase(this));
 }
 
 void* JSDataViewOrRabGsabDataView::data_pointer(

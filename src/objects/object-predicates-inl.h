@@ -25,17 +25,13 @@ bool IsTaggedIndex(Tagged<Object> obj) {
          TaggedIndex::IsValid(Tagged<TaggedIndex>(obj.ptr()).value());
 }
 
-#define IS_TYPE_FUNCTION_DEF(type_)                               \
-  bool Is##type_(Tagged<Object> obj) {                            \
-    Tagged<HeapObject> ho;                                        \
-    return TryCast<HeapObject>(obj, &ho) && Is##type_(ho);        \
-  }                                                               \
-  bool Is##type_(HeapObject obj) {                                \
-    static_assert(kTaggedCanConvertToRawObjects);                 \
-    return Is##type_(Tagged<HeapObject>(obj));                    \
-  }                                                               \
-  bool Is##type_(const HeapObjectLayout* obj) {                   \
-    return Is##type_(Tagged<HeapObject>(obj));                    \
+#define IS_TYPE_FUNCTION_DEF(type_)                        \
+  inline bool Is##type_(Tagged<Object> obj) {              \
+    Tagged<HeapObject> ho;                                 \
+    return TryCast<HeapObject>(obj, &ho) && Is##type_(ho); \
+  }                                                        \
+  inline bool Is##type_(const HeapObject* obj) {           \
+    return Is##type_(Tagged<HeapObject>(obj));             \
   }
 HEAP_OBJECT_TYPE_LIST(IS_TYPE_FUNCTION_DEF)
 IS_TYPE_FUNCTION_DEF(HashTableBase)
@@ -44,22 +40,22 @@ IS_TYPE_FUNCTION_DEF(PropertyDictionary)
 IS_TYPE_FUNCTION_DEF(AnyHole)
 #undef IS_TYPE_FUNCTION_DEF
 
-#define IS_TYPE_FUNCTION_DEF(Type, ...)                                      \
-  bool Is##Type(Tagged<Object> obj, Isolate*) { return Is##Type(obj); }      \
-  bool Is##Type(Tagged<Object> obj, LocalIsolate*) { return Is##Type(obj); } \
-  bool Is##Type(Tagged<Object> obj, ReadOnlyRoots) { return Is##Type(obj); } \
-  bool Is##Type(Tagged<HeapObject> obj) {                                    \
-    return Is##Type(Tagged<Object>(obj));                                    \
-  }                                                                          \
-  bool Is##Type(HeapObject obj) {                                            \
-    static_assert(kTaggedCanConvertToRawObjects);                            \
-    return Is##Type(Tagged<Object>(obj));                                    \
-  }                                                                          \
-  bool Is##Type(const HeapObjectLayout* obj, Isolate*) {                     \
-    return Is##Type(Tagged<Object>(obj));                                    \
-  }                                                                          \
-  bool Is##Type(const HeapObjectLayout* obj) {                               \
-    return Is##Type(Tagged<Object>(obj));                                    \
+#define IS_TYPE_FUNCTION_DEF(Type, ...)                                        \
+  inline bool Is##Type(Tagged<Object> obj, Isolate*) { return Is##Type(obj); } \
+  inline bool Is##Type(Tagged<Object> obj, LocalIsolate*) {                    \
+    return Is##Type(obj);                                                      \
+  }                                                                            \
+  inline bool Is##Type(Tagged<Object> obj, ReadOnlyRoots) {                    \
+    return Is##Type(obj);                                                      \
+  }                                                                            \
+  inline bool Is##Type(Tagged<HeapObject> obj) {                               \
+    return Is##Type(Tagged<Object>(obj));                                      \
+  }                                                                            \
+  inline bool Is##Type(const HeapObject* obj, Isolate*) {                      \
+    return Is##Type(Tagged<Object>(obj));                                      \
+  }                                                                            \
+  inline bool Is##Type(const HeapObject* obj) {                                \
+    return Is##Type(Tagged<Object>(obj));                                      \
   }
 ODDBALL_LIST(IS_TYPE_FUNCTION_DEF)
 HOLE_LIST(IS_TYPE_FUNCTION_DEF)
@@ -178,7 +174,7 @@ bool IsJSObjectThatCanBeTrackedAsPrototype(Tagged<Object> obj) {
 }
 
 bool IsJSObjectThatCanBeTrackedAsPrototype(Tagged<HeapObject> obj) {
-  return IsJSObject(obj) && !HeapLayout::InWritableSharedSpace(*obj);
+  return IsJSObject(obj) && !HeapLayout::InWritableSharedSpace(obj);
 }
 
 bool IsAnyObjectThatCanBeTrackedAsPrototype(Tagged<Object> obj) {
@@ -188,7 +184,7 @@ bool IsAnyObjectThatCanBeTrackedAsPrototype(Tagged<Object> obj) {
 
 bool IsAnyObjectThatCanBeTrackedAsPrototype(Tagged<HeapObject> obj) {
   return (IsJSObject(obj) || IsWasmObject(obj)) &&
-         !HeapLayout::InWritableSharedSpace(*obj);
+         !HeapLayout::InWritableSharedSpace(obj);
 }
 
 bool IsNumber(Tagged<Object> obj) {
@@ -236,16 +232,12 @@ bool IsPrimitive(Tagged<Object> obj) {
   return IsPrimitiveMap(Cast<HeapObject>(obj)->map());
 }
 
-#define MAKE_STRUCT_PREDICATE(NAME, Name, name)                             \
-  bool Is##Name(Tagged<Object> obj) {                                       \
-    return IsHeapObject(obj) && Is##Name(Cast<HeapObject>(obj));            \
-  }                                                                         \
-  bool Is##Name(HeapObject obj) {                                           \
-    static_assert(kTaggedCanConvertToRawObjects);                           \
-    return Is##Name(Tagged<HeapObject>(obj));                               \
-  }                                                                         \
-  bool Is##Name(const HeapObjectLayout* obj) {                              \
-    return Is##Name(Tagged<HeapObject>(obj));                               \
+#define MAKE_STRUCT_PREDICATE(NAME, Name, name)                  \
+  inline bool Is##Name(Tagged<Object> obj) {                     \
+    return IsHeapObject(obj) && Is##Name(Cast<HeapObject>(obj)); \
+  }                                                              \
+  inline bool Is##Name(const HeapObject* obj) {                  \
+    return Is##Name(Tagged<HeapObject>(obj));                    \
   }
 STRUCT_LIST(MAKE_STRUCT_PREDICATE)
 #undef MAKE_STRUCT_PREDICATE

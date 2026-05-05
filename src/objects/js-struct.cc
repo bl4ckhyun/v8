@@ -41,7 +41,7 @@ void AlwaysSharedSpaceJSObject::PrepareMapNoEnumerableProperties(
 void AlwaysSharedSpaceJSObject::PrepareMapNoEnumerableProperties(
     Isolate* isolate, Tagged<Map> map, Tagged<DescriptorArray> descriptors) {
   PrepareMapCommon(map);
-  map->InitializeDescriptors(*descriptors);
+  map->InitializeDescriptors(descriptors);
   DCHECK_EQ(0, map->NumberOfEnumerableProperties());
   map->SetEnumLength(0);
 }

@@ -2678,7 +2678,7 @@ void MigrateMapIfNeeded::GenerateCode(MaglevAssembler* masm,
             Label* deopt = __ GetDeoptLabel(node, DeoptimizeReason::kWrongMap);
             __ TryMigrateInstance(object, register_snapshot, deopt);
             // Reload the map since TryMigrateInstance might have changed it.
-            __ LoadTaggedField(map, object, HeapObject::kMapOffset);
+            __ LoadTaggedField(map, object, offsetof(HeapObject, map_));
             __ Jump(*done);
           },
           save_registers, done, object, map, this));
@@ -3412,7 +3412,7 @@ void StoreMap::GenerateCode(MaglevAssembler* masm,
       auto inlined = ValueInput().node()->Cast<InlinedAllocation>();
       if (inlined->allocation_block()->allocation_type() ==
           AllocationType::kYoung) {
-        __ StoreTaggedFieldNoWriteBarrier(object, HeapObject::kMapOffset,
+        __ StoreTaggedFieldNoWriteBarrier(object, offsetof(HeapObject, map_),
                                           value);
         __ AssertElidedWriteBarrier(object, value, register_snapshot());
         break;
@@ -3421,8 +3421,8 @@ void StoreMap::GenerateCode(MaglevAssembler* masm,
     }
     case Kind::kInitializing:
     case Kind::kTransitioning:
-      __ StoreTaggedFieldWithWriteBarrier(object, HeapObject::kMapOffset, value,
-                                          register_snapshot(),
+      __ StoreTaggedFieldWithWriteBarrier(object, offsetof(HeapObject, map_),
+                                          value, register_snapshot(),
                                           MaglevAssembler::kValueIsCompressed,
                                           MaglevAssembler::kValueCannotBeSmi);
       break;
@@ -7467,7 +7467,7 @@ void GenerateTransitionElementsKind(
               if (is_simple) {
                 __ MoveTagged(map, transition_target.object());
                 __ StoreTaggedFieldWithWriteBarrier(
-                    object, HeapObject::kMapOffset, map, register_snapshot,
+                    object, offsetof(HeapObject, map_), map, register_snapshot,
                     MaglevAssembler::kValueIsCompressed,
                     MaglevAssembler::kValueCannotBeSmi);
               } else {
@@ -9019,14 +9019,14 @@ VirtualObject::VirtualObject(uint64_t bitfield, uint32_t id,
 }
 compiler::MapRef VirtualObject::map_from_slot(
     compiler::JSHeapBroker* broker) const {
-  ValueNode* value = get(HeapObject::kMapOffset);
+  ValueNode* value = get(offsetof(HeapObject, map_));
   return MakeRef(broker, i::Cast<Map>(*value->Reify(broker->local_isolate())));
 }
 
 compiler::OptionalMapRef VirtualObject::TryGetMapFromSlot(
     compiler::JSHeapBroker* broker) const {
   compiler::OptionalHeapObjectRef maybe_constant =
-      get(HeapObject::kMapOffset)->TryGetConstant(broker);
+      get(offsetof(HeapObject, map_))->TryGetConstant(broker);
   if (!maybe_constant.has_value()) return {};
   return maybe_constant->AsMap();
 }

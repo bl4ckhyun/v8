@@ -2362,7 +2362,7 @@ void MacroAssembler::Abort(AbortReason reason) {
 }
 
 void MacroAssembler::LoadMap(Register destination, Register object) {
-  ldr(destination, FieldMemOperand(object, HeapObject::kMapOffset));
+  ldr(destination, FieldMemOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadFeedbackCell(Register dst, Register closure) {
@@ -2377,7 +2377,7 @@ void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
   ldr(dst, FieldMemOperand(feedback_cell, offsetof(FeedbackCell, value_)));
 
   // Check if feedback vector is valid.
-  ldr(scratch, FieldMemOperand(dst, HeapObject::kMapOffset));
+  ldr(scratch, FieldMemOperand(dst, offsetof(HeapObject, map_)));
   ldrh(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
   cmp(scratch, Operand(FEEDBACK_VECTOR_TYPE));
   b(eq, &done);

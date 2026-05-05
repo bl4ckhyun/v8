@@ -1036,27 +1036,27 @@ std::optional<temporal_rs::AnyCalendarKind> ExtractCalendarFrom(
   //
   // i. Return temporalCalendarLike.[[Calendar]].
   if (InstanceTypeChecker::IsJSTemporalPlainDate(instance_type)) {
-    return Cast<JSTemporalPlainDate>(*calendar_like)
+    return Cast<JSTemporalPlainDate>(calendar_like)
         ->wrapped_rust()
         ->calendar()
         .kind();
   } else if (InstanceTypeChecker::IsJSTemporalPlainDateTime(instance_type)) {
-    return Cast<JSTemporalPlainDateTime>(*calendar_like)
+    return Cast<JSTemporalPlainDateTime>(calendar_like)
         ->wrapped_rust()
         ->calendar()
         .kind();
   } else if (InstanceTypeChecker::IsJSTemporalPlainMonthDay(instance_type)) {
-    return Cast<JSTemporalPlainMonthDay>(*calendar_like)
+    return Cast<JSTemporalPlainMonthDay>(calendar_like)
         ->wrapped_rust()
         ->calendar()
         .kind();
   } else if (InstanceTypeChecker::IsJSTemporalPlainYearMonth(instance_type)) {
-    return Cast<JSTemporalPlainYearMonth>(*calendar_like)
+    return Cast<JSTemporalPlainYearMonth>(calendar_like)
         ->wrapped_rust()
         ->calendar()
         .kind();
   } else if (InstanceTypeChecker::IsJSTemporalZonedDateTime(instance_type)) {
-    return Cast<JSTemporalZonedDateTime>(*calendar_like)
+    return Cast<JSTemporalZonedDateTime>(calendar_like)
         ->wrapped_rust()
         ->calendar()
         .kind();

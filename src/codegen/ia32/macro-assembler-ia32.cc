@@ -706,7 +706,7 @@ void MacroAssembler::SarPair_cl(Register high, Register low) {
 }
 
 void MacroAssembler::LoadMap(Register destination, Register object) {
-  mov(destination, FieldOperand(object, HeapObject::kMapOffset));
+  mov(destination, FieldOperand(object, offsetof(HeapObject, map_)));
 }
 
 void MacroAssembler::LoadFeedbackCell(Register dst, Register closure) {
@@ -722,7 +722,7 @@ void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
   mov(dst, FieldOperand(feedback_cell, offsetof(FeedbackCell, value_)));
 
   // Check if feedback vector is valid.
-  mov(scratch, FieldOperand(dst, HeapObject::kMapOffset));
+  mov(scratch, FieldOperand(dst, offsetof(HeapObject, map_)));
   CmpInstanceType(scratch, FEEDBACK_VECTOR_TYPE);
   j(equal, &done, Label::kNear);
 
@@ -976,7 +976,7 @@ void MacroAssembler::AssertJSAny(Register object, Register map_tmp,
 
   JumpIfSmi(object, &ok, Label::kNear);
 
-  mov(map_tmp, FieldOperand(object, HeapObject::kMapOffset));
+  mov(map_tmp, FieldOperand(object, offsetof(HeapObject, map_)));
 
   CmpInstanceType(map_tmp, LAST_NAME_TYPE);
   j(below_equal, &ok, Label::kNear);

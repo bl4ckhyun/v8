@@ -528,12 +528,8 @@ V8_OBJECT class Code : public ExposedTrustedObject {
 // Note that both the underlying Code object and the associated
 // InstructionStream may be forwarding pointers, thus type checks and normal
 // (checked) casts do not work on GcSafeCode.
-class GcSafeCode : public HeapObject {
+V8_OBJECT class GcSafeCode : public HeapObject {
  public:
-  // Use with care, this casts away knowledge that we're dealing with a
-  // special-semantics object.
-  inline Tagged<Code> UnsafeCastToCode() const;
-
   // Safe accessors (these just forward to Code methods).
   inline Address instruction_start() const;
   inline Address instruction_end() const;
@@ -565,8 +561,11 @@ class GcSafeCode : public HeapObject {
   inline uint16_t wasm_js_first_tagged_parameter() const;
 
  private:
-  OBJECT_CONSTRUCTORS(GcSafeCode, HeapObject);
-};
+  // Use with care, this casts away knowledge that we're dealing with a
+  // special-semantics object.
+  inline const Code* UnsafeCastToCode() const;
+  inline Code* UnsafeCastToCode();
+} V8_OBJECT_END;
 
 // A CodeWrapper wraps a Code but lives inside the sandbox. This can be useful
 // for example when a reference to a Code needs to be stored along other tagged

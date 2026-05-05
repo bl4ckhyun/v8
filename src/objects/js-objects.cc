@@ -889,7 +889,7 @@ void JSReceiver::SetProperties(Tagged<Properties> properties) {
                      Cast<PropertyArray>(properties)->length().value() == 0,
                  properties == GetReadOnlyRoots().empty_property_array());
   DisallowGarbageCollection no_gc;
-  int hash = GetIdentityHashHelper(*this);
+  int hash = GetIdentityHashHelper(this);
   Tagged<PropertiesOrHash> new_properties = properties;
 
   // TODO(cbruni): Make GetIdentityHashHelper return a bool so that we
@@ -904,7 +904,7 @@ void JSReceiver::SetProperties(Tagged<Properties> properties) {
 Tagged<Object> JSReceiver::GetIdentityHash() {
   DisallowGarbageCollection no_gc;
 
-  int hash = GetIdentityHashHelper(*this);
+  int hash = GetIdentityHashHelper(this);
   if (hash == PropertyArray::kNoHashSentinel) {
     return GetReadOnlyRoots().undefined_value();
   }
@@ -926,12 +926,12 @@ Tagged<Smi> JSReceiver::CreateIdentityHash(Isolate* isolate,
 Tagged<Smi> JSReceiver::GetOrCreateIdentityHash(Isolate* isolate) {
   DisallowGarbageCollection no_gc;
 
-  int hash = GetIdentityHashHelper(*this);
+  int hash = GetIdentityHashHelper(this);
   if (hash != PropertyArray::kNoHashSentinel) {
     return Smi::FromInt(hash);
   }
 
-  return JSReceiver::CreateIdentityHash(isolate, *this);
+  return JSReceiver::CreateIdentityHash(isolate, this);
 }
 
 void JSReceiver::DeleteNormalizedProperty(DirectHandle<JSReceiver> object,
@@ -2423,7 +2423,7 @@ Maybe<bool> JSReceiver::SetPrototype(Isolate* isolate,
 }
 
 bool JSReceiver::HasProxyInPrototype(Isolate* isolate) {
-  for (PrototypeIterator iter(isolate, *this, kStartAtReceiver,
+  for (PrototypeIterator iter(isolate, this, kStartAtReceiver,
                               PrototypeIterator::END_AT_NULL);
        !iter.IsAtEnd(); iter.AdvanceIgnoringProxies()) {
     if (IsJSProxy(iter.GetCurrent())) return true;
@@ -3024,7 +3024,7 @@ void JSObject::JSObjectShortPrint(StringStream* accumulator) {
       Tagged<Map> map_of_this = map();
       Tagged<Object> constructor = map_of_this->GetConstructor();
       bool printed = false;
-      bool is_global_proxy = IsJSGlobalProxy(*this);
+      bool is_global_proxy = IsJSGlobalProxy(this);
       if (IsJSFunction(constructor)) {
         Tagged<SharedFunctionInfo> sfi =
             Cast<JSFunction>(constructor)->shared();
@@ -3045,13 +3045,13 @@ void JSObject::JSObjectShortPrint(StringStream* accumulator) {
         accumulator->Add("<JS");
         if (is_global_proxy) {
           accumulator->Add("GlobalProxy");
-        } else if (IsJSGlobalObject(*this)) {
+        } else if (IsJSGlobalObject(this)) {
           accumulator->Add("GlobalObject");
         } else {
           accumulator->Add("Object");
         }
       }
-      if (IsJSPrimitiveWrapper(*this)) {
+      if (IsJSPrimitiveWrapper(this)) {
         accumulator->Add(" value = ");
         ShortPrint(Cast<JSPrimitiveWrapper>(this)->value(), accumulator);
       }
@@ -4765,7 +4765,7 @@ std::optional<Tagged<Object>> JSObject::DictionaryPropertyAt(
 // TODO(cbruni/jkummerow): Consider moving this into elements.cc.
 bool JSObject::HasEnumerableElements() {
   // TODO(cbruni): cleanup
-  Tagged<JSObject> object = *this;
+  Tagged<JSObject> object = this;
   switch (object->GetElementsKind()) {
     case PACKED_SMI_ELEMENTS:
     case PACKED_ELEMENTS:
@@ -4977,7 +4977,7 @@ Tagged<Object> JSObject::SlowReverseLookup(Tagged<Object> value) {
       }
     }
     return GetReadOnlyRoots().undefined_value();
-  } else if (IsJSGlobalObject(*this)) {
+  } else if (IsJSGlobalObject(this)) {
     return Cast<JSGlobalObject>(this)
         ->global_dictionary(kAcquireLoad)
         ->SlowReverseLookup(value);
@@ -5508,7 +5508,7 @@ bool JSObject::WouldConvertToSlowElements(uint32_t index) {
   if (!HasFastElements()) return false;
   const uint32_t capacity = elements()->ulength().value();
   uint32_t new_capacity;
-  return ShouldConvertToSlowElements(*this, capacity, index, &new_capacity);
+  return ShouldConvertToSlowElements(this, capacity, index, &new_capacity);
 }
 
 static bool ShouldConvertToFastElements(Tagged<JSObject> object,
@@ -5726,8 +5726,8 @@ uint32_t JSObject::GetFastElementsUsage() {
     case PACKED_SEALED_ELEMENTS:
     case PACKED_NONEXTENSIBLE_ELEMENTS:
     case SHARED_ARRAY_ELEMENTS:
-      return IsJSArray(*this) ? Smi::ToUInt(Cast<JSArray>(this)->length())
-                              : store->ulength().value();
+      return IsJSArray(this) ? Smi::ToUInt(Cast<JSArray>(this)->length())
+                             : store->ulength().value();
     case FAST_SLOPPY_ARGUMENTS_ELEMENTS:
       store = Cast<SloppyArgumentsElements>(store)->arguments();
       [[fallthrough]];
@@ -5737,10 +5737,10 @@ uint32_t JSObject::GetFastElementsUsage() {
     case HOLEY_SEALED_ELEMENTS:
     case HOLEY_NONEXTENSIBLE_ELEMENTS:
     case FAST_STRING_WRAPPER_ELEMENTS:
-      return HoleyElementsUsage(*this, Cast<FixedArray>(store));
+      return HoleyElementsUsage(this, Cast<FixedArray>(store));
     case HOLEY_DOUBLE_ELEMENTS:
       if (elements()->ulength().value() == 0) return 0;
-      return HoleyElementsUsage(*this, Cast<FixedDoubleArray>(store));
+      return HoleyElementsUsage(this, Cast<FixedDoubleArray>(store));
 
     case SLOW_SLOPPY_ARGUMENTS_ELEMENTS:
     case SLOW_STRING_WRAPPER_ELEMENTS:

@@ -2517,7 +2517,8 @@ void Builtins::Generate_CallOrConstructVarargs(MacroAssembler* masm,
     // Allow r4 to be a FixedArray, or a FixedDoubleArray if r6 == 0.
     Label ok, fail;
     __ AssertNotSmi(r4);
-    __ LoadTaggedField(scratch, FieldMemOperand(r4, HeapObject::kMapOffset));
+    __ LoadTaggedField(scratch,
+                       FieldMemOperand(r4, offsetof(HeapObject, map_)));
     __ LoadS16(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
     __ CmpS64(scratch, Operand(FIXED_ARRAY_TYPE));
     __ beq(&ok);
@@ -2604,7 +2605,8 @@ void Builtins::Generate_CallOrConstructForwardVarargs(MacroAssembler* masm,
   if (mode == CallOrConstructMode::kConstruct) {
     Label new_target_constructor, new_target_not_constructor;
     __ JumpIfSmi(r5, &new_target_not_constructor);
-    __ LoadTaggedField(scratch, FieldMemOperand(r5, HeapObject::kMapOffset));
+    __ LoadTaggedField(scratch,
+                       FieldMemOperand(r5, offsetof(HeapObject, map_)));
     __ LoadU8(scratch, FieldMemOperand(scratch, Map::kBitFieldOffset));
     __ tmll(scratch, Operand(Map::Bits1::IsConstructorBit::kShift));
     __ bne(&new_target_constructor);
@@ -2946,7 +2948,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   __ JumpIfSmi(target, &non_constructor);
 
   // Check if target has a [[Construct]] internal method.
-  __ LoadTaggedField(map, FieldMemOperand(target, HeapObject::kMapOffset));
+  __ LoadTaggedField(map, FieldMemOperand(target, offsetof(HeapObject, map_)));
   {
     Register flags = r4;
     DCHECK(!AreAliased(r2, target, map, instance_type, flags));
@@ -3390,7 +3392,8 @@ class RegisterAllocator {
 // depending on the data's type, and places the result in the input register.
 void GetContextFromImplicitArg(MacroAssembler* masm, Register data,
                                Register scratch) {
-  __ LoadTaggedField(scratch, FieldMemOperand(data, HeapObject::kMapOffset));
+  __ LoadTaggedField(scratch,
+                     FieldMemOperand(data, offsetof(HeapObject, map_)));
   __ CompareInstanceType(scratch, scratch, WASM_TRUSTED_INSTANCE_DATA_TYPE);
   Label instance;
   Label end;

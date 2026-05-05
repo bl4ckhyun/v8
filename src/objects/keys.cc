@@ -701,7 +701,7 @@ MaybeHandle<FixedArray> FastKeyAccumulator::GetKeysWithPrototypeInfoCache(
 bool FastKeyAccumulator::MayHaveElements(Tagged<JSReceiver> receiver) {
   if (!IsJSObject(receiver)) {
 #if V8_ENABLE_WEBASSEMBLY
-    if (IsWasmObject(*receiver)) return false;
+    if (IsWasmObject(receiver)) return false;
 #endif  // V8_ENABLE_WEBASSEMBLY
     return true;
   }

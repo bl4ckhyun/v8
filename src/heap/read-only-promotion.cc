@@ -357,7 +357,8 @@ class Committee final {
       DCHECK(host->is_builtin());
     }
     void VisitMapPointer(Tagged<HeapObject> host) final {
-      MaybeObjectSlot slot = host->RawMaybeWeakField(HeapObject::kMapOffset);
+      MaybeObjectSlot slot =
+          host->RawMaybeWeakField(offsetof(HeapObject, map_));
       VisitPointers(host, slot, slot + 1);
     }
 
@@ -568,7 +569,7 @@ class ReadOnlyPromotionImpl final : public AllStatic {
       // InstructionStream objects never move to RO space.
     }
     void VisitMapPointer(Tagged<HeapObject> host) final {
-      ProcessSlot(host, host->RawMaybeWeakField(HeapObject::kMapOffset));
+      ProcessSlot(host, host->RawMaybeWeakField(offsetof(HeapObject, map_)));
     }
     void VisitExternalPointer(Tagged<HeapObject> host,
                               ExternalPointerSlot slot) final {

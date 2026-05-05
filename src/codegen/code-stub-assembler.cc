@@ -2253,7 +2253,7 @@ TNode<IntPtrT> CodeStubAssembler::LoadAndUntagPositiveSmiObjectField(
 TNode<Int32T> CodeStubAssembler::LoadAndUntagToWord32ObjectField(
     TNode<HeapObject> object, int offset) {
   // Please use LoadMap(object) instead.
-  DCHECK_NE(offset, HeapObject::kMapOffset);
+  DCHECK_NE(offset, offsetof(HeapObject, map_));
   if (SmiValuesAre32Bits()) {
 #if V8_TARGET_LITTLE_ENDIAN
     offset += 4;
@@ -2288,7 +2288,7 @@ TNode<Map> CodeStubAssembler::GetInstanceTypeMap(InstanceType instance_type) {
 }
 
 TNode<Map> CodeStubAssembler::LoadMap(TNode<HeapObject> object) {
-  TNode<Map> map = LoadObjectField<Map>(object, HeapObject::kMapOffset);
+  TNode<Map> map = LoadObjectField<Map>(object, offsetof(HeapObject, map_));
 #ifdef V8_MAP_PACKING
   // Check the loaded map is unpacked. i.e. the lowest two bits != 0b10
   CSA_DCHECK(this,
@@ -3991,7 +3991,7 @@ void CodeStubAssembler::StoreObjectField(TNode<HeapObject> object,
 
 void CodeStubAssembler::StoreObjectField(TNode<HeapObject> object, int offset,
                                          TNode<Object> value) {
-  DCHECK_NE(HeapObject::kMapOffset, offset);  // Use StoreMap instead.
+  DCHECK_NE(offsetof(HeapObject, map_), offset);  // Use StoreMap instead.
   OptimizedStoreField(MachineRepresentation::kTagged,
                       UncheckedCast<HeapObject>(object), offset, value);
 }
@@ -4053,7 +4053,7 @@ void CodeStubAssembler::ClearTrustedPointerField(TNode<HeapObject> object,
 
 void CodeStubAssembler::UnsafeStoreObjectFieldNoWriteBarrier(
     TNode<HeapObject> object, int offset, TNode<Object> value) {
-  DCHECK_NE(HeapObject::kMapOffset, offset);  // Use StoreMap instead.
+  DCHECK_NE(offsetof(HeapObject, map_), offset);  // Use StoreMap instead.
   OptimizedStoreFieldUnsafeNoWriteBarrier(MachineRepresentation::kTagged,
                                           object, offset, value);
 }
@@ -4090,7 +4090,7 @@ void CodeStubAssembler::StoreMapNoWriteBarrier(TNode<HeapObject> object,
 void CodeStubAssembler::StoreObjectFieldRoot(TNode<HeapObject> object,
                                              int offset, RootIndex root_index) {
   TNode<Object> root = LoadRoot(root_index);
-  if (offset == HeapObject::kMapOffset) {
+  if (offset == offsetof(HeapObject, map_)) {
     StoreMap(object, CAST(root));
   } else if (RootsTable::IsImmortalImmovable(root_index)) {
     StoreObjectFieldNoWriteBarrier(object, offset, root);
@@ -11531,21 +11531,6 @@ void CodeStubAssembler::SetNameDictionaryFlags(
   Unreachable();
 }
 
-namespace {
-// TODO(leszeks): Remove once both TransitionArray and DescriptorArray are
-// HeapObjectLayout.
-template <typename Array>
-struct OffsetOfArrayDataStart;
-template <>
-struct OffsetOfArrayDataStart<TransitionArray> {
-  static constexpr int value = OFFSET_OF_DATA_START(TransitionArray);
-};
-template <>
-struct OffsetOfArrayDataStart<DescriptorArray> {
-  static constexpr int value = DescriptorArray::kHeaderSize;
-};
-}  // namespace
-
 template <typename Array>
 void CodeStubAssembler::LookupLinear(TNode<Name> unique_name,
                                      TNode<Array> array,
@@ -11568,8 +11553,8 @@ void CodeStubAssembler::LookupLinear(TNode<Name> unique_name,
   BuildFastLoop<IntPtrT>(
       last_exclusive, first_inclusive,
       [=, this](TNode<IntPtrT> name_index) {
-        TNode<MaybeObject> element = LoadArrayElement(
-            array, OffsetOfArrayDataStart<Array>::value, name_index);
+        TNode<MaybeObject> element =
+            LoadArrayElement(array, OFFSET_OF_DATA_START(Array), name_index);
         TNode<Name> candidate_name = CAST(element);
         *var_name_index = name_index;
         GotoIf(TaggedEqual(candidate_name, unique_name), if_found);
@@ -11649,7 +11634,7 @@ TNode<Name> CodeStubAssembler::GetKey(TNode<Array> array,
                 "T must be a descendant of DescriptorArray or TransitionArray");
   const int key_offset = Array::ToKeyIndex(0) * kTaggedSize;
   TNode<MaybeObject> element =
-      LoadArrayElement(array, OffsetOfArrayDataStart<Array>::value,
+      LoadArrayElement(array, OFFSET_OF_DATA_START(Array),
                        EntryIndexToIndex<Array>(entry_index), key_offset);
   return CAST(element);
 }

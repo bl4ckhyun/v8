@@ -30,7 +30,7 @@ class ZoneForwardList;
 // Module is the base class for ECMAScript module types, roughly corresponding
 // to Abstract Module Record.
 // https://tc39.es/ecma262/#sec-abstract-module-records
-V8_OBJECT class Module : public HeapObjectLayout {
+V8_OBJECT class Module : public HeapObject {
  public:
   DECL_VERIFIER(Module)
   DECL_PRINTER(Module)

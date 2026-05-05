@@ -148,7 +148,7 @@ inline constexpr int JSFinalizationRegistry::kHeaderSize =
     sizeof(JSFinalizationRegistry);
 
 // Internal object for storing weak references in JSFinalizationRegistry.
-V8_OBJECT class WeakCell : public HeapObjectLayout {
+V8_OBJECT class WeakCell : public HeapObject {
  public:
   inline Tagged<JSFinalizationRegistry> finalization_registry() const;
   inline void set_finalization_registry(

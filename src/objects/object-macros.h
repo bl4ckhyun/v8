@@ -75,24 +75,6 @@
   ;                               \
   V8_OBJECT_PUSH static_assert(true)
 
-// Since this changes visibility, it should always be last in a class
-// definition.
-#define OBJECT_CONSTRUCTORS(Type, ...)                                         \
- public:                                                                       \
-  constexpr Type() : __VA_ARGS__() {}                                          \
-                                                                               \
-  /* For every object, add a `->` operator which returns a pointer to this     \
-     object. This will allow smoother transition between T and Tagged<T>. */   \
-  Type* operator->() { return this; }                                          \
-  const Type* operator->() const { return this; }                              \
-                                                                               \
- protected:                                                                    \
-  /* Special constructor for constexpr construction which allows skipping type \
-   * checks. */                                                                \
-  explicit constexpr V8_INLINE Type(Address ptr, HeapObject::SkipTypeCheckTag) \
-      : __VA_ARGS__(ptr, HeapObject::SkipTypeCheckTag()) {}                    \
-  friend class Tagged<Type>
-
 #define DECL_PRIMITIVE_GETTER(name, type) inline type name() const;
 
 #define DECL_PRIMITIVE_SETTER(name, type) inline void set_##name(type value);
@@ -205,48 +187,48 @@
 
 #define RELAXED_INT32_ACCESSORS(holder, name, offset)       \
   int32_t holder::name(RelaxedLoadTag) const {              \
-    return RELAXED_READ_INT32_FIELD(*this, offset);         \
+    return RELAXED_READ_INT32_FIELD(this, offset);          \
   }                                                         \
   void holder::set_##name(int32_t value, RelaxedStoreTag) { \
-    RELAXED_WRITE_INT32_FIELD(*this, offset, value);        \
+    RELAXED_WRITE_INT32_FIELD(this, offset, value);         \
   }
 
 #define RELAXED_UINT32_ACCESSORS(holder, name, offset)       \
   uint32_t holder::name(RelaxedLoadTag) const {              \
-    return RELAXED_READ_UINT32_FIELD(*this, offset);         \
+    return RELAXED_READ_UINT32_FIELD(this, offset);          \
   }                                                          \
   void holder::set_##name(uint32_t value, RelaxedStoreTag) { \
-    RELAXED_WRITE_UINT32_FIELD(*this, offset, value);        \
+    RELAXED_WRITE_UINT32_FIELD(this, offset, value);         \
   }
 
 #define RELAXED_UINT16_ACCESSORS(holder, name, offset)       \
   uint16_t holder::name(RelaxedLoadTag) const {              \
-    return RELAXED_READ_UINT16_FIELD(*this, offset);         \
+    return RELAXED_READ_UINT16_FIELD(this, offset);          \
   }                                                          \
   void holder::set_##name(uint16_t value, RelaxedStoreTag) { \
-    RELAXED_WRITE_UINT16_FIELD(*this, offset, value);        \
+    RELAXED_WRITE_UINT16_FIELD(this, offset, value);         \
   }
 
 #define RELAXED_UINT8_ACCESSORS(holder, name, offset)       \
   uint8_t holder::name(RelaxedLoadTag) const {              \
-    return RELAXED_READ_UINT8_FIELD(*this, offset);         \
+    return RELAXED_READ_UINT8_FIELD(this, offset);          \
   }                                                         \
   void holder::set_##name(uint8_t value, RelaxedStoreTag) { \
-    RELAXED_WRITE_UINT8_FIELD(*this, offset, value);        \
+    RELAXED_WRITE_UINT8_FIELD(this, offset, value);         \
   }
 
 #define ACCESSORS_CHECKED2(holder, name, type, offset, get_condition,   \
                            set_condition)                               \
   DEF_GETTER(holder, name, UNPAREN(type)) {                             \
     UNPAREN(type)                                                       \
-    value = TaggedField<UNPAREN(type), offset>::load(*this);            \
+    value = TaggedField<UNPAREN(type), offset>::load(this);             \
     DCHECK(get_condition);                                              \
     return value;                                                       \
   }                                                                     \
   void holder::set_##name(UNPAREN(type) value, WriteBarrierMode mode) { \
     DCHECK(set_condition);                                              \
-    TaggedField<UNPAREN(type), offset>::store(*this, value);            \
-    CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);              \
+    TaggedField<UNPAREN(type), offset>::store(this, value);             \
+    CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);               \
   }
 
 #define ACCESSORS_CHECKED(holder, name, type, offset, condition) \
@@ -272,14 +254,14 @@
 #define ACCESSORS_RELAXED_CHECKED2(holder, name, type, offset, get_condition, \
                                    set_condition)                             \
   type holder::name() const {                                                 \
-    type value = TaggedField<type, offset>::Relaxed_Load(*this);              \
+    type value = TaggedField<type, offset>::Relaxed_Load(this);               \
     DCHECK(get_condition);                                                    \
     return value;                                                             \
   }                                                                           \
   void holder::set_##name(type value, WriteBarrierMode mode) {                \
     DCHECK(set_condition);                                                    \
-    TaggedField<type, offset>::Relaxed_Store(*this, value);                   \
-    CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);                    \
+    TaggedField<type, offset>::Relaxed_Store(this, value);                    \
+    CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);                     \
   }
 
 #define ACCESSORS_RELAXED_CHECKED(holder, name, type, offset, condition) \
@@ -293,15 +275,15 @@
                                    set_condition)                             \
   DEF_RELAXED_GETTER(holder, name, UNPAREN(type)) {                           \
     UNPAREN(type)                                                             \
-    value = TaggedField<UNPAREN(type), offset>::Relaxed_Load(*this);          \
+    value = TaggedField<UNPAREN(type), offset>::Relaxed_Load(this);           \
     DCHECK(get_condition);                                                    \
     return value;                                                             \
   }                                                                           \
   void holder::set_##name(UNPAREN(type) value, RelaxedStoreTag,               \
                           WriteBarrierMode mode) {                            \
     DCHECK(set_condition);                                                    \
-    TaggedField<UNPAREN(type), offset>::Relaxed_Store(*this, value);          \
-    CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);                    \
+    TaggedField<UNPAREN(type), offset>::Relaxed_Store(this, value);           \
+    CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);                     \
   }
 
 #define RELAXED_ACCESSORS_CHECKED(holder, name, type, offset, condition) \
@@ -310,22 +292,22 @@
 #define RELAXED_ACCESSORS(holder, name, type, offset) \
   RELAXED_ACCESSORS_CHECKED(holder, name, type, offset, true)
 
-#define RELEASE_ACQUIRE_GETTER_CHECKED(holder, name, type, offset,   \
-                                       get_condition)                \
-  DEF_ACQUIRE_GETTER(holder, name, UNPAREN(type)) {                  \
-    UNPAREN(type)                                                    \
-    value = TaggedField<UNPAREN(type), offset>::Acquire_Load(*this); \
-    DCHECK(get_condition);                                           \
-    return value;                                                    \
+#define RELEASE_ACQUIRE_GETTER_CHECKED(holder, name, type, offset,  \
+                                       get_condition)               \
+  DEF_ACQUIRE_GETTER(holder, name, UNPAREN(type)) {                 \
+    UNPAREN(type)                                                   \
+    value = TaggedField<UNPAREN(type), offset>::Acquire_Load(this); \
+    DCHECK(get_condition);                                          \
+    return value;                                                   \
   }
 
-#define RELEASE_ACQUIRE_SETTER_CHECKED(holder, name, type, offset,   \
-                                       set_condition)                \
-  void holder::set_##name(UNPAREN(type) value, ReleaseStoreTag,      \
-                          WriteBarrierMode mode) {                   \
-    DCHECK(set_condition);                                           \
-    TaggedField<UNPAREN(type), offset>::Release_Store(*this, value); \
-    CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);           \
+#define RELEASE_ACQUIRE_SETTER_CHECKED(holder, name, type, offset,  \
+                                       set_condition)               \
+  void holder::set_##name(UNPAREN(type) value, ReleaseStoreTag,     \
+                          WriteBarrierMode mode) {                  \
+    DCHECK(set_condition);                                          \
+    TaggedField<UNPAREN(type), offset>::Release_Store(this, value); \
+    CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);           \
   }
 
 #define RELEASE_ACQUIRE_ACCESSORS_CHECKED2(holder, name, type, offset,      \
@@ -342,15 +324,15 @@
   RELEASE_ACQUIRE_ACCESSORS_CHECKED(holder, name, type, offset, true)
 
 // Getter that returns a Smi as an int and writes an int as a Smi.
-#define SMI_ACCESSORS_CHECKED(holder, name, offset, condition)   \
-  int holder::name() const {                                     \
-    DCHECK(condition);                                           \
-    Tagged<Smi> value = TaggedField<Smi, offset>::load(*this);   \
-    return value.value();                                        \
-  }                                                              \
-  void holder::set_##name(int value) {                           \
-    DCHECK(condition);                                           \
-    TaggedField<Smi, offset>::store(*this, Smi::FromInt(value)); \
+#define SMI_ACCESSORS_CHECKED(holder, name, offset, condition)  \
+  int holder::name() const {                                    \
+    DCHECK(condition);                                          \
+    Tagged<Smi> value = TaggedField<Smi, offset>::load(this);   \
+    return value.value();                                       \
+  }                                                             \
+  void holder::set_##name(int value) {                          \
+    DCHECK(condition);                                          \
+    TaggedField<Smi, offset>::store(this, Smi::FromInt(value)); \
   }
 
 #define SMI_ACCESSORS(holder, name, offset) \
@@ -360,26 +342,26 @@
   inline int name(AcquireLoadTag) const;         \
   inline void set_##name(int value, ReleaseStoreTag);
 
-#define RELEASE_ACQUIRE_SMI_ACCESSORS(holder, name, offset)              \
-  int holder::name(AcquireLoadTag) const {                               \
-    Tagged<Smi> value = TaggedField<Smi, offset>::Acquire_Load(*this);   \
-    return value.value();                                                \
-  }                                                                      \
-  void holder::set_##name(int value, ReleaseStoreTag) {                  \
-    TaggedField<Smi, offset>::Release_Store(*this, Smi::FromInt(value)); \
+#define RELEASE_ACQUIRE_SMI_ACCESSORS(holder, name, offset)             \
+  int holder::name(AcquireLoadTag) const {                              \
+    Tagged<Smi> value = TaggedField<Smi, offset>::Acquire_Load(this);   \
+    return value.value();                                               \
+  }                                                                     \
+  void holder::set_##name(int value, ReleaseStoreTag) {                 \
+    TaggedField<Smi, offset>::Release_Store(this, Smi::FromInt(value)); \
   }
 
 #define DECL_RELAXED_INT_ACCESSORS(name) \
   inline int name(RelaxedLoadTag) const; \
   inline void set_##name(int value, RelaxedStoreTag);
 
-#define RELAXED_SMI_ACCESSORS(holder, name, offset)                      \
-  int holder::name(RelaxedLoadTag) const {                               \
-    Tagged<Smi> value = TaggedField<Smi, offset>::Relaxed_Load(*this);   \
-    return value.value();                                                \
-  }                                                                      \
-  void holder::set_##name(int value, RelaxedStoreTag) {                  \
-    TaggedField<Smi, offset>::Relaxed_Store(*this, Smi::FromInt(value)); \
+#define RELAXED_SMI_ACCESSORS(holder, name, offset)                     \
+  int holder::name(RelaxedLoadTag) const {                              \
+    Tagged<Smi> value = TaggedField<Smi, offset>::Relaxed_Load(this);   \
+    return value.value();                                               \
+  }                                                                     \
+  void holder::set_##name(int value, RelaxedStoreTag) {                 \
+    TaggedField<Smi, offset>::Relaxed_Store(this, Smi::FromInt(value)); \
   }
 
 #define BOOL_GETTER(holder, field, name, offset) \
@@ -681,7 +663,7 @@
   }                                                                            \
   Tagged<type> holder::name(IsolateForSandbox isolate, AcquireLoadTag) const { \
     DCHECK(has_##name());                                                      \
-    return i::TrustedPointerField::ReadTrustedPointerField<tag>(*this, offset, \
+    return i::TrustedPointerField::ReadTrustedPointerField<tag>(this, offset,  \
                                                                 isolate);      \
   }                                                                            \
   void holder::set_##name(Tagged<type> value, WriteBarrierMode mode) {         \
@@ -689,20 +671,19 @@
   }                                                                            \
   void holder::set_##name(Tagged<type> value, ReleaseStoreTag,                 \
                           WriteBarrierMode mode) {                             \
-    i::TrustedPointerField::WriteTrustedPointerField<tag>(*this, offset,       \
+    i::TrustedPointerField::WriteTrustedPointerField<tag>(this, offset,        \
                                                           value);              \
-    CONDITIONAL_TRUSTED_POINTER_WRITE_BARRIER(*this, offset, tag, value,       \
-                                              mode);                           \
+    CONDITIONAL_TRUSTED_POINTER_WRITE_BARRIER(this, offset, tag, value, mode); \
   }                                                                            \
   bool holder::has_##name() const {                                            \
-    return !i::TrustedPointerField::IsTrustedPointerFieldEmpty(*this, offset); \
+    return !i::TrustedPointerField::IsTrustedPointerFieldEmpty(this, offset);  \
   }                                                                            \
   bool holder::has_##name##_unpublished(IsolateForSandbox isolate) const {     \
     return i::TrustedPointerField::IsTrustedPointerFieldUnpublished(           \
-        *this, offset, tag, isolate);                                          \
+        this, offset, tag, isolate);                                           \
   }                                                                            \
   void holder::clear_##name() {                                                \
-    i::TrustedPointerField::ClearTrustedPointerField(*this, offset);           \
+    i::TrustedPointerField::ClearTrustedPointerField(this, offset);            \
   }
 
 #define DECL_CODE_POINTER_ACCESSORS(name) \
@@ -720,19 +701,19 @@
   inline bool has_##name() const;                                       \
   inline void clear_##name();
 
-#define PROTECTED_POINTER_ACCESSORS(holder, name, type, offset)              \
-  static_assert(std::is_base_of_v<TrustedObject, holder>);                   \
-  Tagged<type> holder::name() const {                                        \
-    DCHECK(has_##name());                                                    \
-    return ReadProtectedPointerField<type>(offset);                          \
-  }                                                                          \
-  void holder::set_##name(Tagged<type> value, WriteBarrierMode mode) {       \
-    WriteProtectedPointerField(offset, value);                               \
-    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, offset, value, mode); \
-  }                                                                          \
-  bool holder::has_##name() const {                                          \
-    return !IsProtectedPointerFieldEmpty(offset);                            \
-  }                                                                          \
+#define PROTECTED_POINTER_ACCESSORS(holder, name, type, offset)             \
+  static_assert(std::is_base_of_v<TrustedObject, holder>);                  \
+  Tagged<type> holder::name() const {                                       \
+    DCHECK(has_##name());                                                   \
+    return ReadProtectedPointerField<type>(offset);                         \
+  }                                                                         \
+  void holder::set_##name(Tagged<type> value, WriteBarrierMode mode) {      \
+    WriteProtectedPointerField(offset, value);                              \
+    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, offset, value, mode); \
+  }                                                                         \
+  bool holder::has_##name() const {                                         \
+    return !IsProtectedPointerFieldEmpty(offset);                           \
+  }                                                                         \
   void holder::clear_##name() { return ClearProtectedPointerField(offset); }
 
 #define DECL_RELEASE_ACQUIRE_PROTECTED_POINTER_ACCESSORS(name, type)    \
@@ -742,23 +723,23 @@
   inline bool has_##name(AcquireLoadTag) const;                         \
   inline void clear_##name(ReleaseStoreTag);
 
-#define RELEASE_ACQUIRE_PROTECTED_POINTER_ACCESSORS(holder, name, type,      \
-                                                    offset)                  \
-  static_assert(std::is_base_of_v<TrustedObject, holder>);                   \
-  Tagged<type> holder::name(AcquireLoadTag tag) const {                      \
-    DCHECK(has_##name(tag));                                                 \
-    return ReadProtectedPointerField<type>(offset, tag);                     \
-  }                                                                          \
-  void holder::set_##name(Tagged<type> value, ReleaseStoreTag tag,           \
-                          WriteBarrierMode mode) {                           \
-    WriteProtectedPointerField(offset, value, tag);                          \
-    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(*this, offset, value, mode); \
-  }                                                                          \
-  bool holder::has_##name(AcquireLoadTag tag) const {                        \
-    return !IsProtectedPointerFieldEmpty(offset, tag);                       \
-  }                                                                          \
-  void holder::clear_##name(ReleaseStoreTag tag) {                           \
-    return ClearProtectedPointerField(offset, tag);                          \
+#define RELEASE_ACQUIRE_PROTECTED_POINTER_ACCESSORS(holder, name, type,     \
+                                                    offset)                 \
+  static_assert(std::is_base_of_v<TrustedObject, holder>);                  \
+  Tagged<type> holder::name(AcquireLoadTag tag) const {                     \
+    DCHECK(has_##name(tag));                                                \
+    return ReadProtectedPointerField<type>(offset, tag);                    \
+  }                                                                         \
+  void holder::set_##name(Tagged<type> value, ReleaseStoreTag tag,          \
+                          WriteBarrierMode mode) {                          \
+    WriteProtectedPointerField(offset, value, tag);                         \
+    CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(this, offset, value, mode); \
+  }                                                                         \
+  bool holder::has_##name(AcquireLoadTag tag) const {                       \
+    return !IsProtectedPointerFieldEmpty(offset, tag);                      \
+  }                                                                         \
+  void holder::clear_##name(ReleaseStoreTag tag) {                          \
+    return ClearProtectedPointerField(offset, tag);                         \
   }
 
 #define BIT_FIELD_ACCESSORS2(holder, get_field, set_field, name, BitField) \
@@ -774,13 +755,13 @@
 
 #define RELAXED_INT16_ACCESSORS(holder, name, offset) \
   int16_t holder::name() const {                      \
-    return RELAXED_READ_INT16_FIELD(*this, offset);   \
+    return RELAXED_READ_INT16_FIELD(this, offset);    \
   }                                                   \
   void holder::set_##name(int16_t value) {            \
-    RELAXED_WRITE_INT16_FIELD(*this, offset, value);  \
+    RELAXED_WRITE_INT16_FIELD(this, offset, value);   \
   }
 
-#define FIELD_ADDR(p, offset) ((p).ptr() + offset - kHeapObjectTag)
+#define FIELD_ADDR(p, offset) ((p)->ptr() + offset - kHeapObjectTag)
 
 #define SEQ_CST_READ_FIELD(p, offset) \
   TaggedField<Object>::SeqCst_Load(p, offset)
@@ -910,7 +891,7 @@
 #else
 #define CONDITIONAL_TRUSTED_POINTER_WRITE_BARRIER(object, offset, tag, value, \
                                                   mode)                       \
-  CONDITIONAL_WRITE_BARRIER(*this, offset, value, mode);
+  CONDITIONAL_WRITE_BARRIER(this, offset, value, mode);
 #endif  // V8_ENABLE_SANDBOX
 #define CONDITIONAL_CODE_POINTER_WRITE_BARRIER(object, offset, value, mode) \
   CONDITIONAL_TRUSTED_POINTER_WRITE_BARRIER(                                \
@@ -921,7 +902,7 @@
   do {                                                                     \
     DCHECK(TrustedHeapLayout::IsOwnedByAnyHeap(object));                   \
     WriteBarrier::ForProtectedPointer(                                     \
-        object, (object).RawProtectedPointerField(offset), value, mode);   \
+        object, (object)->RawProtectedPointerField(offset), value, mode);  \
   } while (false)
 
 #ifdef V8_DISABLE_WRITE_BARRIERS
@@ -1085,10 +1066,6 @@ static_assert(sizeof(unsigned) == sizeof(uint32_t),
   void DeoptimizationData::Set##name(int i, Tagged<type> value) { \
     set(IndexForEntry(i) + k##name##Offset, value);               \
   }
-
-#define TQ_OBJECT_CONSTRUCTORS(Type)                             \
-  OBJECT_CONSTRUCTORS(Type, TorqueGenerated##Type<Type, Super>); \
-  friend class TorqueGenerated##Type<Type, Super>;
 
 #define TQ_CPP_OBJECT_DEFINITION_ASSERTS(_class, parent) \
   template class TorqueGenerated##_class##Asserts<_class, parent>;

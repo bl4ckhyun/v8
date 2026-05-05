@@ -2510,7 +2510,7 @@ void Builtins::Generate_CallOrConstructForwardVarargs(MacroAssembler* masm,
   if (mode == CallOrConstructMode::kConstruct) {
     Label new_target_constructor, new_target_not_constructor;
     __ JumpIfSmi(a3, &new_target_not_constructor);
-    __ LoadTaggedField(t1, FieldMemOperand(a3, HeapObject::kMapOffset));
+    __ LoadTaggedField(t1, FieldMemOperand(a3, offsetof(HeapObject, map_)));
     __ Ld_bu(t1, FieldMemOperand(t1, Map::kBitFieldOffset));
     __ And(t1, t1, Operand(Map::Bits1::IsConstructorBit::kMask));
     __ Branch(&new_target_constructor, ne, t1, Operand(zero_reg));
@@ -2866,7 +2866,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   __ JumpIfSmi(target, &non_constructor);
 
   // Check if target has a [[Construct]] internal method.
-  __ LoadTaggedField(map, FieldMemOperand(target, HeapObject::kMapOffset));
+  __ LoadTaggedField(map, FieldMemOperand(target, offsetof(HeapObject, map_)));
   {
     Register flags = t3;
     __ Ld_bu(flags, FieldMemOperand(map, Map::kBitFieldOffset));
@@ -3425,7 +3425,8 @@ void GetContextFromImplicitArg(MacroAssembler* masm, Register data,
                                Register scratch) {
   Label instance;
   Label end;
-  __ LoadTaggedField(scratch, FieldMemOperand(data, HeapObject::kMapOffset));
+  __ LoadTaggedField(scratch,
+                     FieldMemOperand(data, offsetof(HeapObject, map_)));
   __ Ld_hu(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
   __ Branch(&instance, eq, scratch, Operand(WASM_TRUSTED_INSTANCE_DATA_TYPE));
 

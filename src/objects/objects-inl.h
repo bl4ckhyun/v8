@@ -223,29 +223,6 @@ void HeapObject::Relaxed_WriteField(size_t offset, T value)
 }
 
 template <class T>
-T HeapObjectLayout::Relaxed_ReadField(size_t offset) const
-  requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
-           !std::is_floating_point_v<T>)
-{
-  DCHECK_IMPLIES(COMPRESS_POINTERS_BOOL, sizeof(T) <= kTaggedSize);
-  using AtomicT = typename base::AtomicTypeFromByteWidth<sizeof(T)>::type;
-  return static_cast<T>(base::AsAtomicImpl<AtomicT>::Relaxed_Load(
-      reinterpret_cast<AtomicT*>(field_address(offset))));
-}
-
-template <class T>
-void HeapObjectLayout::Relaxed_WriteField(size_t offset, T value)
-  requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
-           !std::is_floating_point_v<T>)
-{
-  DCHECK_IMPLIES(COMPRESS_POINTERS_BOOL, sizeof(T) <= kTaggedSize);
-  using AtomicT = typename base::AtomicTypeFromByteWidth<sizeof(T)>::type;
-  base::AsAtomicImpl<AtomicT>::Relaxed_Store(
-      reinterpret_cast<AtomicT*>(field_address(offset)),
-      static_cast<AtomicT>(value));
-}
-
-template <class T>
 T HeapObject::Acquire_ReadField(size_t offset) const
   requires((std::is_arithmetic_v<T> || std::is_enum_v<T>) &&
            !std::is_floating_point_v<T>)
@@ -820,37 +797,11 @@ void HeapObject::WriteSandboxedPointerField(size_t offset, Isolate* isolate,
                                 PtrComprCageBase(isolate), value);
 }
 
-Address HeapObjectLayout::ReadSandboxedPointerField(
-    size_t offset, PtrComprCageBase cage_base) const {
-  return i::ReadSandboxedPointerField(field_address(offset), cage_base);
-}
-
-void HeapObjectLayout::WriteSandboxedPointerField(size_t offset,
-                                                  PtrComprCageBase cage_base,
-                                                  Address value) {
-  i::WriteSandboxedPointerField(field_address(offset), cage_base, value);
-}
-
-void HeapObjectLayout::WriteSandboxedPointerField(size_t offset,
-                                                  Isolate* isolate,
-                                                  Address value) {
-  i::WriteSandboxedPointerField(field_address(offset),
-                                PtrComprCageBase(isolate), value);
-}
-
 size_t HeapObject::ReadBoundedSizeField(size_t offset) const {
   return i::ReadBoundedSizeField(field_address(offset));
 }
 
 void HeapObject::WriteBoundedSizeField(size_t offset, size_t value) {
-  i::WriteBoundedSizeField(field_address(offset), value);
-}
-
-size_t HeapObjectLayout::ReadBoundedSizeField(size_t offset) const {
-  return i::ReadBoundedSizeField(field_address(offset));
-}
-
-void HeapObjectLayout::WriteBoundedSizeField(size_t offset, size_t value) {
   i::WriteBoundedSizeField(field_address(offset), value);
 }
 
@@ -861,7 +812,7 @@ void HeapObject::InitExternalPointerField(size_t offset,
                                           WriteBarrierMode mode) {
   i::InitExternalPointerField<tag>(address(), field_address(offset), isolate,
                                    value);
-  CONDITIONAL_EXTERNAL_POINTER_WRITE_BARRIER(*this, static_cast<int>(offset),
+  CONDITIONAL_EXTERNAL_POINTER_WRITE_BARRIER(this, static_cast<int>(offset),
                                              tag, mode);
 }
 
@@ -871,7 +822,7 @@ void HeapObject::InitExternalPointerField(size_t offset,
                                           WriteBarrierMode mode) {
   i::InitExternalPointerField(address(), field_address(offset), isolate, tag,
                               value);
-  CONDITIONAL_EXTERNAL_POINTER_WRITE_BARRIER(*this, static_cast<int>(offset),
+  CONDITIONAL_EXTERNAL_POINTER_WRITE_BARRIER(this, static_cast<int>(offset),
                                              tag, mode);
 }
 
@@ -959,7 +910,7 @@ void HeapObject::WriteLazilyInitializedExternalPointerField(
     base::AsAtomic32::Release_Store(location, handle);
     // In this case, we're adding a reference from an existing object to a new
     // table entry, so we always require a write barrier.
-    EXTERNAL_POINTER_WRITE_BARRIER(*this, static_cast<int>(offset), tag);
+    EXTERNAL_POINTER_WRITE_BARRIER(this, static_cast<int>(offset), tag);
   } else {
     table.Set(handle, value, tag);
   }
@@ -984,23 +935,23 @@ void HeapObject::WriteLazilyInitializedCppHeapPointerField(
 void HeapObject::InitSelfIndirectPointerField(
     size_t offset, IsolateForSandbox isolate,
     TrustedPointerPublishingScope* opt_publishing_scope) {
-  DCHECK(IsExposedTrustedObject(*this));
+  DCHECK(IsExposedTrustedObject(this));
   InstanceType instance_type = map()->instance_type();
-  SharedFlag shared = SharedFlag(HeapLayout::InAnySharedSpace(*this));
+  SharedFlag shared = SharedFlag(HeapLayout::InAnySharedSpace(this));
   IndirectPointerTag tag =
       IndirectPointerTagFromInstanceType(instance_type, shared);
-  i::InitSelfIndirectPointerField(field_address(offset), isolate, *this, tag,
+  i::InitSelfIndirectPointerField(field_address(offset), isolate, this, tag,
                                   opt_publishing_scope);
 }
 
 void HeapObject::InitSelfIndirectPointerFieldWithoutPublishing(
     size_t offset, IsolateForSandbox isolate) {
-  DCHECK(IsExposedTrustedObject(*this));
-  i::InitSelfIndirectPointerField(field_address(offset), isolate, *this,
+  DCHECK(IsExposedTrustedObject(this));
+  i::InitSelfIndirectPointerField(field_address(offset), isolate, this,
                                   kUnpublishedIndirectPointerTag, nullptr);
 }
 
-void HeapObjectLayout::InitSelfIndirectPointerField(
+void HeapObject::InitSelfIndirectPointerField(
     std::atomic<IndirectPointerHandle>* field_ptr, IsolateForSandbox isolate,
     TrustedPointerPublishingScope* opt_publishing_scope) {
   DCHECK(IsExposedTrustedObject(this));
@@ -1016,7 +967,7 @@ void HeapObjectLayout::InitSelfIndirectPointerField(
 template <IndirectPointerTagRange tag_range>
 inline auto HeapObject::ReadTrustedPointerField(
     size_t offset, IsolateForSandbox isolate) const {
-  return TrustedPointerField::ReadTrustedPointerField<tag_range>(*this, offset,
+  return TrustedPointerField::ReadTrustedPointerField<tag_range>(this, offset,
                                                                  isolate);
 }
 
@@ -1025,7 +976,7 @@ inline auto HeapObject::ReadTrustedPointerField(
     size_t offset, IsolateForSandbox isolate,
     AcquireLoadTag acquire_load) const {
   return TrustedPointerField::ReadTrustedPointerField<tag_range>(
-      *this, offset, isolate, acquire_load);
+      this, offset, isolate, acquire_load);
 }
 
 template <IndirectPointerTagRange tag_range>
@@ -1033,33 +984,32 @@ auto HeapObject::ReadMaybeEmptyTrustedPointerField(
     size_t offset, IsolateForSandbox isolate,
     AcquireLoadTag acquire_load) const {
   return TrustedPointerField::ReadMaybeEmptyTrustedPointerField<tag_range>(
-      *this, offset, isolate, acquire_load);
+      this, offset, isolate, acquire_load);
 }
 
 template <IndirectPointerTagRange tag_range>
 void HeapObject::WriteTrustedPointerField(size_t offset,
                                           Tagged<ExposedTrustedObject> value) {
-  TrustedPointerField::WriteTrustedPointerField<tag_range>(*this, offset,
-                                                           value);
+  TrustedPointerField::WriteTrustedPointerField<tag_range>(this, offset, value);
 }
 
 bool HeapObject::IsTrustedPointerFieldEmpty(size_t offset) const {
-  return TrustedPointerField::IsTrustedPointerFieldEmpty(*this, offset);
+  return TrustedPointerField::IsTrustedPointerFieldEmpty(this, offset);
 }
 
 bool HeapObject::IsTrustedPointerFieldUnpublished(
     size_t offset, IndirectPointerTagRange tag_range,
     IsolateForSandbox isolate) const {
   return TrustedPointerField::IsTrustedPointerFieldUnpublished(
-      *this, offset, tag_range, isolate);
+      this, offset, tag_range, isolate);
 }
 
 void HeapObject::ClearTrustedPointerField(size_t offset) {
-  TrustedPointerField::ClearTrustedPointerField(*this, offset);
+  TrustedPointerField::ClearTrustedPointerField(this, offset);
 }
 
 void HeapObject::ClearTrustedPointerField(size_t offset, ReleaseStoreTag) {
-  TrustedPointerField::ClearTrustedPointerField(*this, offset, kReleaseStore);
+  TrustedPointerField::ClearTrustedPointerField(this, offset, kReleaseStore);
 }
 
 Tagged<Code> HeapObject::ReadCodePointerField(size_t offset,
@@ -1095,7 +1045,7 @@ JSDispatchHandle HeapObject::AllocateAndInstallJSDispatchHandle(
   auto location =
       reinterpret_cast<JSDispatchHandle*>(host->field_address(offset));
   base::AsAtomic32::Release_Store(location, handle);
-  CONDITIONAL_JS_DISPATCH_HANDLE_WRITE_BARRIER(*host, handle, mode);
+  CONDITIONAL_JS_DISPATCH_HANDLE_WRITE_BARRIER(host, handle, mode);
 
   return handle;
 }
@@ -1136,70 +1086,6 @@ ObjectSlot HeapObject::RawField(int byte_offset) const {
   return ObjectSlot(field_address(byte_offset));
 }
 
-ObjectSlot HeapObjectLayout::RawField(int byte_offset) const {
-  return ObjectSlot(field_address(byte_offset));
-}
-
-MaybeObjectSlot HeapObjectLayout::RawMaybeWeakField(int byte_offset) const {
-  return MaybeObjectSlot(field_address(byte_offset));
-}
-
-IndirectPointerSlot HeapObjectLayout::RawIndirectPointerField(
-    int byte_offset, IndirectPointerTagRange tag_range) const {
-  return IndirectPointerSlot(field_address(byte_offset), tag_range);
-}
-
-ExternalPointerSlot HeapObjectLayout::RawExternalPointerField(
-    int byte_offset, ExternalPointerTagRange tag_range) const {
-  return ExternalPointerSlot(field_address(byte_offset), tag_range);
-}
-
-HeapObjectLayout::operator Tagged<HeapObject>() const {
-  return Tagged<HeapObject>(this);
-}
-
-template <ExternalPointerTag tag>
-void HeapObjectLayout::InitExternalPointerField(size_t offset,
-                                                IsolateForSandbox isolate,
-                                                Address value,
-                                                WriteBarrierMode mode) {
-  Tagged<HeapObject>(*this)->InitExternalPointerField<tag>(offset, isolate,
-                                                           value, mode);
-}
-
-template <ExternalPointerTagRange tag_range>
-Address HeapObjectLayout::ReadExternalPointerField(
-    size_t offset, IsolateForSandbox isolate) const {
-  return Tagged<HeapObject>(*this)->ReadExternalPointerField<tag_range>(
-      offset, isolate);
-}
-
-template <ExternalPointerTag tag>
-void HeapObjectLayout::WriteExternalPointerField(size_t offset,
-                                                 IsolateForSandbox isolate,
-                                                 Address value) {
-  Tagged<HeapObject>(*this)->WriteExternalPointerField<tag>(offset, isolate,
-                                                            value);
-}
-
-void HeapObjectLayout::SetupLazilyInitializedExternalPointerField(
-    size_t offset) {
-  Tagged<HeapObject>(*this)->SetupLazilyInitializedExternalPointerField(offset);
-}
-
-bool HeapObjectLayout::IsLazilyInitializedExternalPointerFieldInitialized(
-    size_t offset) const {
-  return Tagged<HeapObject>(*this)
-      ->IsLazilyInitializedExternalPointerFieldInitialized(offset);
-}
-
-template <ExternalPointerTag tag>
-void HeapObjectLayout::WriteLazilyInitializedExternalPointerField(
-    size_t offset, IsolateForSandbox isolate, Address value) {
-  Tagged<HeapObject>(*this)->WriteLazilyInitializedExternalPointerField<tag>(
-      offset, isolate, value);
-}
-
 MaybeObjectSlot HeapObject::RawMaybeWeakField(int byte_offset) const {
   return MaybeObjectSlot(field_address(byte_offset));
 }
@@ -1227,56 +1113,21 @@ IndirectPointerSlot HeapObject::RawIndirectPointerField(
 
 #ifdef VERIFY_HEAP
 void HeapObject::VerifyObjectField(Isolate* isolate, int offset) {
-  Object::VerifyPointer(isolate, TaggedField<Object>::load(*this, offset));
+  Object::VerifyPointer(isolate, TaggedField<Object>::load(this, offset));
   static_assert(!COMPRESS_POINTERS_BOOL || kTaggedSize == kInt32Size);
 }
 
 void HeapObject::VerifyMaybeObjectField(Isolate* isolate, int offset) {
   Object::VerifyMaybeObjectPointer(
-      isolate, TaggedField<MaybeObject>::load(*this, offset));
+      isolate, TaggedField<MaybeObject>::load(this, offset));
   static_assert(!COMPRESS_POINTERS_BOOL || kTaggedSize == kInt32Size);
 }
 
 void HeapObject::VerifySmiField(int offset) {
-  CHECK(IsSmi(TaggedField<Object>::load(*this, offset)));
+  CHECK(IsSmi(TaggedField<Object>::load(this, offset)));
   static_assert(!COMPRESS_POINTERS_BOOL || kTaggedSize == kInt32Size);
 }
 
-void HeapObjectLayout::VerifyObjectField(Isolate* isolate, int offset) {
-  Cast<HeapObject>(this)->VerifyObjectField(isolate, offset);
-}
-
-void HeapObjectLayout::VerifyMaybeObjectField(Isolate* isolate, int offset) {
-  Cast<HeapObject>(this)->VerifyMaybeObjectField(isolate, offset);
-}
-
-void HeapObjectLayout::VerifySmiField(int offset) {
-  Cast<HeapObject>(this)->VerifySmiField(offset);
-}
-
-#endif
-
-bool HeapObjectLayout::NeedsRehashing(InstanceType instance_type) const {
-  return Cast<HeapObject>(this)->NeedsRehashing(instance_type);
-}
-
-bool HeapObjectLayout::NeedsRehashing() const {
-  return Cast<HeapObject>(this)->NeedsRehashing();
-}
-
-bool HeapObjectLayout::CanBeRehashed() const {
-  return Cast<HeapObject>(this)->CanBeRehashed();
-}
-
-template <typename IsolateT>
-void HeapObjectLayout::RehashBasedOnMap(IsolateT* isolate) {
-  Cast<HeapObject>(this)->RehashBasedOnMap(isolate);
-}
-
-#ifdef VERIFY_HEAP
-void HeapObjectLayout::HeapObjectVerify(Isolate* isolate) {
-  Cast<HeapObject>(this)->HeapObjectVerify(isolate);
-}
 #endif
 
 // static
@@ -1307,50 +1158,10 @@ bool JSArray::HasReadOnlyLength(DirectHandle<JSArray> array) {
 }
 
 EarlyReadOnlyRoots HeapObject::EarlyGetReadOnlyRoots() const {
-  return ReadOnlyHeap::EarlyGetReadOnlyRoots(*this);
-}
-
-EarlyReadOnlyRoots HeapObjectLayout::EarlyGetReadOnlyRoots() const {
-  return ReadOnlyHeap::EarlyGetReadOnlyRoots(Tagged(this));
+  return ReadOnlyHeap::EarlyGetReadOnlyRoots(this);
 }
 
 Tagged<Map> HeapObject::map() const { return map_word(kRelaxedLoad).ToMap(); }
-
-Tagged<Map> HeapObjectLayout::map() const {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->map();
-}
-
-Tagged<Map> HeapObjectLayout::map(AcquireLoadTag) const {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->map(kAcquireLoad);
-}
-
-MapWord HeapObjectLayout::map_word(RelaxedLoadTag) const {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->map_word(kRelaxedLoad);
-}
-
-void HeapObjectLayout::set_map(Isolate* isolate, Tagged<Map> value) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->set_map(isolate, value);
-}
-
-template <typename IsolateT>
-void HeapObjectLayout::set_map(IsolateT* isolate, Tagged<Map> value,
-                               ReleaseStoreTag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->set_map(isolate, value, kReleaseStore);
-}
-
-template <typename IsolateT>
-void HeapObjectLayout::set_map_safe_transition(IsolateT* isolate,
-                                               Tagged<Map> value,
-                                               ReleaseStoreTag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->set_map_safe_transition(isolate, value,
-                                                           kReleaseStore);
-}
 
 void HeapObject::set_map(Isolate* isolate, Tagged<Map> value) {
   set_map<EmitWriteBarrier::kYes>(isolate, value, kRelaxedStore,
@@ -1377,13 +1188,6 @@ void HeapObject::set_map_safe_transition(IsolateT* isolate, Tagged<Map> value,
                                   VerificationMode::kSafeMapTransition);
 }
 
-void HeapObjectLayout::set_map_safe_transition_no_write_barrier(
-    Isolate* isolate, Tagged<Map> value, RelaxedStoreTag tag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  return Tagged<HeapObject>(this)->set_map_safe_transition_no_write_barrier(
-      isolate, value, tag);
-}
-
 void HeapObject::set_map_safe_transition_no_write_barrier(Isolate* isolate,
                                                           Tagged<Map> value,
                                                           RelaxedStoreTag tag) {
@@ -1396,13 +1200,6 @@ void HeapObject::set_map_safe_transition_no_write_barrier(Isolate* isolate,
                                                           ReleaseStoreTag tag) {
   set_map<EmitWriteBarrier::kNo>(isolate, value, kReleaseStore,
                                  VerificationMode::kSafeMapTransition);
-}
-
-void HeapObjectLayout::set_map_no_write_barrier(Isolate* isolate,
-                                                Tagged<Map> value,
-                                                RelaxedStoreTag tag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  Tagged<HeapObject>(this)->set_map_no_write_barrier(isolate, value, tag);
 }
 
 // Unsafe accessor omitting write barrier.
@@ -1429,35 +1226,27 @@ void HeapObject::set_map(IsolateT* isolate, Tagged<Map> value,
 #endif
   if (v8_flags.verify_heap) {
     if (mode == VerificationMode::kSafeMapTransition) {
-      HeapVerifier::VerifySafeMapTransition(isolate->heap()->AsHeap(), *this,
+      HeapVerifier::VerifySafeMapTransition(isolate->heap()->AsHeap(), this,
                                             value);
     } else {
       DCHECK_EQ(mode, VerificationMode::kPotentialLayoutChange);
-      HeapVerifier::VerifyObjectLayoutChange(isolate->heap()->AsHeap(), *this,
+      HeapVerifier::VerifyObjectLayoutChange(isolate->heap()->AsHeap(), this,
                                              value);
     }
   }
   set_map_word(value, order);
-  Heap::NotifyObjectLayoutChangeDone(*this);
+  Heap::NotifyObjectLayoutChangeDone(this);
 #ifndef V8_DISABLE_WRITE_BARRIERS
   if (emit_write_barrier == EmitWriteBarrier::kYes) {
-    WriteBarrier::ForValue(*this, MaybeObjectSlot(map_slot()), value,
+    WriteBarrier::ForValue(this, MaybeObjectSlot(map_slot()), value,
                            UPDATE_WRITE_BARRIER);
   } else {
     DCHECK_EQ(emit_write_barrier, EmitWriteBarrier::kNo);
 #if V8_VERIFY_WRITE_BARRIERS
-    DCHECK(!WriteBarrier::IsRequired(*this, value));
+    DCHECK(!WriteBarrier::IsRequired(this, value));
 #endif
   }
 #endif
-}
-
-template <typename IsolateT>
-void HeapObjectLayout::set_map_after_allocation(IsolateT* isolate,
-                                                Tagged<Map> value,
-                                                WriteBarrierMode mode) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  Tagged<HeapObject>(this)->set_map_after_allocation(isolate, value, mode);
 }
 
 template <typename IsolateT>
@@ -1467,12 +1256,12 @@ void HeapObject::set_map_after_allocation(IsolateT* isolate, Tagged<Map> value,
 #ifndef V8_DISABLE_WRITE_BARRIERS
   if (mode != SKIP_WRITE_BARRIER) {
     DCHECK(!value.is_null());
-    WriteBarrier::ForValue(*this, MaybeObjectSlot(map_slot()), value, mode);
+    WriteBarrier::ForValue(this, MaybeObjectSlot(map_slot()), value, mode);
   } else {
     SLOW_DCHECK(
         // We allow writes of a null map before root initialisation.
         value.is_null() ? !isolate->read_only_heap()->roots_init_complete()
-                        : !WriteBarrier::IsRequired(*this, value));
+                        : !WriteBarrier::IsRequired(this, value));
   }
 #endif
 }
@@ -1480,73 +1269,52 @@ void HeapObject::set_map_after_allocation(IsolateT* isolate, Tagged<Map> value,
 // static
 void HeapObject::SetFillerMap(const WritableFreeSpace& writable_space,
                               Tagged<Map> value) {
-  writable_space.WriteHeaderSlot<Map, kMapOffset>(value, kRelaxedStore);
+  writable_space.WriteHeaderSlot<Map, offsetof(HeapObject, map_)>(
+      value, kRelaxedStore);
 }
 
 DEF_ACQUIRE_GETTER(HeapObject, map, Tagged<Map>) {
   return map_word(kAcquireLoad).ToMap();
 }
 
-ObjectSlot HeapObjectLayout::map_slot() const {
-  return Tagged<HeapObject>(this)->map_slot();
-}
-
 ObjectSlot HeapObject::map_slot() const {
-  return ObjectSlot(MapField::address(*this));
+  return ObjectSlot(MapField::address(this));
 }
 
 MapWord HeapObject::map_word(RelaxedLoadTag tag) const {
-  return MapField::Relaxed_Load_Map_Word(*this);
+  return MapField::Relaxed_Load_Map_Word(this);
 }
 
 void HeapObject::set_map_word(Tagged<Map> map, RelaxedStoreTag) {
-  MapField::Relaxed_Store_Map_Word(*this, MapWord::FromMap(map));
+  MapField::Relaxed_Store_Map_Word(this, MapWord::FromMap(map));
 }
 
 void HeapObject::set_map_word_forwarded(Tagged<HeapObject> target_object,
                                         RelaxedStoreTag) {
   MapField::Relaxed_Store_Map_Word(
-      *this, MapWord::FromForwardingAddress(*this, target_object));
+      this, MapWord::FromForwardingAddress(this, target_object));
 }
 
 MapWord HeapObject::map_word(AcquireLoadTag tag) const {
-  return MapField::Acquire_Load_No_Unpack(*this);
+  return MapField::Acquire_Load_No_Unpack(this);
 }
 
 void HeapObject::set_map_word(Tagged<Map> map, ReleaseStoreTag) {
-  MapField::Release_Store_Map_Word(*this, MapWord::FromMap(map));
-}
-
-void HeapObjectLayout::set_map_word_forwarded(Tagged<HeapObject> target_object,
-                                              ReleaseStoreTag tag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  Tagged<HeapObject>(this)->set_map_word_forwarded(target_object, tag);
-}
-
-void HeapObjectLayout::set_map_word_forwarded(Tagged<HeapObject> target_object,
-                                              RelaxedStoreTag tag) {
-  // TODO(leszeks): Support MapWord members and access via that instead.
-  Tagged<HeapObject>(this)->set_map_word_forwarded(target_object, tag);
+  MapField::Release_Store_Map_Word(this, MapWord::FromMap(map));
 }
 
 void HeapObject::set_map_word_forwarded(Tagged<HeapObject> target_object,
                                         ReleaseStoreTag) {
   MapField::Release_Store_Map_Word(
-      *this, MapWord::FromForwardingAddress(*this, target_object));
+      this, MapWord::FromForwardingAddress(this, target_object));
 }
 
 bool HeapObject::relaxed_compare_and_swap_map_word_forwarded(
     MapWord old_map_word, Tagged<HeapObject> new_target_object) {
   Tagged_t result = MapField::Relaxed_CompareAndSwap(
-      *this, old_map_word,
-      MapWord::FromForwardingAddress(*this, new_target_object));
+      this, old_map_word,
+      MapWord::FromForwardingAddress(this, new_target_object));
   return result == static_cast<Tagged_t>(old_map_word.ptr());
-}
-
-int HeapObjectLayout::Size() const { return Tagged<HeapObject>(this)->Size(); }
-
-SafeHeapObjectSize HeapObjectLayout::SafeSize() const {
-  return Tagged<HeapObject>(this)->SafeSize();
 }
 
 int HeapObject::Size() const { return SizeFromMap(map()); }
@@ -1612,14 +1380,9 @@ bool Object::ToIntegerIndex(Tagged<Object> obj, size_t* index) {
   return false;
 }
 
-WriteBarrierModeScope HeapObjectLayout::GetWriteBarrierMode(
-    const DisallowGarbageCollection& promise) {
-  return WriteBarrier::GetWriteBarrierModeForObject(Tagged(this), promise);
-}
-
 WriteBarrierModeScope HeapObject::GetWriteBarrierMode(
     const DisallowGarbageCollection& promise) {
-  return WriteBarrier::GetWriteBarrierModeForObject(*this, promise);
+  return WriteBarrier::GetWriteBarrierModeForObject(this, promise);
 }
 
 // static
@@ -1668,7 +1431,7 @@ AllocationAlignment HeapObject::RequiredAlignment(InSharedSpace in_shared_space,
 }
 
 bool HeapObject::CheckRequiredAlignment() const {
-  const InSharedSpace in_shared_space = HeapLayout::InWritableSharedSpace(*this)
+  const InSharedSpace in_shared_space = HeapLayout::InWritableSharedSpace(this)
                                             ? kInSharedSpace
                                             : kNotInSharedSpace;
   AllocationAlignment alignment =

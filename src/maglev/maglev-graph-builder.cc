@@ -2291,7 +2291,7 @@ ReduceResult MaglevGraphBuilder::BuildNewConsStringMap(ValueNode* left,
       case Opcode::kInlinedAllocation: {
         VirtualObject* cons = input->Cast<InlinedAllocation>()->object();
         if (cons->object_type() != vobj::ObjectType::kConsString) break;
-        ValueNode* map = cons->get(HeapObject::kMapOffset);
+        ValueNode* map = cons->get(offsetof(HeapObject, map_));
         if (auto cons_map = TryGetConstant<Map>(map)) {
           return {true, cons_map->IsTwoByteStringMap(), map};
         }
@@ -2333,12 +2333,12 @@ ReduceResult MaglevGraphBuilder::BuildNewConsStringMap(ValueNode* left,
   ValueNode* left_map = left_info.result_map;
   if (!left_map) {
     GET_VALUE_OR_ABORT(left_map,
-                       BuildLoadTaggedField(left, HeapObject::kMapOffset));
+                       BuildLoadTaggedField(left, offsetof(HeapObject, map_)));
   }
   ValueNode* right_map = right_info.result_map;
   if (!right_map) {
     GET_VALUE_OR_ABORT(right_map,
-                       BuildLoadTaggedField(right, HeapObject::kMapOffset));
+                       BuildLoadTaggedField(right, offsetof(HeapObject, map_)));
   }
   // Sort inputs for CSE. Move constants to the left since the instruction
   // reuses the lhs input.
@@ -4594,7 +4594,7 @@ void MaglevGraphBuilder::BuildInitializeStore_Tagged(
   DCHECK_EQ(desc.type, vobj::FieldType::kTagged);
 
   // Intercept stores of constant map objects here.
-  if (desc.offset == HeapObject::kMapOffset) {
+  if (desc.offset == offsetof(HeapObject, map_)) {
     if (auto map = TryGetConstant<Map>(value)) {
       ReduceResult result = BuildStoreMap(object, map.value(),
                                           StoreMap::Kind::kInlinedAllocation);
@@ -4742,7 +4742,7 @@ VirtualObject* MaglevGraphBuilder::GetModifiableObjectFromAllocation(
 void MaglevGraphBuilder::TryBuildStoreTaggedFieldToAllocation(ValueNode* object,
                                                               ValueNode* value,
                                                               int offset) {
-  if (offset == HeapObject::kMapOffset) return;
+  if (offset == offsetof(HeapObject, map_)) return;
   if (!CanTrackObjectChanges(object, TrackObjectMode::kStore)) return;
   // This avoids loop in the object graph.
   if (value->Is<InlinedAllocation>()) return;
@@ -6745,8 +6745,8 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildElementAccess(
 
       RETURN_IF_ABORT(BuildCheckHeapObject(object));
       ValueNode* object_map;
-      GET_VALUE_OR_ABORT(object_map,
-                         BuildLoadTaggedField(object, HeapObject::kMapOffset));
+      GET_VALUE_OR_ABORT(
+          object_map, BuildLoadTaggedField(object, offsetof(HeapObject, map_)));
 
       RETURN_IF_ABORT(BuildTransitionElementsKindOrCheckMap(
           object, object_map, transition_sources, transition_target));
@@ -6789,7 +6789,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildPolymorphicElementAccess(
   RETURN_IF_ABORT(BuildCheckHeapObject(object));
   ValueNode* object_map;
   GET_VALUE_OR_ABORT(object_map,
-                     BuildLoadTaggedField(object, HeapObject::kMapOffset));
+                     BuildLoadTaggedField(object, offsetof(HeapObject, map_)));
 
   // TODO(pthier): We could do better here than just emitting code for each map,
   // as many different maps can produce the exact samce code (e.g. TypedArray
@@ -7550,8 +7550,9 @@ ReduceResult MaglevGraphBuilder::VisitGetNamedPropertyFromSuper() {
   compiler::FeedbackSource feedback_source{feedback(), slot};
   // {home_object} is guaranteed to be a HeapObject.
   ValueNode* home_object_map;
-  GET_VALUE_OR_ABORT(home_object_map,
-                     BuildLoadTaggedField(home_object, HeapObject::kMapOffset));
+  GET_VALUE_OR_ABORT(
+      home_object_map,
+      BuildLoadTaggedField(home_object, offsetof(HeapObject, map_)));
   ValueNode* lookup_start_object;
   GET_VALUE_OR_ABORT(
       lookup_start_object,
@@ -7597,8 +7598,8 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildGetKeyedPropertyWithEnumeratedKey(
     if (current_for_in_state.receiver_needs_map_check ||
         speculating_receiver_map_matches) {
       ValueNode* receiver_map;
-      GET_VALUE_OR_ABORT(receiver_map,
-                         BuildLoadTaggedField(object, HeapObject::kMapOffset));
+      GET_VALUE_OR_ABORT(receiver_map, BuildLoadTaggedField(
+                                           object, offsetof(HeapObject, map_)));
       RETURN_IF_ABORT(AddNewNode<CheckDynamicValue>(
           {receiver_map, current_for_in_state.cache_type},
           DeoptimizeReason::kWrongMapDynamic));
@@ -8361,7 +8362,8 @@ ReduceResult MaglevGraphBuilder::VisitGetSuperConstructor() {
     }
   }
   ValueNode* map;
-  GET_VALUE(map, BuildLoadTaggedField(active_function, HeapObject::kMapOffset));
+  GET_VALUE(map,
+            BuildLoadTaggedField(active_function, offsetof(HeapObject, map_)));
   ValueNode* map_proto;
   GET_VALUE(map_proto, BuildLoadTaggedField(map, Map::kPrototypeOffset));
   StoreRegister(iterator_.GetRegisterOperand(0), map_proto);
@@ -10660,8 +10662,8 @@ MaglevGraphBuilder::BuildJSArrayBuiltinMapSwitchOnElementsKind(
   // TODO(pthier): Support map packing.
   DCHECK(!V8_MAP_PACKING_BOOL);
   ValueNode* receiver_map;
-  GET_VALUE_OR_ABORT(receiver_map,
-                     BuildLoadTaggedField(receiver, HeapObject::kMapOffset));
+  GET_VALUE_OR_ABORT(
+      receiver_map, BuildLoadTaggedField(receiver, offsetof(HeapObject, map_)));
   int emitted_kind_checks = 0;
   bool any_successful = false;
 
@@ -11658,7 +11660,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceObjectPrototypeHasOwnProperty(
     if (current_for_in_state.receiver_needs_map_check) {
       ValueNode* receiver_map;
       GET_VALUE_OR_ABORT(
-          receiver_map, BuildLoadTaggedField(receiver, HeapObject::kMapOffset));
+          receiver_map,
+          BuildLoadTaggedField(receiver, offsetof(HeapObject, map_)));
       RETURN_IF_ABORT(AddNewNode<CheckDynamicValue>(
           {receiver_map, current_for_in_state.cache_type},
           DeoptimizeReason::kWrongMapDynamic));
@@ -14796,7 +14799,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
   // Protect against concurrent changes to the boilerplate object by checking
   // for an identical value at the end of the compilation.
   broker()->dependencies()->DependOnObjectSlotValue(
-      boilerplate, HeapObject::kMapOffset, boilerplate_map);
+      boilerplate, offsetof(HeapObject, map_), boilerplate_map);
   {
     compiler::OptionalMapRef current_boilerplate_map =
         boilerplate.map_direct_read(broker());
@@ -14932,7 +14935,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
   // Protect against concurrent changes to the boilerplate object by checking
   // for an identical value at the end of the compilation.
   broker()->dependencies()->DependOnObjectSlotValue(
-      boilerplate_elements, HeapObject::kMapOffset, elements_map);
+      boilerplate_elements, offsetof(HeapObject, map_), elements_map);
   if (boilerplate_elements.length() == 0 ||
       elements_map.IsFixedCowArrayMap(broker())) {
     if (allocation == AllocationType::kOld &&
@@ -15008,7 +15011,7 @@ VirtualObject* MaglevGraphBuilder::CreateHeapNumber(ValueNode* value) {
   compiler::MapRef map = broker()->heap_number_map();
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(HeapNumber, value_), value);
   return vobj;
 }
@@ -15023,7 +15026,7 @@ VirtualObject* MaglevGraphBuilder::CreateConsString(ValueNode* map,
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout,
       compiler::OptionalMapRef{}, slot_count);
-  vobj->set(HeapObject::kMapOffset, map);
+  vobj->set(offsetof(HeapObject, map_), map);
   vobj->set(offsetof(ConsString, raw_hash_field_),
             GetInt32Constant(Name::kEmptyHashField));
   vobj->set(offsetof(ConsString, length_), length);
@@ -15040,7 +15043,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSObject(compiler::MapRef map) {
   SBXCHECK_GE(slot_count, 3);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSObject::kElementsOffset,
@@ -15064,7 +15067,7 @@ ReduceResult MaglevGraphBuilder::CreateJSArray(compiler::MapRef map,
   int slot_count = instance_size / kTaggedSize;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSArray, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   // Either the value is a Smi already, or we force a conversion to Smi and
@@ -15087,7 +15090,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSStringWrapper(ValueNode* value) {
   SBXCHECK_EQ(slot_count, 4);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSObject::kElementsOffset,
@@ -15103,7 +15106,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSArrayIterator(
   SBXCHECK_EQ(slot_count, 6);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSArrayIterator, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSArrayIterator, elements_),
@@ -15128,7 +15131,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSConstructor(
   SBXCHECK_GE(slot_count, 3);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSObject::kElementsOffset,
@@ -15167,7 +15170,7 @@ VirtualObject* MaglevGraphBuilder::CreateFixedArray(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
   DCHECK_EQ(vobj->size(), FixedArray::SizeFor(length));
 
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(FixedArrayBase::kLengthOffset, GetInt32Constant(length));
 #if TAGGED_SIZE_8_BYTES
   vobj->set(FixedArrayBase::kPaddingOffset, GetInt32Constant(0));
@@ -15199,7 +15202,7 @@ VirtualObject* MaglevGraphBuilder::CreateFixedDoubleArray(
 #else
   DCHECK_EQ(Shape::header_slot_count, 2);
 #endif  // TAGGED_SIZE_8_BYTES
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(FixedArrayBase::kLengthOffset, GetInt32Constant(length));
 #if TAGGED_SIZE_8_BYTES
   vobj->set(FixedArrayBase::kPaddingOffset, GetInt32Constant(0));
@@ -15223,7 +15226,7 @@ VirtualObject* MaglevGraphBuilder::CreateContext(
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
 
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(Context::kLengthOffset, GetSmiConstant(length));
   vobj->set(Context::OffsetOfElementAt(Context::SCOPE_INFO_INDEX),
             GetConstant(scope_info));
@@ -15254,7 +15257,7 @@ VirtualObject* MaglevGraphBuilder::CreateArgumentsObject(
   SBXCHECK_EQ(slot_count, callee.has_value() ? 5 : 4);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSArray, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSArray::kElementsOffset, elements);
@@ -15280,7 +15283,7 @@ VirtualObject* MaglevGraphBuilder::CreateMappedArgumentsElements(
 #endif  // TAGGED_SIZE_8_BYTES
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(SloppyArgumentsElements, length_),
             GetInt32Constant(mapped_count));
 #if TAGGED_SIZE_8_BYTES
@@ -15300,7 +15303,7 @@ VirtualObject* MaglevGraphBuilder::CreateRegExpLiteralObject(
   SBXCHECK_EQ(slot_count, 6);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSRegExp, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSRegExp::kElementsOffset,
@@ -15328,7 +15331,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSGeneratorObject(
   int slot_count = instance_size / kTaggedSize;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, object_layout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSGeneratorObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSGeneratorObject, elements_),
@@ -15368,7 +15371,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSAsyncFunctionObject(
 
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, object_layout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSAsyncFunctionObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSAsyncFunctionObject, elements_),
@@ -15402,7 +15405,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSPromiseObject() {
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this,
       &VirtualJSPromiseObjectShape::kObjectLayout, promise_map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(promise_map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(promise_map));
   vobj->set(offsetof(JSPromise, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSPromise::kElementsOffset,
@@ -15428,7 +15431,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSIteratorResult(compiler::MapRef map,
   int slot_count = Shape::header_slot_count;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSIteratorResult, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSIteratorResult::kElementsOffset,
@@ -15445,7 +15448,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSStringIterator(compiler::MapRef map,
   int slot_count = Shape::header_slot_count;
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
-  vobj->set(HeapObject::kMapOffset, GetConstant(map));
+  vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSStringIterator, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSStringIterator, elements_),
@@ -16977,7 +16980,8 @@ ReduceResult MaglevGraphBuilder::VisitForInPrepare() {
       // the receiver's Map or a FixedArray).
       ValueNode* receiver_map;
       GET_VALUE_OR_ABORT(
-          receiver_map, BuildLoadTaggedField(receiver, HeapObject::kMapOffset));
+          receiver_map,
+          BuildLoadTaggedField(receiver, offsetof(HeapObject, map_)));
       RETURN_IF_ABORT(AddNewNode<CheckDynamicValue>(
           {receiver_map, enumerator}, DeoptimizeReason::kWrongMapDynamic));
 
@@ -17062,7 +17066,8 @@ ReduceResult MaglevGraphBuilder::VisitForInNext() {
       // Ensure that the expected map still matches that of the {receiver}.
       ValueNode* receiver_map;
       GET_VALUE_OR_ABORT(
-          receiver_map, BuildLoadTaggedField(receiver, HeapObject::kMapOffset));
+          receiver_map,
+          BuildLoadTaggedField(receiver, offsetof(HeapObject, map_)));
       RETURN_IF_ABORT(AddNewNode<CheckDynamicValue>(
           {receiver_map, cache_type}, DeoptimizeReason::kWrongMapDynamic));
       ValueNode* key;
@@ -18777,7 +18782,7 @@ ReduceResult MaglevGraphBuilder::BuildLoadMap(ValueNode* object) {
     // TODO(victorgomes): Implement the holey float64 case.
     return ReduceResult::Done(GetConstant(broker()->heap_number_map()));
   }
-  return BuildLoadTaggedField(object, HeapObject::kMapOffset);
+  return BuildLoadTaggedField(object, offsetof(HeapObject, map_));
 }
 
 ReduceResult MaglevGraphBuilder::BuildLoadTaggedField(ValueNode* object,
@@ -18790,7 +18795,7 @@ ReduceResult MaglevGraphBuilder::BuildLoadTaggedField(ValueNode* object,
   // doesn't like this at all - doing so creates problems like OOB vobject field
   // loads, and missed JSArray elements kind transitions. We should understand
   // whether this is an issue with --maglev-object-tracking.
-  if (offset == HeapObject::kMapOffset ||
+  if (offset == offsetof(HeapObject, map_) ||
       !CanTrackObjectChanges(object, TrackObjectMode::kLoad)) {
     return AddNewNode<LoadTaggedField>({object}, offset, type, is_const, key);
   }

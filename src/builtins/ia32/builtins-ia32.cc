@@ -2437,7 +2437,7 @@ void Builtins::Generate_CallOrConstructVarargs(MacroAssembler* masm,
     // kArgumentsLength == 0.
     Label ok, fail;
     __ AssertNotSmi(kArgumentsList);
-    __ mov(edx, FieldOperand(kArgumentsList, HeapObject::kMapOffset));
+    __ mov(edx, FieldOperand(kArgumentsList, offsetof(HeapObject, map_)));
     __ CmpInstanceType(edx, FIXED_ARRAY_TYPE);
     __ j(equal, &ok);
     __ CmpInstanceType(edx, FIXED_DOUBLE_ARRAY_TYPE);
@@ -2544,7 +2544,7 @@ void Builtins::Generate_CallOrConstructForwardVarargs(MacroAssembler* masm,
 
     Label new_target_constructor, new_target_not_constructor;
     __ JumpIfSmi(edx, &new_target_not_constructor, Label::kNear);
-    __ mov(scratch, FieldOperand(edx, HeapObject::kMapOffset));
+    __ mov(scratch, FieldOperand(edx, offsetof(HeapObject, map_)));
     __ test_b(FieldOperand(scratch, Map::kBitFieldOffset),
               Immediate(Map::Bits1::IsConstructorBit::kMask));
     __ j(not_zero, &new_target_constructor, Label::kNear);
@@ -2911,7 +2911,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   __ JumpIfSmi(target, &non_constructor);
 
   // Check if target has a [[Construct]] internal method.
-  __ mov(map, FieldOperand(target, HeapObject::kMapOffset));
+  __ mov(map, FieldOperand(target, offsetof(HeapObject, map_)));
   __ test_b(FieldOperand(map, Map::kBitFieldOffset),
             Immediate(Map::Bits1::IsConstructorBit::kMask));
   __ j(zero, &non_constructor);
@@ -2925,7 +2925,7 @@ void Builtins::Generate_Construct(MacroAssembler* masm) {
   // Only dispatch to bound functions after checking whether they are
   // constructors.
   __ bind(&non_jsfunction);
-  __ mov(map, FieldOperand(target, HeapObject::kMapOffset));
+  __ mov(map, FieldOperand(target, offsetof(HeapObject, map_)));
   __ CmpInstanceType(map, JS_BOUND_FUNCTION_TYPE);
   __ j(not_equal, &non_jsboundfunction);
   __ TailCallBuiltin(Builtin::kConstructBoundFunction);
@@ -3357,7 +3357,7 @@ void ReloadParentStack(MacroAssembler* masm, Register promise,
 // depending on the data's type, and places the result in the input register.
 void GetContextFromImplicitArg(MacroAssembler* masm, Register data,
                                Register scratch) {
-  __ Move(scratch, FieldOperand(data, HeapObject::kMapOffset));
+  __ Move(scratch, FieldOperand(data, offsetof(HeapObject, map_)));
   __ CmpInstanceType(scratch, WASM_TRUSTED_INSTANCE_DATA_TYPE);
   Label instance;
   Label end;

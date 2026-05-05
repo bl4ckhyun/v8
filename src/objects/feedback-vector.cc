@@ -429,7 +429,7 @@ bool FeedbackVector::ClearSlots(Isolate* isolate, ClearBehavior behavior) {
 
     Tagged<MaybeObject> obj = Get(slot);
     if (obj != uninitialized_sentinel) {
-      FeedbackNexus nexus(isolate, *this, slot);
+      FeedbackNexus nexus(isolate, this, slot);
       feedback_updated |= nexus.Clear(behavior);
     }
   }

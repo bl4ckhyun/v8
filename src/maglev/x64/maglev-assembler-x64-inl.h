@@ -125,7 +125,7 @@ inline MapCompare::MapCompare(MaglevAssembler* masm, Register object,
 void MapCompare::Generate(Handle<Map> map, Condition cond, Label* if_true,
                           Label::Distance distance) {
   if (map_count_ == 1) {
-    masm_->Cmp(FieldOperand(object_, HeapObject::kMapOffset), map);
+    masm_->Cmp(FieldOperand(object_, offsetof(HeapObject, map_)), map);
     masm_->JumpIf(cond, if_true, distance);
   } else {
     masm_->CompareTaggedAndJumpIf(map_, map, cond, if_true, distance);
@@ -921,7 +921,7 @@ inline void MaglevAssembler::CompareMapWithRoot(Register object,
                                                 RootIndex index,
                                                 Register scratch) {
   if (CanBeImmediate(index)) {
-    cmp_tagged(FieldOperand(object, HeapObject::kMapOffset),
+    cmp_tagged(FieldOperand(object, offsetof(HeapObject, map_)),
                Immediate(static_cast<uint32_t>(ReadOnlyRootPtr(index))));
     return;
   }

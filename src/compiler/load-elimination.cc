@@ -989,7 +989,7 @@ Reduction LoadElimination::ReduceLoadField(Node* node,
   Node* control = NodeProperties::GetControlInput(node);
   AbstractState const* state = node_states_.Get(effect);
   if (state == nullptr) return NoChange();
-  if (access.offset == HeapObject::kMapOffset &&
+  if (access.offset == offsetof(HeapObject, map_) &&
       access.base_is_tagged == kTaggedBase) {
     DCHECK(IsAnyTagged(access.machine_type.representation()));
     ZoneRefSet<Map> object_maps;
@@ -1052,7 +1052,7 @@ Reduction LoadElimination::ReduceStoreField(Node* node,
   Node* const effect = NodeProperties::GetEffectInput(node);
   AbstractState const* state = node_states_.Get(effect);
   if (state == nullptr) return NoChange();
-  if (access.offset == HeapObject::kMapOffset &&
+  if (access.offset == offsetof(HeapObject, map_) &&
       access.base_is_tagged == kTaggedBase) {
     DCHECK(IsAnyTagged(access.machine_type.representation()));
     // Kill all potential knowledge about the {object}s map.
@@ -1346,7 +1346,7 @@ LoadElimination::ComputeLoopStateForStoreField(
     Node* current, LoadElimination::AbstractState const* state,
     FieldAccess const& access) const {
   Node* const object = NodeProperties::GetValueInput(current, 0);
-  if (access.offset == HeapObject::kMapOffset) {
+  if (access.offset == offsetof(HeapObject, map_)) {
     // Invalidate what we know about the {object}s map.
     state = state->KillMaps(object, zone());
   } else {

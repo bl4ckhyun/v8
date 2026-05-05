@@ -1698,7 +1698,7 @@ class RepresentationSelector {
                             value_representation, value);
     if (write_barrier_kind != kNoWriteBarrier) {
       if (base_taggedness == kTaggedBase &&
-          field_offset == HeapObject::kMapOffset) {
+          field_offset == offsetof(HeapObject, map_)) {
         write_barrier_kind = kMapWriteBarrier;
       }
     }

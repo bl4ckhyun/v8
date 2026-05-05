@@ -1236,7 +1236,7 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
       // Load a tagged field.
       if constexpr (is_subtype_v<T, Map>) {
         // If this is potentially loading a map, we need to check the offset.
-        if (offset == HeapObject::kMapOffset) {
+        if (offset == offsetof(HeapObject, map_)) {
           machine_type = MachineType::MapInHeader();
         }
       }

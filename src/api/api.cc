@@ -5248,13 +5248,13 @@ Maybe<bool> v8::Object::HasRealNamedCallbackProperty(Local<Context> context,
 
 bool v8::Object::HasNamedLookupInterceptor() const {
   auto self = *Utils::OpenDirectHandle(this);
-  if (!IsJSObject(*self)) return false;
+  if (!IsJSObject(self)) return false;
   return i::Cast<i::JSObject>(self)->HasNamedInterceptor();
 }
 
 bool v8::Object::HasIndexedLookupInterceptor() const {
   auto self = *Utils::OpenDirectHandle(this);
-  if (!IsJSObject(*self)) return false;
+  if (!IsJSObject(self)) return false;
   return i::Cast<i::JSObject>(self)->HasIndexedInterceptor();
 }
 
@@ -5264,7 +5264,7 @@ MaybeLocal<Value> v8::Object::GetRealNamedPropertyInPrototypeChain(
       context, RCCId::kAPI_Object_GetRealNamedPropertyInPrototypeChain};
   i::Isolate* i_isolate = api_scope.i_isolate();
   auto self = Utils::OpenDirectHandle(this);
-  if (!IsJSObject(*self) && !IsWasmObject(*self)) return {};
+  if (!i::IsJSObject(*self) && !i::IsWasmObject(*self)) return {};
   auto key_obj = Utils::OpenDirectHandle(*key);
   i::PrototypeIterator iter(i_isolate, self);
   if (iter.IsAtEnd()) return {};
@@ -5286,7 +5286,7 @@ v8::Object::GetRealNamedPropertyAttributesInPrototypeChain(
       i_isolate, context,
       RCCId::kAPI_Object_GetRealNamedPropertyAttributesInPrototypeChain};
   auto self = Utils::OpenDirectHandle(this);
-  if (!IsJSObject(*self) && !IsWasmObject(*self)) return {};
+  if (!i::IsJSObject(*self) && !i::IsWasmObject(*self)) return {};
   auto key_obj = Utils::OpenDirectHandle(*key);
   i::PrototypeIterator iter(i_isolate, self);
   if (iter.IsAtEnd()) return {};
