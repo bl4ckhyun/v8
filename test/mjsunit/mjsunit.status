@@ -3333,4 +3333,14 @@
   'regress/regress-crbug-999450': [FAIL],
   'regress/regress-v8-9394-2': [FAIL],
 }],
+
+##############################################################################
+['not temporal', {
+  # Needs temporal:
+  'regress/regress-463593768': [SKIP],
+  'regress/regress-464961493': [SKIP],
+  'regress/regress-493269623': [SKIP],
+  'regress/regress-495503781': [SKIP],
+  'regress/regress-temporal-zoneinfo': [SKIP],
+}],
 ]
