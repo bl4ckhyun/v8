@@ -1810,7 +1810,7 @@
 }], # gc_fuzzer or deopt_fuzzer
 
 ##############################################################################
-['gc_fuzzer or deopt_fuzzer or interrupt_fuzzer', {
+['num_fuzzer', {
   # BUG(v8:12842) Skipped until we remove flakes on NumFuzz.
   'compiler/regress-1224277': [SKIP],
   'regress/regress-1220974': [SKIP],
@@ -1858,7 +1858,9 @@
   'wasm/max-wasm-functions': [FUZZ_RARE, PASS],
   'wasm/memory-resizable-buffer-array-*': [FUZZ_RARE, PASS],
   'wasm/shared-memory*': [FUZZ_RARE, PASS],
-}], # gc_fuzzer or deopt_fuzzer or interrupt_fuzzer
+  # Fails due to CWD changes in arguments processing.
+  'd8/cwd/working_dir': [SKIP],
+}], # num_fuzzer
 
 ##############################################################################
 ['endurance_fuzzer', {
@@ -3319,5 +3321,4 @@
   'regress/regress-crbug-999450': [FAIL],
   'regress/regress-v8-9394-2': [FAIL],
 }],
-
 ]
