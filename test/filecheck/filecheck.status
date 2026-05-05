@@ -54,4 +54,9 @@
   'js-wasm-wrapper-inlining-eager-deopt': [SKIP],
   'js-wasm-wrapper-inlining-type-combos': [SKIP],
 }],
+
+['not sandbox', {
+  'wasm/regress-509312806': [SKIP],
+}],
+
 ]
