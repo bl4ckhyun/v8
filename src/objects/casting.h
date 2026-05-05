@@ -437,6 +437,16 @@ struct CastTraits<Weak<T>> {
   }
 };
 
+template <typename... T>
+struct CastTraits<Union<T...>> {
+  static inline bool AllowFrom(Tagged<Object> value) {
+    return (Is<T>(value) || ...);
+  }
+  static inline bool AllowFrom(Tagged<HeapObject> value) {
+    return (Is<T>(value) || ...);
+  }
+};
+
 template <>
 struct CastTraits<Object> {
   static inline bool AllowFrom(Tagged<Object> value) { return true; }

@@ -9,7 +9,6 @@
 // Include the non-inl header before the rest of the headers.
 
 #include "src/common/globals.h"
-#include "src/execution/isolate.h"
 #include "src/heap/heap-layout.h"
 #include "src/heap/heap.h"
 #include "src/objects/heap-object.h"

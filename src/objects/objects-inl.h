@@ -118,15 +118,6 @@ STRUCT_LIST(IS_HELPER_DEF_STRUCT)
 IS_HELPER_DEF(Number)
 #undef IS_HELPER_DEF
 
-template <typename... T>
-struct CastTraits<Union<T...>> {
-  static inline bool AllowFrom(Tagged<Object> value) {
-    return (Is<T>(value) || ...);
-  }
-  static inline bool AllowFrom(Tagged<HeapObject> value) {
-    return (Is<T>(value) || ...);
-  }
-};
 template <>
 struct CastTraits<JSPrimitive> {
   static inline bool AllowFrom(Tagged<Object> value) {

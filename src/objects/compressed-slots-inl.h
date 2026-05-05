@@ -13,7 +13,6 @@
 #include "src/common/ptr-compr-inl.h"
 #include "src/objects/casting.h"
 #include "src/objects/maybe-object-inl.h"
-#include "src/objects/objects-inl.h"
 
 namespace v8::internal {
 

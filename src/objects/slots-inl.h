@@ -12,11 +12,13 @@
 #include "src/base/atomic-utils.h"
 #include "src/common/globals.h"
 #include "src/common/ptr-compr-inl.h"
+#include "src/objects/casting.h"
 #include "src/objects/heap-object.h"
 #include "src/objects/map.h"
-#include "src/objects/objects-inl.h"
 #include "src/objects/tagged.h"
+#include "src/sandbox/code-pointer-table-inl.h"
 #include "src/sandbox/isolate-inl.h"
+#include "src/sandbox/trusted-pointer-table-inl.h"
 #include "src/utils/memcopy.h"
 
 namespace v8 {
