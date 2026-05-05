@@ -2626,7 +2626,7 @@ F16_OP_LIST(VISIT_F16_OP)
 #undef F16_OP_LIST
 #undef SIMD_TYPES
 
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
 void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
   uint8_t shuffle[kSimd128Size];
   bool is_swizzle;
@@ -2655,6 +2655,11 @@ void InstructionSelector::VisitI8x16Shuffle(OpIndex node) {
        g.UseImmediate(SimdShuffle::Pack4Lanes(shuffle_remapped + 12)));
 }
 
+#else
+void InstructionSelector::VisitI8x16Shuffle(OpIndex node) { UNREACHABLE(); }
+#endif  // V8_ENABLE_SIMD128
+
+#if V8_ENABLE_WEBASSEMBLY
 void InstructionSelector::VisitSetStackPointer(OpIndex node) {
   OperandGenerator g(this);
   const SetStackPointerOp& op = Cast<SetStackPointerOp>(node);
@@ -2663,8 +2668,6 @@ void InstructionSelector::VisitSetStackPointer(OpIndex node) {
   Emit(kArchSetStackPointer, 0, nullptr, 1, &input);
 }
 
-#else
-void InstructionSelector::VisitI8x16Shuffle(OpIndex node) { UNREACHABLE(); }
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 void InstructionSelector::VisitS128Zero(OpIndex node) {

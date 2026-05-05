@@ -58,12 +58,12 @@ static CpuFeatureSet CpuFeaturesImpliedByCompiler() {
 }
 
 bool CpuFeatures::SupportsSimd128() {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
   DCHECK(CpuFeatures::IsSupported(PPC_9_PLUS));
   return true;
 #else
   return false;
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 }
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {

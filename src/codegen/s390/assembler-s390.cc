@@ -165,11 +165,11 @@ static bool supportsSTFLE() {
 }
 
 bool CpuFeatures::SupportsSimd128() {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
   return true;
 #else
   return false;
-#endif  // V8_ENABLE_WEBASSEMBLY
+#endif  // V8_ENABLE_SIMD128
 }
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {
