@@ -222,42 +222,74 @@ if V8_DIR != V8_ROOT_DIR:
   ])
 
 
-def check_worktree_changes(config_path, changed_files):
-  d8_file = config_path / "d8"
+def check_worktree_changes(config):
+  config_path = config.path
   args_gn = config_path / "args.gn"
+  snapshot_file = config_path / "snapshot_blob.bin"
+  last_built_commit_file = config_path / "last_built_commit"
   last_test_run_file = config_path / "last_test_run"
 
-  if changed_files is None or not d8_file.exists() or not args_gn.exists():
+  if not args_gn.exists() or not last_built_commit_file.exists():
     return True, True
 
-  d8_mtime = d8_file.stat().st_mtime
-  if args_gn.stat().st_mtime > d8_mtime:
+  oldest_binary_mtime = float("inf")
+  snapshot_mtime = float("inf")
+  if snapshot_file.exists():
+    snapshot_mtime = snapshot_file.stat().st_mtime
+  for target in config.targets:
+    binary_file = config_path / target
+    if not binary_file.exists():
+      return True, True
+    binary_mtime = binary_file.stat().st_mtime
+    if binary_mtime < snapshot_mtime:
+      return True, True
+    oldest_binary_mtime = min(oldest_binary_mtime, binary_mtime)
+  if args_gn.stat().st_mtime > oldest_binary_mtime:
     return True, True
 
+  changed_files = []
+  last_built_commit = last_built_commit_file.read_text().strip()
+  try:
+    git_diff_out = subprocess.check_output(
+        ["git", "diff", "--name-only", last_built_commit],
+        cwd=V8_ROOT_DIR,
+        text=True).strip()
+    if git_diff_out:
+      changed_files = git_diff_out.splitlines()
+    git_untracked_out = subprocess.check_output(
+        ["git", "ls-files", "--others", "--exclude-standard"],
+        cwd=V8_ROOT_DIR,
+        text=True).strip()
+    if git_untracked_out:
+      changed_files.extend(git_untracked_out.splitlines())
+  except subprocess.CalledProcessError:
+    return True, True
+
+  is_js_test = lambda f: f.startswith("test/") and f.endswith(".js")
   build_pattern = re.compile(r'\.(cc|h|tq|gn|gni|bazel|S|asm|cc\.tmpl|cpp)$')
 
   for f in changed_files:
-    if (f.startswith("test/") or f.startswith(".agents/") or
-        f.startswith("agents/") or f.startswith("tools/")):
+    if is_js_test(f) or f.startswith(".agents/") or f.startswith("agents/"):
       continue
     if build_pattern.search(f):
       filepath = V8_ROOT_DIR / f
-      if filepath.exists() and filepath.stat().st_mtime > d8_mtime:
+      if filepath.exists() and filepath.stat().st_mtime > oldest_binary_mtime:
         return True, True
 
   if not last_test_run_file.exists():
     return False, True
   last_test_mtime = last_test_run_file.stat().st_mtime
-  if d8_mtime > last_test_mtime:
+  if oldest_binary_mtime > last_test_mtime:
     return False, True
 
   for f in changed_files:
-    if f.startswith("test/"):
+    if is_js_test(f):
       filepath = V8_ROOT_DIR / f
       if filepath.exists() and filepath.stat().st_mtime > last_test_mtime:
         return False, True
 
-  return False, False
+  # Skipping tests is OK if the default test set was requested.
+  return False, set(config.tests) == set(DEFAULT_TESTS)
 
 RECLIENT_CERT_CACHE = V8_ROOT_DIR / ".#gm_reclient_cert_cache"
 
@@ -1014,60 +1046,18 @@ def main(argv):
     print("# gcert")
     subprocess.check_call("gcert", shell=True)
   for c in configs:
-    # Compute changed files for conditional checking for this config
-    changed_files = []
-    try:
-      config_path = configs[c].path
-      last_built_commit_file = config_path / "last_built_commit"
-      use_fallback = True
-      if last_built_commit_file.exists():
-        last_commit = last_built_commit_file.read_text().strip()
-        try:
-          git_diff_out = subprocess.check_output(
-              ["git", "diff", "--name-only", last_commit],
-              cwd=V8_ROOT_DIR,
-              text=True).strip()
-          use_fallback = False
-        except subprocess.CalledProcessError:
-          pass
-
-      if use_fallback:
-        git_diff_out = subprocess.check_output(
-            ["git", "diff", "--name-only", "origin/main"],
-            cwd=V8_ROOT_DIR,
-            text=True).strip()
-
-      if git_diff_out:
-        changed_files.extend(git_diff_out.splitlines())
-
-      git_untracked_out = subprocess.check_output(
-          ["git", "ls-files", "--others", "--exclude-standard"],
-          cwd=V8_ROOT_DIR,
-          text=True).strip()
-      if git_untracked_out:
-        changed_files.extend(git_untracked_out.splitlines())
-    except subprocess.CalledProcessError:
-      changed_files = None
-
-    # By default we do conditional skipping if it's a full test run,
-    # or if we are just building.
-    is_full_run = ("ALL" in configs[c].tests or
-                   set(configs[c].tests) == set(DEFAULT_TESTS))
-    if is_full_run:
-      build_needed, test_needed = check_worktree_changes(
-          configs[c].path, changed_files)
+    build_needed, test_needed = check_worktree_changes(configs[c])
+    if not test_needed:
+      print("No changes since last successful test run, skipping.")
+      continue
+    build_code = 0
+    if build_needed:
+      build_code = configs[c].build()
+      return_code += build_code
     else:
-      build_needed, _ = check_worktree_changes(configs[c].path, changed_files)
-      test_needed = True
-
-    if test_needed:
-      build_code = 0
-      if build_needed:
-        build_code = configs[c].build()
-        return_code += build_code
-
-      if build_code == 0:
-        return_code += configs[c].run_tests()
+      print("No source changes since last build, reusing binaries.")
+    if build_code == 0:
+      return_code += configs[c].run_tests()
   if return_code == 0:
     _notify('Done!', 'V8 compilation finished successfully.')
   else:
