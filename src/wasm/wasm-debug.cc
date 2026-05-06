@@ -1262,6 +1262,19 @@ bool WasmScript::GetPossibleBreakpoints(
     const wasm::WasmFunction& func = functions[func_idx];
     if (func.code.length() == 0) continue;
 
+    if (V8_UNLIKELY(!module->function_was_validated(func_idx))) {
+      wasm::WasmDetectedFeatures unused_detected_features;
+      wasm::FunctionBody body{func.sig, func.code.offset(),
+                              module_start + func.code.offset(),
+                              module_start + func.code.end_offset(),
+                              module->type(func.sig_index).is_shared};
+      wasm::DecodeResult validation_result =
+          wasm::ValidateFunctionBody(&zone, native_module->enabled_features(),
+                                     module, &unused_detected_features, body);
+      if (validation_result.failed()) return false;
+      module->set_function_validated(func_idx);
+    }
+
     wasm::BodyLocalDecls locals;
     wasm::BytecodeIterator iterator(module_start + func.code.offset(),
                                     module_start + func.code.end_offset(),
