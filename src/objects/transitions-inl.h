@@ -245,7 +245,7 @@ bool TransitionArray::GetTargetIfExists(int transition_number, Isolate* isolate,
 
 int TransitionArray::SearchNameForTesting(Tagged<Name> name,
                                           int* out_insertion_index) {
-  return SearchName(name, out_insertion_index);
+  return SearchName(name, /* concurrent_search= */ false, out_insertion_index);
 }
 
 Tagged<Map> TransitionArray::SearchAndGetTargetForTesting(
@@ -320,24 +320,13 @@ int TransitionArray::BinarySearchName(Tagged<Name> name,
 int TransitionArray::LinearSearchName(Tagged<Name> name,
                                       int* out_insertion_index) {
   int len = number_of_transitions();
-  if (out_insertion_index != nullptr) {
-    uint32_t hash = name->hash();
-    for (int i = 0; i < len; i++) {
-      Tagged<Name> entry = GetKey(i);
-      if (entry == name) return i;
-      if (entry->hash() > hash) {
-        *out_insertion_index = i;
-        return kNotFound;
-      }
-    }
-    *out_insertion_index = len;
-    return kNotFound;
-  } else {
-    for (int i = 0; i < len; i++) {
-      if (GetKey(i) == name) return i;
-    }
-    return kNotFound;
+  for (int i = 0; i < len; i++) {
+    if (GetKey(i) == name) return i;
   }
+  if (out_insertion_index != nullptr) {
+    *out_insertion_index = len;
+  }
+  return kNotFound;
 }
 
 TransitionsAccessor::TransitionsAccessor(Isolate* isolate, Tagged<Map> map,
