@@ -376,17 +376,17 @@ class MachineLoweringReducer : public Next {
 
 #if V8_STATIC_ROOTS_BOOL
         // Fast check for NullOrUndefined before loading the map, if helpful.
-        V<Word32> is_null_or_undefined;
         if (kind == ObjectIsOp::Kind::kReceiverOrNullOrUndefined) {
           static_assert(StaticReadOnlyRoot::kFirstAllocatedRoot ==
                         StaticReadOnlyRoot::kUndefinedValue);
           static_assert(StaticReadOnlyRoot::kUndefinedValue +
                             sizeof(Undefined) ==
                         StaticReadOnlyRoot::kNullValue);
-          is_null_or_undefined = __ Uint32LessThanOrEqual(
-              __ TruncateWordPtrToWord32(
-                  __ BitcastHeapObjectToWordPtr(V<HeapObject>::Cast(input))),
-              StaticReadOnlyRoot::kNullValue);
+          GOTO_IF(__ Uint32LessThanOrEqual(
+                      __ TruncateWordPtrToWord32(__ BitcastHeapObjectToWordPtr(
+                          V<HeapObject>::Cast(input))),
+                      StaticReadOnlyRoot::kNullValue),
+                  done, 1);
         }
 #endif  // V8_STATIC_ROOTS_BOOL
 
@@ -428,9 +428,9 @@ class MachineLoweringReducer : public Next {
             break;
           case ObjectIsOp::Kind::kReceiverOrNullOrUndefined: {
 #if V8_STATIC_ROOTS_BOOL
-            V<Word32> is_non_primitive =
-                JSAnyIsNotPrimitiveHeapObject(input, map);
-            check = __ Word32BitwiseOr(is_null_or_undefined, is_non_primitive);
+            // Null and Undefined have already been checked before loading the
+            // map.
+            check = JSAnyIsNotPrimitiveHeapObject(input, map);
 #else
             static_assert(LAST_PRIMITIVE_HEAP_OBJECT_TYPE == ODDBALL_TYPE);
             static_assert(LAST_TYPE == LAST_JS_RECEIVER_TYPE);
