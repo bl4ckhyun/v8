@@ -3433,9 +3433,9 @@ TEST_F(ValueSerializerTestWithWasm, DefaultSerializationDelegate) {
   Local<Message> message = InvalidEncodeTest(MakeWasm());
   uint32_t msg_len = message->Get()->Length();
   std::unique_ptr<char[]> buff(new char[msg_len + 1]);
-  message->Get()->WriteOneByteV2(isolate(), 0, msg_len,
-                                 reinterpret_cast<uint8_t*>(buff.get()),
-                                 String::WriteFlags::kNullTerminate);
+  message->Get()->WriteOneByte(isolate(), 0, msg_len,
+                               reinterpret_cast<uint8_t*>(buff.get()),
+                               String::WriteFlags::kNullTerminate);
   // the message ends with the custom error string
   size_t custom_msg_len = strlen(kUnsupportedSerialization);
   ASSERT_GE(msg_len, custom_msg_len);

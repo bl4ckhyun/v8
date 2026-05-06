@@ -5882,7 +5882,7 @@ bool String::ContainsOnlyOneByte() const {
   return helper.Check(*str);
 }
 
-size_t String::Utf8LengthV2(Isolate* v8_isolate) const {
+size_t String::Utf8Length(Isolate* v8_isolate) const {
   auto str = Utils::OpenDirectHandle(this);
   return i::String::Utf8Length(reinterpret_cast<i::Isolate*>(v8_isolate), str);
 }
@@ -5904,21 +5904,20 @@ static inline void WriteHelperV2(i::Isolate* i_isolate, const String* string,
   }
 }
 
-void String::WriteV2(Isolate* v8_isolate, uint32_t offset, uint32_t length,
-                     uint16_t* buffer, int flags) const {
+void String::Write(Isolate* v8_isolate, uint32_t offset, uint32_t length,
+                   uint16_t* buffer, int flags) const {
   WriteHelperV2(reinterpret_cast<i::Isolate*>(v8_isolate), this, buffer, offset,
                 length, flags);
 }
 
-void String::WriteOneByteV2(Isolate* v8_isolate, uint32_t offset,
-                            uint32_t length, uint8_t* buffer, int flags) const {
+void String::WriteOneByte(Isolate* v8_isolate, uint32_t offset, uint32_t length,
+                          uint8_t* buffer, int flags) const {
   WriteHelperV2(reinterpret_cast<i::Isolate*>(v8_isolate), this, buffer, offset,
                 length, flags);
 }
 
-size_t String::WriteUtf8V2(Isolate* v8_isolate, char* buffer, size_t capacity,
-                           int flags,
-                           size_t* processed_characters_return) const {
+size_t String::WriteUtf8(Isolate* v8_isolate, char* buffer, size_t capacity,
+                         int flags, size_t* processed_characters_return) const {
   auto str = Utils::OpenDirectHandle(this);
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
   ApiRuntimeCallStatsScope rcs_scope(i_isolate, RCCId::kAPI_String_WriteUtf8);
@@ -11180,11 +11179,11 @@ String::Utf8Value::Utf8Value(v8::Isolate* v8_isolate, v8::Local<v8::Value> obj)
   TryCatch try_catch(v8_isolate);
   Local<String> str;
   if (!obj->ToString(context).ToLocal(&str)) return;
-  length_ = str->Utf8LengthV2(v8_isolate);
+  length_ = str->Utf8Length(v8_isolate);
   str_ = i::NewArray<char>(length_ + 1);
   int flags = String::WriteFlags::kNullTerminate |
               String::WriteFlags::kReplaceInvalidUtf8;
-  str->WriteUtf8V2(v8_isolate, str_, length_ + 1, flags);
+  str->WriteUtf8(v8_isolate, str_, length_ + 1, flags);
 }
 
 String::Utf8Value::~Utf8Value() { i::DeleteArray(str_); }
@@ -11202,8 +11201,7 @@ String::Value::Value(v8::Isolate* v8_isolate, v8::Local<v8::Value> obj)
   length_ = str->Length();
   SBXCHECK_LT(length_, String::kMaxLength);
   str_ = i::NewArray<uint16_t>(length_ + 1);
-  str->WriteV2(v8_isolate, 0, length_, str_,
-               String::WriteFlags::kNullTerminate);
+  str->Write(v8_isolate, 0, length_, str_, String::WriteFlags::kNullTerminate);
 }
 
 String::Value::~Value() { i::DeleteArray(str_); }

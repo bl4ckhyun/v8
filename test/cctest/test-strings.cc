@@ -888,7 +888,7 @@ TEST(Utf8Conversion) {
                               v8::NewStringType::kNormal,
                               static_cast<int>(strlen(one_byte_string)))
           .ToLocalChecked()
-          ->Utf8LengthV2(CcTest::isolate());
+          ->Utf8Length(CcTest::isolate());
   CHECK_EQ(strlen(one_byte_string), len);
   // A mixed one-byte and two-byte string
   // U+02E4 -> CB A4
@@ -906,14 +906,14 @@ TEST(Utf8Conversion) {
       v8::String::NewFromTwoByte(CcTest::isolate(), mixed_string,
                                  v8::NewStringType::kNormal, 5)
           .ToLocalChecked();
-  CHECK_EQ(10, mixed->Utf8LengthV2(CcTest::isolate()));
+  CHECK_EQ(10, mixed->Utf8Length(CcTest::isolate()));
   // Try encoding the string with all capacities
   char buffer[11];
   const char kNoChar = static_cast<char>(-1);
   for (int i = 0; i <= 10; i++) {
     // Clear the buffer before reusing it
     for (int j = 0; j < 11; j++) buffer[j] = kNoChar;
-    size_t written = mixed->WriteUtf8V2(CcTest::isolate(), buffer, i);
+    size_t written = mixed->WriteUtf8(CcTest::isolate(), buffer, i);
     CHECK_EQ(lengths[i], written);
     // Check that the contents are correct
     for (uint32_t j = 0; j < lengths[i]; j++)
@@ -940,21 +940,21 @@ TEST(Utf8ConversionPerf) {
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    ascii_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    ascii_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("ascii string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    ascii_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    ascii_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("ascii string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    ascii_string->WriteUtf8V2(CcTest::isolate(), buffer, 4 * size);
+    ascii_string->WriteUtf8(CcTest::isolate(), buffer, 4 * size);
     printf("ascii string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
@@ -962,21 +962,21 @@ TEST(Utf8ConversionPerf) {
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    one_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    one_byte_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("one byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    one_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    one_byte_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("one byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    one_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, 4 * size);
+    one_byte_string->WriteUtf8(CcTest::isolate(), buffer, 4 * size);
     printf("one byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
@@ -984,21 +984,21 @@ TEST(Utf8ConversionPerf) {
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    two_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    two_byte_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("two byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    two_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    two_byte_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("two byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    two_byte_string->WriteUtf8V2(CcTest::isolate(), buffer, 4 * size);
+    two_byte_string->WriteUtf8(CcTest::isolate(), buffer, 4 * size);
     printf("two byte string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
@@ -1006,21 +1006,21 @@ TEST(Utf8ConversionPerf) {
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    surrogate_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    surrogate_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("surrogate string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    surrogate_string->WriteUtf8V2(CcTest::isolate(), buffer, size);
+    surrogate_string->WriteUtf8(CcTest::isolate(), buffer, size);
     printf("surrogate string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
   {
     v8::base::ElapsedTimer timer;
     timer.Start();
-    surrogate_string->WriteUtf8V2(CcTest::isolate(), buffer, 4 * size);
+    surrogate_string->WriteUtf8(CcTest::isolate(), buffer, 4 * size);
     printf("surrogate string %0.3f\n", timer.Elapsed().InMillisecondsF());
     timer.Stop();
   }
@@ -1142,15 +1142,14 @@ TEST(ReplaceInvalidUtf8) {
   v8::Local<v8::String> string = CompileRun("'ab\\ud800cd'").As<v8::String>();
   char buffer[7];
   memset(buffer, 0, 7);
-  size_t size =
-      string->WriteUtf8V2(CcTest::isolate(), buffer, 7,
-                          v8::String::WriteFlags::kReplaceInvalidUtf8);
+  size_t size = string->WriteUtf8(CcTest::isolate(), buffer, 7,
+                                  v8::String::WriteFlags::kReplaceInvalidUtf8);
   CHECK_EQ(7, size);
   CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63\x64", buffer, 7));
 
   memset(buffer, 0, 7);
-  size = string->WriteUtf8V2(CcTest::isolate(), buffer, 6,
-                             v8::String::WriteFlags::kReplaceInvalidUtf8);
+  size = string->WriteUtf8(CcTest::isolate(), buffer, 6,
+                           v8::String::WriteFlags::kReplaceInvalidUtf8);
   CHECK_EQ(6, size);
   CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63", buffer, 6));
 }

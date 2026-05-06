@@ -25,8 +25,7 @@ const char kGlobalDebuggerScriptHandleLabel[] = "DevTools debugger";
 String16 calculateHash(v8::Isolate* isolate, v8::Local<v8::String> source) {
   uint32_t length = source->Length();
   std::unique_ptr<UChar[]> buffer(new UChar[length]);
-  source->WriteV2(isolate, 0, length,
-                  reinterpret_cast<uint16_t*>(buffer.get()));
+  source->Write(isolate, 0, length, reinterpret_cast<uint16_t*>(buffer.get()));
 
   const uint8_t* data = nullptr;
   size_t sizeInBytes = sizeof(UChar) * length;
@@ -69,9 +68,9 @@ String16 V8DebuggerScript::source(size_t pos, size_t len) const {
   size_t substringLength =
       std::min(len, static_cast<size_t>(v8Source->Length()) - pos);
   std::unique_ptr<UChar[]> buffer(new UChar[substringLength]);
-  v8Source->WriteV2(m_isolate, static_cast<uint32_t>(pos),
-                    static_cast<uint32_t>(substringLength),
-                    reinterpret_cast<uint16_t*>(buffer.get()));
+  v8Source->Write(m_isolate, static_cast<uint32_t>(pos),
+                  static_cast<uint32_t>(substringLength),
+                  reinterpret_cast<uint16_t*>(buffer.get()));
   return String16(buffer.get(), substringLength);
 }
 
