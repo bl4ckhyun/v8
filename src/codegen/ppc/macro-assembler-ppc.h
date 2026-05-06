@@ -9,6 +9,8 @@
 #error This header must be included via macro-assembler.h
 #endif
 
+#include <optional>
+
 #include "src/base/numbers/double.h"
 #include "src/base/platform/platform.h"
 #include "src/codegen/bailout-reason.h"
@@ -1860,6 +1862,11 @@ class V8_EXPORT_PRIVATE MacroAssembler : public MacroAssemblerBase {
 struct MoveCycleState {
   // Whether a move in the cycle needs a double scratch register.
   bool pending_double_scratch_register_use = false;
+  // Scratch scope that persists across MoveToTempLocation/MoveTempLocationTo,
+  // keeping the acquired register excluded from the scratch pool.
+  std::optional<UseScratchRegisterScope> temps;
+  // InstructionCode of the scratch register picked by MoveToTempLocation.
+  int scratch_reg_code = -1;
 };
 
 // Provides access to exit frame parameters (GC-ed).

@@ -1208,8 +1208,10 @@ void MacroAssembler::LoadConstantPoolPointerRegister() {
 void MacroAssembler::StubPrologue(StackFrame::Type type) {
   {
     ConstantPoolUnavailableScope constant_pool_unavailable(this);
-    mov(r11, Operand(StackFrame::TypeToMarker(type)));
-    PushCommonFrame(r11);
+    UseScratchRegisterScope temps(this);
+    Register scratch = temps.Acquire();
+    mov(scratch, Operand(StackFrame::TypeToMarker(type)));
+    PushCommonFrame(scratch);
   }
   if (V8_EMBEDDED_CONSTANT_POOL_BOOL) {
     LoadConstantPoolPointerRegister();

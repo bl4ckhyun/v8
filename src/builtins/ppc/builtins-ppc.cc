@@ -1216,14 +1216,17 @@ void Builtins::Generate_BaselineOutOfLinePrologue(MacroAssembler* masm) {
   __ LoadTaggedField(
       feedback_vector,
       FieldMemOperand(feedback_cell, offsetof(FeedbackCell, value_)), r0);
-  __ AssertFeedbackVector(feedback_vector, r11);
+  UseScratchRegisterScope temps(masm);
+  Register scratch = temps.Acquire();
+  __ AssertFeedbackVector(feedback_vector, scratch);
 
-
-  { ResetFeedbackVectorOsrUrgency(masm, feedback_vector, r11, r0); }
+  {
+    ResetFeedbackVectorOsrUrgency(masm, feedback_vector, scratch, r0);
+  }
 
   // Increment invocation count for the function.
   {
-    Register invocation_count = r11;
+    Register invocation_count = scratch;
     __ LoadU32(invocation_count,
                FieldMemOperand(feedback_vector,
                                FeedbackVector::kInvocationCountOffset),
@@ -1246,7 +1249,7 @@ void Builtins::Generate_BaselineOutOfLinePrologue(MacroAssembler* masm) {
         BaselineOutOfLinePrologueDescriptor::kCalleeContext);
     Register callee_js_function = descriptor.GetRegisterParameter(
         BaselineOutOfLinePrologueDescriptor::kClosure);
-    ResetJSFunctionAge(masm, callee_js_function, r11, r0);
+    ResetJSFunctionAge(masm, callee_js_function, scratch, r0);
     __ Push(callee_context, callee_js_function);
     DCHECK_EQ(callee_js_function, kJavaScriptCallTargetRegister);
     DCHECK_EQ(callee_js_function, kJSFunctionRegister);
@@ -1261,7 +1264,6 @@ void Builtins::Generate_BaselineOutOfLinePrologue(MacroAssembler* masm) {
     __ Push(argc, bytecodeArray);
 
     if (v8_flags.debug_code) {
-      Register scratch = r11;
       __ CompareObjectType(feedback_vector, scratch, scratch,
                            FEEDBACK_VECTOR_TYPE);
       __ Assert(eq, AbortReason::kExpectedFeedbackVector);
@@ -1281,7 +1283,7 @@ void Builtins::Generate_BaselineOutOfLinePrologue(MacroAssembler* masm) {
     // limit or tighter. By ensuring we have space until that limit after
     // building the frame we can quickly precheck both at once.
 
-    Register sp_minus_frame_size = r11;
+    Register sp_minus_frame_size = scratch;
     Register interrupt_limit = r0;
     __ SubS64(sp_minus_frame_size, sp, frame_size);
     __ LoadStackLimit(interrupt_limit, StackLimitKind::kInterruptStackLimit,
@@ -3031,7 +3033,8 @@ struct SaveWasmParamsScope {
 
 void Builtins::Generate_WasmLiftoffFrameSetup(MacroAssembler* masm) {
   Register func_index = wasm::kLiftoffFrameSetupFunctionReg;
-  Register vector = r11;
+  UseScratchRegisterScope temps(masm);
+  Register vector = temps.Acquire();
   Register scratch = ip;
   Label allocate_vector, done;
 
@@ -3078,7 +3081,7 @@ void Builtins::Generate_WasmLiftoffFrameSetup(MacroAssembler* masm) {
     __ push(func_index);
     // Allocate a stack slot where the runtime function can spill a pointer
     // to the {NativeModule}.
-    __ push(r11);
+    __ push(vector);
     __ LoadSmiLiteral(cp, Smi::zero());
     __ CallRuntime(Runtime::kWasmAllocateFeedbackVector, 3);
     __ mr(vector, kReturnRegister0);
@@ -3096,6 +3099,9 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
   // The function index was put in a register by the jump table trampoline.
   // Convert to Smi for the runtime call.
   __ SmiTag(kWasmCompileLazyFuncIndexRegister);
+
+  UseScratchRegisterScope temps(masm);
+  Register target = temps.Acquire();
 
   {
     HardAbortScope hard_abort(masm);  // Avoid calls to Abort.
@@ -3117,24 +3123,24 @@ void Builtins::Generate_WasmCompileLazy(MacroAssembler* masm) {
       __ LoadSmiLiteral(cp, Smi::zero());
       __ CallRuntime(Runtime::kWasmCompileLazy, 2);
       // The runtime function returns the jump table slot offset as a Smi. Use
-      // that to compute the jump target in r11.
+      // that to compute the jump target.
       __ SmiUntag(kReturnRegister0);
-      __ mr(r11, kReturnRegister0);
+      __ mr(target, kReturnRegister0);
 
       // Saved parameters are restored at the end of this block.
     }
 
     // After the instance data register has been restored, we can add the jump
-    // table start to the jump table offset already stored in r11.
+    // table start to the jump table offset already stored in the target.
     __ LoadU64(ip,
                FieldMemOperand(kWasmImplicitArgRegister,
                                WasmTrustedInstanceData::kJumpTableStartOffset),
                r0);
-    __ AddS64(r11, r11, ip);
+    __ AddS64(target, target, ip);
   }
 
   // Finally, jump to the jump table slot for the function.
-  __ Jump(r11);
+  __ Jump(target);
 }
 
 void Builtins::Generate_WasmDebugBreak(MacroAssembler* masm) {
