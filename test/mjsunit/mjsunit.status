@@ -983,6 +983,7 @@
   'compiler/fast-api-interface-types': [SKIP],
   'compiler/fast-api-deopt': [SKIP],
   'regress/regress-505551322': [SKIP],
+  'regress/regress-508672637': [SKIP],
   'compiler/regress-crbug-1201011': [SKIP],
   'compiler/regress-crbug-1201057': [SKIP],
   'compiler/regress-crbug-1201082': [SKIP],
@@ -2652,6 +2653,7 @@
   'compiler/fast-api-sequences-x64': [SKIP],
   'compiler/fast-api-annotations': [SKIP],
   'regress/regress-505551322': [SKIP],
+  'regress/regress-508672637': [SKIP],
 }],  # arch != x64 and arch != arm64 and arch != loong64 and arch != mips64 and arch != riscv64'
 
 ##############################################################################
@@ -2836,6 +2838,7 @@
   'regress/wasm/regress-368086282': [SKIP],
   'regress/wasm/regress-438770394': [SKIP],
   'regress/regress-505551322': [SKIP],
+  'regress/regress-508672637': [SKIP],
   'regress/regress-366323469': [FAIL],
   'regress/regress-366635361': [FAIL],
   # Maglev doesn't specialise the IsBeingInterpreted runtime func.

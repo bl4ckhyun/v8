@@ -421,6 +421,8 @@ std::ostream& operator<<(std::ostream& os, ChangeOrDeoptOp::Kind kind) {
       return os << "Float64NotHole";
     case ChangeOrDeoptOp::Kind::kInt32ToUint64:
       return os << "Int32ToUint64";
+    case ChangeOrDeoptOp::Kind::kInt64ToUint64:
+      return os << "Int64ToUint64";
     case ChangeOrDeoptOp::Kind::kFloat64ToUint64:
       return os << "Float64ToUint64";
   }

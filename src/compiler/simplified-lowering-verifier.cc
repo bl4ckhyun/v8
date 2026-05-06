@@ -558,6 +558,7 @@ void SimplifiedLoweringVerifier::VisitNode(Node* node,
       CASE(CheckedFloat64ToAdditiveSafeInteger)
       CASE(CheckedFloat64ToInt64)
       CASE(CheckedInt32ToUint64)
+      CASE(CheckedInt64ToUint64)
       CASE(CheckedFloat64ToUint64)
       CASE(CheckedTaggedSignedToInt32)
       CASE(CheckedTaggedToInt32)

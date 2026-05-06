@@ -1196,6 +1196,14 @@ OpIndex GraphBuilder::Process(
                               CheckForMinusZeroMode::kDontCheckForMinusZero,
                               params.feedback());
     }
+    case IrOpcode::kCheckedInt64ToUint64: {
+      DCHECK(dominating_frame_state.valid());
+      const CheckParameters& params = CheckParametersOf(node->op());
+      return __ ChangeOrDeopt(Map(node->InputAt(0)), dominating_frame_state,
+                              ChangeOrDeoptOp::Kind::kInt64ToUint64,
+                              CheckForMinusZeroMode::kDontCheckForMinusZero,
+                              params.feedback());
+    }
 
     case IrOpcode::kCheckedTaggedToInt32: {
       DCHECK(dominating_frame_state.valid());

@@ -329,6 +329,7 @@
   V(CheckedFloat64ToInt32)               \
   V(CheckedFloat64ToInt64)               \
   V(CheckedInt32ToUint64)                \
+  V(CheckedInt64ToUint64)                \
   V(CheckedFloat64ToUint64)              \
   V(CheckedFloat64ToAdditiveSafeInteger) \
   V(CheckedTaggedSignedToInt32)          \
