@@ -959,17 +959,18 @@ Scope* Scope::FinalizeBlockScope() {
   // Reparent inner scopes.
   if (inner_scope_ != nullptr) {
     Scope* scope = inner_scope_;
-    scope->outer_scope_ = outer_scope();
-    if (private_name_lookup_skips_outer_class()) {
-      scope->set_private_name_lookup_skips_outer_class(true);
-    }
-    while (scope->sibling_ != nullptr) {
-      scope = scope->sibling_;
+    do {
       scope->outer_scope_ = outer_scope();
       if (private_name_lookup_skips_outer_class()) {
         scope->set_private_name_lookup_skips_outer_class(true);
       }
-    }
+      if (scope->is_function_scope()) {
+        scope->set_is_hoisted_in_context(false);
+      }
+      if (scope->sibling_ == nullptr) break;
+      scope = scope->sibling_;
+    } while (true);
+
     scope->sibling_ = outer_scope()->inner_scope_;
     outer_scope()->inner_scope_ = inner_scope_;
     inner_scope_ = nullptr;
@@ -2496,6 +2497,19 @@ bool UpdateNeedsHoleCheck(Variable* var, VariableProxy* proxy, Scope* scope,
       var->set_hole_check_state(Variable::HoleCheckState::kSkip);
     }
     return needs_check;
+  }
+
+  if (var->mode() == VariableMode::kDynamic) {
+    if (var->has_local_if_not_shadowed()) {
+      bool needs_check = UpdateNeedsHoleCheck(var->local_if_not_shadowed(),
+                                              proxy, scope, access_position);
+      if (needs_check) {
+        // Dynamic variables are fully handled in the runtime so don't need a
+        // hole check.
+        proxy->clear_needs_hole_check(var);
+      }
+    }
+    return false;
   }
 
   if (var->initialization_flag() == kCreatedInitialized) return false;

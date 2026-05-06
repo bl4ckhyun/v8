@@ -1595,6 +1595,10 @@ class VariableProxy final : public Expression {
     bit_field_ =
         HoleCheckModeField::update(bit_field_, HoleCheckMode::kRequired);
   }
+  void clear_needs_hole_check(Variable* var) {
+    DCHECK(var->is_dynamic());
+    bit_field_ = HoleCheckModeField::update(bit_field_, HoleCheckMode::kElided);
+  }
 
   bool IsPrivateName() const { return raw_name()->IsPrivateName(); }
 
