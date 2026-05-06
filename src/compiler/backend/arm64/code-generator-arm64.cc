@@ -647,16 +647,16 @@ void EmitFpOrNeonUnop(MacroAssembler* masm, Fn fn, Instruction* instr,
       __ Casal##suffix(i.Output##reg(), i.Input##reg(3),                   \
                        MemOperand(i.TempRegister(0)));                     \
     } else {                                                               \
-      Label compareExchange;                                               \
+      Label compare_exchange;                                              \
       Label exit;                                                          \
-      __ Bind(&compareExchange);                                           \
+      __ Bind(&compare_exchange);                                          \
       RecordTrapInfoIfNeeded(zone(), this, opcode, instr, __ pc_offset()); \
       __ ldaxr##suffix(i.Output##reg(), i.TempRegister(0));                \
       __ Cmp(i.Output##reg(), Operand(i.Input##reg(2), ext));              \
       __ B(ne, &exit);                                                     \
       __ stlxr##suffix(i.TempRegister32(1), i.Input##reg(3),               \
                        i.TempRegister(0));                                 \
-      __ Cbnz(i.TempRegister32(1), &compareExchange);                      \
+      __ Cbnz(i.TempRegister32(1), &compare_exchange);                     \
       __ Bind(&exit);                                                      \
     }                                                                      \
   } while (0)
@@ -2738,30 +2738,61 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       ASSEMBLE_ATOMIC_COMPARE_EXCHANGE_INTEGER(, UXTX, Register);
       break;
     case kAtomicCompareExchangeWithWriteBarrier: {
-      if constexpr (COMPRESS_POINTERS_BOOL) {
-        ASSEMBLE_ATOMIC_COMPARE_EXCHANGE_INTEGER(, UXTW, Register32);
-        // Contrary to x64, the instruction sequence we emit on arm64 always
-        // writes an uncompressed value into the output register, so we can
-        // unconditionally decompress it.
-        __ Add(i.OutputRegister(), i.OutputRegister(),
-               kPtrComprCageBaseRegister);
-      } else {
-        ASSEMBLE_ATOMIC_COMPARE_EXCHANGE_INTEGER(, UXTX, Register);
-      }
-      if (v8_flags.disable_write_barriers) break;
-      // Emit the write barrier.
-      Register object = i.InputRegister(0);
-      Register offset = i.InputRegister(1);
-      Register new_value = i.InputRegister(3);
-      auto ool = zone()->New<OutOfLineRecordWrite>(
-          this, object, offset, new_value, RecordWriteMode::kValueIsAny,
-          DetermineStubCallMode(), &unwinding_info_writer_);
-      __ B(ne, ool->exit());
-      __ JumpIfSmi(new_value, ool->exit());
+      // Perform the atomic compare exchange.
+      // This is mostly ASSEMBLE_ATOMIC_COMPARE_EXCHANGE_INTEGER, either on 32
+      // or 64 bit depending on whether pointer compression is enabled.
 
-      __ CheckPageFlag(object, MemoryChunk::kPointersFromHereAreInterestingMask,
-                       ne, ool->entry());
-      __ Bind(ool->exit());
+      __ Add(i.TempRegister(0), i.InputRegister(0), i.InputRegister(1));
+      Register output_register =
+          COMPRESS_POINTERS_BOOL ? i.OutputRegister32() : i.OutputRegister();
+      Register expected =
+          COMPRESS_POINTERS_BOOL ? i.InputRegister32(2) : i.InputRegister(2);
+      Register new_value =
+          COMPRESS_POINTERS_BOOL ? i.InputRegister32(3) : i.InputRegister(3);
+      Extend extend = COMPRESS_POINTERS_BOOL ? UXTW : UXTX;
+
+      Label exit;
+      if (CpuFeatures::IsSupported(LSE)) {
+        DCHECK_NE(i.OutputRegister(), i.InputRegister(2));
+        __ Mov(output_register, expected);
+        CpuFeatureScope scope(masm(), LSE);
+        RecordTrapInfoIfNeeded(zone(), this, opcode, instr, __ pc_offset());
+        __ Casal(output_register, new_value, MemOperand(i.TempRegister(0)));
+        // If the loaded value isn't the expected value, nothing was written,
+        // so the write barrier can be skipped.
+        __ Cmp(output_register, Operand(expected, extend));
+        __ B(ne, &exit);
+      } else {
+        Label compare_exchange;
+        __ Bind(&compare_exchange);
+        RecordTrapInfoIfNeeded(zone(), this, opcode, instr, __ pc_offset());
+        __ ldaxr(output_register, i.TempRegister(0));
+        __ Cmp(output_register, Operand(expected, extend));
+        __ B(ne, &exit);
+        __ stlxr(i.TempRegister32(1), new_value, i.TempRegister(0));
+        __ Cbnz(i.TempRegister32(1), &compare_exchange);
+      }
+      if (!v8_flags.disable_write_barriers) {
+        Register object = i.InputRegister(0);
+        Register offset = i.InputRegister(1);
+        Register new_value = i.InputRegister(3);
+        auto ool = zone()->New<OutOfLineRecordWrite>(
+            this, object, offset, new_value, RecordWriteMode::kValueIsAny,
+            DetermineStubCallMode(), &unwinding_info_writer_);
+        __ JumpIfSmi(new_value, ool->exit());
+        __ CheckPageFlag(object,
+                         MemoryChunk::kPointersFromHereAreInterestingMask, ne,
+                         ool->entry());
+        __ Bind(ool->exit());
+      }
+      __ Bind(&exit);
+
+      if constexpr (COMPRESS_POINTERS_BOOL) {
+        // Contrary to x64, the instruction sequence we emit on arm64 always
+        // writes a compressed value into the output register, so we can
+        // unconditionally decompress it.
+        __ DecompressTagged(i.OutputRegister(), i.OutputRegister());
+      }
       break;
     }
     case kAtomicSubInt8:

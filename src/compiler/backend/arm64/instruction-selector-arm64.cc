@@ -4115,7 +4115,10 @@ void VisitAtomicCompareExchange(InstructionSelector* selector, OpIndex node,
   }
   if (CpuFeatures::IsSupported(LSE)) {
     InstructionOperand temps[] = {g.TempRegister()};
-    outputs[0] = g.DefineSameAsInput(node, 2);
+    // The tagged variant needs to not overwrite the input register to check
+    // whether the cas was successful and a write barrier needs to be executed.
+    outputs[0] = has_write_barrier ? g.DefineAsRegister(node)
+                                   : g.DefineSameAsInput(node, 2);
     selector->Emit(code, arraysize(outputs), outputs, arraysize(inputs), inputs,
                    arraysize(temps), temps);
   } else {

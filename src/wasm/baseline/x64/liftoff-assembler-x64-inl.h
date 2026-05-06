@@ -1110,6 +1110,29 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
     if (result.gp() != rax) {
       movl(result.gp(), rax);
     }
+  } else {
+    cmpxchgq(dst_op, value_reg);
+    if (result.gp() != rax) {
+      movq(result.gp(), rax);
+    }
+  }
+
+  if (!v8_flags.disable_write_barriers) {
+    Label done;
+#ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
+    // TODO(429142815): WriteBarrier builtins currently require a sandbox mode
+    // switch, so more code is emitted and we need far jumps here. Once the
+    // builtins run in sandboxed mode, we can again always use near jumps.
+    Label::Distance distance = Label::kFar;
+#else
+    Label::Distance distance = Label::kNear;
+#endif  // V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
+    j(not_equal, &done, distance);
+    EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
+    bind(&done);
+  }
+
+  if constexpr (COMPRESS_POINTERS_BOOL) {
     // Pointer decompression needs to use an or instead of an add as
     // value_reg is a full pointer. If the expected value stored in rax matches
     // the expected value, rax is left unmodified which already contains a
@@ -1119,26 +1142,7 @@ void LiftoffAssembler::AtomicCompareExchangeTaggedPointer(
     // value if it isn't already decompressed but keeping it unmodified
     // otherwise.
     orq(result.gp(), kPtrComprCageBaseRegister);
-  } else {
-    cmpxchgq(dst_op, value_reg);
-    if (result.gp() != rax) {
-      movq(result.gp(), rax);
-    }
   }
-
-  if (v8_flags.disable_write_barriers) return;
-  Label done;
-#ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
-  // TODO(429142815): WriteBarrier builtins currently require a sandbox mode
-  // switch, so more code is emitted and we need far jumps here. Once the
-  // builtins run in sandboxed mode, we can again always use near jumps.
-  Label::Distance distance = Label::kFar;
-#else
-  Label::Distance distance = Label::kNear;
-#endif  // V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
-  j(not_equal, &done, distance);
-  EmitWriteBarrier(dst_addr, dst_op, new_value_for_write_barrier, pinned);
-  bind(&done);
 }
 
 void LiftoffAssembler::AtomicFence() { mfence(); }
