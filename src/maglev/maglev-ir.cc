@@ -4807,8 +4807,6 @@ void LoadDictionaryField::SetValueLocationConstraints() {
 #if !defined(V8_TARGET_ARCH_X64) && !defined(V8_TARGET_ARCH_ARM64)
 void LoadDictionaryField::GenerateCode(MaglevAssembler* masm,
                                        const ProcessingState& state) {
-  SaveRegisterStateForCall save_register_state(masm, register_snapshot());
-
   __ CallBuiltin<Builtin::kLoadIC>(
       ContextInput(), ObjectInput(), name().object(),
       TaggedIndex::FromIntptr(feedback().index()), feedback().vector);

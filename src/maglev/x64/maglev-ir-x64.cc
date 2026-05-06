@@ -1250,7 +1250,9 @@ void LoadDictionaryField::GenerateCode(MaglevAssembler* masm,
               node->ContextInput(), object, node->name().object(),
               TaggedIndex::FromIntptr(node->feedback().index()),
               node->feedback().vector);
-          masm->DefineExceptionHandlerAndLazyDeoptPoint(node);
+          masm->DefineExceptionHandlerPoint(node);
+          save_register_state.DefineSafepointWithLazyDeopt(
+              node->lazy_deopt_info());
           __ Move(result_reg, kReturnRegister0);
         }
         __ Jump(*done);
