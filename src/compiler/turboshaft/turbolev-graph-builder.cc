@@ -1596,7 +1596,8 @@ class GraphBuildingNodeProcessor {
 
     return maglev::ProcessResult::kContinue;
   }
-  V<Any> GenerateBuiltinCall(
+  template <typename Type = Any>
+  V<Type> GenerateBuiltinCall(
       maglev::NodeBase* node, Builtin builtin,
       OptionalV<FrameState> frame_state, base::Vector<const OpIndex> arguments,
       std::optional<int> stack_arg_count = std::nullopt) {
@@ -1615,9 +1616,10 @@ class GraphBuildingNodeProcessor {
 
     LazyDeoptOnThrow lazy_deopt_on_throw = ShouldLazyDeoptOnThrow(node);
 
-    return __ Call(stub_code, frame_state, base::VectorOf(arguments),
-                   TSCallDescriptor::Create(call_descriptor, CanThrow::kYes,
-                                            lazy_deopt_on_throw, graph_zone()));
+    return __ Call<Type>(
+        stub_code, frame_state, base::VectorOf(arguments),
+        TSCallDescriptor::Create(call_descriptor, CanThrow::kYes,
+                                 lazy_deopt_on_throw, graph_zone()));
   }
   maglev::ProcessResult Process(maglev::CallBuiltin* node,
                                 const maglev::ProcessingState& state) {
@@ -2182,7 +2184,7 @@ class GraphBuildingNodeProcessor {
                                 const maglev::ProcessingState& state) {
     GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());
 
-    V<Object> object = Map(node->ObjectInput());
+    V<JSReceiver> object = Map(node->ObjectInput());
     V<Name> name = __ HeapConstant(node->name().object());
 
     Label<Object> done(this);
@@ -2192,35 +2194,34 @@ class GraphBuildingNodeProcessor {
 
     if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
       UNREACHABLE();
-    } else {
-      int entry_index = NameDictionary::kElementsStartIndex +
-                        node->dictionary_index() * NameDictionary::kEntrySize;
-      int max_index = entry_index + NameDictionary::kEntrySize - 1;
+    }
 
-      V<Word32> length = V<Word32>::Cast(__ Load(
-          properties, LoadOp::Kind::TaggedBase(),
-          MemoryRepresentation::Uint32(), FixedArrayBase::kLengthOffset));
+    int entry_index = NameDictionary::kElementsStartIndex +
+                      node->dictionary_index() * NameDictionary::kEntrySize;
+    int max_index = entry_index + NameDictionary::kEntrySize - 1;
 
-      IF (LIKELY(__ Uint32LessThan(__ Word32Constant(max_index), length))) {
-        int key_offset = NameDictionary::OffsetOfElementAt(
-            entry_index + NameDictionary::kEntryKeyIndex);
-        V<Object> key = __ LoadTaggedField(properties, key_offset);
+    V<Word32> length =
+        __ LoadField<Word32>(properties, AccessBuilder::ForFixedArrayLength());
 
-        IF (LIKELY(__ TaggedEqual(key, name))) {
-          int details_offset = NameDictionary::OffsetOfElementAt(
-              entry_index + NameDictionary::kEntryDetailsIndex);
-          V<Object> details = __ LoadTaggedField(properties, details_offset);
+    IF (LIKELY(__ Uint32LessThan(max_index, length))) {
+      int key_offset = NameDictionary::OffsetOfElementAt(
+          entry_index + NameDictionary::kEntryKeyIndex);
+      V<Object> key = __ LoadTaggedField(properties, key_offset);
 
-          V<Word32> details_int = __ UntagSmi(V<Smi>::Cast(details));
-          V<Word32> kind = __ Word32BitwiseAnd(
-              details_int, PropertyDetails::KindField::kMask);
-          IF (LIKELY(__ Word32Equal(kind, PropertyDetails::KindField::encode(
-                                              PropertyKind::kData)))) {
-            int value_offset = NameDictionary::OffsetOfElementAt(
-                entry_index + NameDictionary::kEntryValueIndex);
-            V<Object> value = __ LoadTaggedField(properties, value_offset);
-            GOTO(done, value);
-          }
+      IF (LIKELY(__ TaggedEqual(key, name))) {
+        int details_offset = NameDictionary::OffsetOfElementAt(
+            entry_index + NameDictionary::kEntryDetailsIndex);
+        V<Smi> details = __ LoadTaggedField<Smi>(properties, details_offset);
+
+        V<Word32> details_int = __ UntagSmi(details);
+        V<Word32> kind =
+            __ Word32BitwiseAnd(details_int, PropertyDetails::KindField::kMask);
+        IF (LIKELY(__ Word32Equal(kind, PropertyDetails::KindField::encode(
+                                            PropertyKind::kData)))) {
+          int value_offset = NameDictionary::OffsetOfElementAt(
+              entry_index + NameDictionary::kEntryValueIndex);
+          V<Object> value = __ LoadTaggedField(properties, value_offset);
+          GOTO(done, value);
         }
       }
     }
@@ -2229,8 +2230,8 @@ class GraphBuildingNodeProcessor {
         object, name, __ TaggedIndexConstant(node->feedback().index()),
         __ HeapConstant(node->feedback().vector), Map(node->ContextInput())};
 
-    V<Object> fallback_result = V<Object>::Cast(GenerateBuiltinCall(
-        node, Builtin::kLoadIC, frame_state, base::VectorOf(arguments)));
+    V<Object> fallback_result = GenerateBuiltinCall<Object>(
+        node, Builtin::kLoadIC, frame_state, base::VectorOf(arguments));
     GOTO(done, fallback_result);
 
     BIND(done, result);

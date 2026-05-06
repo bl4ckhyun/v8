@@ -991,7 +991,7 @@ PropertyAccessInfo AccessInfoFactory::ComputePropertyAccessInfo(
 
   if (map.is_dictionary_map() && access_mode == AccessMode::kLoad &&
       handler.has_value() && handler->IsSmi()) {
-    if (!V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
+    if constexpr (!V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
       auto smi_handler = Cast<Smi>(*handler->object());
       if (LoadHandler::GetHandlerKind(smi_handler) ==
           LoadHandler::Kind::kNormal) {
