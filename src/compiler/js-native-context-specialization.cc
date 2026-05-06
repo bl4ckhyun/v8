@@ -3595,9 +3595,9 @@ JSNativeContextSpecialization::BuildElementAccess(
                 simplified()->LoadField(
                     AccessBuilder::ForJSArrayLength(elements_kind)),
                 receiver, effect, control)
-          : graph()->NewNode(
-                simplified()->LoadField(AccessBuilder::ForFixedArrayLength()),
-                elements, effect, control);
+          : graph()->NewNode(simplified()->LoadField(
+                                 AccessBuilder::ForFixedArrayLengthLegacy()),
+                             elements, effect, control);
 
   // Check if we might need to grow the {elements} backing store.
   if (keyed_mode.IsStore() && StoreModeCanGrow(keyed_mode.store_mode())) {
@@ -3879,7 +3879,7 @@ JSNativeContextSpecialization::BuildElementAccess(
     } else if (StoreModeCanGrow(keyed_mode.store_mode())) {
       // Determine the length of the {elements} backing store.
       Node* elements_length = effect = graph()->NewNode(
-          simplified()->LoadField(AccessBuilder::ForFixedArrayLength()),
+          simplified()->LoadField(AccessBuilder::ForFixedArrayLengthLegacy()),
           elements, effect, control);
 
       // Validate the {index} depending on holeyness:

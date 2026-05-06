@@ -220,7 +220,14 @@ class V8_EXPORT_PRIVATE AccessBuilder final
   static FieldAccess ForJSRegExpLastIndex();
 
   // Provides access to FixedArray::length() field.
+  // TODO(dmercadier): get rid of ForFixedArrayLengthLegacy once we get rid of
+  // Turbofan. It's currently only used to make Turbofan's escape analysis
+  // happy.
+  static FieldAccess ForFixedArrayLengthLegacy();
   static FieldAccess ForFixedArrayLength();
+#if TAGGED_SIZE_8_BYTES
+  static FieldAccess ForFixedArrayLengthPadding();
+#endif
 
   // Provides access to Context::length() field.
   static FieldAccess ForContextLength();

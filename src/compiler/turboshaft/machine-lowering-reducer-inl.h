@@ -2029,14 +2029,14 @@ class MachineLoweringReducer : public Next {
         size, allocation_type, kTaggedAligned);
     __ InitializeField(uninitialized_array, AccessBuilder::ForMap(),
                        __ HeapConstant(array_map));
-#if TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
-    __ InitializeField(uninitialized_array,
-                       AccessBuilder::ForFixedArrayLength(), length);
-#else
     __ InitializeField(uninitialized_array,
                        AccessBuilder::ForFixedArrayLength(),
                        __ TruncateWordPtrToWord32(length));
-#endif  // TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
+#if TAGGED_SIZE_8_BYTES
+    __ InitializeField(uninitialized_array,
+                       AccessBuilder::ForFixedArrayLengthPadding(),
+                       __ Word32Constant(0));
+#endif
     // TODO(nicohartmann@): Should finish initialization only after all elements
     // have been initialized.
     auto array = __ FinishInitialization(std::move(uninitialized_array));

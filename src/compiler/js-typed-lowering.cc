@@ -2442,7 +2442,7 @@ Reduction JSTypedLowering::ReduceJSForInPrepare(Node* node) {
         // The {enumerator} is the FixedArray with the keys to iterate.
         cache_array_false = enumerator;
         cache_length_false = efalse = graph()->NewNode(
-            simplified()->LoadField(AccessBuilder::ForFixedArrayLength()),
+            simplified()->LoadField(AccessBuilder::ForFixedArrayLengthLegacy()),
             cache_array_false, efalse, if_fixed_array);
       }
 

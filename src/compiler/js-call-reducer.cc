@@ -549,7 +549,7 @@ class IteratingArrayBuiltinReducerAssembler : public JSCallReducerAssembler {
     return LoadField<FixedArrayBase>(AccessBuilder::ForJSObjectElements(), o);
   }
   TNode<Smi> LoadFixedArrayBaseLength(TNode<FixedArrayBase> o) {
-    return LoadField<Smi>(AccessBuilder::ForFixedArrayLength(), o);
+    return LoadField<Smi>(AccessBuilder::ForFixedArrayLengthLegacy(), o);
   }
 
   TNode<Boolean> HoleCheck(ElementsKind kind, TNode<Object> v) {

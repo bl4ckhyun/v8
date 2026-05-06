@@ -740,7 +740,7 @@ FieldAccess AccessBuilder::ForJSRegExpLastIndex() {
 }
 
 // static
-FieldAccess AccessBuilder::ForFixedArrayLength() {
+FieldAccess AccessBuilder::ForFixedArrayLengthLegacy() {
   FieldAccess access = {
       kTaggedBase, offsetof(FixedArray, length_), MaybeHandle<Name>(),
       OptionalMapRef(), TypeCache::Get()->kFixedArrayLengthType,
@@ -758,6 +758,36 @@ FieldAccess AccessBuilder::ForFixedArrayLength() {
   access.is_immutable = true;
   return access;
 }
+
+// static
+FieldAccess AccessBuilder::ForFixedArrayLength() {
+  FieldAccess access = {kTaggedBase,
+                        offsetof(FixedArray, length_),
+                        MaybeHandle<Name>(),
+                        OptionalMapRef(),
+                        TypeCache::Get()->kFixedArrayLengthType,
+                        MachineType::Uint32(),
+                        kNoWriteBarrier,
+                        "FixedArrayLength"};
+  access.is_immutable = true;
+  return access;
+}
+
+#if TAGGED_SIZE_8_BYTES
+// static
+FieldAccess AccessBuilder::ForFixedArrayLengthPadding() {
+  FieldAccess access = {kTaggedBase,
+                        offsetof(FixedArray, length_) + sizeof(uint32_t),
+                        MaybeHandle<Name>(),
+                        OptionalMapRef(),
+                        TypeCache::Get()->kSingletonZero,
+                        MachineType::Uint32(),
+                        kNoWriteBarrier,
+                        "FixedArrayLengthPadding"};
+  access.is_immutable = true;
+  return access;
+}
+#endif
 
 // static
 FieldAccess AccessBuilder::ForContextLength() {

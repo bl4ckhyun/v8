@@ -1420,10 +1420,10 @@ Reduction JSCreateLowering::ReduceJSCreateObject(Node* node) {
     a.Store(AccessBuilder::ForMap(), map);
     // Initialize FixedArray fields.
 #if TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
-    a.Store(AccessBuilder::ForFixedArrayLength(),
+    a.Store(AccessBuilder::ForFixedArrayLengthLegacy(),
             jsgraph()->Uint64Constant(length));
 #else
-    a.Store(AccessBuilder::ForFixedArrayLength(),
+    a.Store(AccessBuilder::ForFixedArrayLengthLegacy(),
             jsgraph()->Uint32Constant(length));
 #endif  // TAGGED_SIZE_8_BYTES && !V8_TARGET_BIG_ENDIAN
     // Initialize HashTable fields.
