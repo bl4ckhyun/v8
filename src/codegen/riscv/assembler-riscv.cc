@@ -99,7 +99,13 @@ static CpuFeatureSet SimulatorFeatures() {
 }
 #endif
 
-bool CpuFeatures::SupportsSimd128() { return IsSupported(RISCV_SIMD); }
+bool CpuFeatures::SupportsSimd128() {
+#if V8_ENABLE_SIMD128
+  return IsSupported(RISCV_SIMD);
+#else
+  return false;
+#endif  // V8_ENABLE_SIMD128
+}
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {
   supported_ |= CpuFeaturesImpliedByCompiler();
