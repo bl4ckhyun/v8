@@ -405,6 +405,22 @@ DirectHandle<InternalizedString> StringTable::LookupString(
   return result;
 }
 
+bool StringTable::HasString(Isolate* isolate, DirectHandle<String> string) {
+  DirectHandle<InternalizedString> result;
+  DirectHandle<String> flat_string =
+      String::Flatten(isolate, indirect_handle(string, isolate));
+  if (TryCast<InternalizedString>(flat_string, &result)) return true;
+
+  uint32_t raw_hash_field = flat_string->raw_hash_field(kAcquireLoad);
+  if (String::IsInternalizedForwardingIndex(raw_hash_field)) return true;
+
+  if (!Name::IsHashFieldComputed(raw_hash_field)) {
+    raw_hash_field = flat_string->EnsureRawHash();
+  }
+  InternalizedStringKey key(flat_string, raw_hash_field);
+  return TryLookupKey(isolate, &key).has_value();
+}
+
 template <typename StringTableKey, typename IsolateT>
 std::optional<DirectHandle<InternalizedString>> StringTable::TryLookupKey(
     IsolateT* isolate, StringTableKey* key) {

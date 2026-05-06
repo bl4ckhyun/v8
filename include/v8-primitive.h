@@ -261,6 +261,11 @@ class V8_EXPORT String : public Name {
    */
   Local<String> InternalizeString(Isolate* isolate);
 
+  /**
+   * Returns true if the string is already in the string table of the isolate.
+   */
+  bool IsInStringTable(Isolate* isolate) const;
+
   class V8_EXPORT ExternalStringResourceBase {
    public:
     virtual ~ExternalStringResourceBase() = default;

@@ -5989,6 +5989,12 @@ Local<v8::String> v8::String::InternalizeString(Isolate* v8_isolate) {
   return Utils::ToLocal(isolate->factory()->InternalizeString(str));
 }
 
+bool v8::String::IsInStringTable(Isolate* v8_isolate) const {
+  auto* isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
+  auto str = Utils::OpenDirectHandle(this);
+  return isolate->string_table()->HasString(isolate, str);
+}
+
 void v8::String::VerifyExternalStringResourceBase(
     const v8::String::ExternalStringResourceBase* value,
     Encoding encoding) const {
