@@ -383,7 +383,8 @@ class V8_EXPORT_PRIVATE GCTracer {
   void SampleAllocation(base::TimeTicks current,
                         uint64_t new_space_counter_bytes,
                         uint64_t old_generation_counter_bytes,
-                        uint64_t embedder_counter_bytes);
+                        uint64_t embedder_counter_bytes,
+                        uint64_t external_counter_bytes);
 
   void AddCompactionEvent(double duration, size_t live_bytes_compacted);
 
@@ -436,15 +437,17 @@ class V8_EXPORT_PRIVATE GCTracer {
   // Returns 0 if no allocation events have been recorded.
   double NewSpaceAllocationThroughputInBytesPerMillisecond() const;
 
-  // Allocation throughput in the old generation in bytes/millisecond in the
-  // last time_ms milliseconds.
+  // Allocation throughput in the old generation in bytes/millisecond.
   // Returns 0 if no allocation events have been recorded.
   double OldGenerationAllocationThroughputInBytesPerMillisecond() const;
 
-  // Allocation throughput in the embedder in bytes/millisecond in the
-  // last time_ms milliseconds.
+  // Allocation throughput in the embedder in bytes/millisecond.
   // Returns 0 if no allocation events have been recorded.
   double EmbedderAllocationThroughputInBytesPerMillisecond() const;
+
+  // Allocation throughput in external memory in bytes/millisecond.
+  // Returns 0 if no allocation events have been recorded.
+  double ExternalAllocationThroughputInBytesPerMillisecond() const;
 
   // Allocation throughput in heap in bytes/millisecond in the last time_ms
   // milliseconds.
@@ -579,6 +582,7 @@ class V8_EXPORT_PRIVATE GCTracer {
   uint64_t new_space_allocation_counter_bytes_ = 0;
   uint64_t old_generation_allocation_counter_bytes_ = 0;
   uint64_t embedder_allocation_counter_bytes_ = 0;
+  uint64_t external_allocation_counter_bytes_ = 0;
 
   std::optional<double> combined_mark_compact_speed_cache_;
 
@@ -619,6 +623,9 @@ class V8_EXPORT_PRIVATE GCTracer {
       kSmoothedAllocationSpeedIncreaseDecayRate,
       kSmoothedAllocationSpeedDeclineDecayRate};
   SmoothedBytesAndDuration embedder_generation_allocations_{
+      kSmoothedAllocationSpeedIncreaseDecayRate,
+      kSmoothedAllocationSpeedDeclineDecayRate};
+  SmoothedBytesAndDuration external_allocations_{
       kSmoothedAllocationSpeedIncreaseDecayRate,
       kSmoothedAllocationSpeedDeclineDecayRate};
 

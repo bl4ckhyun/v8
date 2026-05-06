@@ -2537,6 +2537,8 @@ void Heap::MarkCompact() {
 
   UpdateOldGenerationAllocationCounter();
   uint64_t size_of_objects_before_gc = SizeOfObjects();
+  uint64_t external_memory_before_gc =
+      AllocatedExternalMemorySinceMarkCompact();
 
   mark_compact_collector()->Prepare();
 
@@ -2557,6 +2559,7 @@ void Heap::MarkCompact() {
   // GC.
   old_generation_allocation_counter_at_last_gc_ +=
       static_cast<size_t>(promoted_objects_size_);
+  external_allocation_counter_at_last_gc_ += external_memory_before_gc;
   limits()->UpdateConsumedAfterGC();
 }
 
@@ -7373,6 +7376,11 @@ bool Heap::AllowedToBeMigrated(Tagged<Map> map, Tagged<HeapObject> object,
 
 uint64_t Heap::EmbedderAllocationCounter() const {
   return cpp_heap_ ? CppHeap::From(cpp_heap_)->allocated_size() : 0;
+}
+
+uint64_t Heap::ExternalAllocationCounter() const {
+  return external_allocation_counter_at_last_gc_ +
+         AllocatedExternalMemorySinceMarkCompact();
 }
 
 void Heap::CreateObjectStats() {

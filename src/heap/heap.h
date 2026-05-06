@@ -1397,6 +1397,7 @@ class Heap final {
   }
 
   uint64_t EmbedderAllocationCounter() const;
+  uint64_t ExternalAllocationCounter() const;
 
   // This should be used only for testing.
   void set_old_generation_allocation_counter_at_last_gc(size_t new_value) {
@@ -2325,6 +2326,11 @@ class Heap final {
   // account for the bytes allocated since the last GC, use the
   // OldGenerationAllocationCounter() function.
   uint64_t old_generation_allocation_counter_at_last_gc_ = 0;
+
+  // This counter is increased before each GC and never reset. To account for
+  // the bytes allocated since the last GC, use the ExternalAllocationCounter()
+  // function.
+  uint64_t external_allocation_counter_at_last_gc_ = 0;
 
   char trace_ring_buffer_[kTraceRingBufferSize];
 

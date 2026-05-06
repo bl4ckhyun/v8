@@ -384,7 +384,8 @@ void GCTracer::StartAtomicPause() {
 void GCTracer::StartInSafepoint(base::TimeTicks time) {
   SampleAllocation(current_.start_time, heap_->NewSpaceAllocationCounter(),
                    heap_->OldGenerationAllocationCounter(),
-                   heap_->EmbedderAllocationCounter());
+                   heap_->EmbedderAllocationCounter(),
+                   heap_->ExternalAllocationCounter());
   current_.start_object_size = heap_->SizeOfObjects();
   current_.start_memory_size = heap_->memory_allocator()->Size();
   current_.start_holes_size = CountTotalHolesSize(heap_);
@@ -726,7 +727,8 @@ void GCTracer::NotifyYoungCppGCRunning() {
 void GCTracer::SampleAllocation(base::TimeTicks current,
                                 uint64_t new_space_counter_bytes,
                                 uint64_t old_generation_counter_bytes,
-                                uint64_t embedder_counter_bytes) {
+                                uint64_t embedder_counter_bytes,
+                                uint64_t external_counter_bytes) {
   // Ideally counters are monotonically increasing, but in practise this
   // isn't always true and we observe small decrease between GC cycles, leading
   // to negative delta.
@@ -740,12 +742,16 @@ void GCTracer::SampleAllocation(base::TimeTicks current,
   uint64_t embedder_allocated_bytes =
       std::max(embedder_counter_bytes, embedder_allocation_counter_bytes_) -
       embedder_allocation_counter_bytes_;
+  uint64_t external_allocated_bytes =
+      std::max(external_counter_bytes, external_allocation_counter_bytes_) -
+      external_allocation_counter_bytes_;
   const base::TimeDelta allocation_duration = current - allocation_time_;
   allocation_time_ = current;
 
   new_space_allocation_counter_bytes_ = new_space_counter_bytes;
   old_generation_allocation_counter_bytes_ = old_generation_counter_bytes;
   embedder_allocation_counter_bytes_ = embedder_counter_bytes;
+  external_allocation_counter_bytes_ = external_counter_bytes;
 
   new_generation_allocations_.Update(
       BytesAndDuration(new_space_allocated_bytes, allocation_duration));
@@ -753,6 +759,8 @@ void GCTracer::SampleAllocation(base::TimeTicks current,
       BytesAndDuration(old_generation_allocated_bytes, allocation_duration));
   embedder_generation_allocations_.Update(
       BytesAndDuration(embedder_allocated_bytes, allocation_duration));
+  external_allocations_.Update(
+      BytesAndDuration(external_allocated_bytes, allocation_duration));
 
   if (v8_flags.memory_balancer) {
     heap_->mb_->UpdateAllocationRate(old_generation_allocated_bytes,
@@ -767,6 +775,10 @@ void GCTracer::SampleAllocation(base::TimeTicks current,
       TRACE_DISABLED_BY_DEFAULT("v8.gc"),
       perfetto::CounterTrack("EmbedderAllocationThroughput", parent_track_),
       EmbedderAllocationThroughputInBytesPerMillisecond());
+  TRACE_COUNTER(
+      TRACE_DISABLED_BY_DEFAULT("v8.gc"),
+      perfetto::CounterTrack("ExternalAllocationThroughput", parent_track_),
+      ExternalAllocationThroughputInBytesPerMillisecond());
   TRACE_COUNTER(
       TRACE_DISABLED_BY_DEFAULT("v8.gc"),
       perfetto::CounterTrack("NewSpaceAllocationThroughput", parent_track_),
@@ -1366,6 +1378,10 @@ double GCTracer::OldGenerationAllocationThroughputInBytesPerMillisecond()
 
 double GCTracer::EmbedderAllocationThroughputInBytesPerMillisecond() const {
   return BoundedThroughput(embedder_generation_allocations_);
+}
+
+double GCTracer::ExternalAllocationThroughputInBytesPerMillisecond() const {
+  return BoundedThroughput(external_allocations_);
 }
 
 double GCTracer::AllocationThroughputInBytesPerMillisecond() const {
