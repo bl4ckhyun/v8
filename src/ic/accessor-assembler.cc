@@ -293,7 +293,8 @@ void AccessorAssembler::TryHomomorphicCase(TNode<Object> lookup_start_object,
   }
 }
 
-void AccessorAssembler::TryMegaDOMCase(TNode<Object> lookup_start_object,
+void AccessorAssembler::TryMegaDOMCase(TNode<Context> caller_context,
+                                       TNode<Object> lookup_start_object,
                                        TNode<Map> lookup_start_object_map,
                                        TVariable<MaybeObject>* var_handler,
                                        TNode<Object> vector,
@@ -337,7 +338,6 @@ void AccessorAssembler::TryMegaDOMCase(TNode<Object> lookup_start_object,
 
   // TODO(gsathya): This builtin throws an exception on interface check fail but
   // we should miss to the runtime.
-  TNode<Context> caller_context = context;
   exit_point->Return(CallBuiltin(Builtin::kCallFunctionTemplate_Generic,
                                  context, getter, Int32Constant(1),
                                  caller_context, lookup_start_object));
@@ -3686,8 +3686,9 @@ void AccessorAssembler::LoadIC_Noninlined(const LoadICParameters* p,
 
     BIND(&try_megadom);
     {
-      TryMegaDOMCase(p->lookup_start_object(), lookup_start_object_map,
-                     var_handler, p->vector(), p->slot(), miss, exit_point);
+      TryMegaDOMCase(p->context(), p->lookup_start_object(),
+                     lookup_start_object_map, var_handler, p->vector(),
+                     p->slot(), miss, exit_point);
     }
   }
 }
