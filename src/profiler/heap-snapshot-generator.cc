@@ -472,10 +472,8 @@ const char* HeapEntry::TypeAsString() const {
 }
 
 HeapSnapshot::HeapSnapshot(HeapProfiler* profiler,
-                           v8::HeapProfiler::HeapSnapshotMode snapshot_mode,
                            v8::HeapProfiler::NumericsMode numerics_mode)
     : profiler_(profiler),
-      snapshot_mode_(snapshot_mode),
       numerics_mode_(numerics_mode) {
   // It is very important to keep objects that form a heap snapshot
   // as small as possible. Check assumptions about data structure sizes.

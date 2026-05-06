@@ -134,15 +134,14 @@ const char* HeapProfiler::CopyNameForHeapSnapshot(const char* name) {
 HeapSnapshot* HeapProfiler::TakeSnapshot(
     const v8::HeapProfiler::HeapSnapshotOptions options) {
   is_taking_snapshot_ = true;
-  HeapSnapshot* result =
-      new HeapSnapshot(this, options.snapshot_mode, options.numerics_mode);
+  HeapSnapshot* result = new HeapSnapshot(this, options.numerics_mode);
 
   // We need a stack marker here to allow deterministic passes over the stack.
   // The garbage collection and the filling of references in GenerateSnapshot
   // should scan the same part of the stack.
   heap()->stack().SetMarkerIfNeededAndCallback([this, &options, &result]() {
     std::optional<CppClassNamesAsHeapObjectNameScope> use_cpp_class_name;
-    if (result->expose_internals() && heap()->cpp_heap()) {
+    if (heap()->cpp_heap()) {
       use_cpp_class_name.emplace(heap()->cpp_heap());
     }
 
@@ -182,7 +181,7 @@ void HeapProfiler::WriteSnapshotToDiskAfterGC(
     }
     v8::HeapProfiler::HeapSnapshotOptions otions;
     std::unique_ptr<HeapSnapshot> result(
-        new HeapSnapshot(this, options.snapshot_mode, options.numerics_mode));
+        new HeapSnapshot(this, options.numerics_mode));
     HeapSnapshotGenerator generator(result.get(), options.control,
                                     options.context_name_resolver, heap(),
                                     options.stack_state);

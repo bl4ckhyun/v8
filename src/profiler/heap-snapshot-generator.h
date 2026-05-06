@@ -259,7 +259,6 @@ class HeapEntry {
 class HeapSnapshot {
  public:
   HeapSnapshot(HeapProfiler* profiler,
-               v8::HeapProfiler::HeapSnapshotMode snapshot_mode,
                v8::HeapProfiler::NumericsMode numerics_mode);
   HeapSnapshot(const HeapSnapshot&) = delete;
   HeapSnapshot& operator=(const HeapSnapshot&) = delete;
@@ -287,10 +286,6 @@ class HeapSnapshot {
   bool capture_numeric_value() const {
     return numerics_mode_ ==
            v8::HeapProfiler::NumericsMode::kExposeNumericValues;
-  }
-  bool expose_internals() const {
-    return snapshot_mode_ ==
-           v8::HeapProfiler::HeapSnapshotMode::kExposeInternals;
   }
   size_t extra_native_bytes() const { return extra_native_bytes_; }
   void set_extra_native_bytes(size_t bytes) { extra_native_bytes_ = bytes; }
@@ -332,7 +327,6 @@ class HeapSnapshot {
       entries_by_id_cache_;
   std::vector<EntrySourceLocation> locations_;
   SnapshotObjectId max_snapshot_js_object_id_ = -1;
-  v8::HeapProfiler::HeapSnapshotMode snapshot_mode_;
   v8::HeapProfiler::NumericsMode numerics_mode_;
   size_t extra_native_bytes_ = 0;
 

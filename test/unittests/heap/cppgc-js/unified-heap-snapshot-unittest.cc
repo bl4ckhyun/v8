@@ -449,13 +449,12 @@ TEST_F(UnifiedHeapSnapshotTest, RetainingUnnamedTypeWithoutInternalDetails) {
       TakeHeapSnapshot(cppgc::EmbedderStackState::kMayContainHeapPointers,
                        v8::HeapProfiler::HeapSnapshotMode::kRegular);
   EXPECT_TRUE(IsValidSnapshot(snapshot));
-  EXPECT_FALSE(ContainsRetainingPath(
+  EXPECT_TRUE(ContainsRetainingPath(
       *snapshot, {kExpectedGCRootsName, kExpectedCppRootsName,
                   cppgc::NameProvider::kHiddenName}));
-  EXPECT_FALSE(ContainsRetainingPath(
-      *snapshot, {kExpectedGCRootsName, kExpectedCppRootsName,
-                  GetExpectedName<BaseWithoutName>()}));
-  EXPECT_EQ(GetCppSize(base_without_name.Get()), GetExtraNativeBytes(snapshot));
+  CheckSize(snapshot, GetExpectedName<BaseWithoutName>(),
+            GetCppSize(base_without_name.Get()));
+  EXPECT_EQ(0u, GetExtraNativeBytes(snapshot));
 }
 
 TEST_F(UnifiedHeapSnapshotTest, RetainingNamedThroughUnnamed) {
