@@ -1169,13 +1169,12 @@ Maybe<bool> SourceTextModule::ExecuteAsyncModule(
   // 8. Perform PerformPromiseThen(capability.[[Promise]],
   //                               onFulfilled, onRejected).
   DirectHandle<Object> args[] = {on_fulfilled, on_rejected};
-  if (V8_UNLIKELY(Execution::CallBuiltin(isolate, isolate->promise_then(),
+  if (V8_UNLIKELY(Execution::CallBuiltin(isolate,
+                                         isolate->perform_promise_then(),
                                          capability, base::VectorOf(args))
                       .is_null())) {
-    // This may fail with a termination exception or if, for any weird reason,
-    // the promise has been rejected. See bugs: https://crbug.com/349961173 and
-    // https://crbug.com/442161248.
-    CHECK(isolate->has_exception());
+    // This may only fail with a termination exception.
+    CHECK(isolate->is_execution_terminating());
     return Nothing<bool>();
   }
 
