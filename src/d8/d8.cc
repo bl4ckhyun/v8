@@ -1961,6 +1961,11 @@ bool Shell::ExecuteModule(Isolate* isolate, const char* file_name) {
 
 // Treat every line as a JSON value and parse it.
 bool Shell::LoadJSON(Isolate* isolate, const char* file_name) {
+  if (std::string_view(file_name).starts_with("data:")) {
+    printf("d8: --json does not support data URLs\n");
+    base::OS::ExitProcess(1);
+  }
+
   HandleScope handle_scope(isolate);
   PerIsolateData* isolate_data = PerIsolateData::Get(isolate);
   Local<Context> realm =
