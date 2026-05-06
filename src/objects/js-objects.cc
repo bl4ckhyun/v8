@@ -466,26 +466,31 @@ Maybe<bool> JSReceiver::SetOrCopyDataProperties(
       KeyAccumulator::GetKeys(isolate, from, KeyCollectionMode::kOwnOnly,
                               ALL_PROPERTIES, GetKeysConversion::kKeepNumbers));
 
-  if (!from->HasFastProperties() && target->HasFastProperties() &&
-      IsJSObject(*target) && !IsJSGlobalProxy(*target)) {
-    // Convert to slow properties if we're guaranteed to overflow the number of
-    // descriptors.
-    int source_length;
-    if (IsJSGlobalObject(*from)) {
-      source_length = Cast<JSGlobalObject>(*from)
-                          ->global_dictionary(kAcquireLoad)
-                          ->NumberOfEnumerableProperties();
-    } else if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
-      source_length =
-          from->property_dictionary_swiss()->NumberOfEnumerableProperties();
-    } else {
-      source_length =
-          from->property_dictionary()->NumberOfEnumerableProperties();
-    }
-    if (source_length > kMaxNumberOfDescriptors) {
-      JSObject::NormalizeProperties(isolate, Cast<JSObject>(target),
-                                    CLEAR_INOBJECT_PROPERTIES, source_length,
-                                    "Copying data properties");
+  if (!from->HasFastProperties() && target->HasFastProperties()) {
+    InstanceType target_instance_type = target->map()->instance_type();
+    if (InstanceTypeChecker::IsJSObject(target_instance_type) &&
+        !InstanceTypeChecker::IsJSGlobalProxy(target_instance_type) &&
+        !InstanceTypeChecker::IsAlwaysSharedSpaceJSObject(
+            target_instance_type)) {
+      // Convert to slow properties if we're guaranteed to overflow the number
+      // of descriptors.
+      int source_length;
+      if (IsJSGlobalObject(*from)) {
+        source_length = Cast<JSGlobalObject>(*from)
+                            ->global_dictionary(kAcquireLoad)
+                            ->NumberOfEnumerableProperties();
+      } else if constexpr (V8_ENABLE_SWISS_NAME_DICTIONARY_BOOL) {
+        source_length =
+            from->property_dictionary_swiss()->NumberOfEnumerableProperties();
+      } else {
+        source_length =
+            from->property_dictionary()->NumberOfEnumerableProperties();
+      }
+      if (source_length > kMaxNumberOfDescriptors) {
+        JSObject::NormalizeProperties(isolate, Cast<JSObject>(target),
+                                      CLEAR_INOBJECT_PROPERTIES, source_length,
+                                      "Copying data properties");
+      }
     }
   }
 
