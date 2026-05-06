@@ -640,6 +640,15 @@ class RawConfig:
         _notify("V8 build requires your attention",
                 "Detecting torque failure, re-running in GDB...")
         _call(cmdline)
+    if return_code == 0:
+      try:
+        head_commit = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                              cwd=V8_ROOT_DIR,
+                                              text=True).strip()
+        last_built_commit_file = self.path / "last_built_commit"
+        last_built_commit_file.write_text(head_commit)
+      except subprocess.CalledProcessError:
+        pass
     return return_code
 
   def run_tests(self):
@@ -1004,26 +1013,42 @@ def main(argv):
   if (RECLIENT_MODE == Reclient.GOOGLE and not detect_reclient_cert()):
     print("# gcert")
     subprocess.check_call("gcert", shell=True)
-  # Compute changed files for conditional checking
-  changed_files = []
-  try:
-    git_diff_out = subprocess.check_output(
-        ["git", "diff", "--name-only", "origin/main"],
-        cwd=V8_ROOT_DIR,
-        text=True).strip()
-    if git_diff_out:
-      changed_files.extend(git_diff_out.splitlines())
-    git_untracked_out = subprocess.check_output(
-        ["git", "ls-files", "--others", "--exclude-standard"],
-        cwd=V8_ROOT_DIR,
-        text=True).strip()
-    if git_untracked_out:
-      changed_files.extend(git_untracked_out.splitlines())
-  except subprocess.CalledProcessError:
-    # Fallback if git fails
-    changed_files = None
-
   for c in configs:
+    # Compute changed files for conditional checking for this config
+    changed_files = []
+    try:
+      config_path = configs[c].path
+      last_built_commit_file = config_path / "last_built_commit"
+      use_fallback = True
+      if last_built_commit_file.exists():
+        last_commit = last_built_commit_file.read_text().strip()
+        try:
+          git_diff_out = subprocess.check_output(
+              ["git", "diff", "--name-only", last_commit],
+              cwd=V8_ROOT_DIR,
+              text=True).strip()
+          use_fallback = False
+        except subprocess.CalledProcessError:
+          pass
+
+      if use_fallback:
+        git_diff_out = subprocess.check_output(
+            ["git", "diff", "--name-only", "origin/main"],
+            cwd=V8_ROOT_DIR,
+            text=True).strip()
+
+      if git_diff_out:
+        changed_files.extend(git_diff_out.splitlines())
+
+      git_untracked_out = subprocess.check_output(
+          ["git", "ls-files", "--others", "--exclude-standard"],
+          cwd=V8_ROOT_DIR,
+          text=True).strip()
+      if git_untracked_out:
+        changed_files.extend(git_untracked_out.splitlines())
+    except subprocess.CalledProcessError:
+      changed_files = None
+
     # By default we do conditional skipping if it's a full test run,
     # or if we are just building.
     is_full_run = ("ALL" in configs[c].tests or
