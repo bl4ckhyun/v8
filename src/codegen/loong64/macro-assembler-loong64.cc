@@ -5819,14 +5819,19 @@ void MacroAssembler::JumpJSFunction(Register function_object,
 void MacroAssembler::ResolveWasmCodePointer(Register target,
                                             uint64_t signature_hash) {
   ASM_CODE_COMMENT(this);
-  ExternalReference global_jump_table =
-      ExternalReference::wasm_code_pointer_table();
   UseScratchRegisterScope temps(this);
   Register scratch = temps.Acquire();
-  li(scratch, global_jump_table);
+  li(scratch, ExternalReference::wasm_code_pointer_table());
 #ifdef V8_ENABLE_SANDBOX
-  static_assert(sizeof(wasm::WasmCodePointerTableEntry) == 16);
-  Alsl_d(target, target, scratch, 4);
+  static constexpr int kNumRelevantBits =
+      base::bits::WhichPowerOfTwo(WasmCodePointer::kIndexSpaceSize);
+  static constexpr int kLeftShift =
+      base::bits::WhichPowerOfTwo(sizeof(wasm::WasmCodePointerTableEntry));
+  // Only keep `kNumRelevantBits` bits (to avoid OOB access to the table),
+  Bstrpick_d(target, target, kNumRelevantBits - 1, 0);
+  // Shift to multiply by `sizeof(WasmCodePointerTableEntry)`.
+  Alsl_d(target, target, scratch, kLeftShift);
+
   Ld_d(scratch,
        MemOperand(target, wasm::WasmCodePointerTable::kOffsetOfSignatureHash));
   bool has_second_tmp = temps.hasAvailable();
@@ -5860,14 +5865,20 @@ void MacroAssembler::CallWasmCodePointer(Register target,
 }
 
 void MacroAssembler::CallWasmCodePointerNoSignatureCheck(Register target) {
-  ExternalReference global_jump_table =
-      ExternalReference::wasm_code_pointer_table();
+  ASM_CODE_COMMENT(this);
   UseScratchRegisterScope temps(this);
   Register scratch = temps.Acquire();
-  li(scratch, global_jump_table);
-  constexpr unsigned int kEntrySizeLog2 =
-      std::bit_width(sizeof(wasm::WasmCodePointerTableEntry)) - 1;
-  Alsl_d(target, target, scratch, kEntrySizeLog2);
+  li(scratch, ExternalReference::wasm_code_pointer_table());
+
+  static constexpr int kNumRelevantBits =
+      base::bits::WhichPowerOfTwo(WasmCodePointer::kIndexSpaceSize);
+  static constexpr int kLeftShift =
+      base::bits::WhichPowerOfTwo(sizeof(wasm::WasmCodePointerTableEntry));
+  // Only keep `kNumRelevantBits` bits (to avoid OOB access to the table),
+  Bstrpick_d(target, target, kNumRelevantBits - 1, 0);
+  // Shift to multiply by `sizeof(WasmCodePointerTableEntry)`.
+  Alsl_d(target, target, scratch, kLeftShift);
+
   Ld_d(target, MemOperand(target, 0));
 
   Call(target);
