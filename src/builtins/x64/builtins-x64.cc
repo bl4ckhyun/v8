@@ -4111,8 +4111,7 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
   Register arg_buffer = WasmFXSuspendDescriptor::GetRegisterParameter(2);
   MemOperand sig(rbp, 2 * kSystemPointerSize);
   Label resume;
-  // Save the suspended stack and return it to the handler.
-  __ Push(Operand(kRootRegister, IsolateData::active_stack_offset()));
+  __ Push(arg_buffer);
   __ Push(cont);
   __ Push(kContextRegister);
   {
@@ -4143,7 +4142,7 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
   __ Pop(kContextRegister);
   cont = kReturnRegister0;
   __ Pop(cont);
-  __ Pop(kReturnRegister1);  // Suspended stack.
+  __ Pop(arg_buffer);
 
   Label ok;
   // Do not use {JumpIf} for the null check as it emits a {cmpl}.
