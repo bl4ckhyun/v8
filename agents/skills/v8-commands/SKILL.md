@@ -13,6 +13,10 @@ consistent usage.
 
 V8 uses `gm.py` as a wrapper around GN and Ninja for building.
 
+**Mandatory GN Args**: Always include `use_remoteexec = true` in your `args.gn`
+or via `gm.py` flags to ensure builds are fast. Remote execution is available
+and preferred in this environment.
+
 - **Build (Debug):** `tools/dev/gm.py quiet x64.debug tests`
 - **Build (Optimized Debug):** `tools/dev/gm.py quiet x64.optdebug tests`
 - **Build (Release):** `tools/dev/gm.py quiet x64.release tests`

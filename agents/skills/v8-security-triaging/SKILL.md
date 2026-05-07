@@ -31,6 +31,10 @@ security vulnerability report.
     by the V8 Sandbox threat model.
   - **Regular Bug**: Vulnerabilities that do not require an initial in-sandbox
     write primitive.
+- **Remote Execution Priority**: Always use `use_remoteexec = true` in GN
+  arguments for all local builds to speed up the process, even if a reporter
+  provides a configuration where it is set to `false`. Remote execution is
+  strictly an environmental optimization and does not affect reproduction logic.
 - **Environmental Awareness**: During information gathering, identify if the
   crash involves **specialized execution modes** (e.g., REPL mode,
   `DebugEvaluate`, or experimental features) that might have different security
