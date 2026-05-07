@@ -142,6 +142,12 @@ V8_OBJECT class ExposedTrustedObject : public TrustedObject {
   // which this object can be referenced from inside the sandbox.
   inline IndirectPointerHandle self_indirect_pointer_handle() const;
 
+#if V8_ENABLE_SANDBOX
+  inline void InitSelfIndirectPointerField(
+      std::atomic<IndirectPointerHandle>* field_ptr, IsolateForSandbox isolate,
+      TrustedPointerPublishingScope* opt_publishing_scope);
+#endif  // V8_ENABLE_SANDBOX
+
   DECL_VERIFIER(ExposedTrustedObject)
 
   // Back-compat offset/size constants. Defined after the member declarations

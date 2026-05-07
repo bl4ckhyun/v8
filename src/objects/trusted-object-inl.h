@@ -11,10 +11,9 @@
 #include "src/heap/heap-write-barrier-inl.h"
 #include "src/objects/heap-object-inl.h"
 #include "src/objects/instance-type-inl.h"
-#include "src/objects/objects-inl.h"  // For InitSelfIndirectPointerField.
+#include "src/objects/map-inl.h"
 #include "src/objects/trusted-pointer-inl.h"
 #include "src/sandbox/indirect-pointer-inl.h"
-#include "src/sandbox/sandbox.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
@@ -169,6 +168,19 @@ IndirectPointerHandle ExposedTrustedObject::self_indirect_pointer_handle()
   UNREACHABLE();
 #endif
 }
+
+#if V8_ENABLE_SANDBOX
+void ExposedTrustedObject::InitSelfIndirectPointerField(
+    std::atomic<IndirectPointerHandle>* field_ptr, IsolateForSandbox isolate,
+    TrustedPointerPublishingScope* opt_publishing_scope) {
+  InstanceType instance_type = map()->instance_type();
+  SharedFlag shared = SharedFlag(HeapLayout::InAnySharedSpace(this));
+  IndirectPointerTag tag =
+      IndirectPointerTagFromInstanceType(instance_type, shared);
+  i::InitSelfIndirectPointerField(reinterpret_cast<Address>(field_ptr), isolate,
+                                  this, tag, opt_publishing_scope);
+}
+#endif  // V8_ENABLE_SANDBOX
 
 }  // namespace internal
 }  // namespace v8

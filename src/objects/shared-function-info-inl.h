@@ -202,9 +202,9 @@ bool SharedFunctionInfo::HasUntrustedData() const { return !HasTrustedData(); }
 template <typename T, IndirectPointerTagRange tag_range>
 Tagged<T> SharedFunctionInfo::GetTrustedData(IsolateForSandbox isolate) const {
   static_assert(tag_range != kAllIndirectPointerTags);
-  return Cast<T>(
-      Tagged<HeapObject>(this)->template ReadTrustedPointerField<tag_range>(
-          kTrustedFunctionDataOffset, isolate, kAcquireLoad));
+  return Cast<T>(TrustedPointerField::ReadTrustedPointerField<tag_range>(
+      Tagged<HeapObject>(this), kTrustedFunctionDataOffset, isolate,
+      kAcquireLoad));
 }
 
 Tagged<Object> SharedFunctionInfo::GetUntrustedData() const {

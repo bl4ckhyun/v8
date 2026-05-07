@@ -328,7 +328,8 @@ inline Holder<To> Cast(Holder<From> value,
       "      Tagged<Trusted> t = SbxCast<Trusted>(obj);\n"
       "* TrustedCast if correct by construction (or other deprecated usage)\n"
       "      Tagged<Trusted> t = "
-      "TrustedCast<Trusted>(obj->ReadTrustedPointerField<kTrustedTag>(...);\n");
+      "TrustedCast<Trusted>(TrustedPointerField::ReadTrustedPointerField<"
+      "kTrustedTag>(obj, ...));\n");
   return TrustedCast<To>(value, loc);
 }
 
