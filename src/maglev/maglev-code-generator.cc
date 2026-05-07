@@ -909,7 +909,11 @@ class MaglevCodeGeneratingNodeProcessor {
     if (std::is_base_of_v<ValueNode, NodeT>) {
       ValueNode* value_node = node->template Cast<ValueNode>();
       RegallocValueNodeInfo* node_info = value_node->regalloc_info();
-      if (node_info->has_valid_live_range() && node_info->is_spilled()) {
+      bool is_spilled = false;
+      if (node_info && node_info->has_valid_live_range()) {
+        is_spilled = node_info->is_spilled();
+      }
+      if (is_spilled) {
         compiler::AllocatedOperand source =
             compiler::AllocatedOperand::cast(node_info->result().operand());
         // We shouldn't spill nodes which already output to the stack.
@@ -926,6 +930,15 @@ class MaglevCodeGeneratingNodeProcessor {
           // Otherwise, the result source stack slot should be equal to the
           // spill slot.
           DCHECK_EQ(source.index(), node_info->spill_slot().index());
+        }
+      }
+
+      if (v8_flags.maglev_gdbjit && is_spilled) {
+        int node_id = graph_labeller()->NodeId(value_node);
+        if (node_id != -1) {
+          int start_pc = masm()->pc_offset();
+          code_gen_state()->AddVariableInfo(
+              {node_id, node_info->spill_slot().index(), start_pc});
         }
       }
     }
@@ -2061,6 +2074,12 @@ MaybeHandle<Code> MaglevCodeGenerator::BuildCodeObject(
   Handle<Code> code;
   if (maybe_code.ToHandle(&code)) {
     Isolate* isolate = local_isolate->GetMainThreadIsolateUnsafe();
+#ifdef ENABLE_GDB_JIT_INTERFACE
+    if (v8_flags.maglev_gdbjit) {
+      GDBJITInterface::RegisterMaglevVariableLocations(
+          code->instruction_start(), code_gen_state_.maglev_variables());
+    }
+#endif
     LOG_CODE_EVENT(isolate, CodeLinePosInfoRecordEvent(
                                 code->instruction_start(), *source_positions,
                                 JitCodeEvent::JIT_CODE));

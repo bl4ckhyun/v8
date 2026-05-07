@@ -77,7 +77,8 @@ bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
 
   if (V8_UNLIKELY(ALWAYS_MAGLEV_GRAPH_LABELLER_BOOL ||
                   compilation_info->is_tracing_enabled() ||
-                  compilation_info->collect_source_positions())) {
+                  compilation_info->collect_source_positions() ||
+                  v8_flags.maglev_gdbjit || v8_flags.code_comments)) {
     compilation_info->set_graph_labeller(new MaglevGraphLabeller());
     graph_labeller_scope.emplace(compilation_info->graph_labeller());
   }
