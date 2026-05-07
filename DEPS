@@ -140,7 +140,7 @@ vars = {
 
 deps = {
   'build':
-    Var('chromium_url') + '/chromium/src/build.git' + '@' + 'f050e5eda1b29d6f0ca33ace52dbb655a1d95cc5',
+    Var('chromium_url') + '/chromium/src/build.git' + '@' + 'ef985b8ee486bc242fdd9de81b00a2b79ce21482',
   'buildtools':
     Var('chromium_url') + '/chromium/src/buildtools.git' + '@' + '88e3576b9259cba94204a5609894cc1efeb10401',
   'buildtools/linux64': {
@@ -319,7 +319,7 @@ deps = {
   'third_party/libunwind/src':
     Var('chromium_url') + '/external/github.com/llvm/llvm-project/libunwind.git' + '@' + 'd6c7a21e978f0adaa43accaad53bc64f0b64f6ec',
   'third_party/llvm-libc/src':
-    Var('chromium_url') + '/external/github.com/llvm/llvm-project/libc.git' + '@' + '01f1fb50a55d022e351f52fb71a642547eb5c080',
+    Var('chromium_url') + '/external/github.com/llvm/llvm-project/libc.git' + '@' + '90854af5d94236618c664aeccca6808b75f5a688',
   'third_party/llvm-build/Release+Asserts': {
     'dep_type': 'gcs',
     'bucket': 'chromium-browser-clang',
@@ -499,7 +499,7 @@ deps = {
     'condition': 'not build_with_chromium',
   },
   'third_party/perfetto':
-    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + '08617935301242fb7a9cb649ed65f035dcaf04f9',
+    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + 'b6b8fef3ca7840c15cfb92cd03aea4e10ca39367',
   'third_party/protobuf':
     Var('chromium_url') + '/chromium/src/third_party/protobuf.git' + '@' + '37f32fff0db6abc817e08ff850c576fa06aac209',
   'third_party/re2/src':
@@ -565,7 +565,7 @@ deps = {
   'tools/protoc_wrapper':
     Var('chromium_url') + '/chromium/src/tools/protoc_wrapper.git' + '@' + '3438d4183bfc7c0d6850e8b970204cc8189f0323',
   'third_party/abseil-cpp': {
-    'url': Var('chromium_url') + '/chromium/src/third_party/abseil-cpp.git' + '@' + '25fc9e860eab1155784aa5e4fec83e384eb105d7',
+    'url': Var('chromium_url') + '/chromium/src/third_party/abseil-cpp.git' + '@' + '204ad6277cf961a6551b437e9c32ac3c528a3649',
     'condition': 'not build_with_chromium',
   },
   'third_party/zoslib': {
