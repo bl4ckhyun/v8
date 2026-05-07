@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <array>
 #include <cstring>
+#include <vector>
 
 #include "include/cppgc/allocation.h"
 #include "include/cppgc/common.h"
@@ -15,6 +17,7 @@
 #include "include/v8-cppgc.h"
 #include "include/v8-profiler.h"
 #include "src/api/api-inl.h"
+#include "src/base/macros.h"
 #include "src/heap/cppgc-js/cpp-heap.h"
 #include "src/heap/cppgc/heap-object-header.h"
 #include "src/heap/cppgc/object-allocator.h"
@@ -59,12 +62,117 @@ struct CompactableHolder : public cppgc::GarbageCollected<CompactableHolder> {
   cppgc::subtle::UncompressedMember<CompactableGCed> object = nullptr;
 };
 
+struct EphemeronKey final : public cppgc::GarbageCollected<EphemeronKey> {
+ public:
+  void Trace(cppgc::Visitor* visitor) const {}
+};
+
+struct EphemeronValue final : public cppgc::GarbageCollected<EphemeronValue> {
+ public:
+  void Trace(cppgc::Visitor* visitor) const {}
+};
+
+struct EphemeronContainerBacking final
+    : public cppgc::GarbageCollected<EphemeronContainerBacking> {
+ public:
+  static constexpr size_t kEphemeronCount = 3;
+  using EphemeronPair = cppgc::EphemeronPair<EphemeronKey, EphemeronValue>;
+
+  EphemeronContainerBacking()
+      : ephemeron_pairs_{EphemeronPair{nullptr, nullptr},
+                         EphemeronPair{nullptr, nullptr},
+                         EphemeronPair{nullptr, nullptr}} {}
+
+  void SetEphemeronPair(size_t index, EphemeronKey* key,
+                        EphemeronValue* value) {
+    CHECK_LT(index, kEphemeronCount);
+    ephemeron_pairs_[index].key = key;
+    ephemeron_pairs_[index].value = value;
+  }
+
+  void Trace(cppgc::Visitor* visitor) const {
+    TraceStrongifiedEphemerons(visitor);
+  }
+
+  static void TraceStrong(cppgc::Visitor* visitor, const void* self) {
+    static_cast<const EphemeronContainerBacking*>(self)->Trace(visitor);
+  }
+
+  static void TraceWeak(cppgc::Visitor* visitor, const void* self) {
+    static_cast<const EphemeronContainerBacking*>(self)->TraceWeakEphemerons(
+        visitor);
+  }
+
+  EphemeronKey* key(size_t index) const {
+    return ephemeron_pairs_[index].key.Get();
+  }
+  EphemeronValue* value(size_t index) const {
+    return ephemeron_pairs_[index].value.Get();
+  }
+
+  static void ClearCallback(const cppgc::LivenessBroker& broker,
+                            const void* data) {
+    auto* backing =
+        static_cast<EphemeronContainerBacking*>(const_cast<void*>(data));
+    for (auto& ephemeron_pair : backing->ephemeron_pairs_) {
+      ephemeron_pair.ClearKeyAndValueIfKeyIsDead(broker);
+    }
+  }
+
+ private:
+  void TraceStrongifiedEphemerons(cppgc::Visitor* visitor) const {
+    for (const auto& ephemeron_pair : ephemeron_pairs_) {
+      visitor->TraceStrongly(ephemeron_pair.key);
+      visitor->TraceEphemeron(ephemeron_pair.key, &ephemeron_pair.value);
+    }
+  }
+
+  void TraceWeakEphemerons(cppgc::Visitor* visitor) const {
+    for (const auto& ephemeron_pair : ephemeron_pairs_) {
+      visitor->Trace(ephemeron_pair);
+    }
+  }
+
+  std::array<EphemeronPair, kEphemeronCount> ephemeron_pairs_;
+};
+
+class EphemeronContainer : public cppgc::GarbageCollected<EphemeronContainer> {
+ public:
+  explicit EphemeronContainer(EphemeronContainerBacking* backing)
+      : backing_(backing) {}
+
+  void Trace(cppgc::Visitor* visitor) const {
+    visitor->TraceWeakContainer(backing_.Get(),
+                                EphemeronContainerBacking::ClearCallback,
+                                backing_.Get());
+  }
+
+  EphemeronContainerBacking* backing() const { return backing_.Get(); }
+  EphemeronKey* key(size_t index) const { return backing_->key(index); }
+  EphemeronValue* value(size_t index) const { return backing_->value(index); }
+
+ private:
+  cppgc::UntracedMember<EphemeronContainerBacking> backing_;
+};
+
 }  // namespace v8::internal
 
 namespace cppgc {
 template <>
 struct SpaceTrait<v8::internal::CompactableGCed> {
   using Space = CompactableCustomSpace;
+};
+
+template <>
+struct TraceTrait<v8::internal::EphemeronContainerBacking>
+    : public internal::TraceTraitBase<v8::internal::EphemeronContainerBacking> {
+  static TraceDescriptor GetTraceDescriptor(const void* self) {
+    return {self, v8::internal::EphemeronContainerBacking::TraceStrong};
+  }
+
+  static TraceDescriptor GetWeakTraceDescriptor(const void* self) {
+    return {self, v8::internal::EphemeronContainerBacking::TraceWeak};
+  }
 };
 }  // namespace cppgc
 
@@ -160,6 +268,23 @@ bool ContainsRetainingPath(const v8::HeapSnapshot& snapshot,
     std::swap(haystack, new_haystack);
   }
   return true;
+}
+
+EphemeronContainer* CreateEphemeronContainer(
+    std::vector<cppgc::Persistent<EphemeronKey>>& keys,
+    cppgc::AllocationHandle& allocation_handle) {
+  auto* backing =
+      cppgc::MakeGarbageCollected<EphemeronContainerBacking>(allocation_handle);
+  keys.reserve(EphemeronContainerBacking::kEphemeronCount);
+  for (size_t i = 0; i < EphemeronContainerBacking::kEphemeronCount; ++i) {
+    auto* key = cppgc::MakeGarbageCollected<EphemeronKey>(allocation_handle);
+    auto* value =
+        cppgc::MakeGarbageCollected<EphemeronValue>(allocation_handle);
+    keys.emplace_back(key);
+    backing->SetEphemeronPair(i, key, value);
+  }
+  return cppgc::MakeGarbageCollected<EphemeronContainer>(allocation_handle,
+                                                         backing);
 }
 
 class BaseWithoutName : public cppgc::GarbageCollected<BaseWithoutName> {
@@ -380,6 +505,95 @@ TEST_F(UnifiedHeapSnapshotTest, RetainedByStackRoots) {
       *snapshot, {kExpectedGCRootsName, kExpectedCppStackRootsName,
                   GetExpectedName<GCed>()}));
   EXPECT_STREQ(gced->GetHumanReadableName(), GetExpectedName<GCed>());
+}
+
+TEST_F(UnifiedHeapSnapshotTest, EphemeronContainerReachableFromStack) {
+  // Keep keys alive in case we trigger GC during CreateEphemeronContainer.
+  std::vector<cppgc::Persistent<EphemeronKey>> keys;
+  EphemeronContainer* container =
+      CreateEphemeronContainer(keys, allocation_handle());
+  EphemeronContainerBacking* backing = container->backing();
+
+  // Here we want to clear the vector of Persistents to demonstrate the keys are
+  // kept alive just from the backing pointer on the stack.
+  keys.clear();
+
+  const v8::HeapSnapshot* snapshot =
+      TakeHeapSnapshot(cppgc::EmbedderStackState::kMayContainHeapPointers);
+  ASSERT_TRUE(IsValidSnapshot(snapshot));
+
+  HeapSnapshot* heap_snapshot =
+      reinterpret_cast<HeapSnapshot*>(const_cast<v8::HeapSnapshot*>(snapshot));
+  const HeapEntry* stack_roots_entry =
+      GetEntryByName(heap_snapshot, kExpectedCppStackRootsName);
+  ASSERT_NE(nullptr, stack_roots_entry);
+
+  const HeapEntry* backing_entry =
+      GetEntryFor(isolate(), heap_snapshot, backing);
+  ASSERT_NE(nullptr, backing_entry);
+  EXPECT_NE(nullptr, FindFirstEdgeTo(*stack_roots_entry, *backing_entry));
+  // Because the backing is reachable from stack, the backing object has an edge
+  // to each key in it.
+  EXPECT_EQ(static_cast<int>(EphemeronContainerBacking::kEphemeronCount),
+            backing_entry->children_count());
+
+  for (size_t i = 0; i < EphemeronContainerBacking::kEphemeronCount; ++i) {
+    const HeapEntry* key_entry =
+        GetEntryFor(isolate(), heap_snapshot, container->key(i));
+    ASSERT_NE(nullptr, key_entry);
+    const HeapEntry* value_entry =
+        GetEntryFor(isolate(), heap_snapshot, container->value(i));
+    ASSERT_NE(nullptr, value_entry);
+
+    // The ephemeron container backing is reachable from stack, so the container
+    // has an edge to all keys.
+    const HeapGraphEdge* backing_to_key =
+        FindFirstEdgeTo(*backing_entry, *key_entry);
+    ASSERT_NE(nullptr, backing_to_key);
+
+    // Each key has an edge to its linked ephemeron value.
+    const HeapGraphEdge* key_to_value =
+        FindFirstEdgeTo(*key_entry, *value_entry);
+    ASSERT_NE(nullptr, key_to_value);
+    EXPECT_STREQ("part of key -> value pair in ephemeron table",
+                 key_to_value->name());
+  }
+}
+
+TEST_F(UnifiedHeapSnapshotTest, EphemeronContainerNotReachableFromStack) {
+  std::vector<cppgc::Persistent<EphemeronKey>> keys;
+  cppgc::Persistent<EphemeronContainer> container(
+      CreateEphemeronContainer(keys, allocation_handle()));
+
+  const v8::HeapSnapshot* snapshot =
+      TakeHeapSnapshot(cppgc::EmbedderStackState::kNoHeapPointers);
+
+  HeapSnapshot* heap_snapshot =
+      reinterpret_cast<HeapSnapshot*>(const_cast<v8::HeapSnapshot*>(snapshot));
+  EXPECT_EQ(nullptr, GetEntryByName(heap_snapshot, kExpectedCppStackRootsName));
+
+  const HeapEntry* backing_entry =
+      GetEntryFor(isolate(), heap_snapshot, container->backing());
+  ASSERT_NE(nullptr, backing_entry);
+  // Currently the ephemeron container backing doesn't have any edges when not
+  // reachable from stack.
+  EXPECT_EQ(0, backing_entry->children_count());
+
+  for (size_t i = 0; i < EphemeronContainerBacking::kEphemeronCount; ++i) {
+    const HeapEntry* key_entry =
+        GetEntryFor(isolate(), heap_snapshot, container->key(i));
+    ASSERT_NE(nullptr, key_entry);
+    const HeapEntry* value_entry =
+        GetEntryFor(isolate(), heap_snapshot, container->value(i));
+    ASSERT_NE(nullptr, value_entry);
+
+    // Each key has an edge to its linked ephemeron value.
+    const HeapGraphEdge* key_to_value =
+        FindFirstEdgeTo(*key_entry, *value_entry);
+    ASSERT_NE(nullptr, key_to_value);
+    EXPECT_STREQ("part of key -> value pair in ephemeron table",
+                 key_to_value->name());
+  }
 }
 
 TEST_F(UnifiedHeapSnapshotTest, RetainedByCppStackRootTracedReference) {
