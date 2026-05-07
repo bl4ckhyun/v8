@@ -1057,6 +1057,41 @@ void EmitTSANRelaxedLoadOOLIfNeeded(Zone* zone, CodeGenerator* codegen,
     __ asm_instr(dst, i.InputOperand(index++));   \
   }
 
+#define ASSEMBLE_BINOP_WIDE(asm_instr_low, asm_instr_high)               \
+  do {                                                                   \
+    Register low_out = i.OutputRegister(0);                              \
+    Register high_out = i.OutputRegister(1);                             \
+    DCHECK_EQ(low_out, i.InputRegister(0));                              \
+    size_t index = 1;                                                    \
+    if (HasAddressingMode(instr)) {                                      \
+      Operand b_low = i.MemoryOperand(&index);                           \
+      __ asm_instr_low(low_out, b_low);                                  \
+    } else {                                                             \
+      ASSEMBLE_RHS(asm_instr_low, low_out, index);                       \
+    }                                                                    \
+    DCHECK(HasRegisterInput(instr, index));                              \
+    Register a_high = i.InputRegister(index++);                          \
+    CHECK_NE(a_high, low_out);                                           \
+    AddressingMode b_high_mode =                                         \
+        static_cast<AddressingMode>(MiscField::decode(instr->opcode())); \
+    if (b_high_mode != kMode_None) {                                     \
+      Operand b_high = i.MemoryOperand(b_high_mode, &index);             \
+      __ asm_instr_high(high_out, b_high);                               \
+    } else {                                                             \
+      CHECK(!HasRegisterInput(instr, index) ||                           \
+            i.InputRegister(index) != low_out);                          \
+      if (HasRegisterInput(instr, index) &&                              \
+          i.InputRegister(index) == high_out) {                          \
+        __ asm_instr_high(high_out, a_high);                             \
+        index++;                                                         \
+      } else {                                                           \
+        __ Move(high_out, a_high);                                       \
+        ASSEMBLE_RHS(asm_instr_high, high_out, index);                   \
+      }                                                                  \
+    }                                                                    \
+    DCHECK_EQ(index, instr->InputCount());                               \
+  } while (false)
+
 #define ASSEMBLE_COMPARE(cmp_instr, test_instr)                    \
   do {                                                             \
     if (HasAddressingMode(instr)) {                                \
@@ -2253,45 +2288,12 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
     case kX64Sub:
       ASSEMBLE_BINOP(subq);
       break;
-    case kX64Add128: {
-      // Inputs: a_low, b_low, a_high, b_high.
-      Register low_out = i.OutputRegister(0);
-      Register high_out = i.OutputRegister(1);
-      DCHECK_EQ(low_out, i.InputRegister(0));
-      size_t index = 1;
-      if (HasAddressingMode(instr)) {
-        Operand b_low = i.MemoryOperand(&index);
-        __ addq(low_out, b_low);
-      } else {
-        ASSEMBLE_RHS(addq, low_out, index);
-      }
-
-      DCHECK(HasRegisterInput(instr, index));
-      Register a_high = i.InputRegister(index++);
-      CHECK_NE(a_high, low_out);
-      AddressingMode b_high_mode =
-          static_cast<AddressingMode>(MiscField::decode(instr->opcode()));
-      if (b_high_mode != kMode_None) {
-        Operand b_high = i.MemoryOperand(b_high_mode, &index);
-        __ adcq(high_out, b_high);
-      } else {
-        // If b_high is a register, it must not alias with low_out.
-        CHECK(!HasRegisterInput(instr, index) ||
-              i.InputRegister(index) != low_out);
-        // Special case: if b_high happens to be a register and happens to
-        // equal {high_out}, skip unnecessary moves.
-        if (HasRegisterInput(instr, index) &&
-            i.InputRegister(index) == high_out) {
-          __ adcq(high_out, a_high);
-          index++;
-        } else {
-          __ Move(high_out, a_high);  // Possibly no-op.
-          ASSEMBLE_RHS(adcq, high_out, index);
-        }
-      }
-      DCHECK_EQ(index, instr->InputCount());
+    case kX64Add128:
+      ASSEMBLE_BINOP_WIDE(addq, adcq);
       break;
-    }
+    case kX64Sub128:
+      ASSEMBLE_BINOP_WIDE(subq, sbbq);
+      break;
     case kX64And32:
       ASSEMBLE_BINOP(andl);
       break;

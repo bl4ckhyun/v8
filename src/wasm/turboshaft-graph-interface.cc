@@ -962,6 +962,11 @@ class TurboshaftGraphBuildingInterface
         op = __ Add128(al.get<Word64>(), ah.get<Word64>(), bl.get<Word64>(),
                        bh.get<Word64>());
         break;
+      case kExprI64Sub128:
+        op = __ Sub128(al.get<Word64>(), ah.get<Word64>(), bl.get<Word64>(),
+                       bh.get<Word64>());
+        break;
+
       default:
         UNREACHABLE();
     }

@@ -4763,9 +4763,23 @@ class AssemblerOpInterface : public Next {
                                             right_high, kind);
   }
 
+  V<Word64Pair> Word64AddSub128Binop(V<Word64> left_low, V<Word64> left_high,
+                                     V<Word64> right_low, V<Word64> right_high,
+                                     Word64AddSub128BinopOp::Kind kind) {
+    return ReduceIfReachableWord64AddSub128Binop(left_low, left_high, right_low,
+                                                 right_high, kind);
+  }
+
   V<Word64Pair> Add128(V<Word64> a_low, V<Word64> a_high, V<Word64> b_low,
                        V<Word64> b_high) {
-    return ReduceIfReachableWord64Add128(a_low, a_high, b_low, b_high);
+    return Word64AddSub128Binop(a_low, a_high, b_low, b_high,
+                                Word64AddSub128BinopOp::Kind::kAdd);
+  }
+
+  V<Word64Pair> Sub128(V<Word64> a_low, V<Word64> a_high, V<Word64> b_low,
+                       V<Word64> b_high) {
+    return Word64AddSub128Binop(a_low, a_high, b_low, b_high,
+                                Word64AddSub128BinopOp::Kind::kSub);
   }
 
   V<Word64Pair> Word64MulWide(V<Word64> left, V<Word64> right,

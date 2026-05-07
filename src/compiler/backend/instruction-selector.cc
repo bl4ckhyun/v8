@@ -2079,7 +2079,8 @@ void InstructionSelector::VisitProjection(OpIndex node) {
       DCHECK_EQ(1u, projection.index);
       MarkAsUsed(projection.input());
     }
-  } else if (value_op.Is<Word64Add128Op>() || value_op.Is<Word64MulWideOp>()) {
+  } else if (value_op.Is<Word64AddSub128BinopOp>() ||
+             value_op.Is<Word64MulWideOp>()) {
     MarkAsUsed(projection.input());
   } else if (value_op.Is<DidntThrowOp>()) {
     // Nothing to do here?
@@ -3264,9 +3265,16 @@ void InstructionSelector::VisitNode(OpIndex node) {
       }
       UNREACHABLE();
     }
-    case Opcode::kWord64Add128: {
+    case Opcode::kWord64AddSub128Binop: {
+      const Word64AddSub128BinopOp& wideop = op.Cast<Word64AddSub128BinopOp>();
       MarkPairProjectionsAsWord64(node);
-      return VisitUint64Add128(node);
+      switch (wideop.kind) {
+        case Word64AddSub128BinopOp::Kind::kAdd:
+          return VisitUint64Add128(node);
+        case Word64AddSub128BinopOp::Kind::kSub:
+          return VisitUint64Sub128(node);
+      }
+      UNREACHABLE();
     }
     case Opcode::kWord64MulWide: {
       const Word64MulWideOp& wideop = op.Cast<Word64MulWideOp>();

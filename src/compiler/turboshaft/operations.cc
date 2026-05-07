@@ -1130,6 +1130,10 @@ void Word64MulWideOp::PrintOptions(std::ostream& os) const {
   os << (kind == Kind::kSigned ? "signed" : "unsigned");
 }
 
+void Word64AddSub128BinopOp::PrintOptions(std::ostream& os) const {
+  os << (kind == Kind::kAdd ? "add" : "sub");
+}
+
 void WordBinopDeoptOnOverflowOp::PrintOptions(std::ostream& os) const {
   os << '[';
   switch (kind) {

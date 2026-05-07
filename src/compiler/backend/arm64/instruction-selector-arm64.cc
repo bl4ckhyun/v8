@@ -2900,7 +2900,7 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
 
 void InstructionSelector::VisitUint64Add128(OpIndex node) {
   Arm64OperandGenerator g(this);
-  const auto& op = Get(node).Cast<Word64Add128Op>();
+  const auto& op = Get(node).Cast<Word64AddSub128BinopOp>();
 
   OptionalV<Word64> out_low = FindProjection(node, 0);
   OptionalV<Word64> out_high = FindProjection(node, 1);
@@ -2931,7 +2931,10 @@ void InstructionSelector::VisitUint64Add128(OpIndex node) {
   this->Emit(kArm64Add128, output_count, outputs, input_count, inputs);
 }
 
+void InstructionSelector::VisitUint64Sub128(OpIndex node) { UNIMPLEMENTED(); }
+
 #if V8_ENABLE_SIMD128
+
 namespace {
 void VisitExtMul(InstructionSelector* selector, ArchOpcode opcode, OpIndex node,
                  LaneSize dst_lane_size) {

@@ -296,7 +296,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(WordBinop)                               \
   V(FloatBinop)                              \
   V(Word32PairBinop)                         \
-  V(Word64Add128)                            \
+  V(Word64AddSub128Binop)                    \
   V(Word64MulWide)                           \
   V(OverflowCheckedBinop)                    \
   V(WordUnary)                               \
@@ -1847,7 +1847,10 @@ struct Word64MulWideOp : FixedArityOperationT<2, Word64MulWideOp> {
   void PrintOptions(std::ostream& os) const;
 };
 
-struct Word64Add128Op : FixedArityOperationT<4, Word64Add128Op> {
+struct Word64AddSub128BinopOp
+    : FixedArityOperationT<4, Word64AddSub128BinopOp> {
+  enum class Kind : uint8_t { kAdd, kSub };
+  Kind kind;
   static constexpr OpEffects effects = OpEffects();
 
   base::Vector<const RegisterRepresentation> outputs_rep() const {
@@ -1868,11 +1871,12 @@ struct Word64Add128Op : FixedArityOperationT<4, Word64Add128Op> {
   V<Word64> right_low() const { return input<Word64>(2); }
   V<Word64> right_high() const { return input<Word64>(3); }
 
-  Word64Add128Op(V<Word64> al, V<Word64> ah, V<Word64> bl, V<Word64> bh)
-      : Base(al, ah, bl, bh) {}
+  Word64AddSub128BinopOp(V<Word64> al, V<Word64> ah, V<Word64> bl, V<Word64> bh,
+                         Kind kind)
+      : Base(al, ah, bl, bh), kind(kind) {}
 
-  auto options() const { return std::tuple{}; }
-  void PrintOptions(std::ostream& os) const {}
+  auto options() const { return std::tuple{kind}; }
+  void PrintOptions(std::ostream& os) const;
 };
 
 struct WordBinopDeoptOnOverflowOp
