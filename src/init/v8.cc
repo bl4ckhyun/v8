@@ -219,7 +219,8 @@ void V8::Initialize() {
 
 #ifdef V8_ENABLE_SANDBOX
   // If enabled, the sandbox must be initialized first.
-  Sandbox::InitializeDefaultOncePerProcess(GetPlatformVirtualAddressSpace());
+  Sandbox::InitializeDefaultOncePerProcess(GetCurrentPlatform(),
+                                           GetPlatformVirtualAddressSpace());
   CHECK_EQ(kSandboxSize, Sandbox::current()->size());
 
 #ifdef V8_ENABLE_MEMORY_CORRUPTION_API

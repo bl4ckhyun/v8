@@ -10,11 +10,13 @@
 #include "src/base/cpu/cpu.h"
 #include "src/base/emulated-virtual-address-subspace.h"
 #include "src/base/lazy-instance.h"
+#include "src/base/macros.h"
 #include "src/base/sys-info.h"
 #include "src/base/utils/random-number-generator.h"
 #include "src/base/virtual-address-space-page-allocator.h"
 #include "src/base/virtual-address-space.h"
 #include "src/flags/flags.h"
+#include "src/objects/js-objects.h"
 #include "src/sandbox/hardware-support.h"
 #include "src/sandbox/sandboxed-pointer.h"
 #include "src/sandbox/testing.h"
@@ -142,7 +144,7 @@ static Address DetermineAddressSpaceLimit() {
   return 1ULL << virtual_address_bits;
 }
 
-void Sandbox::Initialize(v8::VirtualAddressSpace* vas) {
+void Sandbox::Initialize(v8::Platform* platform, v8::VirtualAddressSpace* vas) {
   // Take the size of the virtual address space into account when determining
   // the size of the address space reservation backing the sandbox. For
   // example, if we only have a 40-bit address space, split evenly between
@@ -189,12 +191,12 @@ void Sandbox::Initialize(v8::VirtualAddressSpace* vas) {
   DCHECK(base::bits::IsPowerOfTwo(reservation_size));
   if (reservation_size < kSandboxSize) {
     DCHECK_GE(max_reservation_size, kSandboxMinimumReservationSize);
-    success = InitializeAsPartiallyReservedSandbox(vas, kSandboxSize,
+    success = InitializeAsPartiallyReservedSandbox(platform, vas, kSandboxSize,
                                                    reservation_size);
   } else {
     DCHECK_EQ(kSandboxSize, reservation_size);
     constexpr bool use_guard_regions = true;
-    success = Initialize(vas, kSandboxSize, use_guard_regions);
+    success = Initialize(platform, vas, kSandboxSize, use_guard_regions);
   }
 
   // Fall back to creating a (smaller) partially reserved sandbox.
@@ -202,7 +204,7 @@ void Sandbox::Initialize(v8::VirtualAddressSpace* vas) {
     static_assert(kFallbackToPartiallyReservedSandboxAllowed);
     reservation_size /= 2;
     DCHECK_GE(reservation_size, kSandboxMinimumReservationSize);
-    success = InitializeAsPartiallyReservedSandbox(vas, kSandboxSize,
+    success = InitializeAsPartiallyReservedSandbox(platform, vas, kSandboxSize,
                                                    reservation_size);
   }
 
@@ -240,8 +242,8 @@ void Sandbox::Initialize(v8::VirtualAddressSpace* vas) {
   DCHECK(initialized_);
 }
 
-bool Sandbox::Initialize(v8::VirtualAddressSpace* vas, size_t size,
-                         bool use_guard_regions) {
+bool Sandbox::Initialize(v8::Platform* platform, v8::VirtualAddressSpace* vas,
+                         size_t size, bool use_guard_regions) {
   CHECK(!initialized_);
   CHECK(base::bits::IsPowerOfTwo(size));
   CHECK(vas->CanAllocateSubspaces());
@@ -314,13 +316,21 @@ bool Sandbox::Initialize(v8::VirtualAddressSpace* vas, size_t size,
   // Smi value as a pointer.
   if (!smi_address_range_reserved_) {
     // Make the guard region extend a little past the first 4GB to also catch
-    // accesses with an offset into a negative Smi (e.g. [0xfffffffe + offset]).
-    Address end = kSmiAddressRange + kSmiAddressRangePadding;
-    size_t step = address_space_->allocation_granularity();
-    for (Address start = 0; start <= 1 * MB; start += step) {
-      if (vas->AllocateGuardRegion(start, end - start)) {
-        smi_address_range_reserved_ = true;
-        break;
+    // accesses to in-object properties which are bounded by the JSObject
+    // instance size.
+    static_assert(kSmiAddressRangePadding > JSObject::kMaxInstanceSize);
+    constexpr Address kRangeEnd = kSmiAddressRange + kSmiAddressRangePadding;
+    const size_t zero_segment_size = platform->GetZeroSegmentSize();
+    if (zero_segment_size >= kRangeEnd) {
+      smi_address_range_reserved_ = true;
+    } else {
+      const size_t step = address_space_->allocation_granularity();
+      const Address aligned_end = RoundUp(kRangeEnd, step);
+      for (Address start = 0; start <= 1 * MB; start += step) {
+        if (vas->AllocateGuardRegion(start, aligned_end - start)) {
+          smi_address_range_reserved_ = true;
+          break;
+        }
       }
     }
   }
@@ -333,7 +343,8 @@ bool Sandbox::Initialize(v8::VirtualAddressSpace* vas, size_t size,
   return true;
 }
 
-bool Sandbox::InitializeAsPartiallyReservedSandbox(v8::VirtualAddressSpace* vas,
+bool Sandbox::InitializeAsPartiallyReservedSandbox(v8::Platform* platform,
+                                                   v8::VirtualAddressSpace* vas,
                                                    size_t size,
                                                    size_t size_to_reserve) {
   CHECK(!initialized_);
@@ -450,14 +461,15 @@ void Sandbox::TearDown() {
 }
 
 // static
-void Sandbox::InitializeDefaultOncePerProcess(v8::VirtualAddressSpace* vas) {
+void Sandbox::InitializeDefaultOncePerProcess(v8::Platform* platform,
+                                              v8::VirtualAddressSpace* vas) {
   static base::LeakyObject<Sandbox> default_sandbox;
   default_sandbox_ = default_sandbox.get();
 
 #ifdef V8_COMPRESS_POINTERS_IN_MULTIPLE_CAGES
   set_current(default_sandbox_);
 #endif
-  default_sandbox_->Initialize(vas);
+  default_sandbox_->Initialize(platform, vas);
 }
 
 // static
@@ -470,14 +482,14 @@ void Sandbox::TearDownDefault() {
 }
 
 // static
-Sandbox* Sandbox::New(v8::VirtualAddressSpace* vas) {
+Sandbox* Sandbox::New(v8::Platform* platform, v8::VirtualAddressSpace* vas) {
   if (!COMPRESS_POINTERS_IN_MULTIPLE_CAGES_BOOL) {
     FATAL(
         "Creation of new sandboxes requires enabling "
         "multiple pointer compression cages at build-time");
   }
   Sandbox* sandbox = new Sandbox;
-  sandbox->Initialize(vas);
+  sandbox->Initialize(platform, vas);
   CHECK(!v8_flags.sandbox_testing && !v8_flags.sandbox_fuzzing);
   return sandbox;
 }

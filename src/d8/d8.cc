@@ -90,8 +90,8 @@
 #endif  // V8_ENABLE_MAGLEV
 
 #ifdef V8_ENABLE_PARTITION_ALLOC
-#include <partition_alloc/partition_root.h>
-#include <partition_alloc/shim/allocator_shim_default_dispatch_to_partition_alloc.h>
+#include "third_party/partition_alloc/src/partition_alloc/partition_root.h"
+#include "third_party/partition_alloc/src/partition_alloc/shim/allocator_shim_default_dispatch_to_partition_alloc.h"
 #endif  // V8_ENABLE_PARTITION_ALLOC
 
 #if V8_OS_POSIX
@@ -7390,6 +7390,18 @@ void ConfigurePartitionAllocIfEnabled() {
 int Shell::Main(int argc, char* argv[]) {
   ConfigurePartitionAllocIfEnabled();
   v8::base::EnsureConsoleOutput();
+
+#if (defined(V8_OS_LINUX) && !defined(V8_OS_ANDROID) && \
+     !defined(V8_TARGET_OS_CHROMEOS)) ||                \
+    (defined(V8_OS_DARWIN) && !defined(V8_OS_IOS))
+#if !defined(V8_USE_ADDRESS_SANITIZER) &&   \
+    !defined(V8_USE_HWADDRESS_SANITIZER) && \
+    !defined(V8_USE_MEMORY_SANITIZER) &&    \
+    !defined(V8_USE_UNDEFINED_BEHAVIOR_SANITIZER) && !defined(V8_IS_TSAN)
+  i::v8_flags.sandbox_prohibit_insecure_mode = true;
+#endif
+#endif
+
   if (!v8::Shell::SetOptions(argc, argv)) return 1;
 
 #ifdef V8_ENABLE_HARDWARE_WATCHPOINT_SUPPORT

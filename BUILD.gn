@@ -7481,6 +7481,10 @@ v8_component("v8_libplatform") {
     ":v8_tracing",
   ]
 
+  if (v8_enable_partition_alloc) {
+    deps += [ "//third_party/partition_alloc" ]
+  }
+
   if (v8_use_perfetto) {
     sources -= [
       "src/libplatform/tracing/trace-buffer.cc",
