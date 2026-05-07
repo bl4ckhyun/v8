@@ -206,6 +206,7 @@ namespace compiler {
   V(Arm64Add)                                        \
   V(Arm64Add32)                                      \
   V(Arm64Add128)                                     \
+  V(Arm64Sub128)                                     \
   V(Arm64And)                                        \
   V(Arm64And32)                                      \
   V(Arm64Bic)                                        \

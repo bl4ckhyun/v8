@@ -1592,6 +1592,14 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       __ Adc(high_out, i.InputRegister(2), i.InputRegister(3));
       break;
     }
+    case kArm64Sub128: {
+      Register low_out = i.OutputRegister(0);
+      Register high_out = i.OutputRegister(1);
+      Operand b_low = i.InputOperand2_64(1);
+      __ Subs(low_out, i.InputRegister(0), b_low);
+      __ Sbc(high_out, i.InputRegister(2), i.InputRegister(3));
+      break;
+    }
     case kArm64And:
       if (FlagsModeField::decode(opcode) != kFlags_none) {
         // The ands instruction only sets N and Z, so only the following

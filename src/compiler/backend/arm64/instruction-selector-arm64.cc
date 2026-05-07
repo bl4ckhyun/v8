@@ -2897,20 +2897,24 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
     Emit(high_opcode, g.DefineAsRegister(out_high.value()), left, right);
   }
 }
+namespace {
 
-void InstructionSelector::VisitUint64Add128(OpIndex node) {
-  Arm64OperandGenerator g(this);
-  const auto& op = Get(node).Cast<Word64AddSub128BinopOp>();
+void VisitWideAddSub(InstructionSelector* selector, OpIndex node, bool is_add) {
+  Arm64OperandGenerator g(selector);
+  const auto& op = selector->Get(node).Cast<Word64AddSub128BinopOp>();
 
-  OptionalV<Word64> out_low = FindProjection(node, 0);
-  OptionalV<Word64> out_high = FindProjection(node, 1);
+  OptionalV<Word64> out_low = selector->FindProjection(node, 0);
+  OptionalV<Word64> out_high = selector->FindProjection(node, 1);
+
+  InstructionCode opcode = is_add ? kArm64Add128 : kArm64Sub128;
+  InstructionCode opcode_no_high = is_add ? kArm64Add : kArm64Sub;
 
   DCHECK(out_low.valid() && out_high.valid());
 
-  if (!IsUsed(out_high.value())) {
+  if (!selector->IsUsed(out_high.value())) {
     InstructionOperand b_low_op = g.UseOperand(op.right_low(), kArithmeticImm);
-    Emit(kArm64Add, g.DefineAsRegister(out_low.value()),
-         g.UseRegister(op.left_low()), b_low_op);
+    selector->Emit(opcode_no_high, g.DefineAsRegister(out_low.value()),
+                   g.UseRegister(op.left_low()), b_low_op);
     return;
   }
 
@@ -2922,16 +2926,24 @@ void InstructionSelector::VisitUint64Add128(OpIndex node) {
   inputs[input_count++] = g.UseRegister(op.left_low());
   inputs[input_count++] = g.UseOperand(op.right_low(), kArithmeticImm);
 
-  inputs[input_count++] = g.UseRegister(op.left_high());
-  inputs[input_count++] = g.UseRegister(op.right_high());
+  inputs[input_count++] = g.UseUniqueRegister(op.left_high());
+  inputs[input_count++] = g.UseUniqueRegister(op.right_high());
 
   outputs[output_count++] = g.DefineAsRegister(out_low.value());
   outputs[output_count++] = g.DefineAsRegister(out_high.value());
 
-  this->Emit(kArm64Add128, output_count, outputs, input_count, inputs);
+  selector->Emit(opcode, output_count, outputs, input_count, inputs);
 }
 
-void InstructionSelector::VisitUint64Sub128(OpIndex node) { UNIMPLEMENTED(); }
+}  // namespace
+
+void InstructionSelector::VisitUint64Add128(OpIndex node) {
+  VisitWideAddSub(this, node, true);
+}
+
+void InstructionSelector::VisitUint64Sub128(OpIndex node) {
+  VisitWideAddSub(this, node, false);
+}
 
 #if V8_ENABLE_SIMD128
 
