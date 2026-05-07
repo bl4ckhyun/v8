@@ -1169,6 +1169,8 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
 
 void InstructionSelector::VisitUint64Add128(OpIndex node) { UNIMPLEMENTED(); }
 
+void InstructionSelector::VisitUint64Sub128(OpIndex node) { UNIMPLEMENTED(); }
+
 void InstructionSelector::VisitUint32MulHigh(OpIndex node) {
   PPCOperandGenerator g(this);
   const WordBinopOp& op = Cast<WordBinopOp>(node);
