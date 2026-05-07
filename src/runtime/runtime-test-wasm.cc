@@ -557,7 +557,7 @@ RUNTIME_FUNCTION(Runtime_GetWasmExceptionValues) {
       // can't handle.
       if (IsByteArray(*value) ||  // Probably a stringview_wtf8.
           IsWasmContinuationObject(*value) || IsWasmExceptionPackage(*value) ||
-          IsWasmStringViewIter(*value)) {
+          IsWasmStringViewIter(*value) || IsForeign(*value)) {
         return CrashUnlessFuzzing(isolate);
       }
       value = wasm::WasmToJSObject(isolate, value);
