@@ -10,13 +10,34 @@
 
 #include "src/common/ptr-compr-inl.h"
 #include "src/objects/instance-type-inl.h"
-#include "src/objects/objects-inl.h"
+#include "src/objects/map-word-inl.h"
+#include "src/objects/tagged-field-inl.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
 
 namespace v8 {
 namespace internal {
+
+MapWord HeapObject::map_word(RelaxedLoadTag tag) const {
+  return MapField::Relaxed_Load_Map_Word(this);
+}
+
+MapWord HeapObject::map_word(AcquireLoadTag tag) const {
+  return MapField::Acquire_Load_No_Unpack(this);
+}
+
+Tagged<Map> HeapObject::map() const { return map_word(kRelaxedLoad).ToMap(); }
+
+DEF_ACQUIRE_GETTER(HeapObject, map, Tagged<Map>) {
+  return map_word(kAcquireLoad).ToMap();
+}
+
+int HeapObject::Size() const { return SizeFromMap(map()); }
+
+SafeHeapObjectSize HeapObject::SafeSize() const {
+  return SafeSizeFromMap(map());
+}
 
 #define TYPE_CHECKER(type, ...)                                          \
   bool Is##type(Tagged<HeapObject> obj) {                                \

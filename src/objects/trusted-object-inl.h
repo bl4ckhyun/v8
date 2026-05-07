@@ -11,6 +11,8 @@
 #include "src/heap/heap-write-barrier-inl.h"
 #include "src/objects/heap-object-inl.h"
 #include "src/objects/instance-type-inl.h"
+#include "src/objects/objects-inl.h"  // For InitSelfIndirectPointerField.
+#include "src/objects/trusted-pointer-inl.h"
 #include "src/sandbox/indirect-pointer-inl.h"
 #include "src/sandbox/sandbox.h"
 

@@ -10,6 +10,7 @@
 
 #include "src/heap/heap-write-barrier-inl.h"
 #include "src/objects/heap-object-inl.h"
+#include "src/objects/objects-inl.h"
 
 namespace v8::internal {
 

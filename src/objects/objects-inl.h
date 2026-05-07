@@ -1152,8 +1152,6 @@ EarlyReadOnlyRoots HeapObject::EarlyGetReadOnlyRoots() const {
   return ReadOnlyHeap::EarlyGetReadOnlyRoots(this);
 }
 
-Tagged<Map> HeapObject::map() const { return map_word(kRelaxedLoad).ToMap(); }
-
 void HeapObject::set_map(Isolate* isolate, Tagged<Map> value) {
   set_map<EmitWriteBarrier::kYes>(isolate, value, kRelaxedStore,
                                   VerificationMode::kPotentialLayoutChange);
@@ -1264,16 +1262,8 @@ void HeapObject::SetFillerMap(const WritableFreeSpace& writable_space,
       value, kRelaxedStore);
 }
 
-DEF_ACQUIRE_GETTER(HeapObject, map, Tagged<Map>) {
-  return map_word(kAcquireLoad).ToMap();
-}
-
 ObjectSlot HeapObject::map_slot() const {
   return ObjectSlot(MapField::address(this));
-}
-
-MapWord HeapObject::map_word(RelaxedLoadTag tag) const {
-  return MapField::Relaxed_Load_Map_Word(this);
 }
 
 void HeapObject::set_map_word(Tagged<Map> map, RelaxedStoreTag) {
@@ -1284,10 +1274,6 @@ void HeapObject::set_map_word_forwarded(Tagged<HeapObject> target_object,
                                         RelaxedStoreTag) {
   MapField::Relaxed_Store_Map_Word(
       this, MapWord::FromForwardingAddress(this, target_object));
-}
-
-MapWord HeapObject::map_word(AcquireLoadTag tag) const {
-  return MapField::Acquire_Load_No_Unpack(this);
 }
 
 void HeapObject::set_map_word(Tagged<Map> map, ReleaseStoreTag) {
@@ -1306,12 +1292,6 @@ bool HeapObject::relaxed_compare_and_swap_map_word_forwarded(
       this, old_map_word,
       MapWord::FromForwardingAddress(this, new_target_object));
   return result == static_cast<Tagged_t>(old_map_word.ptr());
-}
-
-int HeapObject::Size() const { return SizeFromMap(map()); }
-
-SafeHeapObjectSize HeapObject::SafeSize() const {
-  return SafeSizeFromMap(map());
 }
 
 inline bool IsSpecialReceiverInstanceType(InstanceType instance_type) {
