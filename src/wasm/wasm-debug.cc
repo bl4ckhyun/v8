@@ -919,6 +919,26 @@ size_t DebugInfo::EstimateCurrentMemoryConsumption() const {
 
 namespace {
 
+bool EnsureFunctionValidated(const wasm::NativeModule* native_module,
+                             int func_index, Zone* zone) {
+  const wasm::WasmModule* module = native_module->module();
+  if (V8_LIKELY(module->function_was_validated(func_index))) return true;
+
+  const wasm::WasmFunction& func = module->functions[func_index];
+  const uint8_t* module_start = native_module->wire_bytes().begin();
+  wasm::WasmDetectedFeatures unused_detected_features;
+  wasm::FunctionBody body{func.sig, func.code.offset(),
+                          module_start + func.code.offset(),
+                          module_start + func.code.end_offset(),
+                          module->type(func.sig_index).is_shared};
+  wasm::DecodeResult validation_result =
+      wasm::ValidateFunctionBody(zone, native_module->enabled_features(),
+                                 module, &unused_detected_features, body);
+  if (V8_UNLIKELY(validation_result.failed())) return false;
+  module->set_function_validated(func_index);
+  return true;
+}
+
 // Return the next breakable position at or after {offset_in_func} in function
 // {func_index}, or 0 if there is none.
 // Note that 0 is never a breakable position in wasm, since the first byte
@@ -926,6 +946,10 @@ namespace {
 int FindNextBreakablePosition(wasm::NativeModule* native_module, int func_index,
                               int offset_in_func) {
   Zone zone{wasm::GetWasmEngine()->allocator(), ZONE_NAME};
+  if (V8_UNLIKELY(!EnsureFunctionValidated(native_module, func_index, &zone))) {
+    return 0;
+  }
+
   wasm::BodyLocalDecls locals;
   const uint8_t* module_start = native_module->wire_bytes().begin();
   const wasm::WasmFunction& func =
@@ -1226,8 +1250,9 @@ bool WasmScript::GetPossibleBreakpoints(
   if (start.GetLineNumber() != 0 || start.GetColumnNumber() < 0 ||
       (!end.IsEmpty() &&
        (end.GetLineNumber() != 0 || end.GetColumnNumber() < 0 ||
-        end.GetColumnNumber() < start.GetColumnNumber())))
+        end.GetColumnNumber() < start.GetColumnNumber()))) {
     return false;
+  }
 
   // start_func_index, start_offset and end_func_index is inclusive.
   // end_offset is exclusive.
@@ -1252,8 +1277,9 @@ bool WasmScript::GetPossibleBreakpoints(
   }
 
   if (start_func_index == end_func_index &&
-      start_offset > functions[end_func_index].code.end_offset())
+      start_offset > functions[end_func_index].code.end_offset()) {
     return false;
+  }
   Zone zone{wasm::GetWasmEngine()->allocator(), ZONE_NAME};
   const uint8_t* module_start = native_module->wire_bytes().begin();
 
@@ -1262,17 +1288,8 @@ bool WasmScript::GetPossibleBreakpoints(
     const wasm::WasmFunction& func = functions[func_idx];
     if (func.code.length() == 0) continue;
 
-    if (V8_UNLIKELY(!module->function_was_validated(func_idx))) {
-      wasm::WasmDetectedFeatures unused_detected_features;
-      wasm::FunctionBody body{func.sig, func.code.offset(),
-                              module_start + func.code.offset(),
-                              module_start + func.code.end_offset(),
-                              module->type(func.sig_index).is_shared};
-      wasm::DecodeResult validation_result =
-          wasm::ValidateFunctionBody(&zone, native_module->enabled_features(),
-                                     module, &unused_detected_features, body);
-      if (validation_result.failed()) return false;
-      module->set_function_validated(func_idx);
+    if (V8_UNLIKELY(!EnsureFunctionValidated(native_module, func_idx, &zone))) {
+      return false;
     }
 
     wasm::BodyLocalDecls locals;
