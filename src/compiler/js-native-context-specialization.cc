@@ -1877,10 +1877,13 @@ Reduction JSNativeContextSpecialization::ReduceHomomorphicAccess(
         holder, effect, control);
   }
 
+  FieldAccess field_access =
+      AccessBuilder::ForJSObjectOffset(kTaggedSize * offset_in_words);
+  if (is_double) {
+    field_access.type = Type::OtherInternal();
+  }
   Node* result = effect = graph()->NewNode(
-      simplified()->LoadField(
-          AccessBuilder::ForJSObjectOffset(kTaggedSize * offset_in_words)),
-      holder, effect, control);
+      simplified()->LoadField(field_access), holder, effect, control);
 
   if (is_double) {
     // With in-place field representation changes it is possible that this is
