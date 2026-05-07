@@ -4932,6 +4932,11 @@ class RepresentationSelector {
                       MachineRepresentation::kTaggedSigned);
         return;
 
+      case IrOpcode::kWeakCollectionGet:
+        VisitBinop<T>(node, UseInfo::AnyTagged(),
+                      MachineRepresentation::kTagged);
+        return;
+
       case IrOpcode::kFastApiCall: {
         VisitFastApiCall<T>(node, lowering);
         return;

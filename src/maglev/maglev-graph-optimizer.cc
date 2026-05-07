@@ -2800,6 +2800,12 @@ ProcessResult MaglevGraphOptimizer::VisitSetPrototypeHas(
   return ProcessResult::kContinue;
 }
 
+ProcessResult MaglevGraphOptimizer::VisitWeakMapPrototypeGet(
+    WeakMapPrototypeGet* node, const ProcessingState& state) {
+  // TODO(b/424157317): Optimize.
+  return ProcessResult::kContinue;
+}
+
 ProcessResult MaglevGraphOptimizer::VisitStringSlice(
     StringSlice* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.

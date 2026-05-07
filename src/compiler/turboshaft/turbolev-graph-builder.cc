@@ -2439,6 +2439,14 @@ class GraphBuildingNodeProcessor {
     return maglev::ProcessResult::kContinue;
   }
 
+  maglev::ProcessResult Process(maglev::WeakMapPrototypeGet* node,
+                                const maglev::ProcessingState& state) {
+    V<JSWeakCollection> receiver = Map(node->ReceiverInput());
+    V<Object> key = Map(node->KeyInput());
+    SetMap(node, __ WeakCollectionGet(receiver, key));
+    return maglev::ProcessResult::kContinue;
+  }
+
   maglev::ProcessResult Process(maglev::StringSlice* node,
                                 const maglev::ProcessingState& state) {
     V<String> string = Map(node->StringInput());

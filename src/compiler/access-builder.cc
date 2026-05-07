@@ -202,6 +202,16 @@ FieldAccess AccessBuilder::ForJSCollectionTable() {
 }
 
 // static
+FieldAccess AccessBuilder::ForJSWeakCollectionTable() {
+  FieldAccess access = {
+      kTaggedBase,           offsetof(JSWeakCollection, table_),
+      MaybeHandle<Name>(),   OptionalMapRef(),
+      Type::OtherInternal(), MachineType::TaggedPointer(),
+      kPointerWriteBarrier,  "JSWeakCollectionTable"};
+  return access;
+}
+
+// static
 FieldAccess AccessBuilder::ForJSCollectionIteratorTable() {
   FieldAccess access = {
       kTaggedBase,           JSCollectionIterator::kTableOffset,

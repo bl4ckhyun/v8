@@ -5059,6 +5059,10 @@ class AssemblerOpInterface : public Next {
         FindOrderedHashEntryOp::Kind::kFindOrderedHashMapEntryForInt32Key);
   }
 
+  V<Object> WeakCollectionGet(V<JSWeakCollection> receiver, V<Object> key) {
+    return ReduceIfReachableWeakCollectionGet(receiver, key);
+  }
+
   template <RootIndex index>
   V<root_type_t<index>> LoadRoot() {
     using RootObjectType = root_type_t<index>;

@@ -2508,6 +2508,8 @@ OpIndex GraphBuilder::Process(
     case IrOpcode::kFindOrderedHashMapEntryForInt32Key:
       return __ FindOrderedHashMapEntryForInt32Key(Map(node->InputAt(0)),
                                                    Map(node->InputAt(1)));
+    case IrOpcode::kWeakCollectionGet:
+      return __ WeakCollectionGet(Map(node->InputAt(0)), Map(node->InputAt(1)));
 
     case IrOpcode::kBeginRegion:
       inside_region = true;

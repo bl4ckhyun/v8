@@ -4025,6 +4025,21 @@ class MachineLoweringReducer : public Next {
     }
   }
 
+  V<Object> REDUCE(WeakCollectionGet)(V<JSWeakCollection> receiver,
+                                      V<Object> key) {
+    V<EphemeronHashTable> table = __ template LoadField<EphemeronHashTable>(
+        receiver, AccessBuilder::ForJSWeakCollectionTable());
+    V<Smi> index = __ template CallBuiltin<builtin::WeakMapLookupHashIndex>(
+        __ NoContextConstant(), {.table = table, .key = key});
+    ScopedVar<Object> result(this,
+                             __ HeapConstant(factory_->undefined_value()));
+    IF_NOT (__ TaggedEqual(index, __ SmiConstant(Smi::FromInt(-1)))) {
+      result = __ LoadFixedArrayElement(
+          table, __ ChangeInt32ToIntPtr(__ UntagSmi(index)));
+    }
+    return result;
+  }
+
   // Loads a surrogate pair from {string} starting at {index} and returns the
   // result encode in {encoding}. Note that UTF32 encoding is identical to the
   // code point. If the string's {length} is already available, it can be

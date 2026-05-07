@@ -929,6 +929,7 @@ class MaglevGraphBuilder {
   V(FunctionPrototypeCall)                     \
   V(FunctionPrototypeHasInstance)              \
   V(MapPrototypeGet)                           \
+  V(WeakMapPrototypeGet)                       \
   V(ObjectPrototypeGetProto)                   \
   V(ObjectGetPrototypeOf)                      \
   V(ReflectGet)                                \

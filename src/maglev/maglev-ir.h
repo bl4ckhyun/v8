@@ -198,6 +198,7 @@ class ExceptionHandlerInfo;
   V(MapPrototypeGet)                \
   V(MapPrototypeGetInt32Key)        \
   V(SetPrototypeHas)                \
+  V(WeakMapPrototypeGet)            \
   V(ObjectIsArray)                  \
   V(ProcessWasmArgument)
 
@@ -7727,6 +7728,23 @@ class SetPrototypeHas : public FixedInputValueNodeT<2, SetPrototypeHas> {
   }
 
   NodeType type() const { return NodeType::kBoolean; }
+
+  void SetValueLocationConstraints();
+  void GenerateCode(MaglevAssembler*, const ProcessingState&);
+};
+
+class WeakMapPrototypeGet
+    : public FixedInputValueNodeT<2, WeakMapPrototypeGet> {
+ public:
+  explicit WeakMapPrototypeGet(uint64_t bitfield) : Base(bitfield) {}
+
+  static constexpr OpProperties kProperties = OpProperties::Call() |
+                                              OpProperties::CanRead() |
+                                              OpProperties::TaggedValue();
+  DECLARE_INPUTS(Receiver, Key)
+  DECLARE_INPUT_TYPES(Tagged, Tagged)
+
+  int MaxCallStackArgs() const { UNREACHABLE(); }
 
   void SetValueLocationConstraints();
   void GenerateCode(MaglevAssembler*, const ProcessingState&);

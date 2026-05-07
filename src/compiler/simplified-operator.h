@@ -1017,6 +1017,9 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
   const Operator* FindOrderedHashMapEntryForInt32Key();
   const Operator* FindOrderedCollectionEntry(CollectionKind collection_kind);
 
+  // WeakMap.prototype.get lowering. Inputs: receiver (JSWeakCollection), key.
+  const Operator* WeakCollectionGet();
+
   const Operator* SpeculativeToNumber(NumberOperationHint hint,
                                       const FeedbackSource& feedback);
 

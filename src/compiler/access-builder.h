@@ -81,6 +81,10 @@ class V8_EXPORT_PRIVATE AccessBuilder final
   // Provides access to JSCollecton::table() field.
   static FieldAccess ForJSCollectionTable();
 
+  // Provides access to JSWeakCollection::table() field
+  // (an EphemeronHashTable for JSWeakMap/JSWeakSet).
+  static FieldAccess ForJSWeakCollectionTable();
+
   // Provides access to JSCollectionIterator::table() field.
   static FieldAccess ForJSCollectionIteratorTable();
 

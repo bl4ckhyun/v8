@@ -506,6 +506,7 @@
   V(FindOrderedHashMapEntry)                \
   V(FindOrderedHashMapEntryForInt32Key)     \
   V(FindOrderedHashSetEntry)                \
+  V(WeakCollectionGet)                      \
   V(InitializeImmutableInObject)            \
   V(LoadDataViewElement)                    \
   V(LoadElement)                            \

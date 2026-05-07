@@ -316,6 +316,20 @@ struct builtin : CallDescriptorBuilder {
   using FindOrderedHashSetEntry =
       FindOrderedHashEntry<Builtin::kFindOrderedHashSetEntry>;
 
+  struct WeakMapLookupHashIndex : public Descriptor<WeakMapLookupHashIndex> {
+    static constexpr auto kFunction = Builtin::kWeakMapLookupHashIndex;
+    struct Arguments : ArgumentsBase {
+      ARG(V<EphemeronHashTable>, table)
+      ARG(V<Object>, key)
+    };
+    using returns_t = std::tuple<V<Smi>>;
+
+    static constexpr bool kCanTriggerLazyDeopt = false;
+    static constexpr bool kNeedsContext = true;
+    static constexpr Operator::Properties kProperties = Operator::kEliminatable;
+    static constexpr OpEffects kEffects = base_effects.CanReadMemory();
+  };
+
   template <Builtin B>
   struct GrowFastElements : public Descriptor<GrowFastElements<B>> {
     static constexpr auto kFunction = B;

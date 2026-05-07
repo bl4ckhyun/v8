@@ -1165,6 +1165,15 @@ struct SimplifiedOperatorGlobalCache final {
   };
   FindOrderedHashSetEntryOperator kFindOrderedHashSetEntry;
 
+  // Inputs: receiver (JSWeakCollection), key (Object).
+  // Output: looked-up value (Object) or undefined.
+  struct WeakCollectionGetOperator final : public Operator {
+    WeakCollectionGetOperator()
+        : Operator(IrOpcode::kWeakCollectionGet, Operator::kEliminatable,
+                   "WeakCollectionGet", 2, 1, 1, 1, 1, 0) {}
+  };
+  WeakCollectionGetOperator kWeakCollectionGet;
+
   template <CheckForMinusZeroMode kMode>
   struct ChangeFloat64ToTaggedOperator final
       : public Operator1<CheckForMinusZeroMode> {
@@ -1606,6 +1615,10 @@ const Operator* SimplifiedOperatorBuilder::FindOrderedCollectionEntry(
     case CollectionKind::kSet:
       return &cache_.kFindOrderedHashSetEntry;
   }
+}
+
+const Operator* SimplifiedOperatorBuilder::WeakCollectionGet() {
+  return &cache_.kWeakCollectionGet;
 }
 
 #define GET_FROM_CACHE_WITH_FEEDBACK(Name, value_input_count,               \

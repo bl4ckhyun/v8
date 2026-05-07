@@ -5608,6 +5608,8 @@ Reduction JSCallReducer::ReduceJSCall(Node* node,
       return ReduceMapPrototypeGet(node);
     case Builtin::kMapPrototypeHas:
       return ReduceMapPrototypeHas(node);
+    case Builtin::kWeakMapPrototypeGet:
+      return ReduceWeakMapPrototypeGet(node);
     case Builtin::kSetPrototypeHas:
       return ReduceSetPrototypeHas(node);
     case Builtin::kRegExpPrototypeTest:
@@ -8712,6 +8714,26 @@ Reduction JSCallReducer::ReduceNumberIsNaN(Node* node) {
   Node* input = n.Argument(0);
   Node* value = graph()->NewNode(simplified()->ObjectIsNaN(), input);
   ReplaceWithValue(node, value);
+  return Replace(value);
+}
+
+Reduction JSCallReducer::ReduceWeakMapPrototypeGet(Node* node) {
+  JSCallNode n(node);
+  if (n.ArgumentCount() != 1) return NoChange();
+  Node* receiver = NodeProperties::GetValueInput(node, 1);
+  Effect effect{NodeProperties::GetEffectInput(node)};
+  Control control{NodeProperties::GetControlInput(node)};
+  Node* key = NodeProperties::GetValueInput(node, 2);
+
+  MapInference inference(broker(), receiver, effect);
+  if (!inference.HaveMaps() ||
+      !inference.AllOfInstanceTypesAre(JS_WEAK_MAP_TYPE)) {
+    return NoChange();
+  }
+
+  Node* value = effect = graph()->NewNode(simplified()->WeakCollectionGet(),
+                                          receiver, key, effect, control);
+  ReplaceWithValue(node, value, effect, control);
   return Replace(value);
 }
 

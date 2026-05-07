@@ -10792,6 +10792,43 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceMapPrototypeGet(
   return entry;
 }
 
+MaybeReduceResult MaglevGraphBuilder::TryReduceWeakMapPrototypeGet(
+    compiler::JSFunctionRef target, CallArguments& args) {
+  if (!CanSpeculateCall()) return {};
+  // Lowering happens in turboshaft (machine-lowering-reducer); the pure-Maglev
+  // GenerateCode for this node is UNREACHABLE.
+  if (!is_turbolev()) return {};
+
+  if (args.receiver_mode() == ConvertReceiverMode::kNullOrUndefined) {
+    FAIL(" to reduce WeakMap.prototype.Get - no receiver");
+  }
+  if (args.count() != 1) {
+    FAIL(" to reduce WeakMap.prototype.Get - invalid argument count");
+  }
+
+  ValueNode* receiver = GetValueOrUndefined(args.receiver());
+  MapInference inference(this, receiver);
+  auto possible_receiver_maps = inference.TryGetPossibleMaps();
+  if (!possible_receiver_maps) {
+    FAIL(" to reduce WeakMap.prototype.Get - unknown receiver map");
+  }
+
+  if (possible_receiver_maps->is_empty()) {
+    return ReduceResult::DoneWithAbort();
+  }
+
+  if (!AllOfInstanceTypesAre(*possible_receiver_maps, JS_WEAK_MAP_TYPE)) {
+    FAIL(" to reduce WeakMap.prototype.Get - wrong receiver maps");
+  }
+
+  RETURN_IF_ABORT(inference.InsertMapChecks(zone()));
+
+  ValueNode* key = args[0];
+  ValueNode* value;
+  GET_VALUE_OR_ABORT(value, AddNewNode<WeakMapPrototypeGet>({receiver, key}));
+  return value;
+}
+
 MaybeReduceResult MaglevGraphBuilder::TryReduceSetPrototypeHas(
     compiler::JSFunctionRef target, CallArguments& args) {
   if (!CanSpeculateCall()) return {};

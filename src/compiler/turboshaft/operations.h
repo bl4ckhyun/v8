@@ -258,6 +258,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   V(EnsureWritableFastElements)                 \
   V(FastApiCall)                                \
   V(FindOrderedHashEntry)                       \
+  V(WeakCollectionGet)                          \
   V(LoadDataViewElement)                        \
   V(LoadFieldByIndex)                           \
   V(LoadMessage)                                \
@@ -7258,6 +7259,31 @@ struct FindOrderedHashEntryOp
 };
 V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream& os,
                                            FindOrderedHashEntryOp::Kind kind);
+
+struct WeakCollectionGetOp : FixedArityOperationT<2, WeakCollectionGetOp> {
+  static constexpr OpEffects effects =
+      OpEffects().CanDependOnChecks().CanReadMemory();
+
+  base::Vector<const RegisterRepresentation> outputs_rep() const {
+    return RepVector<RegisterRepresentation::Tagged()>();
+  }
+
+  base::Vector<const MaybeRegisterRepresentation> inputs_rep(
+      ZoneVector<MaybeRegisterRepresentation>& storage) const {
+    return MaybeRepVector<MaybeRegisterRepresentation::Tagged(),
+                          MaybeRegisterRepresentation::Tagged()>();
+  }
+
+  V<JSWeakCollection> receiver() const {
+    return Base::input<JSWeakCollection>(0);
+  }
+  V<Object> key() const { return Base::input<Object>(1); }
+
+  WeakCollectionGetOp(V<JSWeakCollection> receiver, V<Object> key)
+      : Base(receiver, key) {}
+
+  auto options() const { return std::tuple{}; }
+};
 
 struct CommentOp : FixedArityOperationT<0, CommentOp> {
   const char* message;
