@@ -1930,17 +1930,18 @@ void OnStackReplacement(MacroAssembler* masm, OsrSourceTier source,
 
   // Check we are actually jumping to an OSR code object. This among other
   // things ensures that the object contains deoptimization data below.
-  __ Lwu(scratch, FieldMemOperand(maybe_target_code, Code::kOsrOffsetOffset));
-  __ Check(ne, AbortReason::kExpectedOsrCode, scratch,
-           Operand(BytecodeOffset::None().ToInt()));
+  // Keep scratch's sign-extension same with another operand.
+  __ Lw(scratch, FieldMemOperand(maybe_target_code, Code::kOsrOffsetOffset));
+  __ SbxCheck(ne, AbortReason::kExpectedOsrCode, scratch,
+              Operand(BytecodeOffset::None().ToInt()));
 
   // Check the target has a matching parameter count. This ensures that the OSR
   // code will correctly tear down our frame when leaving.
   __ Lhu(scratch,
          FieldMemOperand(maybe_target_code, Code::kParameterCountOffset));
   __ SmiUntag(expected_param_count);
-  __ Check(eq, AbortReason::kOsrUnexpectedStackSize, scratch,
-           Operand(expected_param_count));
+  __ SbxCheck(eq, AbortReason::kOsrUnexpectedStackSize, scratch,
+              Operand(expected_param_count));
 
   // Load deoptimization data from the code object.
   // <deopt_data> = <code>[#deoptimization_data_offset]
