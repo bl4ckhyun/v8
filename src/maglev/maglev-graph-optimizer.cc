@@ -12,6 +12,7 @@
 #include "src/common/operation.h"
 #include "src/deoptimizer/deoptimize-reason.h"
 #include "src/maglev/maglev-basic-block.h"
+#include "src/maglev/maglev-graph-builder.h"
 #include "src/maglev/maglev-graph-labeller.h"
 #include "src/maglev/maglev-graph-processor.h"
 #include "src/maglev/maglev-ir-inl.h"
@@ -97,6 +98,9 @@ constexpr ValueRepresentation ValueRepresentationFromUse(
 }
 }  // namespace
 
+static_assert(ReducerBaseWithEagerDeopt<MaglevGraphOptimizer>);
+static_assert(ReducerBaseWithLazyDeopt<MaglevGraphOptimizer>);
+
 MaglevGraphOptimizer::MaglevGraphOptimizer(
     Graph* graph, RecomputeKnownNodeAspectsProcessor& kna_processor,
     NodeRanges* ranges)
@@ -106,6 +110,9 @@ BlockProcessResult MaglevGraphOptimizer::PreProcessBasicBlock(
     BasicBlock* block) {
   reducer_.set_current_block(block);
   TRACE(TraceColor::kYellow << "Entering block b" << block->id());
+  if (block->is_loop()) {
+    loop_depth_++;
+  }
   return BlockProcessResult::kContinue;
 }
 
@@ -434,6 +441,27 @@ Jump* MaglevGraphOptimizer::FoldBranch(BasicBlock* current,
 
   reducer_.graph()->set_may_have_unreachable_blocks(true);
   return new_control_node;
+}
+
+void MaglevGraphOptimizer::AttachExceptionHandlerInfo(NodeBase* node) {
+  DCHECK(node->properties().can_throw());
+  DCHECK(current_node()->properties().can_throw());
+  ExceptionHandlerInfo* info = current_node()->exception_handler_info();
+  if (info->ShouldLazyDeopt()) {
+    new (node->exception_handler_info())
+        ExceptionHandlerInfo(ExceptionHandlerInfo::kLazyDeopt);
+  } else if (!info->HasExceptionHandler()) {
+    new (node->exception_handler_info()) ExceptionHandlerInfo();
+  } else {
+    new (node->exception_handler_info())
+        ExceptionHandlerInfo(info->catch_block(), info->depth());
+  }
+  if (node->Is<CallKnownJSFunction>()) {
+    // Ensure that we always have the handler of inline call
+    // candidates.
+    reducer_.current_block()->AddExceptionHandler(
+        node->exception_handler_info());
+  }
 }
 
 ReduceResult MaglevGraphOptimizer::EmitUnconditionalDeopt(
@@ -1081,8 +1109,140 @@ ProcessResult MaglevGraphOptimizer::VisitRestLength(
 
 ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
                                               const ProcessingState& state) {
-  // TODO(b/424157317): Optimize.
-  return ProcessResult::kContinue;
+  ValueNode* target = node->TargetInput().node();
+  auto target_function = reducer_.TryGetConstant<JSFunction>(target);
+  if (!target_function.has_value()) return ProcessResult::kContinue;
+
+  // Don't inline CallFunction stub across native contexts.
+  if (target_function->native_context(broker()) !=
+      broker()->target_native_context()) {
+    return ProcessResult::kContinue;
+  }
+
+  compiler::SharedFunctionInfoRef shared = target_function->shared(broker());
+  // Do not reduce calls to functions with break points.
+  if (shared.HasBreakInfo(broker())) return ProcessResult::kContinue;
+  if (IsClassConstructor(shared.kind())) {
+    // If we have a class constructor, we should raise an exception.
+    return ThrowAndTruncate(Throw::kThrowConstructorNonCallableError, target);
+  }
+
+  // Call's varargs slots are [receiver, arg0, arg1, ...]; CallKnownBuiltin
+  // pulls receiver into a fixed input slot.
+  if (node->num_args() < 1) return ProcessResult::kContinue;
+  ValueNode* receiver = node->arg(0).node();
+  int positional_arg_count = node->num_args() - 1;
+
+  // Receiver conversion: CallKnownBuiltin expects a pre-converted receiver.
+  // For native or strict callees, no conversion is needed. For sloppy
+  // callees, kNullOrUndefined receivers are replaced by the global proxy;
+  // otherwise we emit a runtime ConvertReceiver. Already-known JSReceivers
+  // pass through unchanged.
+  ConvertReceiverMode receiver_mode = node->receiver_mode();
+  ReduceResult converted_receiver_result =
+      reducer_.GetConvertReceiver(shared, receiver, receiver_mode);
+  if (!converted_receiver_result.IsDoneWithValue()) {
+    return ProcessResult::kContinue;
+  }
+  ValueNode* converted_receiver = converted_receiver_result.value();
+
+  ValueNode* context = node->ContextInput().node();
+  ValueNode* new_target = reducer_.GetRootConstant(RootIndex::kUndefinedValue);
+  if (shared.HasBuiltinId()) {
+    Builtin builtin_id = shared.builtin_id();
+    // Promote to CallKnownBuiltin.
+    // TODO(victorgomes): Once we are able, we should try to inline the builtin
+    // directly here.
+    if (MaglevGraphBuilder::IsReducibleBuiltin(builtin_id)) {
+      size_t input_count =
+          positional_arg_count + CallKnownBuiltin::kFixedInputCount;
+      ReduceResult new_call = reducer_.AddNewNode<CallKnownBuiltin>(
+          input_count,
+          [&](CallKnownBuiltin* call) {
+            for (int i = 0; i < positional_arg_count; i++) {
+              call->set_arg(i, node->arg(i + 1).node());
+            }
+            return ReduceResult::Done();
+          },
+          builtin_id, target_function->dispatch_handle(), shared, target,
+          context, converted_receiver, new_target, compiler::FeedbackSource{});
+      DCHECK(new_call.IsDoneWithValue());
+      TRACE(TraceColor::kDarkGreen << "Promoting " << PrintNodeLabel(node)
+                                   << " to CallKnownBuiltin("
+                                   << Builtins::name(builtin_id) << ")");
+      return ReplaceWith(new_call.value());
+    }
+  }
+
+  // Promote to CallKnownJSFunction.
+  size_t input_count =
+      positional_arg_count + CallKnownJSFunction::kFixedInputCount;
+  ReduceResult new_call = reducer_.AddNewNode<CallKnownJSFunction>(
+      input_count,
+      [&](CallKnownJSFunction* call) {
+        for (int i = 0; i < positional_arg_count; i++) {
+          call->set_arg(i, node->arg(i + 1).node());
+        }
+        return ReduceResult::Done();
+      },
+      target_function->dispatch_handle(), shared, target, context,
+      converted_receiver, new_target, compiler::FeedbackSource{});
+  DCHECK(new_call.IsDoneWithValue());
+  CallKnownJSFunction* new_call_node =
+      new_call.value()->Cast<CallKnownJSFunction>();
+
+  // TODO(victorgomes): Should we propagate call frequency from feedback?
+  float call_frequency = 1.0f;
+  if (!reducer_.CanInlineCall(shared, call_frequency)) {
+    return ReplaceWith(new_call_node);
+  }
+
+  // Create and push MaglevCallSiteInfo
+  // TODO(victorgomes): Investigate if we can avoid this copy.
+  auto arguments =
+      reducer_.zone()->AllocateVector<ValueNode*>(node->num_args());
+  arguments[0] = converted_receiver;
+  for (int i = 1; i < node->num_args(); ++i) {
+    arguments[i] = node->arg(i).node();
+  }
+
+  CatchBlockDetails catch_details;
+  if (node->exception_handler_info()->HasExceptionHandler()) {
+    catch_details = {node->exception_handler_info()->catch_block_ref_address(),
+                     !node->exception_handler_info()->ShouldLazyDeopt(), true,
+                     0};
+  }
+
+  int bytecode_length = shared.GetBytecodeArray(broker()).length();
+  float score =
+      (call_frequency / bytecode_length) * (loop_depth_ > 0 ? 1.5 : 1.0);
+
+  bool is_small_function =
+      bytecode_length <
+      reducer_.graph()->compilation_info()->flags().max_eager_inlined_bytecode;
+  MaglevCallSiteInfo* call_site = reducer_.zone()->New<MaglevCallSiteInfo>(
+      MaglevCallerDetails{
+          base::VectorOf(arguments),
+          &new_call_node->lazy_deopt_info()->top_frame(),
+          known_node_aspects().Clone(reducer_.zone()),
+          nullptr,  // loop_effects
+          ZoneUnorderedMap<KnownNodeAspects::LoadedContextSlotsKey, Node*>(
+              reducer_.zone()),  // unobserved_context_slot_stores
+          catch_details, loop_depth_,
+          0,      // peeled_iteration_count
+          false,  // is_eager_inline
+          is_small_function, call_frequency,
+          nullptr  // TOD(victorgomes): Propagate
+                   // parent_inlining_tree_debug_info?
+      },
+      new_call_node, target_function->raw_feedback_cell(broker()), score,
+      bytecode_length);
+
+  reducer_.PushInlineCandidate(call_site);
+
+  TRACE(TraceColor::kDarkGreen << "Promoting " << PrintNodeLabel(node)
+                               << " to CallKnownJSFunction");
+  return ReplaceWith(new_call_node);
 }
 
 ProcessResult MaglevGraphOptimizer::VisitCallBuiltin(
@@ -3125,16 +3285,17 @@ ProcessResult MaglevGraphOptimizer::VisitJumpLoop(
   // weren't identities when the loop header was visited initially, but they
   // later became Identities while visiting the loop's body).
   BasicBlock* loop_header = node->target();
-  if (!loop_header->has_phi()) return ProcessResult::kContinue;
-
-  for (Phi* phi : *loop_header->phis()) {
-    for (int i = 0; i < phi->input_count(); i++) {
-      ValueNode* input = phi->input(i).node();
-      if (!input) continue;
-      phi->change_input(i, input->UnwrapIdentities());
+  if (loop_header->has_phi()) {
+    for (Phi* phi : *loop_header->phis()) {
+      for (int i = 0; i < phi->input_count(); i++) {
+        ValueNode* input = phi->input(i).node();
+        if (!input) continue;
+        phi->change_input(i, input->UnwrapIdentities());
+      }
     }
   }
 
+  loop_depth_--;
   return ProcessResult::kContinue;
 }
 

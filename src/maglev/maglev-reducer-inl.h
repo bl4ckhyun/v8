@@ -1273,6 +1273,49 @@ void MaglevReducer<BaseT>::FlushNodesToBlock() {
     new_nodes_at_.clear();
   }
 }
+
+#define TRACE_CANNOT_INLINE(...) \
+  TRACE_INLINING(TraceSkip(shared) << __VA_ARGS__)
+
+template <typename BaseT>
+bool MaglevReducer<BaseT>::CanInlineCall(compiler::SharedFunctionInfoRef shared,
+                                         float call_frequency) {
+  auto tracer_ = tracer();
+  if (static_cast<int>(graph()->inlined_functions().size()) >=
+      SourcePosition::MaxInliningId()) {
+    graph()->compilation_info()->set_could_not_inline_all_candidates();
+    TRACE_CANNOT_INLINE("maximum inlining ids");
+    return false;
+  }
+
+  if (current_provenance().unit->shared_function_info().equals(shared)) {
+    TRACE_CANNOT_INLINE("direct recursion");
+    return false;
+  }
+  SharedFunctionInfo::Inlineability inlineability =
+      shared.GetInlineability(CodeKind::MAGLEV, broker());
+  if (inlineability != SharedFunctionInfo::Inlineability::kIsInlineable) {
+    TRACE_CANNOT_INLINE(inlineability);
+    return false;
+  }
+  compiler::BytecodeArrayRef bytecode = shared.GetBytecodeArray(broker());
+  const CompilationFlags& flags = graph()->compilation_info()->flags();
+  if (call_frequency < flags.min_inlining_frequency) {
+    TRACE_CANNOT_INLINE("call frequency ("
+                        << call_frequency << ") < minimum threshold ("
+                        << flags.min_inlining_frequency << ")");
+    return false;
+  }
+  if (bytecode.length() > flags.max_inlined_bytecode_size) {
+    TRACE_CANNOT_INLINE("big function, size ("
+                        << bytecode.length() << ") >= max-size ("
+                        << flags.max_inlined_bytecode_size << ")");
+    return false;
+  }
+  return true;
+}
+#undef TRACE_CANNOT_INLINE
+
 template <typename BaseT>
 template <typename MapContainer>
 MaybeReduceResult MaglevReducer<BaseT>::TryFoldCheckConstantMaps(
@@ -2798,6 +2841,45 @@ MaybeReduceResult MaglevReducer<BaseT>::TryFoldLogicalNot(ValueNode* input) {
   }
 
   return {};
+}
+template <typename BaseT>
+bool MaglevReducer<BaseT>::IsTheHoleConstant(ValueNode* node) {
+  if (node != nullptr) {
+    if (compiler::OptionalHeapObjectRef maybe_constant =
+            TryGetConstant<HeapObject>(node)) {
+      return maybe_constant->IsTheHole();
+    }
+  }
+  return false;
+}
+
+template <typename BaseT>
+ReduceResult MaglevReducer<BaseT>::GetConvertReceiver(
+    compiler::SharedFunctionInfoRef shared, ValueNode* receiver,
+    ConvertReceiverMode mode) {
+  DCHECK(!IsTheHoleConstant(receiver));
+  if (shared.native() || shared.language_mode() == LanguageMode::kStrict) {
+    if (mode == ConvertReceiverMode::kNullOrUndefined) {
+      return GetRootConstant(RootIndex::kUndefinedValue);
+    } else {
+      return receiver;
+    }
+  }
+  if (mode == ConvertReceiverMode::kNullOrUndefined) {
+    return GetConstant(
+        broker()->target_native_context().global_proxy_object(broker()));
+  }
+  if (CheckType(receiver, NodeType::kJSReceiver)) return receiver;
+  if (compiler::OptionalHeapObjectRef maybe_constant =
+          TryGetConstant<HeapObject>(receiver)) {
+    compiler::HeapObjectRef constant = maybe_constant.value();
+    if (constant.IsNullOrUndefined()) {
+      return GetConstant(
+          broker()->target_native_context().global_proxy_object(broker()));
+    }
+  }
+  return AddNewNode<ConvertReceiver>({receiver},
+                                     broker()->target_native_context(), mode);
 }
 
 }  // namespace maglev

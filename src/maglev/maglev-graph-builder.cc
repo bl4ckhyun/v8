@@ -8604,40 +8604,7 @@ ReduceResult MaglevGraphBuilder::BuildInlineFunction(
 #define TRACE_CANNOT_INLINE(...) \
   TRACE_INLINING(TraceSkip(shared) << __VA_ARGS__)
 
-bool MaglevGraphBuilder::CanInlineCall(compiler::SharedFunctionInfoRef shared,
-                                       float call_frequency) {
-  if (static_cast<int>(graph()->inlined_functions().size()) >=
-      SourcePosition::MaxInliningId()) {
-    compilation_unit_->info()->set_could_not_inline_all_candidates();
-    TRACE_CANNOT_INLINE("maximum inlining ids");
-    return false;
-  }
 
-  if (compilation_unit_->shared_function_info().equals(shared)) {
-    TRACE_CANNOT_INLINE("direct recursion");
-    return false;
-  }
-  SharedFunctionInfo::Inlineability inlineability =
-      shared.GetInlineability(CodeKind::MAGLEV, broker());
-  if (inlineability != SharedFunctionInfo::Inlineability::kIsInlineable) {
-    TRACE_CANNOT_INLINE(inlineability);
-    return false;
-  }
-  compiler::BytecodeArrayRef bytecode = shared.GetBytecodeArray(broker());
-  if (call_frequency < flags_.min_inlining_frequency) {
-    TRACE_CANNOT_INLINE("call frequency ("
-                        << call_frequency << ") < minimum threshold ("
-                        << flags_.min_inlining_frequency << ")");
-    return false;
-  }
-  if (bytecode.length() > flags_.max_inlined_bytecode_size) {
-    TRACE_CANNOT_INLINE("big function, size ("
-                        << bytecode.length() << ") >= max-size ("
-                        << flags_.max_inlined_bytecode_size << ")");
-    return false;
-  }
-  return true;
-}
 
 bool MaglevGraphBuilder::IsFunctionCandidateForEagerInlining(
     compiler::SharedFunctionInfoRef shared, CallArguments& args) {
@@ -8726,7 +8693,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildInlineCall(
   }
   float call_frequency = feedback_frequency * GetCurrentCallFrequency();
 
-  if (!CanInlineCall(shared, call_frequency)) return {};
+  if (!reducer_.CanInlineCall(shared, call_frequency)) return {};
 
   compiler::BytecodeArrayRef bytecode = shared.GetBytecodeArray(broker());
   if (ShouldEagerInlineCall(shared, args)) {
@@ -8807,7 +8774,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildInlineCall(
                  << std::setprecision(2) << call_site->score << ", Node: n"
                  << graph_->graph_labeller()->NodeId(
                         call_site->generic_call_node));
-  graph()->inlineable_calls().push(call_site);
+  reducer_.PushInlineCandidate(call_site);
   return generic_call;
 }
 
@@ -12355,30 +12322,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceBuiltin(
 
 ReduceResult MaglevGraphBuilder::GetConvertReceiver(
     compiler::SharedFunctionInfoRef shared, const CallArguments& args) {
-  DCHECK(!IsTheHoleConstant(args.receiver()));
-  if (shared.native() || shared.language_mode() == LanguageMode::kStrict) {
-    if (args.receiver_mode() == ConvertReceiverMode::kNullOrUndefined) {
-      return GetRootConstant(RootIndex::kUndefinedValue);
-    } else {
-      return args.receiver();
-    }
-  }
-  if (args.receiver_mode() == ConvertReceiverMode::kNullOrUndefined) {
-    return GetConstant(
-        broker()->target_native_context().global_proxy_object(broker()));
-  }
-  ValueNode* receiver = args.receiver();
-  if (CheckType(receiver, NodeType::kJSReceiver)) return receiver;
-  if (compiler::OptionalHeapObjectRef maybe_constant =
-          TryGetConstant<HeapObject>(receiver)) {
-    compiler::HeapObjectRef constant = maybe_constant.value();
-    if (constant.IsNullOrUndefined()) {
-      return GetConstant(
-          broker()->target_native_context().global_proxy_object(broker()));
-    }
-  }
-  return AddNewNode<ConvertReceiver>(
-      {receiver}, broker()->target_native_context(), args.receiver_mode());
+  return reducer().GetConvertReceiver(shared, args.receiver(),
+                                      args.receiver_mode());
 }
 
 std::pair<ReduceResult, base::Vector<ValueNode*>>
@@ -12660,13 +12605,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildCallKnownApiFunction(
 }
 
 bool MaglevGraphBuilder::IsTheHoleConstant(ValueNode* node) {
-  if (node != nullptr) {
-    if (compiler::OptionalHeapObjectRef maybe_constant =
-            TryGetConstant<HeapObject>(node)) {
-      return maybe_constant->IsTheHole();
-    }
-  }
-  return false;
+  return reducer().IsTheHoleConstant(node);
 }
 
 MaybeReduceResult MaglevGraphBuilder::TryBuildCallKnownJSFunction(

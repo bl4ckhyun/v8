@@ -25,6 +25,7 @@ namespace v8 {
 namespace internal {
 namespace maglev {
 
+struct MaglevCallSiteInfo;
 class ReduceResult;
 class V8_NODISCARD MaybeReduceResult {
  public:
@@ -598,6 +599,10 @@ class MaglevReducer {
   }
 #endif  // DEBUG
 
+  void PushInlineCandidate(MaglevCallSiteInfo* call_site) {
+    graph()->inlineable_calls().push(call_site);
+  }
+
   SmiConstant* GetSmiConstant(int constant) const {
     return graph()->GetSmiConstant(constant);
   }
@@ -637,6 +642,13 @@ class MaglevReducer {
   }
 
   ValueNode* GetNumberConstant(double constant);
+
+  bool IsTheHoleConstant(ValueNode* node);
+  ReduceResult GetConvertReceiver(compiler::SharedFunctionInfoRef shared,
+                                  ValueNode* receiver,
+                                  ConvertReceiverMode mode);
+  bool CanInlineCall(compiler::SharedFunctionInfoRef shared,
+                     float call_frequency);
 
   ReduceResult BuildCheckedSmiSizedInt32(ValueNode* input);
 

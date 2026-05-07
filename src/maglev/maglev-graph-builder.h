@@ -1080,8 +1080,7 @@ class MaglevGraphBuilder {
       JSDispatchHandle dispatch_handle, compiler::SharedFunctionInfoRef shared,
       compiler::FeedbackCellRef feedback_cell, CallArguments& args,
       const compiler::FeedbackSource& feedback_source);
-  bool CanInlineCall(compiler::SharedFunctionInfoRef shared,
-                     float call_frequency);
+
   bool IsFunctionCandidateForEagerInlining(
       compiler::SharedFunctionInfoRef shared, CallArguments& args);
   bool ShouldEagerInlineCall(compiler::SharedFunctionInfoRef shared,

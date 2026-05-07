@@ -70,21 +70,7 @@ class MaglevGraphOptimizer {
                            info->result_size());
   }
 
-  void AttachExceptionHandlerInfo(NodeBase* node) {
-    DCHECK(node->properties().can_throw());
-    DCHECK(current_node()->properties().can_throw());
-    DCHECK(!node->Is<CallKnownJSFunction>());
-    ExceptionHandlerInfo* info = current_node()->exception_handler_info();
-    if (info->ShouldLazyDeopt()) {
-      new (node->exception_handler_info())
-          ExceptionHandlerInfo(ExceptionHandlerInfo::kLazyDeopt);
-    } else if (!info->HasExceptionHandler()) {
-      new (node->exception_handler_info()) ExceptionHandlerInfo();
-    } else {
-      new (node->exception_handler_info())
-          ExceptionHandlerInfo(info->catch_block(), info->depth());
-    }
-  }
+  void AttachExceptionHandlerInfo(NodeBase* node);
 
   ReduceResult EmitUnconditionalDeopt(DeoptimizeReason);
   ReduceResult EmitThrow(Throw::Function function, ValueNode* input);
@@ -105,6 +91,7 @@ class MaglevGraphOptimizer {
   MaglevReducer<MaglevGraphOptimizer> reducer_;
   RecomputeKnownNodeAspectsProcessor& kna_processor_;
   NodeRanges* ranges_;
+  int loop_depth_ = 0;
 
   NodeBase* current_node_;
 
