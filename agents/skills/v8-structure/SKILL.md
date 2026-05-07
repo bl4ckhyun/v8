@@ -1,6 +1,6 @@
 ---
 name: v8-structure
-description: Maps the V8 folder structure and component locations. Use when locating specific subsystems or understanding repository architecture. Do not use for build command syntax.
+description: Maps the V8 dir/folder structure, component locations, and local documentation. Use when locating specific subsystems, mapping src/ code to docs/ design files, or understanding repository architecture.
 ---
 
 # V8 Folder Structure
@@ -83,3 +83,24 @@ components.
   embedded in other projects such as e.g. the Blink rendering engine.
 - `out/`: Folder containing the results of a build. Usually organized in sub
   folders for the respective configurations.
+- `docs/`: Contains V8 documentation, including high-level, cross-cutting
+  concept guides at the root, and subsystem-specific directories.
+  - **Root Documentation**: Documents cross-cutting concerns such as embedding
+    (`docs/embed.md`), debugging (`docs/gdb.md`), profiling (`docs/profile.md`),
+    security mitigations (`docs/untrusted-code-mitigations.md`), and building V8
+    (`docs/build.md`).
+  - **Subsystem Directories** (often containing deep design docs):
+    - `docs/builtins/`: V8 built-ins and CodeStubAssembler.
+    - `docs/codegen/`: Code generation.
+    - `docs/compiler/`: Compilers (Sparkplug, Maglev, TurboFan, Turboshaft).
+    - `docs/heap/`: Memory management and Garbage Collector.
+    - `docs/interpreter/`: Ignition interpreter.
+    - `docs/objects/`: Object layout and Map representations.
+    - `docs/parsing/`: JavaScript parsing and AST.
+    - `docs/regexp/`: Regular expression engine.
+    - `docs/runtime/`: Runtime functions and execution model.
+    - `docs/sandbox/`: V8 Security Sandbox.
+    - `docs/security/`: Security triaging and design principles.
+    - `docs/snapshot/`: Snapshot and serialization.
+    - `docs/torque/`: Torque language and builtins.
+    - `docs/wasm/`: WebAssembly implementation.
