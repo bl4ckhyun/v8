@@ -51,6 +51,11 @@ security vulnerability report.
 - **Official Documentation:** Always refer to
   [triaging.md](../../../docs/security/triaging.md) for the definitive rules on
   labeling and classification.
+- **Strict Subagent Delegation:** To maintain a lean context, the Orchestrator
+  **MUST NOT** call Buganizer, Gerrit, or local execution tools directly during
+  Phases 1-4. All technical tasks must be delegated to subagents via
+  `invoke_agent`. The Orchestrator's role is strictly limited to reviewing
+  subagent summaries and coordinating the next step.
 
 ## Strategic Orchestration Guidelines
 
@@ -69,80 +74,67 @@ When executing a triage task, delegate tactical steps to subagents:
 
 ## Workflow
 
-### 1. Phase: Intake (Researcher)
+### 1. Phase: Intake (Delegation)
 
-Delegate to **Researcher** to gather all necessary data.
+Task the **Researcher** subagent with gathering all necessary data from
+Buganizer.
 
-- **Action**: Fetch report details using `mcp_Buganizer_render_issue`.
-- **Extraction**: Identify the POC script, required `d8` flags, and the
-  reporter's environment (commit hash/version). Identify the **introduction
-  commit (regression range)** by analyzing the history of affected files or
-  using the reporter's claims.
-- **Attachment Check**: Check if the reporter mentions specific files (e.g.,
-  "poc.html", "crash.log") that are NOT present in the issue's attachments list.
-  If any are missing, **MUST** include a request for these files in the final
-  update.
-- **Mapping**: Identify affected source files and find top experts using
-  `mcp_pndMcp_find_experts_for_file`.
-- **Component Discovery**: Identify the most specific Buganizer component for
-  the affected subsystem (e.g., `Blink > JavaScript > Maglev`) using
-  `mcp_Buganizer_list_components`.
+- **Orchestrator Instruction:** "Invoke the Researcher to render Buganizer issue
+  `<id>`, extract the POC and d8 flags, find top experts for affected files, and
+  identify the correct component. Instruct the subagent to return only a concise
+  technical summary."
+- **Extraction:** The summary must include the POC script, required `d8` flags,
+  the reporter's environment (commit hash/version), and the identified
+  **introduction commit (regression range)**.
+- **Attachment Check**: Ensure the subagent checks for mentioned files (e.g.,
+  "poc.html", "crash.log") that are NOT in the attachments list.
+- **Stop Condition**: If the subagent reports that critical attachments (POC,
+  flags, etc.) are inaccessible or redacted, the Orchestrator **MUST** stop
+  immediately and ask the user to provide them manually before proceeding to
+  Phase 2.
+- **Mapping**: Include identified experts and the specific Buganizer component
+  (e.g., `Blink > JavaScript > Maglev`).
 
-### 2. Phase: Exhaustive Reproduction (Tester/Builder/Generalist)
+### 2. Phase: Exhaustive Reproduction (Delegation)
 
-Reproduction is the critical first gate. You MUST confirm the issue exists
-before proceeding. Delegate technical deep-dives to `v8-poc-classification`.
+Task the **Tester**, **Builder**, and **Generalist** subagents with confirming
+the issue. You MUST confirm the bug exists before proceeding.
 
-- **Baseline**: Delegate to **Tester** to reproduce with the reporter's exact
-  flags and revision.
-- **Escalation**: If initial attempt fails, delegate to **Builder** and
-  **Tester** to try:
-  - Different build variants (Release, Debug, ASan).
-  - Current `origin/main` (HEAD).
-- **Healing (Initial)**: If it still fails, delegate to **Generalist** to
-  analyze the POC for stability or environmental dependencies (e.g., memory
-  limits).
-- **Exit**: If reproduction fails after exhaustive attempts across all
-  configurations, stop and ask the user for clarification.
+- **Baseline:** Task **Tester** to reproduce with the reporter's exact flags and
+  revision.
+- **Escalation:** If initial attempt fails, task **Builder** and **Tester** to
+  verify across Release, Debug, and ASan variants at HEAD.
+- **Healing (Initial):** If still failing, task **Generalist** to analyze and
+  "heal" the POC for environmental dependencies.
+- **Summary:** Review the subagent's reproduction command and result. Stop if
+  reproduction fails after exhaustive attempts.
 
-### 3. Phase: Security Boundary Verification (Tester/Generalist)
+### 3. Phase: Security Boundary Verification (Delegation)
 
-Determine if the bug is a security vulnerability or a regular bug. Utilize
-`v8-poc-classification` for detailed investigation loops.
+Task the **Tester** and **Generalist** to determine if the bug violates a
+security boundary.
 
-- **Boundary Check**: Delegate to **Tester** to run the POC with
+- **Boundary Check:** Task **Tester** to run with
   `reporter_flags + --run-as-[sandbox]-security-poc`.
-  - **Note**: The meta-flag MUST be specified *in addition to* the existing
-    flags.
-- **Investigation Loop**: If the crash **stops** reproducing with the security
-  flag:
-  1. **Analyze**: Delegate to **Generalist** to identify why. Is it a forbidden
-     flag, a developer-only feature, or natives syntax?
-  2. **Heal**: Delegate to **Generalist** to attempt "healing" the POC. Replace
-     forbidden syntax (e.g., `%OptimizeFunctionOnNextCall`) with standard JS
-     logic (e.g., a hot loop) while maintaining the bug trigger.
-  3. **Conclude**: If it cannot be healed or still fails, explain technically
-     why the report is invalid.
+- **Investigation Loop:** If the crash stops reproducing with the security flag,
+  task **Generalist** to identify why and attempt to "heal" the POC by replacing
+  forbidden syntax with standard JS while maintaining the bug trigger.
+- **Conclude:** Review the subagent's conclusion on whether the bug is a
+  security vulnerability or a regular bug.
 
-### 4. Phase: Impact Determination & Minimization (Debugger/Generalist)
+### 4. Phase: Impact Determination & Minimization (Delegation)
 
-Technical proof of the vulnerability's impact. Use `v8-poc-classification` to
-verify primitives and attacker control.
+Task the **Debugger**, **Tester**, and **Generalist** to provide technical proof
+of impact.
 
-- **Crash/Corruption Priority**: Delegate to **Generalist** to attempt to make
-  the POC either **crash** (SEGV, Abort) or **demonstrate clear memory
-  corruption** (e.g., via non-overwritten side effects, type confusion detected
-  in JS).
-- **Verification**: Delegate to **Tester** to run the POC on a **Standard
-  Release build (non-ASan)** and **ASan build**.
-- **Minimization**: Delegate to **Generalist** to reduce the POC and flags to
-  the smallest possible set that still reproduces the security violation.
-- **Deep Dive**: Delegate to **Debugger** to capture the crash in GDB and
-  verify:
-  - **Primitive**: Is it a Read or Write?
-  - **Control**: Does the faulting address or register contain data from the
-    POC?
-  - **Traps**: Is this a safe termination (e.g., `SBXCHECK`)?
+- **Crash/Corruption Priority:** Task **Generalist** to make the POC either
+  crash or demonstrate clear memory corruption.
+- **Verification:** Task **Tester** to verify on Standard Release and ASan
+  builds.
+- **Minimization:** Task **Generalist** to reduce the POC and flags to the
+  smallest possible set.
+- **Deep Dive:** Task **Debugger** to capture the crash in GDB and verify the
+  primitive (Read/Write) and attacker control. Review the provided backtrace.
 
 ### 5. Phase: Reporting Findings
 

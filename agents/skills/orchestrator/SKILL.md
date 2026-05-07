@@ -68,6 +68,15 @@ parallelism, and correct dependency handling.
   path) is ambiguous or not found in standard lists, the Orchestrator MUST
   immediately ask the user for clarification instead of guessing or performing
   extensive sequential searches.
+- **Inaccessible Attachments/Resources**: If the intake phase detects that
+  critical attachments (e.g., POC script, flags, or reproduction steps) from a
+  bug report are inaccessible or redacted, the Orchestrator **MUST** stop
+  immediately and ask the user to provide them manually.
+- **Resumption After Information Provision**: Once the user provides the missing
+  information, the Orchestrator **MUST** immediately restart the affected
+  intake/research phase with the new data to ensure all subsequent technical
+  steps (expert identification, reproduction, etc.) are based on complete
+  information.
 - **Domain Context Awareness**: Do NOT assume terms in a task description refer
   to the environment (e.g., assuming "WSL" means the OS) if they could be
   domain-specific (e.g., a benchmark name). Verify with domain documentation or

@@ -25,8 +25,9 @@ general debugging approach for tracked issues.
    commits.
 4. **Handling Inaccessible URLs & Missing Info**:
    - If a URL cannot be accessed directly (e.g., due to authentication), or if
-     the user just mentions an issue without providing the repro, you MUST
-     prompt for it.
+     the intake phase detects that critical attachments (repro script, flags,
+     etc.) cannot be accessed or are redacted, the Orchestrator **MUST** stop
+     immediately and ask the user to provide them manually.
    - Avoid opening a browser to access the page if it is inaccessible through
      tools.
    - Use separate, sequential interactive prompts (e.g., via `ask_question` or
