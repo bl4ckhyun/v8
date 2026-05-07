@@ -1096,8 +1096,10 @@ class MaglevGraphBuilder {
       compiler::SharedFunctionInfoRef shared,
       compiler::FeedbackCellRef feedback_cell, CallArguments& args,
       const compiler::FeedbackSource& feedback_source);
-  ReduceResult BuildGenericCall(ValueNode* target, Call::TargetType target_type,
-                                const CallArguments& args);
+  ReduceResult BuildGenericCall(
+      ValueNode* target, Call::TargetType target_type,
+      const CallArguments& args,
+      const compiler::FeedbackSource& feedback_source = {});
   MaybeReduceResult TryReduceCallForConstant(
       compiler::JSFunctionRef target, CallArguments& args,
       const compiler::FeedbackSource& feedback_source =
@@ -2081,8 +2083,6 @@ class MaglevGraphBuilder {
   compiler::OptionalScopeInfoRef accumulator_scope_info_;
 
   InterpreterFrameState current_interpreter_frame_;
-  SpeculationMode current_speculation_mode_ =
-      SpeculationMode::kDisallowSpeculation;
 
   ValueNode* inlined_new_target_ = nullptr;
 
@@ -2113,15 +2113,11 @@ class MaglevGraphBuilder {
   bool IsNodeCreatedForThisBytecode(ValueNode* node) const;
 #endif
 
-  bool CanSpeculateCall() const {
-    return current_speculation_mode_ == SpeculationMode::kAllowSpeculation;
-  }
+  bool CanSpeculateCall() const { return reducer_.CanSpeculateCall(); }
 
   bool CanSpeculateCall(
       std::initializer_list<SpeculationMode> supported_modes) const {
-    return CanSpeculateCall() ||
-           std::find(supported_modes.begin(), supported_modes.end(),
-                     current_speculation_mode_) != supported_modes.end();
+    return reducer_.CanSpeculateCall(supported_modes);
   }
 
   inline void MarkNodeDead(Node* node) {

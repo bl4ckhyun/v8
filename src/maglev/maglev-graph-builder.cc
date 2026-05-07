@@ -236,160 +236,6 @@ MaybeAssignedFlag MaglevGraphBuilder::GetContextMaybeAssigned(
   return scope_info.ContextLocalMaybeAssignedFlag(var_index);
 }
 
-class CallArguments {
- public:
-  enum Mode {
-    kDefault,
-    kWithSpread,
-    kWithArrayLike,
-  };
-
-  CallArguments(ConvertReceiverMode receiver_mode,
-                interpreter::RegisterList reglist,
-                const InterpreterFrameState& frame, Mode mode = kDefault)
-      : receiver_mode_(receiver_mode),
-        args_(reglist.register_count()),
-        mode_(mode) {
-    for (int i = 0; i < reglist.register_count(); i++) {
-      args_[i] = frame.get(reglist[i]);
-    }
-    DCHECK_IMPLIES(args_.size() == 0,
-                   receiver_mode == ConvertReceiverMode::kNullOrUndefined);
-    DCHECK_IMPLIES(mode == kWithArrayLike,
-                   receiver_mode == ConvertReceiverMode::kAny);
-    DCHECK_IMPLIES(mode == kWithArrayLike, args_.size() == 2);
-  }
-
-  explicit CallArguments(ConvertReceiverMode receiver_mode)
-      : receiver_mode_(receiver_mode), args_(), mode_(kDefault) {
-    DCHECK_EQ(receiver_mode, ConvertReceiverMode::kNullOrUndefined);
-  }
-
-  CallArguments(ConvertReceiverMode receiver_mode,
-                std::initializer_list<ValueNode*> args, Mode mode = kDefault)
-      : receiver_mode_(receiver_mode), args_(args), mode_(mode) {
-    DCHECK_IMPLIES(mode != kDefault,
-                   receiver_mode == ConvertReceiverMode::kAny);
-    DCHECK_IMPLIES(mode == kWithArrayLike, args_.size() == 2);
-    CheckArgumentsAreNotConversionNodes();
-  }
-
-  CallArguments(ConvertReceiverMode receiver_mode,
-                base::SmallVector<ValueNode*, 8>&& args, Mode mode = kDefault)
-      : receiver_mode_(receiver_mode), args_(std::move(args)), mode_(mode) {
-    DCHECK_IMPLIES(mode != kDefault,
-                   receiver_mode == ConvertReceiverMode::kAny);
-    DCHECK_IMPLIES(mode == kWithArrayLike, args_.size() == 2);
-    CheckArgumentsAreNotConversionNodes();
-  }
-
-  ValueNode* receiver() const {
-    if (receiver_mode_ == ConvertReceiverMode::kNullOrUndefined) {
-      return nullptr;
-    }
-    return args_[0];
-  }
-
-  void set_receiver(ValueNode* receiver) {
-    if (receiver_mode_ == ConvertReceiverMode::kNullOrUndefined) {
-      args_.insert(args_.data(), receiver);
-      receiver_mode_ = ConvertReceiverMode::kAny;
-    } else {
-      DCHECK(!receiver->is_conversion());
-      args_[0] = receiver;
-    }
-  }
-
-  ValueNode* array_like_argument() {
-    DCHECK_EQ(mode_, kWithArrayLike);
-    DCHECK_GT(count(), 0);
-    return args_[args_.size() - 1];
-  }
-
-  ValueNode* spread() {
-    DCHECK_EQ(mode_, kWithSpread);
-    DCHECK_GT(count(), 0);
-    return args_[args_.size() - 1];
-  }
-
-  size_t count() const {
-    DCHECK_LE(index_offset(), args_.size());
-    return args_.size() - index_offset();
-  }
-
-  size_t count_with_receiver() const { return count() + 1; }
-
-  ValueNode* operator[](size_t i) const {
-    i += index_offset();
-    if (i >= args_.size()) return nullptr;
-    return args_[i];
-  }
-
-  ValueNode** begin() { return args_.begin() + index_offset(); }
-  const ValueNode* const* begin() const {
-    return args_.begin() + index_offset();
-  }
-
-  ValueNode** end() { return args_.end(); }
-  const ValueNode* const* end() const { return args_.end(); }
-
-  Mode mode() const { return mode_; }
-
-  ConvertReceiverMode receiver_mode() const { return receiver_mode_; }
-
-  void PopArrayLikeArgument() {
-    DCHECK_EQ(mode_, kWithArrayLike);
-    DCHECK_GT(count(), 0);
-    args_.pop_back();
-  }
-
-  void PopSpread() {
-    DCHECK_EQ(mode_, kWithSpread);
-    DCHECK_GT(count(), 0);
-    args_.pop_back();
-  }
-
-  void ResizeDefaultArguments(size_t new_count) {
-    DCHECK_EQ(mode_, kDefault);
-    DCHECK_GT(count(), new_count);
-    args_.resize(new_count + index_offset());
-    DCHECK_EQ(count(), new_count);
-  }
-
-  void PopReceiver(ConvertReceiverMode new_receiver_mode) {
-    DCHECK_NE(receiver_mode_, ConvertReceiverMode::kNullOrUndefined);
-    DCHECK_NE(new_receiver_mode, ConvertReceiverMode::kNullOrUndefined);
-    DCHECK_GT(args_.size(), 0);  // We have at least a receiver to pop!
-    size_t new_args_size_in_bytes = (args_.size() - 1) * sizeof(args_[0]);
-    MemMove(args_.data(), args_.data() + 1, new_args_size_in_bytes);
-    args_.pop_back();
-
-    // If there is no non-receiver argument to become the new receiver,
-    // consider the new receiver to be known undefined.
-    receiver_mode_ = args_.empty() ? ConvertReceiverMode::kNullOrUndefined
-                                   : new_receiver_mode;
-  }
-
- private:
-  ConvertReceiverMode receiver_mode_;
-  base::SmallVector<ValueNode*, 8> args_;
-  Mode mode_;
-
-  int index_offset() const {
-    return receiver_mode_ == ConvertReceiverMode::kNullOrUndefined ? 0 : 1;
-  }
-
-  void CheckArgumentsAreNotConversionNodes() {
-#ifdef DEBUG
-    // Arguments can leak to the interpreter frame if the call is inlined,
-    // conversions should be stored in known_node_aspects/NodeInfo.
-    for (ValueNode* arg : args_) {
-      DCHECK(!arg->is_conversion());
-    }
-#endif  // DEBUG
-  }
-};
-
 // TODO(victorgomes): This scope should be moved to MaglevReducer after all its
 // uses were moved.
 class V8_NODISCARD MaglevGraphBuilder::SaveCallSpeculationScope {
@@ -399,23 +245,23 @@ class V8_NODISCARD MaglevGraphBuilder::SaveCallSpeculationScope {
       compiler::FeedbackSource feedback_source = compiler::FeedbackSource())
       : builder_(builder),
         saved_(builder->current_speculation_feedback()),
-        saved_mode_(builder->current_speculation_mode_) {
+        saved_mode_(builder->reducer_.current_speculation_mode()) {
     // Only set the current speculation feedback if speculation is allowed.
     SpeculationMode mode = MaglevGraphBuilder::GetSpeculationMode(
         builder_->broker(), feedback_source);
     if (mode != SpeculationMode::kDisallowSpeculation) {
       builder_->reducer_.set_current_speculation_feedback(feedback_source);
-      builder_->current_speculation_mode_ = mode;
+      builder_->reducer_.set_current_speculation_mode(mode);
     } else {
       builder->reducer_.set_current_speculation_feedback(
           compiler::FeedbackSource());
-      builder_->current_speculation_mode_ =
-          SpeculationMode::kDisallowSpeculation;
+      builder_->reducer_.set_current_speculation_mode(
+          SpeculationMode::kDisallowSpeculation);
     }
   }
   ~SaveCallSpeculationScope() {
     builder_->reducer_.set_current_speculation_feedback(saved_);
-    builder_->current_speculation_mode_ = saved_mode_;
+    builder_->reducer_.set_current_speculation_mode(saved_mode_);
   }
 
   const compiler::FeedbackSource& value() { return saved_; }
@@ -9840,7 +9686,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeCharAt(
       return AddNewNode<StringAt>({receiver, index});
     }
   };
-  if (current_speculation_mode_ ==
+  if (reducer_.current_speculation_mode() ==
       SpeculationMode::kDisallowBoundsCheckSpeculation) {
     return Select(
         [&](BranchBuilder& builder) {
@@ -9861,7 +9707,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeCharAt(
         });
   }
 
-  DCHECK_EQ(current_speculation_mode_, SpeculationMode::kAllowSpeculation);
+  DCHECK_EQ(reducer_.current_speculation_mode(),
+            SpeculationMode::kAllowSpeculation);
   RETURN_IF_ABORT(TryBuildCheckInt32Condition(
       index, length, AssertCondition::kUnsignedLessThan,
       DeoptimizeReason::kOutOfBounds));
@@ -9901,7 +9748,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeCharCodeAt(
   ValueNode* length;
   GET_VALUE_OR_ABORT(length, BuildLoadStringLength(receiver));
 
-  if (current_speculation_mode_ ==
+  if (reducer_.current_speculation_mode() ==
       SpeculationMode::kDisallowBoundsCheckSpeculation) {
     return Select(
         [&](BranchBuilder& builder) {
@@ -9963,7 +9810,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeCodePointAt(
     }
   };
 
-  if (current_speculation_mode_ ==
+  if (reducer_.current_speculation_mode() ==
       SpeculationMode::kDisallowBoundsCheckSpeculation) {
     return Select(
         [&](BranchBuilder& builder) {
@@ -12245,20 +12092,10 @@ IEEE_754_UNARY_LIST(MATH_UNARY_IEEE_BUILTIN_REDUCER)
 IEEE_754_BINARY_LIST(MATH_BINARY_IEEE_BUILTIN_REDUCER)
 #undef MATH_BINARY_IEEE_BUILTIN_REDUCER
 
+// TODO(victorgomes): Eventually we should remove this function altogether.
 MaybeReduceResult MaglevGraphBuilder::TryReduceMathSqrt(
     compiler::JSFunctionRef target, CallArguments& args) {
-  if (args.count() < 1) {
-    return GetRootConstant(RootIndex::kNanValue);
-  }
-
-  if (!CanSpeculateCall() && args[0]->is_tagged()) {
-    return {};
-  }
-
-  ValueNode* value;
-  GET_VALUE_OR_ABORT(
-      value, GetFloat64ForToNumber(args[0], NodeType::kNumberOrOddball));
-  return AddNewNode<Float64Sqrt>({value});
+  return reducer_.TryReduceMathSqrt(target, args);
 }
 
 MaybeReduceResult MaglevGraphBuilder::TryReduceMathFround(
@@ -12370,13 +12207,9 @@ ReduceResult MaglevGraphBuilder::AddNewCallNode(const CallArguments& args,
       std::forward<Args>(extra_args)...);
 }
 
-ReduceResult MaglevGraphBuilder::BuildGenericCall(ValueNode* target,
-                                                  Call::TargetType target_type,
-                                                  const CallArguments& args) {
-  // TODO(victorgomes): We do not collect call feedback from optimized/inlined
-  // calls. In order to be consistent, we don't pass the feedback_source to the
-  // IR, so that we avoid collecting for generic calls as well. We might want to
-  // revisit this in the future.
+ReduceResult MaglevGraphBuilder::BuildGenericCall(
+    ValueNode* target, Call::TargetType target_type, const CallArguments& args,
+    const compiler::FeedbackSource& feedback_source) {
   ValueNode* tagged_target;
   GET_VALUE_OR_ABORT(tagged_target, GetTaggedValue(target));
   ValueNode* context;
@@ -12384,7 +12217,7 @@ ReduceResult MaglevGraphBuilder::BuildGenericCall(ValueNode* target,
   switch (args.mode()) {
     case CallArguments::kDefault:
       return AddNewCallNode<Call>(args, args.receiver_mode(), target_type,
-                                  tagged_target, context);
+                                  tagged_target, context, feedback_source);
     case CallArguments::kWithSpread:
       DCHECK_EQ(args.receiver_mode(), ConvertReceiverMode::kAny);
       return AddNewCallNode<CallWithSpread>(args, tagged_target, context);
@@ -12923,7 +12756,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceCallForConstant(
         target, GetRootConstant(RootIndex::kUndefinedValue), args,
         feedback_source));
   }
-  return BuildGenericCall(target_node, Call::TargetType::kJSFunction, args);
+  return BuildGenericCall(target_node, Call::TargetType::kJSFunction, args,
+                          feedback_source);
 }
 
 std::optional<compiler::HolderLookupResult>
@@ -13023,7 +12857,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceCallForNewClosure(
         GetRootConstant(RootIndex::kUndefinedValue), dispatch_handle, shared,
         feedback_cell, args, feedback_source));
   }
-  return BuildGenericCall(target_node, Call::TargetType::kJSFunction, args);
+  return BuildGenericCall(target_node, Call::TargetType::kJSFunction, args,
+                          feedback_source);
 }
 
 MaybeReduceResult
@@ -13317,7 +13152,8 @@ ReduceResult MaglevGraphBuilder::ReduceCallWithArrayLike(
   }
 
   // On fallthrough, create a generic call.
-  return BuildGenericCall(target_node, Call::TargetType::kAny, args);
+  return BuildGenericCall(target_node, Call::TargetType::kAny, args,
+                          feedback_source);
 }
 
 ReduceResult MaglevGraphBuilder::ReduceCall(
@@ -13352,7 +13188,8 @@ ReduceResult MaglevGraphBuilder::ReduceCall(
   }
 
   // On fallthrough, create a generic call.
-  return BuildGenericCall(target_node, Call::TargetType::kAny, args);
+  return BuildGenericCall(target_node, Call::TargetType::kAny, args,
+                          feedback_source);
 }
 
 ReduceResult MaglevGraphBuilder::BuildCallFromRegisterList(

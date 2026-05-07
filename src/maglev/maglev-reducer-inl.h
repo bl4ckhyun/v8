@@ -15,6 +15,7 @@
 #include "src/base/division-by-constant.h"
 #include "src/base/ieee754.h"
 #include "src/common/scoped-modification.h"
+#include "src/compiler/processed-feedback.h"
 #include "src/maglev/maglev-ir-inl.h"
 #include "src/maglev/maglev-map-inference.h"
 #include "src/numbers/conversions.h"
@@ -2880,6 +2881,65 @@ ReduceResult MaglevReducer<BaseT>::GetConvertReceiver(
   }
   return AddNewNode<ConvertReceiver>({receiver},
                                      broker()->target_native_context(), mode);
+}
+
+template <typename BaseT>
+MaybeReduceResult MaglevReducer<BaseT>::TryReduceMathSqrt(
+    compiler::JSFunctionRef target, CallArguments& args) {
+  if (args.count() < 1) {
+    return GetRootConstant(RootIndex::kNanValue);
+  }
+  if (!CanSpeculateCall() && args[0]->is_tagged()) {
+    return {};
+  }
+  ValueNode* value;
+  GET_VALUE_OR_ABORT(
+      value, GetFloat64ForToNumber(args[0], NodeType::kNumberOrOddball));
+  return AddNewNode<Float64Sqrt>({value});
+}
+
+template <typename BaseT>
+MaybeReduceResult MaglevReducer<BaseT>::TryReduceBuiltin(
+    Builtin builtin_id, compiler::JSFunctionRef target, CallArguments& args,
+    const compiler::FeedbackSource& feedback_source) {
+  if (args.mode() != CallArguments::kDefault) {
+    // TODO(victorgomes): Maybe inline the spread stub? Or call known function
+    // directly if arguments list is an array.
+    return {};
+  }
+
+  const compiler::FeedbackSource saved_feedback = current_speculation_feedback_;
+  const SpeculationMode saved_mode = current_speculation_mode_;
+  SpeculationMode mode = SpeculationMode::kDisallowSpeculation;
+  if (feedback_source.IsValid()) {
+    compiler::ProcessedFeedback const& processed_feedback =
+        broker_->GetFeedbackForCall(feedback_source);
+    if (!processed_feedback.IsInsufficient()) {
+      mode = processed_feedback.AsCall().speculation_mode();
+    }
+  }
+  if (mode != SpeculationMode::kDisallowSpeculation) {
+    current_speculation_feedback_ = feedback_source;
+    current_speculation_mode_ = mode;
+  } else {
+    current_speculation_feedback_ = compiler::FeedbackSource();
+    current_speculation_mode_ = SpeculationMode::kDisallowSpeculation;
+  }
+
+  MaybeReduceResult result;
+  switch (builtin_id) {
+    case Builtin::kMathSqrt:
+      result = TryReduceMathSqrt(target, args);
+      break;
+    default:
+      // Not yet ported. The remaining builtins still go through the
+      // bytecode-builder dispatcher.
+      break;
+  }
+
+  current_speculation_feedback_ = saved_feedback;
+  current_speculation_mode_ = saved_mode;
+  return result;
 }
 
 }  // namespace maglev

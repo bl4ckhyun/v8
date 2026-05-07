@@ -1150,10 +1150,19 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
   ValueNode* new_target = reducer_.GetRootConstant(RootIndex::kUndefinedValue);
   if (shared.HasBuiltinId()) {
     Builtin builtin_id = shared.builtin_id();
-    // Promote to CallKnownBuiltin.
-    // TODO(victorgomes): Once we are able, we should try to inline the builtin
-    // directly here.
     if (MaglevGraphBuilder::IsReducibleBuiltin(builtin_id)) {
+      CallArguments args(node);
+      MaybeReduceResult reduction = reducer_.TryReduceBuiltin(
+          builtin_id, *target_function, args, node->feedback());
+      if (reduction.IsDoneWithAbort()) {
+        return ProcessResult::kTruncateBlock;
+      }
+      if (reduction.IsDoneWithValue()) {
+        TRACE(TraceColor::kDarkGreen << "Reducing " << PrintNodeLabel(node)
+                                     << " to " << Builtins::name(builtin_id));
+        return ReplaceWith(reduction.value());
+      }
+
       size_t input_count =
           positional_arg_count + CallKnownBuiltin::kFixedInputCount;
       ReduceResult new_call = reducer_.AddNewNode<CallKnownBuiltin>(
@@ -1165,7 +1174,7 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
             return ReduceResult::Done();
           },
           builtin_id, target_function->dispatch_handle(), shared, target,
-          context, converted_receiver, new_target, compiler::FeedbackSource{});
+          context, converted_receiver, new_target, node->feedback());
       DCHECK(new_call.IsDoneWithValue());
       TRACE(TraceColor::kDarkGreen << "Promoting " << PrintNodeLabel(node)
                                    << " to CallKnownBuiltin("
@@ -1186,7 +1195,7 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
         return ReduceResult::Done();
       },
       target_function->dispatch_handle(), shared, target, context,
-      converted_receiver, new_target, compiler::FeedbackSource{});
+      converted_receiver, new_target, node->feedback());
   DCHECK(new_call.IsDoneWithValue());
   CallKnownJSFunction* new_call_node =
       new_call.value()->Cast<CallKnownJSFunction>();
@@ -1330,8 +1339,22 @@ ProcessResult MaglevGraphOptimizer::VisitCallKnownJSFunction(
 
 ProcessResult MaglevGraphOptimizer::VisitCallKnownBuiltin(
     CallKnownBuiltin* node, const ProcessingState& state) {
-  // TODO(b/424157317): Optimize.
-  return ProcessResult::kContinue;
+  ValueNode* target = node->TargetInput().node();
+  auto target_function = reducer_.TryGetConstant<JSFunction>(target);
+  if (!target_function.has_value()) return ProcessResult::kContinue;
+
+  CallArguments args(node);
+  MaybeReduceResult reduction = reducer_.TryReduceBuiltin(
+      node->builtin_id(), *target_function, args, node->feedback_source());
+  if (!reduction.IsDone()) return ProcessResult::kContinue;
+  if (reduction.IsDoneWithAbort()) {
+    return ProcessResult::kTruncateBlock;
+  }
+  DCHECK(reduction.IsDoneWithValue());
+  TRACE(TraceColor::kDarkGreen << "Reducing " << PrintNodeLabel(node)
+                               << " builtin "
+                               << Builtins::name(node->builtin_id()));
+  return ReplaceWith(reduction.value());
 }
 
 ProcessResult MaglevGraphOptimizer::VisitReturnedValue(

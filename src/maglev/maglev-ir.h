@@ -9893,8 +9893,12 @@ class Call : public VarargsValueNodeT<2, Call> {
   // This ctor is used when for variable input counts.
   // Inputs must be initialized manually.
   Call(uint64_t bitfield, ConvertReceiverMode mode, TargetType target_type,
-       ValueNode* function, ValueNode* context)
-      : Base(bitfield), receiver_mode_(mode), target_type_(target_type) {
+       ValueNode* function, ValueNode* context,
+       const compiler::FeedbackSource& feedback = {})
+      : Base(bitfield),
+        receiver_mode_(mode),
+        target_type_(target_type),
+        feedback_(feedback) {
     set_input(kTargetIndex, function);
     set_input(kContextIndex, context);
   }
@@ -9912,10 +9916,12 @@ class Call : public VarargsValueNodeT<2, Call> {
 
   ConvertReceiverMode receiver_mode() const { return receiver_mode_; }
   TargetType target_type() const { return target_type_; }
+  const compiler::FeedbackSource& feedback() const { return feedback_; }
 
  private:
   ConvertReceiverMode receiver_mode_;
   TargetType target_type_;
+  compiler::FeedbackSource feedback_;
 };
 
 class Construct : public VarargsValueNodeT<3, Construct> {
