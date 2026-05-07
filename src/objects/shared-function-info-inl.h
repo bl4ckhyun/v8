@@ -20,6 +20,7 @@
 #include "src/objects/abstract-code-inl.h"
 #include "src/objects/debug-objects-inl.h"
 #include "src/objects/feedback-vector-inl.h"
+#include "src/objects/function-kind.h"
 #include "src/objects/heap-object-inl.h"
 #include "src/objects/hole.h"
 #include "src/objects/instance-type-inl.h"
@@ -1025,7 +1026,7 @@ void SharedFunctionInfo::FlushBaselineCode() {
 
 #if V8_ENABLE_WEBASSEMBLY
 bool SharedFunctionInfo::HasAsmWasmData() const {
-  return IsAsmWasmData(GetUntrustedData());
+  return IsAsmWasmData(GetTrustedData(GetCurrentIsolateForSandbox()));
 }
 
 bool SharedFunctionInfo::HasWasmFunctionData(IsolateForSandbox isolate) const {
@@ -1048,14 +1049,15 @@ bool SharedFunctionInfo::HasWasmResumeData() const {
 
 DEF_GETTER(SharedFunctionInfo, asm_wasm_data, Tagged<AsmWasmData>) {
   DCHECK(HasAsmWasmData());
-  return Cast<AsmWasmData>(GetUntrustedData());
+  return GetTrustedData<AsmWasmData, kAsmWasmDataIndirectPointerTag>(
+      GetCurrentIsolateForSandbox());
 }
 
 void SharedFunctionInfo::set_asm_wasm_data(Tagged<AsmWasmData> data,
                                            WriteBarrierMode mode) {
   DCHECK(GetUntrustedData() == Smi::FromEnum(Builtin::kCompileLazy) ||
          HasUncompiledData(GetCurrentIsolateForSandbox()) || HasAsmWasmData());
-  SetUntrustedData(data, mode);
+  SetTrustedData(data, mode);
 }
 
 DEF_GETTER(SharedFunctionInfo, wasm_function_data, Tagged<WasmFunctionData>) {

@@ -469,7 +469,6 @@ VisitorId Map::GetVisitorId(Tagged<Map> map) {
     case TEMPLATE_OBJECT_DESCRIPTION_TYPE:
     case TUPLE2_TYPE:
 #if V8_ENABLE_WEBASSEMBLY
-    case ASM_WASM_DATA_TYPE:
     case WASM_EXCEPTION_TAG_TYPE:
 #endif
       return kVisitStruct;

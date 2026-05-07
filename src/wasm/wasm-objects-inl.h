@@ -1487,20 +1487,26 @@ void WasmExceptionTag::set_index(int value) {
   index_.store(this, Smi::FromInt(value));
 }
 
-Tagged<Managed<wasm::NativeModule>> AsmWasmData::managed_native_module() const {
+// AsmWasmData
+Tagged<TrustedManaged<wasm::NativeModule>> AsmWasmData::managed_native_module()
+    const {
+  DCHECK(has_managed_native_module());
   return managed_native_module_.load();
 }
 void AsmWasmData::set_managed_native_module(
-    Tagged<Managed<wasm::NativeModule>> value, WriteBarrierMode mode) {
+    Tagged<TrustedManaged<wasm::NativeModule>> value, WriteBarrierMode mode) {
   managed_native_module_.store(this, value, mode);
 }
-
-Tagged<HeapNumber> AsmWasmData::uses_bitset() const {
-  return uses_bitset_.load();
+bool AsmWasmData::has_managed_native_module() const {
+  return !managed_native_module_.load().is_null();
 }
-void AsmWasmData::set_uses_bitset(Tagged<HeapNumber> value,
-                                  WriteBarrierMode mode) {
-  uses_bitset_.store(this, value, mode);
+void AsmWasmData::clear_managed_native_module() {
+  managed_native_module_.store(this, {}, SKIP_WRITE_BARRIER);
+}
+
+uint64_t AsmWasmData::uses_bitset() const { return uses_bitset_.value(); }
+void AsmWasmData::set_uses_bitset(uint64_t value) {
+  uses_bitset_.set_value(value);
 }
 
 Tagged<JSReceiver> WasmSuspendingObject::callable() const {

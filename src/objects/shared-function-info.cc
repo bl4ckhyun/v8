@@ -121,6 +121,11 @@ Tagged<Code> SharedFunctionInfo::GetCode(Isolate* isolate) const {
     if (IsWasmCapiFunctionData(trusted_data)) {
       return wasm_capi_function_data()->wrapper_code(isolate);
     }
+    if (IsAsmWasmData(trusted_data)) {
+      // Having AsmWasmData means we are an asm.js/wasm function.
+      DCHECK(HasAsmWasmData());
+      return isolate->builtins()->code(Builtin::kInstantiateAsmJs);
+    }
 #endif  // V8_ENABLE_WEBASSEMBLY
   } else {
     DCHECK(HasUntrustedData());
@@ -137,11 +142,6 @@ Tagged<Code> SharedFunctionInfo::GetCode(Isolate* isolate) const {
       return isolate->builtins()->code(Builtin::kHandleApiCallOrConstruct);
     }
 #if V8_ENABLE_WEBASSEMBLY
-    if (IsAsmWasmData(untrusted_data)) {
-      // Having AsmWasmData means we are an asm.js/wasm function.
-      DCHECK(HasAsmWasmData());
-      return isolate->builtins()->code(Builtin::kInstantiateAsmJs);
-    }
     if (IsWasmResumeData(untrusted_data)) {
       if (static_cast<wasm::OnResume>(
               Cast<WasmResumeData>(untrusted_data)->on_resume()) ==

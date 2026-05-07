@@ -3212,7 +3212,7 @@ void WasmStringViewIter::WasmStringViewIterPrint(std::ostream& os) {
 void AsmWasmData::AsmWasmDataPrint(std::ostream& os) {
   PrintHeader(os, "AsmWasmData");
   os << "\n - native module: " << Brief(managed_native_module());
-  os << "\n - uses bitset: " << uses_bitset()->value();
+  os << "\n - uses bitset: " << uses_bitset();
   os << "\n";
 }
 

@@ -2199,6 +2199,19 @@ DirectHandle<WasmImportData> Factory::NewWasmImportData(
                            import_data->sig(), shared);
 }
 
+Handle<AsmWasmData> Factory::NewAsmWasmData(
+    DirectHandle<TrustedManaged<wasm::NativeModule>> managed_native_module,
+    uint64_t uses_bitset) {
+  Tagged<AsmWasmData> result = TrustedCast<AsmWasmData>(
+      AllocateRawWithImmortalMap(sizeof(AsmWasmData), AllocationType::kTrusted,
+                                 read_only_roots().asm_wasm_data_map()));
+  DisallowGarbageCollection no_gc;
+  result->InitAndPublish(isolate());
+  result->set_managed_native_module(*managed_native_module);
+  result->set_uses_bitset(uses_bitset);
+  return handle(result, isolate());
+}
+
 DirectHandle<WasmFastApiCallData> Factory::NewWasmFastApiCallData(
     DirectHandle<HeapObject> signature, DirectHandle<Object> callback_data) {
   Tagged<Map> map = *wasm_fast_api_call_data_map();

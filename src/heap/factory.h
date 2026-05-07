@@ -32,30 +32,28 @@ namespace internal {
 
 // Forward declarations.
 class AliasedArgumentsEntry;
-class ObjectBoilerplateDescription;
+class ArrayBoilerplateDescription;
 class BasicBlockProfilerData;
 class BreakPoint;
 class BreakPointInfo;
 class CallableTask;
 class CallbackTask;
 class CallSiteInfo;
-class Expression;
-class EmbedderDataArray;
-class ArrayBoilerplateDescription;
 class CoverageInfo;
 class DebugInfo;
 class DeoptimizationData;
 class DeoptimizationLiteralArray;
 class DictionaryTemplateInfo;
+class EmbedderDataArray;
 class EnumCache;
+class Expression;
 class FreshlyAllocatedBigInt;
 class FunctionTemplateInfo;
 class Isolate;
 class JSArrayBufferView;
+class JSAsyncDisposableStack;
 class JSDataView;
 class JSDisposableStackBase;
-class JSSyncDisposableStack;
-class JSAsyncDisposableStack;
 class JSGeneratorObject;
 class JSMap;
 class JSMapIterator;
@@ -64,10 +62,12 @@ class JSPromise;
 class JSProxy;
 class JSSet;
 class JSSetIterator;
+class JSSyncDisposableStack;
 class JSTypedArray;
 class JSWeakMap;
 class LoadHandler;
 class NativeContext;
+class ObjectBoilerplateDescription;
 class PromiseResolveThenableJobTask;
 class RegExpMatchInfo;
 class ScriptContextTable;
@@ -76,10 +76,12 @@ class Signature;
 class SourceTextModule;
 class StackFrameInfo;
 class StackTraceInfo;
-class StringSet;
 class StoreHandler;
+class StringSet;
 class SyntheticModule;
 class TemplateObjectDescription;
+template <typename T>
+class TrustedManaged;
 class WasmCapiFunctionData;
 class WasmExportedFunctionData;
 
@@ -861,6 +863,9 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
       const wasm::CanonicalSig* sig, SharedFlag shared);
   DirectHandle<WasmImportData> NewWasmImportData(
       DirectHandle<WasmImportData> ref, SharedFlag shared);
+  Handle<AsmWasmData> NewAsmWasmData(
+      DirectHandle<TrustedManaged<wasm::NativeModule>> managed_native_module,
+      uint64_t uses_bitset);
 
   DirectHandle<WasmFastApiCallData> NewWasmFastApiCallData(
       DirectHandle<HeapObject> signature, DirectHandle<Object> callback_data);

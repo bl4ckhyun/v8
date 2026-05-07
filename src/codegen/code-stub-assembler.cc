@@ -19157,6 +19157,9 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
   Label check_is_interpreter_data(this);
   Label check_is_uncompiled_data(this);
   Label check_is_wasm_function_data(this);
+#if V8_ENABLE_WEBASSEMBLY
+  Label check_is_asm_wasm_data(this);
+#endif  // V8_ENABLE_WEBASSEMBLY
 
   LoadSharedFunctionInfoTrustedDataAndDispatch(
       shared_info, &sfi_data_out, data_type_out, &use_untrusted_data,
@@ -19175,6 +19178,7 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
 #if V8_ENABLE_WEBASSEMBLY
           {WASM_CAPI_FUNCTION_DATA_TYPE, &check_is_wasm_function_data},
           {WASM_EXPORTED_FUNCTION_DATA_TYPE, &check_is_wasm_function_data},
+          {ASM_WASM_DATA_TYPE, &check_is_asm_wasm_data},
 #endif  // V8_ENABLE_WEBASSEMBLY
       });
 
@@ -19218,6 +19222,11 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
   sfi_code = LoadTrustedPointerFromObject<kCodeIndirectPointerTag>(
       CAST(sfi_data_out.value()), WasmExportedFunctionData::kWrapperCodeOffset);
   Goto(&done);
+
+  // IsAsmWasmData: Instantiate using AsmWasmData
+  BIND(&check_is_asm_wasm_data);
+  sfi_code = HeapConstantNoHole(BUILTIN_CODE(isolate(), InstantiateAsmJs));
+  Goto(&done);
 #endif  // V8_ENABLE_WEBASSEMBLY
 
   BIND(&use_untrusted_data);
@@ -19249,17 +19258,14 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
     int32_t case_values[] = {
         FUNCTION_TEMPLATE_INFO_TYPE,
 #if V8_ENABLE_WEBASSEMBLY
-        ASM_WASM_DATA_TYPE,
         WASM_RESUME_DATA_TYPE,
 #endif  // V8_ENABLE_WEBASSEMBLY
     };
     Label check_is_function_template_info(this);
-    Label check_is_asm_wasm_data(this);
     Label check_is_wasm_resume(this);
     Label* case_labels[] = {
         &check_is_function_template_info,
 #if V8_ENABLE_WEBASSEMBLY
-        &check_is_asm_wasm_data,
         &check_is_wasm_resume,
 #endif  // V8_ENABLE_WEBASSEMBLY
     };
@@ -19274,11 +19280,6 @@ TNode<Code> CodeStubAssembler::GetSharedFunctionInfoCode(
     Goto(&done);
 
 #if V8_ENABLE_WEBASSEMBLY
-    // IsAsmWasmData: Instantiate using AsmWasmData
-    BIND(&check_is_asm_wasm_data);
-    sfi_code = HeapConstantNoHole(BUILTIN_CODE(isolate(), InstantiateAsmJs));
-    Goto(&done);
-
     // IsWasmResumeData: Resume the suspended wasm continuation.
     BIND(&check_is_wasm_resume);
     sfi_code = HeapConstantNoHole(BUILTIN_CODE(isolate(), WasmResume));

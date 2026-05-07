@@ -1877,31 +1877,34 @@ V8_OBJECT class WasmExceptionTag : public Struct {
 
 // Data annotated to the asm.js Module function. Used for later instantiation of
 // that function.
-V8_OBJECT class AsmWasmData : public Struct {
+V8_OBJECT class AsmWasmData : public ExposedTrustedObject {
  public:
   static Handle<AsmWasmData> New(
       Isolate* isolate, std::shared_ptr<wasm::NativeModule> native_module,
-      DirectHandle<HeapNumber> uses_bitset);
+      uint64_t uses_bitset);
 
-  inline Tagged<Managed<wasm::NativeModule>> managed_native_module() const;
+  inline Tagged<TrustedManaged<wasm::NativeModule>> managed_native_module()
+      const;
   inline void set_managed_native_module(
-      Tagged<Managed<wasm::NativeModule>> value,
+      Tagged<TrustedManaged<wasm::NativeModule>> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline bool has_managed_native_module() const;
+  inline void clear_managed_native_module();
 
-  inline Tagged<HeapNumber> uses_bitset() const;
-  inline void set_uses_bitset(Tagged<HeapNumber> value,
-                              WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
+  inline uint64_t uses_bitset() const;
+  inline void set_uses_bitset(uint64_t value);
 
   DECL_PRINTER(AsmWasmData)
   DECL_VERIFIER(AsmWasmData)
 
-  using BodyDescriptor = StructBodyDescriptor;
+  class BodyDescriptor;
 
  private:
   friend class TorqueGeneratedAsmWasmDataAsserts;
 
-  TaggedMember<Managed<wasm::NativeModule>> managed_native_module_;
-  TaggedMember<HeapNumber> uses_bitset_;
+  ProtectedTaggedMember<TrustedManaged<wasm::NativeModule>>
+      managed_native_module_;
+  UnalignedValueMember<uint64_t> uses_bitset_;
 } V8_OBJECT_END;
 
 V8_OBJECT class WasmTypeInfo : public HeapObject {

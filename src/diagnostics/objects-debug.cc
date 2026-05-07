@@ -3342,12 +3342,11 @@ void WasmExceptionTag::WasmExceptionTagVerify(Isolate* isolate) {
 }
 
 void AsmWasmData::AsmWasmDataVerify(Isolate* isolate) {
-  CHECK(IsStruct(this));
   CHECK(IsAsmWasmData(this));
-  Object::VerifyPointer(isolate, managed_native_module_.load());
-  CHECK(IsForeign(managed_native_module_.load()));
-  Object::VerifyPointer(isolate, uses_bitset_.load());
-  CHECK(IsHeapNumber(uses_bitset_.load()));
+  ExposedTrustedObjectVerify(isolate);
+  if (has_managed_native_module()) {
+    Object::VerifyPointer(isolate, managed_native_module());
+  }
 }
 
 void WasmFuncRef::WasmFuncRefVerify(Isolate* isolate) {

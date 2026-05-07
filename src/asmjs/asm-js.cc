@@ -339,7 +339,6 @@ MaybeDirectHandle<Object> AsmJs::InstantiateAsmWasm(
     DirectHandle<JSReceiver> foreign, DirectHandle<JSArrayBuffer> memory) {
   base::ElapsedTimer instantiate_timer;
   instantiate_timer.Start();
-  DirectHandle<HeapNumber> uses_bitset(wasm_data->uses_bitset(), isolate);
   Handle<Script> script(Cast<Script>(shared->script()), isolate);
   auto* wasm_engine = wasm::GetWasmEngine();
 
@@ -361,7 +360,7 @@ MaybeDirectHandle<Object> AsmJs::InstantiateAsmWasm(
   // Check that all used stdlib members are valid.
   bool stdlib_use_of_typed_array_present = false;
   wasm::AsmJsParser::StdlibSet stdlib_uses =
-      wasm::AsmJsParser::StdlibSet::FromIntegral(uses_bitset->value_as_bits());
+      wasm::AsmJsParser::StdlibSet::FromIntegral(wasm_data->uses_bitset());
   if (!stdlib_uses.empty()) {  // No checking needed if no uses.
     if (stdlib.is_null()) {
       ReportInstantiationFailure(script, position, "Requires standard library");

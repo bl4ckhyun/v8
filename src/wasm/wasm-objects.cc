@@ -3143,19 +3143,15 @@ DirectHandle<WasmExceptionTag> WasmExceptionTag::New(Isolate* isolate,
 
 Handle<AsmWasmData> AsmWasmData::New(
     Isolate* isolate, std::shared_ptr<wasm::NativeModule> native_module,
-    DirectHandle<HeapNumber> uses_bitset) {
+    uint64_t uses_bitset) {
   const WasmModule* module = native_module->module();
   size_t memory_estimate =
       wasm::WasmCodeManager::EstimateNativeModuleCodeSize(module) +
       wasm::WasmCodeManager::EstimateNativeModuleMetaDataSize(module);
-  DirectHandle<Managed<wasm::NativeModule>> managed_native_module =
-      Managed<wasm::NativeModule>::From(isolate, memory_estimate,
-                                        std::move(native_module));
-  auto result = Cast<AsmWasmData>(
-      isolate->factory()->NewStruct(ASM_WASM_DATA_TYPE, AllocationType::kOld));
-  result->set_managed_native_module(*managed_native_module);
-  result->set_uses_bitset(*uses_bitset);
-  return result;
+  DirectHandle<TrustedManaged<wasm::NativeModule>> managed_native_module =
+      TrustedManaged<wasm::NativeModule>::From(
+          isolate, memory_estimate, std::move(native_module), SharedFlag::kNo);
+  return isolate->factory()->NewAsmWasmData(managed_native_module, uses_bitset);
 }
 
 namespace {
