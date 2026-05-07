@@ -2174,15 +2174,15 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       // Emit the write barrier.
       Register object = i.InputRegister(0);
       Register offset = i.InputRegister(1);
-      Register value = i.InputRegister(2);
+      Register new_value = i.InputRegister(3);
       UseScratchRegisterScope temps(masm());
       Register scratch = temps.Acquire();
       auto ool = zone()->New<OutOfLineRecordWrite>(
-          this, object, offset, value, ip, scratch,
+          this, object, offset, new_value, ip, scratch,
           RecordWriteMode::kValueIsAny, DetermineStubCallMode(),
           &unwinding_info_writer_);
       __ bne(ool->exit());
-      __ JumpIfSmi(value, ool->exit());
+      __ JumpIfSmi(new_value, ool->exit());
 
       __ CheckPageFlag(object, scratch,
                        MemoryChunk::kPointersFromHereAreInterestingMask, ne,

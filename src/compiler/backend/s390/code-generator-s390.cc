@@ -2722,7 +2722,7 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
       // Emit the write barrier.
       Register object = i.InputRegister(2);
       auto ool = zone()->New<OutOfLineRecordWrite>(
-          this, object, op, r1, ip, new_val, RecordWriteMode::kValueIsAny,
+          this, object, op, new_val, ip, r1, RecordWriteMode::kValueIsAny,
           DetermineStubCallMode(), &unwinding_info_writer_);
       __ bne(ool->exit());
       __ JumpIfSmi(new_val, ool->exit());
