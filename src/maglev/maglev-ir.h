@@ -9899,7 +9899,10 @@ class Call : public VarargsValueNodeT<2, Call> {
     set_input(kContextIndex, context);
   }
 
-  static constexpr OpProperties kProperties = OpProperties::JSCall();
+  // Eager deopt frame is attached, since this might be a call to a
+  // builtin that could be reduced during MaglevGraphOptimizer.
+  static constexpr OpProperties kProperties =
+      OpProperties::EagerDeopt() | OpProperties::JSCall();
   DECLARE_INPUTS(Target, Context)
 
   int MaxCallStackArgs() const;

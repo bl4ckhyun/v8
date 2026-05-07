@@ -12705,7 +12705,6 @@ ReduceResult MaglevGraphBuilder::BuildCallKnownJSFunction(
     // not the case.
     GET_VALUE_OR_ABORT(receiver, GetConvertReceiver(shared, args));
   }
-  size_t input_count = args.count() + CallKnownJSFunction::kFixedInputCount;
   ValueNode* tagged_function;
   GET_VALUE_OR_ABORT(tagged_function, GetTaggedValue(function));
   ValueNode* tagged_context;
@@ -12714,6 +12713,29 @@ ReduceResult MaglevGraphBuilder::BuildCallKnownJSFunction(
   GET_VALUE_OR_ABORT(tagged_receiver, GetTaggedValue(receiver));
   ValueNode* tagged_new_target;
   GET_VALUE(tagged_new_target, GetTaggedValue(new_target));
+
+  // Reducible builtins get a CallKnownBuiltin marker node so the optimizer
+  // can attempt reduction post-inlining. If reduction never fires, the node
+  // codegens as a normal JS builtin call (same as the HasBuiltinId branch
+  // of CallKnownJSFunction). Wasm wrappers don't have a Builtin id so they
+  // never take this path.
+  if (shared.HasBuiltinId() && IsReducibleBuiltin(shared.builtin_id())) {
+    size_t input_count = args.count() + CallKnownBuiltin::kFixedInputCount;
+    return AddNewNode<CallKnownBuiltin>(
+        input_count,
+        [&](CallKnownBuiltin* call) {
+          for (int i = 0; i < static_cast<int>(args.count()); i++) {
+            ValueNode* tagged_arg;
+            GET_VALUE_OR_ABORT(tagged_arg, GetTaggedValue(args[i]));
+            call->set_arg(i, tagged_arg);
+          }
+          return ReduceResult::Done();
+        },
+        shared.builtin_id(), dispatch_handle, shared, tagged_function,
+        tagged_context, tagged_receiver, tagged_new_target, feedback_source);
+  }
+
+  size_t input_count = args.count() + CallKnownJSFunction::kFixedInputCount;
 
 #if V8_ENABLE_WEBASSEMBLY
   // When calling a JS-to-Wasm wrapper and Turbolev Wasm inlining is enabled,

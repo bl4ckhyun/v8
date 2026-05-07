@@ -972,6 +972,17 @@ class MaglevGraphBuilder {
   MAGLEV_REDUCED_BUILTIN(DEFINE_BUILTIN_REDUCER)
 #undef DEFINE_BUILTIN_REDUCER
 
+  static constexpr bool IsReducibleBuiltin(Builtin builtin) {
+    switch (builtin) {
+#define CASE(Name, ...) case Builtin::k##Name:
+      MAGLEV_REDUCED_BUILTIN(CASE)
+#undef CASE
+      return true;
+      default:
+        return false;
+    }
+  }
+
   using InitialCallback = base::FunctionRef<ReduceResult(ValueNode*)>;
   using ProcessElementCallback =
       base::FunctionRef<ReduceResult(ValueNode*, ValueNode*)>;
