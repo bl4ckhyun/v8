@@ -327,7 +327,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
   IF_WASM(V, SetStackPointer)                \
   IF_WASM(V, MemoryCopy)                     \
   IF_WASM(V, MemoryFill)                     \
-  IF_WASM(V, WasmFXArgBuffer)                \
+  IF_WASM(V, WasmFXSuspendedStack)           \
   V(Phi)                                     \
   V(FrameState)                              \
   V(Call)                                    \
@@ -4278,10 +4278,11 @@ struct MemoryFillOp : FixedArityOperationT<3, MemoryFillOp> {
   V<WordPtr> num_bytes() const { return input<WordPtr>(2); }
 };
 
-// Materialize the arg buffer passed from the suspend instruction to the
-// target effect handler, similar to how we materialize the exception or
+// Materialize the suspended StackMemory passed from the suspend instruction to
+// the target effect handler, similar to how we materialize the exception or
 // continuation object in CatchBlockBeginOp.
-struct WasmFXArgBufferOp : FixedArityOperationT<0, WasmFXArgBufferOp> {
+struct WasmFXSuspendedStackOp
+    : FixedArityOperationT<0, WasmFXSuspendedStackOp> {
   // This op should always appear at the start of a wasm effect handler block,
   // when the fixed register has not been clobbered yet.
   // Conservatively assume arbitrary side effects to prevent reordering.
@@ -4296,7 +4297,7 @@ struct WasmFXArgBufferOp : FixedArityOperationT<0, WasmFXArgBufferOp> {
     return {};
   }
 
-  WasmFXArgBufferOp() : Base() {}
+  WasmFXSuspendedStackOp() : Base() {}
   auto options() const { return std::tuple{}; }
 };
 #endif  // V8_ENABLE_WEBASSEMBLY

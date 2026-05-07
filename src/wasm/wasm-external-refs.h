@@ -216,6 +216,7 @@ Address switch_wasmfx_stack(Isolate* isolate, Address sp, Address fp,
 void return_jspi_stack(Isolate* isolate, wasm::StackMemory* to);
 void return_wasmfx_stack(Isolate* isolate, wasm::StackMemory* to);
 void retire_stack(Isolate* isolate, wasm::StackMemory* stack);
+void wasmfx_save_canonical_sig_id(wasm::StackMemory* stack, uint32_t id);
 
 intptr_t switch_to_the_central_stack(Isolate* isolate, uintptr_t sp);
 void switch_from_the_central_stack(Isolate* isolate);

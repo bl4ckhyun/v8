@@ -4023,7 +4023,8 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
   Register arg_buffer = WasmFXSuspendDescriptor::GetRegisterParameter(2);
   MemOperand sig(ebp, 2 * kSystemPointerSize);
   Label resume;
-  __ Push(arg_buffer);
+  // Save the suspended stack and return it to the handler.
+  __ Push(Operand(kRootRegister, IsolateData::active_stack_offset()));
   __ Push(cont);
   __ Push(kContextRegister);
   {
@@ -4049,7 +4050,7 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
   __ Pop(kContextRegister);
   cont = kReturnRegister0;
   __ Pop(cont);
-  __ Pop(arg_buffer);
+  __ Pop(kReturnRegister1);  // Suspended stack.
 
   Label ok;
   __ test(target_stack, target_stack);

@@ -4070,15 +4070,14 @@ class TurboshaftGraphBuildingInterface
     // signature.
     CanonicalTypeIndex expected_csig_index =
         env_->module->canonical_type_id(imm.cont_type->contfun_typeindex());
-    const CanonicalSig* expected_csig =
-        GetTypeCanonicalizer()->LookupFunctionSignature(expected_csig_index);
-    uint64_t expected_hash = expected_csig->signature_hash();
-    V<Word64> signature_hash = __ Load(stack, LoadOp::Kind::RawAligned(),
-                                       MemoryRepresentation::Uint64(),
-                                       StackMemory::signature_hash_offset());
-    __ TrapIfNot(__ Equal(signature_hash, __ Word64Constant(expected_hash),
-                          RegisterRepresentation::Word64()),
-                 TrapId::kTrapFuncSigMismatch);
+    V<Word32> expected_id =
+        __ RelocatableWasmCanonicalSignatureId(expected_csig_index.index);
+    V<Word32> signature_id = __ Load(stack, LoadOp::Kind::RawAligned(),
+                                     MemoryRepresentation::Uint32(),
+                                     StackMemory::signature_id_offset());
+    __ TrapIfNot(
+        __ Equal(signature_id, expected_id, RegisterRepresentation::Word32()),
+        TrapId::kTrapFuncSigMismatch);
     return stack;
   }
 
@@ -4111,11 +4110,15 @@ class TurboshaftGraphBuildingInterface
           }
         });
     V<Context> native_context = instance_cache_.native_context();
+    CanonicalTypeIndex new_csig_index = decoder->module_->canonical_type_id(
+        new_imm.cont_type->contfun_typeindex());
     // Allocate a new continuation for this stack, and invalidate the old one by
     // pointing {StackMemory::current_cont_} to the new one.
     V<WasmContinuationObject> cont = __ WasmCallRuntime(
         decoder->zone(), Runtime::kWasmAllocateBoundContinuation,
-        {input_cont.op, __ SmiConstant(Smi::FromInt(static_cast<int>(delta)))},
+        {input_cont.op, __ SmiConstant(Smi::FromInt(static_cast<int>(delta))),
+         __ TagSmi(
+             __ RelocatableWasmCanonicalSignatureId(new_csig_index.index))},
         native_context);
     result->op = cont;
   }
@@ -4182,9 +4185,13 @@ class TurboshaftGraphBuildingInterface
     // handler block. It works the same way but generates the continuation
     // object instead of the exception.
     OpIndex cont = __ CatchBlockBegin();
-    OpIndex arg_buffer = __ WasmFXArgBuffer();
+    // The handler also generates a pointer to the suspended StackMemory.
+    OpIndex stack_mem = __ WasmFXSuspendedStack();
 
     // Unpack tag params.
+    OpIndex arg_buffer =
+        __ LoadOffHeap(stack_mem, StackMemory::arg_buffer_offset(),
+                       MemoryRepresentation::UintPtr());
     const FunctionSig* sig = handler.tag.tag->sig;
     IterateWasmFXArgBuffer(sig->parameters(), [&](size_t index, int offset) {
       DCHECK(IsSubtypeOf(sig->GetParam(index), tag_params[index].type,
@@ -4195,6 +4202,30 @@ class TurboshaftGraphBuildingInterface
       tag_params[index].op =
           AnnotateResultIfReference(loaded, tag_params[index].type);
     });
+
+    // Store the canonical signature ID in the suspended stack. Avoid loading
+    // the stack from the continuation object since it could have been
+    // corrupted, use the stack returned by the suspend builtin instead.
+    ModuleTypeIndex cont_type_index = cont_val->type.ref_index();
+    const ContType* cont_type = decoder->module_->cont_type(cont_type_index);
+    ModuleTypeIndex fun_type_index = cont_type->contfun_typeindex();
+    wasm::CanonicalTypeIndex sig_id =
+        decoder->module_->canonical_type_id(fun_type_index);
+    V<Word32> relocatable_sig_id =
+        __ RelocatableWasmCanonicalSignatureId(sig_id.index);
+#ifdef V8_ENABLE_SANDBOX_HARDWARE_SUPPORT
+    // We don't have write access to the stack metadata from generated code, so
+    // perform the write from an external C call.
+    auto csig = FixedSizeSignature<MachineType>::Params(MachineType::Pointer(),
+                                                        MachineType::Uint32());
+    CallC(&csig, ExternalReference::wasmfx_save_canonical_sig_id(),
+          {stack_mem, relocatable_sig_id});
+#else
+    __ Store(stack_mem, OpIndex::Invalid(), relocatable_sig_id,
+             StoreOp::Kind::RawAligned(), MemoryRepresentation::Uint32(),
+             WriteBarrierKind::kNoWriteBarrier,
+             StackMemory::signature_id_offset());
+#endif
 
     instance_cache_.ReloadCachedMemory();
     cont_val->op = cont;

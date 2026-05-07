@@ -1644,10 +1644,10 @@ void InstructionSelector::VisitLoadStackPointer(OpIndex node) {
   Emit(kArchStackPointer, g.DefineAsRegister(node));
 }
 
-void InstructionSelector::VisitWasmFXArgBuffer(OpIndex node) {
+void InstructionSelector::VisitWasmFXSuspendedStack(OpIndex node) {
   OperandGenerator g(this);
-  LinkageLocation arg_buffer = LinkageLocation::ForRegister(
-      WasmFXSuspendDescriptor::GetRegisterParameter(2).code());
+  LinkageLocation arg_buffer =
+      LinkageLocation::ForRegister(kReturnRegister1.code());
   Emit(kArchNop, g.DefineAsLocation(node, arg_buffer));
 }
 #endif  // V8_ENABLE_WEBASSEMBLY
@@ -3554,8 +3554,8 @@ void InstructionSelector::VisitNode(OpIndex node) {
 #if V8_ENABLE_WEBASSEMBLY
     case Opcode::kTrapIf:
       return VisitTrapIf(node);
-    case Opcode::kWasmFXArgBuffer:
-      return VisitWasmFXArgBuffer(node);
+    case Opcode::kWasmFXSuspendedStack:
+      return VisitWasmFXSuspendedStack(node);
 #endif  // V8_ENABLE_WEBASSEMBLY
     case Opcode::kCatchBlockBegin:
       MarkAsTagged(node);

@@ -4043,7 +4043,9 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
   Register arg_buffer = WasmFXSuspendDescriptor::GetRegisterParameter(2);
   MemOperand sig(fp, 2 * kSystemPointerSize);
   Label resume;
-  __ Push(arg_buffer, padreg);
+  // Save the cont and suspended stack and return them to the handler.
+  __ LoadRootRelative(ip0, IsolateData::active_stack_offset());
+  __ Push(ip0, padreg);
   __ Push(cont, kContextRegister);
   {
     FrameScope scope(masm, StackFrame::MANUAL);
@@ -4059,11 +4061,11 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
     __ Adr(kCArgRegs[3], &resume);
     __ CallCFunction(ExternalReference::wasm_suspend_wasmfx_stack(), 8);
   }
-  Register target_stack = x1;
+  Register target_stack = x2;
   __ Move(target_stack, kReturnRegister0);
   cont = kReturnRegister0;
   __ Pop(kContextRegister, cont);
-  __ Pop(padreg, arg_buffer);
+  __ Pop(padreg, kReturnRegister1);  // Suspended stack.
 
   Label ok;
   __ cmp(target_stack, Operand(0));
@@ -4074,7 +4076,7 @@ void Builtins::Generate_WasmFXSuspend(MacroAssembler* masm) {
 
   __ bind(&ok);
   DCHECK_EQ(cont, kReturnRegister0);
-  DCHECK(!AreAliased(x4, arg_buffer, target_stack));
+  DCHECK(!AreAliased(x4, target_stack));
   LoadJumpBuffer(masm, target_stack, true, x4);
   __ Trap();
   __ Bind(&resume, BranchTargetIdentifier::kBtiJump);

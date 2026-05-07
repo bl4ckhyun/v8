@@ -5535,7 +5535,9 @@ class AssemblerOpInterface : public Next {
     return ReduceIfReachableWasmIncCoverageCounter(counter_addr);
   }
 
-  V<WordPtr> WasmFXArgBuffer() { return ReduceIfReachableWasmFXArgBuffer(); }
+  V<WordPtr> WasmFXSuspendedStack() {
+    return ReduceIfReachableWasmFXSuspendedStack();
+  }
 #endif  // V8_ENABLE_WEBASSEMBLY
 
 #ifdef V8_ENABLE_CONTINUATION_PRESERVED_EMBEDDER_DATA
