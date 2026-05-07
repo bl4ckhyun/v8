@@ -6,7 +6,7 @@ description: Checks if a POC provided by some JS and d8 flags is a vulnerability
 # Skill: V8 POC Classification
 
 Use this skill to determine if a reported Proof-of-Concept (POC) crash is a
-security vulnerability or a regular bug.
+security vulnerability or a regular bug through empirical technical analysis.
 
 ## Core Mandates
 
@@ -15,131 +15,110 @@ security vulnerability or a regular bug.
 - **Empirical Verification of ALL Claims:** Do not take ANY part of the
   reporter's classification or impact claims at face value. Every claim (e.g.,
   "arbitrary memory write", "sandbox escape", "silent write") MUST be
-  empirically verified. If a claim cannot be observed in a debugger, it must be
-  noted as "unverified" in the final rationale.
+  empirically verified.
 - **Verify with Debuggers:** A claim of memory corruption must be verified by
   observing the crash or memory state using debugging tools (GDB).
-  - **Read vs. Write:** You MUST verify the faulting instruction type.
-    - `mov rax, [rbx]` is a **Read**.
-    - `mov [rax], rbx` is a **Write**.
-  - **Pointer Control:** Check if faulting addresses or register values are
+  - **Read vs. Write**: You MUST verify the faulting instruction type.
+  - **Pointer Control**: Check if faulting addresses or register values are
     actually controlled by the attacker (e.g., contain values from the POC).
 - **Mandatory Non-ASan Verification:** For any potential security bug, you MUST
-  attempt reproduction on a standard **Release build without ASan/UBSan**.
-  - ASan often flags "harmless" OOB accesses that V8 would otherwise handle
-    safely or trap.
-  - If a non-ASan build prints `Caught harmless memory access violation` or
-    `Exiting process due to sandbox violation`, the sandbox is working as
-    intended.
-- **Exhaustive Reproduction:** Try harder to reproduce the issue locally. If the
-  provided POC doesn't crash immediately, try running it multiple times or
-  modifying the POC to be more stable.
+  verify reproduction on a standard **Release build without ASan/UBSan**.
 - **Autonomous Classification:** You are responsible for forming your own
-  technical conclusion. If the report claims a vulnerability but your analysis
-  shows it is a `DCHECK` failure in a debug build or relies on experimental
-  flags, classify it as a **Bug**.
+  technical conclusion. If your analysis shows it is a `DCHECK` failure or
+  relies on experimental flags, classify it as a **Bug**.
 
 ## Workflow
 
-When provided with a reproduction script (JS) and a set of `d8` flags that cause
-a crash, follow these steps to classify the bug:
+### 1. Initial Verification & Exhaustive Reproduction
 
-### 1. Initial Verification & Deep Dive
+Confirm the bug exists as reported.
 
-Reproduce the crash using the *provided* flags to confirm the bug exists.
+- **Action**: Run `d8 <provided-flags> <poc.js>`.
+- **Escalation**: If it doesn't reproduce, try multiple revisions (Reporter's
+  commit and Main) and build configurations (Debug, ASan, Release).
+- **Deep Dive**: Capture the initial backtrace and faulting instruction in GDB.
 
-- Command: `d8 <provided-flags> <poc.js>`
-- **Deep Dive:** If it reproduces, run it under GDB to inspect the crash state.
-  Capture the backtrace, the faulting instruction, and relevant register values.
-- **Check for Safe Termination:** Look for functions like
-  `PushStackTraceAndDie`, `SBXCHECK`, or `FATAL` in the backtrace. If these are
-  present, V8 has detected the corruption and is intentionally crashing.
+### 2. Security Boundary Investigation (The Filter)
 
-### 2. Impact Escalation (Crucial for Classification)
+Determine if the bug remains a vulnerability under production restrictions.
 
-If the bug exists but does NOT cause a crash (e.g., a "stale value" or "logical
-type confusion"), you MUST attempt to escalate it to a memory safety violation.
+- **Action**: Run with `provided_flags + --run-as-[sandbox]-security-poc`.
+- **Failure Loop (If reproduction stops)**:
+  1. **Analyze**: Identify which flag or syntax is restricted. Is it
+     `--allow-natives-syntax`? Is it an experimental compiler flag?
+  2. **Heal**: Attempt to rewrite the POC to avoid the restriction.
+     - *Example*: Replace `%OptimizeFunctionOnNextCall(f)` with a loop that
+       triggers Tier-up: `for(let i=0; i<10000; i++) f();`.
+     - *Example*: Replace `%ArrayBufferDetach(b)` with a standard way to
+       detach/transfer if possible.
+  3. **Conclude**: If the logic *requires* a restricted feature (like
+     `--fuzzing` or a non-shipping experimental flag) to trigger the memory
+     corruption, the report is likely a **Bug**, not a vulnerability.
 
-- **Objective**: Prove that the logical flaw can bypass V8's security
-  boundaries.
-- **Techniques**:
-  - **Type Confusion**: Use a stale tag to mislead the compiler into using an
-    object with an incompatible layout (e.g., reading a reference as an
-    integer).
-  - **OOB Access**: Use a stale length to mislead the compiler into eliding a
-    bounds check that should have fired.
-- **Verification**: If escalation attempts only lead to `RuntimeError` (illegal
-  cast, OOB access) or safe termination without a memory violation, it is likely
-  a **Bug**, not a vulnerability. V8's runtime protections (like `ref.cast` and
-  Wasm bounds checks) are designed to mitigate such flaws.
+### 3. Impact Assessment & Minimization
 
-### 3. Check with Security POC Flags
+Technical proof of the vulnerability's severity.
 
-Run the reproduction with the appropriate meta-flags. This is the most important
-step for classification.
+- **Minimization**: Strip the POC and flags to the absolute minimum required to
+  trigger the crash under the security POC flags.
+- **Impact Escalation**: If the bug exists but does NOT cause a crash (e.g., a
+  "stale value" or "logical type confusion"), you MUST attempt to escalate it to
+  a memory safety violation. Prove that the logical flaw can bypass V8's
+  security boundaries.
+  - **Techniques**: Type Confusion (misleading object layout), OOB Access (stale
+    length), Pointer Overwrite (overwriting field/loop-carried pointer).
+- **Verification**: Run the *minimized* POC on a **Standard Release build
+  (non-ASan)**.
+  - If it stops crashing or is caught by a hardened check (`SBXCHECK`, `FATAL`),
+    classify it as **Intended Behavior** or a **Bug**.
+- **Crashing POC for ClusterFuzz**: A crashing POC (segfault) is highly
+  preferred for ClusterFuzz upload. Always try to provide a standalone `.js`
+  file that crashes on a Release build.
+- **Deep Dive (GDB)**:
+  - Verify **Attacker Control**: Do registers or memory at the crash site
+    reflect values set in the POC (e.g., `0x41414141`)?
+  - **Read vs. Write**: Explicitly identify the primitive.
+  - **Scope Analysis**: For logical bugs, use tracing flags (e.g.,
+    `--trace-maglev-graph-building`) to confirm the discrepancy.
+  - **Component Mapping**: Identify the specific V8 subsystem affected (e.g.,
+    Maglev, Turbofan, Ignition, WebAssembly) to support component
+    classification.
 
-#### Regular Security POC
+### 4. Classification Guidelines
 
-- Command: `d8 --run-as-security-poc <provided-flags> <poc.js>`
-- **Result**: If the crash still occurs, it is likely a valid security
-  vulnerability (**Type=Vulnerability**).
+The classification MUST be supported by empirical evidence from the local
+reproduction:
 
-#### Sandbox Security POC
+- **Local Reproduction Findings**:
+  - **Status**: Reproduced / Not Reproduced.
+  - **Reproduction**: `d8 <flags> <poc.js>` (Exact command used locally).
+  - **Result**: Summarize the result of running the command (output, crash,
+    sandbox violation, harmless memory access).
+  - **Build**: The build variant and commit/version used.
+  - **Verified Impact**: Summarize the **Verified Impact** (e.g., confirmed OOB
+    write). If the bug is purely logical and caught by runtime protections (like
+    `ref.cast` or bounds checks) without crashing, state this clearly.
+  - **GDB Backtrace**: Include a snippet if it supports the classification.
 
-- Command: `d8 --run-as-sandbox-security-poc <provided-flags> <poc.js>`
-- **Result**: If the crash still occurs and shows **write access outside the
-  sandbox**, it is a valid sandbox vulnerability.
-- **Important:** Read access outside the sandbox is currently NOT considered a
-  vulnerability.
+Summary of rules from [triaging.md](../../../docs/security/triaging.md) based on
+the threat model:
 
-### 3. Isolate Required Flags (If needed)
+#### Regular Bugs (No initial in-sandbox write)
 
-If the crash stops reproducing with the security POC flags, identify which
-restriction prevents the crash. Try running with individual flags (e.g.,
-`--disallow-unsafe-flags`, `--disallow-developer-only-features`,
-`--no-experimental`, or `--fuzzing`) to isolate the behavior.
-
-Refer to [reproducing-bugs.md](../../../docs/security/reproducing-bugs.md) and
-[triaging.md](../../../docs/security/triaging.md) to understand the
-implications. In general, if a POC stops reproducing when any of these flags are
-set, it is likely not a security bug.
-
-### 4. Classification & Impact Assessment
-
-Determine the appropriate Buganizer fields and the actual security impact based
-on your findings and the rules in
-[triaging.md](../../../docs/security/triaging.md).
-
-**Findings from Local Reproduction:** The classification MUST be supported by
-empirical evidence from the local reproduction:
-
-- **Reproduced:** [Yes/No]
-- **Build Configuration:** [e.g., x64.release, x64.debug, asan]
-- **Verified Impact:** [e.g., "Confirmed OOB write of 8 bytes at 0x... via GDB"]
-- **GDB Backtrace Snippet:** [Top 3-5 frames]
-
-#### Classification Guidelines
-
-Refer to [triaging.md](../../../docs/security/triaging.md) for the definitive
-rules. Summary:
-
-- **Type=Vulnerability**: Production code, enabled by default
-  (Security_Impact=Head/Beta/Stable/Extended) or not enabled by default
-  (Security_Impact=None). Default to **S1** for memory corruption.
-- **Type=Bug**: Experimental flags (not in `--future`), developer/unsafe flags,
-  `nullptr` dereference, `DCHECK` or reliable `CHECK` failure.
+- **Type=Vulnerability**: Production code, enabled by default, survives the
+  security POC flags (`--run-as-security-poc`).
+- **Type=Bug**: Requires experimental flags (not in `--future`), developer
+  flags, or only triggers a `DCHECK` or reliable `CHECK` (safe termination).
 - **Intended Behavior**: Safe termination via `SBXCHECK`, `FATAL`, or hardened
-  libc++ checks (`std::vector`/`std::span` OOB).
+  libc++ checks.
 
-#### Sandbox Bypasses (starting with in-sandbox corruption)
+#### Sandbox Bypasses (Starts with in-sandbox write/corruption)
 
-Reports using `--sandbox-testing` or the Sandbox API.
-
-- **Sandbox bypass (Write access)**: Type=Vulnerability, Security_Impact=None,
-  Severity=S2.
-- **Read-only bypass**: Type=Bug, Security_Impact=None.
-- **Safe Termination**: Output shows `Caught harmless memory access violation`
-  or similar. This is **Intended Behavior**.
-- **Corrupting the wrong trusted object of the same type with well-formed
-  data**: Not a Bug (as long as it doesn't break internal structure). This is
-  **Intended Behavior**.
+- **Type=Vulnerability**: Demonstration of **write access** outside the sandbox
+  (e.g., "V8 sandbox violation detected") using `--sandbox-testing`.
+- **Intended Behavior**: Read-only bypass, or safe termination ("Caught harmless
+  memory access violation"). Includes linear OOB writes (e.g., `memset`,
+  `memcpy`) hitting guard regions, or corrupting trusted objects with
+  well-formed data of the same type. Also includes breaking internal invariants
+  using testing-only natives (restricted by `IsEnabledForFuzzing`) if the impact
+  is safely contained.

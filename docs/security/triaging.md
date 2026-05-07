@@ -51,6 +51,8 @@ See the section below for common scenarios that lead to reclassifications.
 
 The same general principles apply to sandbox security bugs.
 To ease classification, bugs should reproduce on `d8` by providing `--run-as-sandbox-security-poc` in addition to possibly other flags in the [sandbox testing environment](../../src/sandbox/README.md#testing).
+A successful reproduction must result in the crash filter reporting a sandbox violation (e.g. "V8 sandbox violation detected").
+Crashes reported as "harmless" by the filter do not qualify as sandbox escapes.
 
 ## Common cases for conditional features and code
 
