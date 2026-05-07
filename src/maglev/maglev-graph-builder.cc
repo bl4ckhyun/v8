@@ -17796,8 +17796,6 @@ void MaglevGraphBuilder::OsrPrewalk() {
       SetCurrentScopeInfo(merge_states_[offset]->context_scope_info());
     }
 
-    PrewalkBytecode();
-
     if (interpreter::Bytecodes::IsJump(iterator_.current_bytecode())) {
       int target = iterator_.GetJumpTargetOffset();
       auto jump_it = saved_states.find(target);
@@ -17816,6 +17814,8 @@ void MaglevGraphBuilder::OsrPrewalk() {
     }
 
     HandleTryBlock(offset);
+
+    PrewalkBytecode();
   }
   auto it = saved_states.find(entrypoint_);
   if (it != saved_states.end()) {
@@ -18071,8 +18071,8 @@ void MaglevGraphBuilder::MarkBytecodeDead() {
         SetCurrentScopeInfo(it->second);
       }
     }
-    PrewalkBytecode();
     HandleTryBlock(current_offset);
+    PrewalkBytecode();
   }
   TRACE(TraceColor::kRed << "DEAD " << " : " << TraceBytecode(iterator_));
 
