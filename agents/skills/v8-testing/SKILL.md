@@ -34,7 +34,10 @@ tools/run-tests.py --progress dots --exit-after-n-failures=5 --outdir=out/x64.op
 tools/run-tests.py --progress dots --exit-after-n-failures=5 --outdir=out/x64.optdebug cctest/test-heap
 
 # Manual execution with d8
-# Note: mjsunit tests require test/mjsunit/mjsunit.js to be included first.
+# Note: mjsunit tests always require test/mjsunit/mjsunit.js.
+# tools/run-tests.py prepends this automatically for all tests in mjsunit,
+# so you don't need to load it explicitly in the test file.
+# For manual d8 execution, you must include it first.
 # You can also run tools/run-tests.py with -v to see the full command line used by the runner.
 out/x64.optdebug/d8 test/mjsunit/mjsunit.js test/mjsunit/my-test.js
 ```
