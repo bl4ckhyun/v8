@@ -237,20 +237,14 @@ BIT_FIELD_ACCESSORS(Map, relaxed_bit_field3, construction_counter,
 
 Tagged<InterceptorInfo> Map::GetNamedInterceptor() const {
   DCHECK(has_named_interceptor());
-  Tagged<InterceptorInfo> interceptor_info =
-      Cast<JSInterceptorMap>(Tagged<Map>(this))->named_interceptor();
-  DCHECK_EQ(GetFunctionTemplateInfo()->GetNamedPropertyHandler(),
-            interceptor_info);
-  return interceptor_info;
+  Tagged<FunctionTemplateInfo> info = GetFunctionTemplateInfo();
+  return Cast<InterceptorInfo>(info->GetNamedPropertyHandler());
 }
 
 Tagged<InterceptorInfo> Map::GetIndexedInterceptor() const {
   DCHECK(has_indexed_interceptor());
-  Tagged<InterceptorInfo> interceptor_info =
-      Cast<JSInterceptorMap>(Tagged<Map>(this))->indexed_interceptor();
-  DCHECK_EQ(GetFunctionTemplateInfo()->GetIndexedPropertyHandler(),
-            interceptor_info);
-  return interceptor_info;
+  Tagged<FunctionTemplateInfo> info = GetFunctionTemplateInfo();
+  return Cast<InterceptorInfo>(info->GetIndexedPropertyHandler());
 }
 
 // static

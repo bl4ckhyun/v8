@@ -6670,9 +6670,27 @@ static i::DirectHandle<ObjectType> CreateEnvironment(
             i_isolate, global_constructor,
             i_isolate->factory()->undefined_value());
       }
-      // We don't need to silence named/indexed interceptors since we skip
-      // them when we transfer properties from the snapshotted global object
-      // to the new global object. See Genesis::TransferNamedProperties(..).
+
+      // Same for other interceptors. If the global constructor has
+      // interceptors, we need to replace them temporarily with noop
+      // interceptors, so the map is correctly marked as having interceptors,
+      // but we don't invoke any.
+      if (!IsUndefined(global_constructor->GetNamedPropertyHandler(),
+                       i_isolate)) {
+        named_interceptor = direct_handle(
+            global_constructor->GetNamedPropertyHandler(), i_isolate);
+        i::FunctionTemplateInfo::SetNamedPropertyHandler(
+            i_isolate, global_constructor,
+            i_isolate->factory()->noop_named_interceptor_info());
+      }
+      if (!IsUndefined(global_constructor->GetIndexedPropertyHandler(),
+                       i_isolate)) {
+        indexed_interceptor = direct_handle(
+            global_constructor->GetIndexedPropertyHandler(), i_isolate);
+        i::FunctionTemplateInfo::SetIndexedPropertyHandler(
+            i_isolate, global_constructor,
+            i_isolate->factory()->noop_indexed_interceptor_info());
+      }
     }
 
     i::MaybeDirectHandle<i::JSGlobalProxy> maybe_proxy;
@@ -6695,6 +6713,10 @@ static i::DirectHandle<ObjectType> CreateEnvironment(
           i::direct_handle(proxy_constructor->GetAccessCheckInfo(), i_isolate));
       global_constructor->set_needs_access_check(
           proxy_constructor->needs_access_check());
+      i::FunctionTemplateInfo::SetNamedPropertyHandler(
+          i_isolate, global_constructor, named_interceptor);
+      i::FunctionTemplateInfo::SetIndexedPropertyHandler(
+          i_isolate, global_constructor, indexed_interceptor);
     }
   }
   // Leave V8.

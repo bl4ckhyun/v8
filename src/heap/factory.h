@@ -625,13 +625,6 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
       int inobject_properties = 0,
       AllocationType allocation_type = AllocationType::kMap);
 
-  DirectHandle<ExtendedMap> NewContextfulMap(
-      DirectHandle<NativeContext> native_context, ExtendedMapKind map_kind,
-      InstanceType type, int instance_size,
-      ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
-      int inobject_properties = 0,
-      AllocationType allocation_type = AllocationType::kMap);
-
   Handle<Map> NewContextfulMapForCurrentContext(
       InstanceType type, int instance_size,
       ElementsKind elements_kind = TERMINAL_FAST_ELEMENTS_KIND,
