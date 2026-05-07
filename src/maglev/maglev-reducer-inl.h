@@ -343,9 +343,6 @@ void MaglevReducer<BaseT>::SetNodeInputsNoConversion(NodeT* node,
 template <typename BaseT>
 template <typename NodeT>
 NodeT* MaglevReducer<BaseT>::AttachExtraInfoAndAddToGraph(NodeT* node) {
-  static_assert(NodeT::kProperties.has_eager_deopt_info() +
-                    NodeT::kProperties.can_lazy_deopt() <=
-                1);
   AttachDeoptCheckpoint(node);
   AttachEagerDeoptInfo(node);
   AttachLazyDeoptInfo(node);

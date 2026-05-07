@@ -6915,6 +6915,48 @@ void CallKnownJSFunction::GenerateCode(MaglevAssembler* masm,
   masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
 }
 
+int CallKnownBuiltin::MaxCallStackArgs() const {
+  int actual_parameter_count = num_args() + 1;
+  return std::max(expected_parameter_count_, actual_parameter_count);
+}
+void CallKnownBuiltin::SetValueLocationConstraints() {
+  UseAny(ReceiverInput());
+  for (int i = 0; i < num_args(); i++) {
+    UseAny(arg(i));
+  }
+  UseFixed(TargetInput(), kJavaScriptCallTargetRegister);
+  UseFixed(NewTargetInput(), kJavaScriptCallNewTargetRegister);
+  UseFixed(ContextInput(), kContextRegister);
+  DefineAsFixed(this, kReturnRegister0);
+  set_temporaries_needed(1);
+}
+
+void CallKnownBuiltin::GenerateCode(MaglevAssembler* masm,
+                                    const ProcessingState& state) {
+  MaglevAssembler::TemporaryRegisterScope temps(masm);
+  Register scratch = temps.Acquire();
+  int actual_parameter_count = num_args() + 1;
+  if (actual_parameter_count < expected_parameter_count_) {
+    int number_of_undefineds =
+        expected_parameter_count_ - actual_parameter_count;
+    __ LoadRoot(scratch, RootIndex::kUndefinedValue);
+    __ PushReverse(ReceiverInput(), args(),
+                   RepeatValue(scratch, number_of_undefineds));
+  } else {
+    __ PushReverse(ReceiverInput(), args());
+  }
+  temps.SetAvailable(MaglevAssembler::GetAllocatableRegisters() -
+                     RegList{kContextRegister, kJavaScriptCallCodeStartRegister,
+                             kJavaScriptCallTargetRegister,
+                             kJavaScriptCallNewTargetRegister,
+                             kJavaScriptCallArgCountRegister});
+  DCHECK_EQ(kContextRegister, ToRegister(ContextInput()));
+  DCHECK_EQ(kJavaScriptCallTargetRegister, ToRegister(TargetInput()));
+  __ Move(kJavaScriptCallArgCountRegister, actual_parameter_count);
+  __ CallJSBuiltin(builtin_id_, expected_parameter_count_);
+  masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
+}
+
 int CallKnownApiFunction::MaxCallStackArgs() const {
   int actual_parameter_count = num_args() + 1;
   return actual_parameter_count;
@@ -8893,6 +8935,10 @@ void CallSelf::PrintParams(std::ostream& os) const {}
 
 void CallKnownJSFunction::PrintParams(std::ostream& os) const {
   os << "(" << shared_function_info_.object() << ", " << use_repr_hints_ << ")";
+}
+
+void CallKnownBuiltin::PrintParams(std::ostream& os) const {
+  os << "(" << Builtins::name(builtin_id_) << ")";
 }
 
 void CallKnownApiFunction::PrintParams(std::ostream& os) const {

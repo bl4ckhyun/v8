@@ -261,6 +261,7 @@ class ExceptionHandlerInfo;
   V(CallWithArrayLike)                                                \
   V(CallWithSpread)                                                   \
   V(CallKnownApiFunction)                                             \
+  V(CallKnownBuiltin)                                                 \
   V(CallKnownJSFunction)                                              \
   V(CallSelf)                                                         \
   V(Construct)                                                        \
@@ -1166,12 +1167,14 @@ class OpProperties {
   }
   constexpr bool is_any_call() const { return is_call() || is_deferred_call(); }
   constexpr bool can_eager_deopt() const {
-    return kAttachedDeoptInfoBits::decode(bitfield_) ==
-           AttachedDeoptInfo::kEager;
+    AttachedDeoptInfo info = kAttachedDeoptInfoBits::decode(bitfield_);
+    return info == AttachedDeoptInfo::kEager ||
+           info == AttachedDeoptInfo::kEagerAndLazy;
   }
   constexpr bool can_lazy_deopt() const {
-    return kAttachedDeoptInfoBits::decode(bitfield_) ==
-           AttachedDeoptInfo::kLazy;
+    AttachedDeoptInfo info = kAttachedDeoptInfoBits::decode(bitfield_);
+    return info == AttachedDeoptInfo::kLazy ||
+           info == AttachedDeoptInfo::kEagerAndLazy;
   }
   constexpr bool is_deopt_checkpoint() const {
     return kAttachedDeoptInfoBits::decode(bitfield_) ==
@@ -1343,9 +1346,15 @@ class OpProperties {
   }
 
  private:
-  enum class AttachedDeoptInfo { kNone, kEager, kLazy, kCheckpoint };
+  enum class AttachedDeoptInfo {
+    kNone,
+    kEager,
+    kLazy,
+    kEagerAndLazy,
+    kCheckpoint
+  };
   using kIsCallBit = base::BitField<bool, 0, 1>;
-  using kAttachedDeoptInfoBits = kIsCallBit::Next<AttachedDeoptInfo, 2>;
+  using kAttachedDeoptInfoBits = kIsCallBit::Next<AttachedDeoptInfo, 3>;
   using kCanThrowBit = kAttachedDeoptInfoBits::Next<bool, 1>;
   using kCanReadBit = kCanThrowBit::Next<bool, 1>;
   using kCanWriteBit = kCanReadBit::Next<bool, 1>;
@@ -2200,14 +2209,15 @@ class NodeBase : public ZoneObject {
 
   EagerDeoptInfo* eager_deopt_info() {
     DCHECK(properties().has_eager_deopt_info());
-    DCHECK(!properties().can_lazy_deopt());
     return reinterpret_cast<EagerDeoptInfo*>(deopt_info_address());
   }
 
   LazyDeoptInfo* lazy_deopt_info() {
     DCHECK(properties().can_lazy_deopt());
-    DCHECK(!properties().can_eager_deopt());
-    return reinterpret_cast<LazyDeoptInfo*>(deopt_info_address());
+    size_t offset = properties().has_eager_deopt_info()
+                        ? EagerDeoptInfoSize(properties())
+                        : 0;
+    return reinterpret_cast<LazyDeoptInfo*>(deopt_info_address() + offset);
   }
 
   const RegisterSnapshot& register_snapshot() const {
@@ -2379,13 +2389,6 @@ class NodeBase : public ZoneObject {
 
   template <class Derived, typename... Args>
   static Derived* Allocate(Zone* zone, size_t input_count, Args&&... args) {
-    static_assert(
-        !Derived::kProperties.can_eager_deopt() ||
-            !Derived::kProperties.can_lazy_deopt(),
-        "The current deopt info representation, at the end of inputs, requires "
-        "that we cannot have both lazy and eager deopts on a node. If we ever "
-        "need this, we have to update accessors to check node->properties() "
-        "for which deopts are active.");
     constexpr size_t size_before_inputs =
         ExceptionHandlerInfoSize(Derived::kProperties) +
         RegisterSnapshotSize(Derived::kProperties) +
@@ -2442,8 +2445,6 @@ class NodeBase : public ZoneObject {
   // Returns the position of deopt info if it exists, otherwise returns
   // its position as if DeoptInfo size were zero.
   Address deopt_info_address() const {
-    DCHECK(!properties().has_eager_deopt_info() ||
-           !properties().can_lazy_deopt());
     size_t extra =
         EagerDeoptInfoSize(properties()) + LazyDeoptInfoSize(properties());
     return last_input_address() - extra;
@@ -10434,6 +10435,48 @@ class ReturnedValue : public ValueNodeT<ReturnedValue> {
   }
 };
 static_assert(sizeof(ReturnedValue) <= sizeof(CallKnownJSFunction));
+
+// A call to a known JS builtin whose builtin id is in MAGLEV_REDUCED_BUILTIN.
+// Carries an EagerDeoptInfo* so the optimizer can speculate.
+class CallKnownBuiltin : public VarargsValueNodeT<4, CallKnownBuiltin> {
+ public:
+  // This ctor is used when for variable input counts.
+  // Inputs must be initialized manually.
+  inline CallKnownBuiltin(uint64_t bitfield, Builtin builtin_id,
+                          JSDispatchHandle dispatch_handle,
+                          compiler::SharedFunctionInfoRef shared_function_info,
+                          ValueNode* closure, ValueNode* context,
+                          ValueNode* receiver, ValueNode* new_target,
+                          const compiler::FeedbackSource& feedback_source);
+
+  static constexpr OpProperties kProperties = OpProperties::EagerDeopt() |
+                                              OpProperties::JSCall() |
+                                              OpProperties::DeferredCall();
+  DECLARE_INPUTS(Target, Context, Receiver, NewTarget)
+
+  Builtin builtin_id() const { return builtin_id_; }
+
+  compiler::SharedFunctionInfoRef shared_function_info() const {
+    return shared_function_info_;
+  }
+
+  const compiler::FeedbackSource& feedback_source() const {
+    return feedback_source_;
+  }
+
+  int expected_parameter_count() const { return expected_parameter_count_; }
+
+  int MaxCallStackArgs() const;
+  void SetValueLocationConstraints();
+  void GenerateCode(MaglevAssembler*, const ProcessingState&);
+  void PrintParams(std::ostream&) const;
+
+ private:
+  Builtin builtin_id_;
+  const compiler::SharedFunctionInfoRef shared_function_info_;
+  int expected_parameter_count_;
+  compiler::FeedbackSource feedback_source_;
+};
 
 class CallKnownApiFunction : public VarargsValueNodeT<1, CallKnownApiFunction> {
  public:

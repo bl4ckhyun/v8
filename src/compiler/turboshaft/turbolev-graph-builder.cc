@@ -1423,6 +1423,41 @@ class GraphBuildingNodeProcessor {
   }
 #endif  // V8_ENABLE_WEBASSEMBLY
 
+  template <typename NodeT>
+  maglev::ProcessResult ProcessJSBuiltinCall(NodeT* node, Builtin builtin,
+                                             V<Object> callee,
+                                             V<FrameState> frame_state) {
+    int actual_parameter_count = JSParameterCount(node->num_args());
+
+    DCHECK(Builtins::HasJSLinkage(builtin));
+    SBXCHECK(Builtins::IsCompatibleJSBuiltin(builtin,
+                                             node->expected_parameter_count()));
+
+    base::SmallVector<OpIndex, 16> arguments;
+    arguments.push_back(callee);
+    arguments.push_back(Map(node->NewTargetInput()));
+    arguments.push_back(__ Word32Constant(actual_parameter_count));
+#ifdef V8_JS_LINKAGE_INCLUDES_DISPATCH_HANDLE
+    arguments.push_back(__ Word32Constant(kPlaceholderDispatchHandle.value()));
+#endif
+    arguments.push_back(Map(node->ReceiverInput()));
+    for (int i = 0; i < node->num_args(); i++) {
+      arguments.push_back(Map(node->arg(i)));
+    }
+    // Setting missing arguments to Undefined.
+    for (int i = actual_parameter_count; i < node->expected_parameter_count();
+         i++) {
+      arguments.push_back(undefined_value_);
+    }
+    arguments.push_back(Map(node->ContextInput()));
+
+    GENERATE_AND_MAP_BUILTIN_CALL(
+        node, builtin, frame_state, base::VectorOf(arguments),
+        std::max<int>(actual_parameter_count,
+                      node->expected_parameter_count()));
+    return maglev::ProcessResult::kContinue;
+  }
+
   maglev::ProcessResult Process(maglev::CallKnownJSFunction* node,
                                 const maglev::ProcessingState& state) {
     GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());
@@ -1457,40 +1492,7 @@ class GraphBuildingNodeProcessor {
 
     if (node->shared_function_info().HasBuiltinId()) {
       Builtin builtin = node->shared_function_info().builtin_id();
-
-      // Non-JS builtins must be called via CallBuiltin().
-      DCHECK(Builtins::HasJSLinkage(builtin));
-
-      // This SBXCHECK is a defense-in-depth measure to ensure that we always
-      // generate valid calls here (with matching signatures).
-      SBXCHECK(Builtins::IsCompatibleJSBuiltin(
-          builtin, node->expected_parameter_count()));
-
-      // Note that there is no need for a ThrowingScope here:
-      // GenerateBuiltinCall takes care of creating one.
-      base::SmallVector<OpIndex, 16> arguments;
-      arguments.push_back(callee);
-      arguments.push_back(Map(node->NewTargetInput()));
-      arguments.push_back(__ Word32Constant(actual_parameter_count));
-#ifdef V8_JS_LINKAGE_INCLUDES_DISPATCH_HANDLE
-      arguments.push_back(
-          __ Word32Constant(kPlaceholderDispatchHandle.value()));
-#endif
-      arguments.push_back(Map(node->ReceiverInput()));
-      for (int i = 0; i < node->num_args(); i++) {
-        arguments.push_back(Map(node->arg(i)));
-      }
-      // Setting missing arguments to Undefined.
-      for (int i = actual_parameter_count; i < node->expected_parameter_count();
-           i++) {
-        arguments.push_back(undefined_value_);
-      }
-      arguments.push_back(Map(node->ContextInput()));
-
-      GENERATE_AND_MAP_BUILTIN_CALL(
-          node, builtin, frame_state, base::VectorOf(arguments),
-          std::max<int>(actual_parameter_count,
-                        node->expected_parameter_count()));
+      return ProcessJSBuiltinCall(node, builtin, callee, frame_state);
     } else {
       ThrowingScope throwing_scope(this, node);
       base::SmallVector<OpIndex, 16> arguments;
@@ -1533,6 +1535,16 @@ class GraphBuildingNodeProcessor {
 
     return maglev::ProcessResult::kContinue;
   }
+
+  maglev::ProcessResult Process(maglev::CallKnownBuiltin* node,
+                                const maglev::ProcessingState& state) {
+    GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());
+
+    V<Object> callee = Map(node->TargetInput());
+    Builtin builtin = node->builtin_id();
+    return ProcessJSBuiltinCall(node, builtin, callee, frame_state);
+  }
+
   maglev::ProcessResult Process(maglev::CallKnownApiFunction* node,
                                 const maglev::ProcessingState& state) {
     GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());

@@ -1168,6 +1168,12 @@ ProcessResult MaglevGraphOptimizer::VisitCallKnownJSFunction(
   return ProcessResult::kContinue;
 }
 
+ProcessResult MaglevGraphOptimizer::VisitCallKnownBuiltin(
+    CallKnownBuiltin* node, const ProcessingState& state) {
+  // TODO(b/424157317): Optimize.
+  return ProcessResult::kContinue;
+}
+
 ProcessResult MaglevGraphOptimizer::VisitReturnedValue(
     ReturnedValue* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.
