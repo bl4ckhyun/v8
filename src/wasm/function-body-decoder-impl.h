@@ -8206,7 +8206,13 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
     // Arity 1 is still common enough that we handle it separately (only doing
     // the most basic subtype check).
     if (arity == 1 && (strict_count ? actual == arity : actual >= arity)) {
-      if (stack_.back().type == merge->vals.first.type) return true;
+      if (stack_.back().type == merge->vals.first.type) {
+        if constexpr (static_cast<bool>(rewrite_types) &&
+                      ValidationTag::validate) {
+          stack_.back().pc_for_errors = this->pc_;
+        }
+        return true;
+      }
     }
     return TypeCheckStackAgainstMerge_Slow<strict_count, push_branch_values,
                                            merge_type, rewrite_types>(merge);
@@ -8248,6 +8254,9 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
         if constexpr (static_cast<bool>(rewrite_types)) {
           // Upcast type on the stack to the target type of the label.
           val.type = old.type;
+          if constexpr (ValidationTag::validate) {
+            val.pc_for_errors = this->pc_;
+          }
         }
       }
       return true;
@@ -8274,6 +8283,10 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
         for (uint32_t i = 0; i < std::min(arity, inserted_value_count); i++) {
           if (stack_base[i].type == kWasmBottom) {
             stack_base[i].type = (*merge)[i].type;
+            if constexpr (static_cast<bool>(rewrite_types) &&
+                          ValidationTag::validate) {
+              stack_base[i].pc_for_errors = this->pc_;
+            }
           }
         }
       }
