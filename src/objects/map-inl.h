@@ -11,7 +11,6 @@
 #include "src/common/globals.h"
 #include "src/heap/heap-layout-inl.h"
 #include "src/heap/heap-write-barrier-inl.h"
-#include "src/objects/api-callbacks-inl.h"
 #include "src/objects/cell-inl.h"
 #include "src/objects/dependent-code.h"
 #include "src/objects/descriptor-array-inl.h"
@@ -21,6 +20,7 @@
 #include "src/objects/hole.h"
 #include "src/objects/instance-type-inl.h"
 #include "src/objects/js-function-inl.h"
+#include "src/objects/js-interceptor-map.h"
 #include "src/objects/literal-objects.h"
 #include "src/objects/map-updater.h"
 #include "src/objects/object-predicates-inl.h"
@@ -235,17 +235,7 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_properties,
 BIT_FIELD_ACCESSORS(Map, relaxed_bit_field3, construction_counter,
                     Map::Bits3::ConstructionCounterBits)
 
-Tagged<InterceptorInfo> Map::GetNamedInterceptor() const {
-  DCHECK(has_named_interceptor());
-  Tagged<FunctionTemplateInfo> info = GetFunctionTemplateInfo();
-  return Cast<InterceptorInfo>(info->GetNamedPropertyHandler());
-}
 
-Tagged<InterceptorInfo> Map::GetIndexedInterceptor() const {
-  DCHECK(has_indexed_interceptor());
-  Tagged<FunctionTemplateInfo> info = GetFunctionTemplateInfo();
-  return Cast<InterceptorInfo>(info->GetIndexedPropertyHandler());
-}
 
 // static
 bool Map::IsMostGeneralFieldType(Representation representation,
@@ -478,6 +468,7 @@ int Map::AllocatedSize() const {
   if (is_extended_map()) [[unlikely]] {
     // This is an extended map, figure out its size from the extended map kind.
     Tagged<ExtendedMap> self = UncheckedCast<ExtendedMap>(this);
+    DCHECK_LE(ExtendedMap::kMinimumSize, self->map_size());
     return self->map_size();
   }
   // This is either a meta map or a regular map. Currently they have the same
@@ -1333,27 +1324,7 @@ void ExtendedMap::set_map_kind_and_size(ExtendedMapKind kind,
   set_relaxed_bit_field_ex(field);
 }
 
-Tagged<InterceptorInfo> JSInterceptorMap::named_interceptor() const {
-  return named_interceptor_.load();
-}
-void JSInterceptorMap::set_named_interceptor(
-    Tagged<InterceptorInfo> interceptor_info, WriteBarrierMode mode) {
-  DCHECK(interceptor_info->is_named());
-  named_interceptor_.store(this, interceptor_info, mode);
-}
 
-Tagged<InterceptorInfo> JSInterceptorMap::indexed_interceptor() const {
-  return indexed_interceptor_.load();
-}
-void JSInterceptorMap::set_indexed_interceptor(
-    Tagged<InterceptorInfo> interceptor_info, WriteBarrierMode mode) {
-  DCHECK(!interceptor_info->is_named());
-  indexed_interceptor_.store(this, interceptor_info, mode);
-}
-
-void JSInterceptorMap::clear_extended_padding() {
-  memset(extended_padding_, 0, sizeof(extended_padding_));
-}
 
 int NormalizedMapCache::GetIndex(Isolate* isolate, Tagged<Map> map,
                                  Tagged<HeapObject> prototype) {

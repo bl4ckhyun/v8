@@ -1030,6 +1030,8 @@ int Deserializer<IsolateT>::ReadSingleBytecodeData(uint8_t data,
     case kNewContextlessMetaMap:
     case kNewContextfulMetaMap:
       return ReadNewMetaMap(data, slot_accessor);
+    case kExtendedMapBitFieldEx:
+      return ReadExtendedMapBitfieldEx(data, slot_accessor);
     case kSandboxedExternalReference:
     case kExternalReference:
       return ReadExternalReference(data, slot_accessor);
@@ -1631,6 +1633,22 @@ int Deserializer<IsolateT>::ReadFixedRawData(uint8_t data,
   // data.
   source_.CopySlots(slot_accessor.slot().location(), size_in_slots);
   return size_in_slots;
+}
+
+template <typename IsolateT>
+template <typename SlotAccessor>
+int Deserializer<IsolateT>::ReadExtendedMapBitfieldEx(
+    uint8_t data, SlotAccessor slot_accessor) {
+  uint8_t bit_field_ex = source_.Get();
+  if (v8_flags.trace_deserialization) {
+    PrintF("%*sExtendedMapBitfieldEx : 0x%x\n", depth_, "", bit_field_ex);
+  }
+  // The slot_accessor points to the slot after HeapObject::map field, so the
+  // ExtendedMap object address is one slot before the slot_accessor location.
+  ExtendedMap* extended_map =
+      reinterpret_cast<ExtendedMap*>((slot_accessor.slot() - 1).location());
+  extended_map->set_bit_field_ex(bit_field_ex);
+  return 0;
 }
 
 template <typename IsolateT>

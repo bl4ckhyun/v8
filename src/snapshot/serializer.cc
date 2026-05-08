@@ -513,6 +513,15 @@ void Serializer::ObjectSerializer::SerializePrologue(SnapshotSpace space,
     // deferred.
     DCHECK(IsMap(map));
     serializer_->SerializeObject(handle(map, isolate()), SlotType::kMapSlot);
+    if (IsExtendedMap(*object_)) {
+      // Extended maps store their actual size in bit_field_ex_, write it
+      // upfront to make sure the ExtendedMap size can be fully initialized,
+      // before deserializing tagged fields which might cause GC.
+      // It must be serialized right after the map field.
+      sink_->Put(kExtendedMapBitFieldEx, "NewExtendedMap");
+      sink_->Put(Cast<ExtendedMap>(*object_)->bit_field_ex(),
+                 "ExtendedMap::bit_field_ex");
+    }
 
     // Make sure the map serialization didn't accidentally recursively serialize
     // this object.

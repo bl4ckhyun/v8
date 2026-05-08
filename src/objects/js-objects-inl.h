@@ -26,6 +26,7 @@
 #include "src/objects/heap-object-inl.h"
 #include "src/objects/heap-object.h"
 #include "src/objects/instance-type-inl.h"
+#include "src/objects/js-interceptor-map-inl.h"
 #include "src/objects/keys.h"
 #include "src/objects/lookup-inl.h"
 #include "src/objects/primitive-heap-object.h"

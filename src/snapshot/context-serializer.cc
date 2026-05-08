@@ -262,8 +262,8 @@ bool ContextSerializer::ShouldBeInTheStartupObjectCache(Tagged<HeapObject> o) {
   // script would cause dupes.
   return IsName(o) || IsScript(o) || IsSharedFunctionInfo(o) ||
          IsHeapNumber(o) || IsCode(o) || IsInstructionStream(o) ||
-         IsScopeInfo(o) || IsAccessorInfo(o) || IsTemplateInfo(o) ||
-         IsClassPositions(o) ||
+         IsScopeInfo(o) || IsAccessorInfo(o) || IsInterceptorInfo(o) ||
+         IsTemplateInfo(o) || IsClassPositions(o) ||
          o->map() == ReadOnlyRoots(isolate()).fixed_cow_array_map();
 }
 

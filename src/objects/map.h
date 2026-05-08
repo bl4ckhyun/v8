@@ -1297,27 +1297,7 @@ inline constexpr int ExtendedMap::kMinimumSize =
 inline constexpr int ExtendedMap::kStartOfStrongExtendedFieldsOffset =
     kMinimumSize;
 
-// Extended map for interceptor objects, it caches named and indexed
-// InterceptorInfo objects in the Map for faster access.
-V8_OBJECT class JSInterceptorMap : public ExtendedMap {
- public:
-  inline Tagged<InterceptorInfo> named_interceptor() const;
-  inline void set_named_interceptor(
-      Tagged<InterceptorInfo> interceptor_info,
-      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
 
-  inline Tagged<InterceptorInfo> indexed_interceptor() const;
-  inline void set_indexed_interceptor(
-      Tagged<InterceptorInfo> interceptor_info,
-      WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
-
-  inline void clear_extended_padding();
-
- public:
-  uint8_t extended_padding_[kTaggedSize - 1];
-  TaggedMember<InterceptorInfo> named_interceptor_;
-  TaggedMember<InterceptorInfo> indexed_interceptor_;
-} V8_OBJECT_END;
 
 // The cache for maps used by normalized (dictionary mode) objects.
 // Such maps do not have property descriptors, so a typical program
