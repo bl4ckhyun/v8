@@ -1309,6 +1309,8 @@ void FlagList::ResolveContradictionsWhenFuzzing() {
       RESET_WHEN_CORRECTNESS_FUZZING(assert_types),
       RESET_WHEN_CORRECTNESS_FUZZING(maglev_assert_types),
       RESET_WHEN_CORRECTNESS_FUZZING(turboshaft_assert_types),
+      RESET_WHEN_CORRECTNESS_FUZZING(verify_bytecode_full),
+      RESET_WHEN_CORRECTNESS_FUZZING(verify_bytecode_light),
 #if V8_ENABLE_WEBASSEMBLY
       RESET_WHEN_CORRECTNESS_FUZZING(wasm_assert_types),
 #endif  // V8_ENABLE_WEBASSEMBLY

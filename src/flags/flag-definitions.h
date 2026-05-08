@@ -3651,11 +3651,6 @@ DEFINE_BOOL(verify_bytecode_full, DEBUG_BOOL,
 DEFINE_NEG_IMPLICATION(verify_bytecode_full, verify_bytecode_light)
 DEFINE_NEG_IMPLICATION(verify_bytecode_light, verify_bytecode_full)
 
-// Fuzzing and sandbox testing modes enable full bytecode verification.
-DEFINE_IMPLICATION(fuzzing, verify_bytecode_full)
-DEFINE_IMPLICATION(sandbox_fuzzing, verify_bytecode_full)
-DEFINE_IMPLICATION(sandbox_testing, verify_bytecode_full)
-
 #ifdef V8_ENABLE_MEMORY_CORRUPTION_API
 DEFINE_BOOL(expose_memory_corruption_api, false,
             "Exposes the memory corruption API. Set automatically by "
