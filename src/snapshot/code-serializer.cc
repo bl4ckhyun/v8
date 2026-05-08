@@ -693,6 +693,7 @@ CodeSerializer::FinishOffThreadDeserialize(
 #ifdef DEBUG
     if (!Cast<String>(result_script->source())->Equals(*source)) {
       isolate->PushStackTraceAndDie(
+          "deserialized script source mismatch",
           reinterpret_cast<void*>(result_script->source().ptr()),
           reinterpret_cast<void*>(source->ptr()));
     }

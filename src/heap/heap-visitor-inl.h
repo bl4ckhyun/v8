@@ -202,6 +202,7 @@ size_t HeapVisitor<ConcreteVisitor>::Visit(Tagged<Map> map,
     Isolate* isolate;
     if (GetIsolateFromHeapObject(object, &isolate)) {
       isolate->PushParamsAndDie(
+          "unknown visitor id in heap object iteration",
           reinterpret_cast<void*>(object.ptr()),
           reinterpret_cast<void*>(map.ptr()),
           reinterpret_cast<void*>(static_cast<intptr_t>(map->visitor_id())));

@@ -1655,8 +1655,8 @@ RUNTIME_FUNCTION(Runtime_AbortCSADcheck) {
     std::unique_ptr<char[]> message_str = message->ToCString();
     base::OS::PrintError("abort: CSA_DCHECK failed: %s\n\n", message_str.get());
 
-    isolate->PushStackTraceAndDie(reinterpret_cast<void*>(message->ptr()),
-                                  message_str.get());
+    isolate->PushStackTraceAndDie(message_str.get(),
+                                  reinterpret_cast<void*>(message->ptr()));
   }
   base::OS::Abort();
   UNREACHABLE();

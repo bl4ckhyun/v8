@@ -320,7 +320,7 @@ V8_NOINLINE V8_PRESERVE_MOST inline bool TryReportUnreachable(
   }
   recursion++;
   Isolate::Current()->PushStackTraceAndDie(
-      reinterpret_cast<void*>(string->ptr()),
+      "invalid string dispatch", reinterpret_cast<void*>(string->ptr()),
       reinterpret_cast<void*>(map->ptr()));
   recursion--;
   UNREACHABLE();

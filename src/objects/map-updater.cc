@@ -436,7 +436,8 @@ std::optional<Tagged<Map>> MapUpdater::TryUpdateNoLock(Isolate* isolate,
   // TODO(olivf, 370536107): For investigating crashes. Should become a CHECK
   // again once resolved.
   if (old_map->elements_kind() != result->elements_kind()) {
-    isolate->PushStackTraceAndDie(reinterpret_cast<void*>(old_map.address()),
+    isolate->PushStackTraceAndDie("elements kind mismatch after map update",
+                                  reinterpret_cast<void*>(old_map.address()),
                                   reinterpret_cast<void*>(result.address()),
                                   reinterpret_cast<void*>(root_map.address()));
   }

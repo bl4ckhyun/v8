@@ -2402,7 +2402,8 @@ void VerifyCodeMerge(Isolate* isolate, DirectHandle<Script> script) {
       auto it = scope_infos.find(scope_info->UniqueIdInScript());
       if (it != scope_infos.end()) {
         if (it->second != scope_info) {
-          isolate->PushParamsAndDie(reinterpret_cast<void*>(it->second.ptr()),
+          isolate->PushParamsAndDie("duplicate scope info unique id",
+                                    reinterpret_cast<void*>(it->second.ptr()),
                                     reinterpret_cast<void*>(scope_info.ptr()));
           UNREACHABLE();
         }

@@ -756,9 +756,10 @@ DirectHandle<String> Isolate::StackTraceString() {
   }
 }
 
-[[noreturn]] void Isolate::PushStackTraceAndDie(void* ptr1, void* ptr2,
-                                                void* ptr3, void* ptr4,
-                                                void* ptr5, void* ptr6) {
+[[noreturn]] void Isolate::PushStackTraceAndDie(const char* reason, void* ptr1,
+                                                void* ptr2, void* ptr3,
+                                                void* ptr4, void* ptr5,
+                                                void* ptr6) {
   static std::atomic<bool> recursive{false};
   if (recursive.exchange(true)) IMMEDIATE_CRASH();
 
@@ -777,12 +778,18 @@ DirectHandle<String> Isolate::StackTraceString() {
       "\n\n#\n# Safely terminating process due to hitting "
       "Isolate::PushStackTraceAndDie\n#\n");
 
+  // Give the embedder a chance to handle the fatal error.
+  FatalErrorCallback callback = exception_behavior();
+  if (callback) {
+    callback("Isolate::PushStackTraceAndDie", reason);
+  }
+
   base::OS::Abort();
 }
 
-[[noreturn]] void Isolate::PushParamsAndDie(void* ptr1, void* ptr2, void* ptr3,
-                                            void* ptr4, void* ptr5,
-                                            void* ptr6) {
+[[noreturn]] void Isolate::PushParamsAndDie(const char* reason, void* ptr1,
+                                            void* ptr2, void* ptr3, void* ptr4,
+                                            void* ptr5, void* ptr6) {
   StackTraceFailureMessage message(
       this, StackTraceFailureMessage::kDontIncludeStackTrace,
       {ptr1, ptr2, ptr3, ptr4, ptr5, ptr6});
@@ -794,6 +801,12 @@ DirectHandle<String> Isolate::StackTraceString() {
   v8::base::OS::PrintError(
       "\n\n#\n# Safely terminating process due to hitting "
       "Isolate::PushParamsAndDie\n#\n");
+
+  // Give the embedder a chance to handle the fatal error.
+  FatalErrorCallback callback = exception_behavior();
+  if (callback) {
+    callback("Isolate::PushParamsAndDie", reason);
+  }
 
   base::OS::Abort();
 }

@@ -752,6 +752,7 @@ InlineCacheState FeedbackNexus::ic_state() const {
       // TODO(1393773): Remove once the issue is solved.
       Address vector_ptr = vector().ptr();
       config_.isolate()->PushParamsAndDie(
+          "unexpected feedback vector IC state",
           reinterpret_cast<void*>(feedback.ptr()),
           reinterpret_cast<void*>(extra.ptr()),
           reinterpret_cast<void*>(vector_ptr),

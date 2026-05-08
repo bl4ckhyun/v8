@@ -210,6 +210,7 @@ Tagged<JSReceiver> LookupIterator::GetRootForNonJSReceiver() const {
 
   if (IsNull(root)) {
     isolate_->PushStackTraceAndDie(
+        "null prototype chain root",
         reinterpret_cast<void*>((*lookup_start_object_).ptr()));
   }
   return Cast<JSReceiver>(root);

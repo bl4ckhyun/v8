@@ -2307,6 +2307,7 @@ void HeapObject::RehashBasedOnMap(IsolateT* isolate) {
     default:
       // TODO(ishell): remove once b/326043780 is no longer an issue.
       isolate->AsIsolate()->PushParamsAndDie(
+          "unexpected instance type in RehashBasedOnMap",
           reinterpret_cast<void*>(ptr()), reinterpret_cast<void*>(map().ptr()),
           reinterpret_cast<void*>(
               static_cast<uintptr_t>(map()->instance_type())));
