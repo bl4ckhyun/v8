@@ -10,20 +10,20 @@ security vulnerability report.
 
 ## Core Mandates
 
-- **Strategic Orchestration:** You are the **Orchestrator**. Your goal is to
+- **Strategic Orchestration**: You are the **Orchestrator**. Your goal is to
   manage specialized subagents to verify reporter claims empirically while
   keeping your own context lean.
-- **Technical Skepticism:** Treat all reporter claims (e.g., "OOB write", "RCE",
+- **Technical Skepticism**: Treat all reporter claims (e.g., "OOB write", "RCE",
   "Silent Write") as **hypotheses**, not facts. Your primary job is empirical
   verification.
-- **Scope Limitation:** This skill is strictly for **triaging and impact
+- **Scope Limitation**: This skill is strictly for **triaging and impact
   analysis**. It does NOT include implementing a fix or creating a CL. Fixing is
   a separate task that must be explicitly requested by the user after triage is
   complete.
-- **No External Actions without Approval:** NEVER upload a CL, post a comment,
+- **No External Actions without Approval**: NEVER upload a CL, post a comment,
   or modify issue metadata on Buganizer or Gerrit without explicit user approval
   of the exact content and action.
-- **Buganizer First:** Use the Buganizer MCP (`render_issue`) as the primary
+- **Buganizer First**: Use the Buganizer MCP (`render_issue`) as the primary
   source of truth. Use `render_issue_with_external` if content is redacted.
 - **Sandbox Bypasses vs. Regular Bugs**:
   - **Sandbox Bypass**: Reports that start with in-sandbox memory corruption
@@ -31,6 +31,12 @@ security vulnerability report.
     by the V8 Sandbox threat model.
   - **Regular Bug**: Vulnerabilities that do not require an initial in-sandbox
     write primitive.
+- **Title Accuracy**: If the reporter provided a generic title, identify a more
+  descriptive and accurate title based on the crash state or root cause.
+- **Component Verification**: Propose only actual Buganizer components. Use
+  `mcp_Buganizer_list_components` to verify existence and
+  `mcp_Buganizer_get_component` to verify the component path and ID before
+  posting.
 - **Remote Execution Priority**: Always use `use_remoteexec = true` in GN
   arguments for all local builds to speed up the process, even if a reporter
   provides a configuration where it is set to `false`. Remote execution is
@@ -46,12 +52,12 @@ security vulnerability report.
 - **ClusterFuzz Check**: Check the issue's comments for indications that the
   crash has already been uploaded to ClusterFuzz. If not uploaded, provide the
   user with manual upload instructions in Step 5.
-- **Exhaustive Verification:** Never classify a bug based solely on the report.
+- **Exhaustive Verification**: Never classify a bug based solely on the report.
   Exhaustive technical verification via `v8-poc-classification` is mandatory.
-- **Official Documentation:** Always refer to
+- **Official Documentation**: Always refer to
   [triaging.md](../../../docs/security/triaging.md) for the definitive rules on
   labeling and classification.
-- **Strict Subagent Delegation:** To maintain a lean context, the Orchestrator
+- **Strict Subagent Delegation**: To maintain a lean context, the Orchestrator
   **MUST NOT** call Buganizer, Gerrit, or local execution tools directly during
   Phases 1-4. All technical tasks must be delegated to subagents via
   `invoke_agent`. The Orchestrator's role is strictly limited to reviewing
@@ -79,11 +85,11 @@ When executing a triage task, delegate tactical steps to subagents:
 Task the **Researcher** subagent with gathering all necessary data from
 Buganizer.
 
-- **Orchestrator Instruction:** "Invoke the Researcher to render Buganizer issue
+- **Orchestrator Instruction**: "Invoke the Researcher to render Buganizer issue
   `<id>`, extract the POC and d8 flags, find top experts for affected files, and
   identify the correct component. Instruct the subagent to return only a concise
   technical summary."
-- **Extraction:** The summary must include the POC script, required `d8` flags,
+- **Extraction**: The summary must include the POC script, required `d8` flags,
   the reporter's environment (commit hash/version), and the identified
   **introduction commit (regression range)**.
 - **Attachment Check**: Ensure the subagent checks for mentioned files (e.g.,
@@ -100,13 +106,13 @@ Buganizer.
 Task the **Tester**, **Builder**, and **Generalist** subagents with confirming
 the issue. You MUST confirm the bug exists before proceeding.
 
-- **Baseline:** Task **Tester** to reproduce with the reporter's exact flags and
+- **Baseline**: Task **Tester** to reproduce with the reporter's exact flags and
   revision.
-- **Escalation:** If initial attempt fails, task **Builder** and **Tester** to
+- **Escalation**: If initial attempt fails, task **Builder** and **Tester** to
   verify across Release, Debug, and ASan variants at HEAD.
-- **Healing (Initial):** If still failing, task **Generalist** to analyze and
+- **Healing (Initial)**: If still failing, task **Generalist** to analyze and
   "heal" the POC for environmental dependencies.
-- **Summary:** Review the subagent's reproduction command and result. Stop if
+- **Summary**: Review the subagent's reproduction command and result. Stop if
   reproduction fails after exhaustive attempts.
 
 ### 3. Phase: Security Boundary Verification (Delegation)
@@ -114,12 +120,12 @@ the issue. You MUST confirm the bug exists before proceeding.
 Task the **Tester** and **Generalist** to determine if the bug violates a
 security boundary.
 
-- **Boundary Check:** Task **Tester** to run with
+- **Boundary Check**: Task **Tester** to run with
   `reporter_flags + --run-as-[sandbox]-security-poc`.
-- **Investigation Loop:** If the crash stops reproducing with the security flag,
+- **Investigation Loop**: If the crash stops reproducing with the security flag,
   task **Generalist** to identify why and attempt to "heal" the POC by replacing
   forbidden syntax with standard JS while maintaining the bug trigger.
-- **Conclude:** Review the subagent's conclusion on whether the bug is a
+- **Conclude**: Review the subagent's conclusion on whether the bug is a
   security vulnerability or a regular bug.
 
 ### 4. Phase: Impact Determination & Minimization (Delegation)
@@ -127,13 +133,13 @@ security boundary.
 Task the **Debugger**, **Tester**, and **Generalist** to provide technical proof
 of impact.
 
-- **Crash/Corruption Priority:** Task **Generalist** to make the POC either
+- **Crash/Corruption Priority**: Task **Generalist** to make the POC either
   crash or demonstrate clear memory corruption.
-- **Verification:** Task **Tester** to verify on Standard Release and ASan
+- **Verification**: Task **Tester** to verify on Standard Release and ASan
   builds.
-- **Minimization:** Task **Generalist** to reduce the POC and flags to the
+- **Minimization**: Task **Generalist** to reduce the POC and flags to the
   smallest possible set.
-- **Deep Dive:** Task **Debugger** to capture the crash in GDB and verify the
+- **Deep Dive**: Task **Debugger** to capture the crash in GDB and verify the
   primitive (Read/Write) and attacker control. Review the provided backtrace.
 
 ### 5. Phase: Reporting Findings
@@ -146,7 +152,7 @@ Draft a concise synthesis based on verified subagent findings.
 - **Formatting Requirement**: Use a **bulleted list** format for the main points
   (Status, Classification, Rationale, etc.) and ensure there are **double line
   breaks** between each list item for optimal rendering in Buganizer.
-- **Content:**
+- **Content**:
   - **Classification**: Vulnerability / Bug / Not a Bug (Intended Behavior).
 
   - **Security Impact**: Provide the label (e.g., `Security_Impact-Head`) and a
@@ -174,6 +180,9 @@ Draft a concise synthesis based on verified subagent findings.
     possible (e.g., `Parser`, `Maglev`, `Turbofan`) if the current component is
     the top-level V8 engine component or is otherwise incorrect. Include the
     component path and ID.
+
+  - **Proposed Title**: If the current title is generic, propose a more
+    descriptive title.
 
   - **ClusterFuzz Upload Info (User Only)**: If a real crash or memory
     corruption is confirmed and it has NOT yet been uploaded to ClusterFuzz,
