@@ -271,6 +271,8 @@
   'random-bit-correlations': [PASS, ['mode == debug or simulator_run', SKIP]],
 
   'arbitrary-length-varargs': [PASS, ['(mode == debug and simulator_run) or lower_limits_mode', SKIP]],
+
+  'regress/regress-509622555*': [['not sparkplug_plus', SKIP]],
 }],  # ALWAYS
 
 ################################################################################

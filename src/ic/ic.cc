@@ -586,6 +586,18 @@ bool IC::UpdateHomomorphicIC(const MaybeObjectDirectHandle& new_handler,
     // code, we should harden this path, e.g. with:
     //
     // DCHECK_NE(nexus()->GetFeedbackExtra(), new_smi_handler);
+    if (v8_flags.sparkplug_plus &&
+        caller_frame_type() == CallerFrameType::kBaseline) {
+      // The feedback is already homomorphic, but we missed in baseline.
+      // This means the baseline code was out of sync. We return true
+      // to trigger patching to homomorphic in SetCache.
+#ifdef DEBUG
+      Builtin current_builtin = GetCurrentBaselineBuiltin();
+      DCHECK(current_builtin == Builtin::kLoadICUninitializedBaseline ||
+             IsMonomorphicLoadICHandler(current_builtin));
+#endif
+      return true;
+    }
     return false;
   } else {
     CHECK_EQ(state(), RECOMPUTE_HANDLER);
@@ -735,6 +747,18 @@ bool IC::UpdatePolymorphicIC(DirectHandle<Name> name,
         // state, there we allow to migrate to a new handler.
         if (handler.is_identical_to(existing_handler) &&
             state() != RECOMPUTE_HANDLER) {
+          if (v8_flags.sparkplug_plus &&
+              caller_frame_type() == CallerFrameType::kBaseline) {
+            // The map/handler is already in the feedback, but we missed.
+            // This means the baseline code was out of sync. We return true
+            // to trigger patching to polymorphic in SetCache.
+#ifdef DEBUG
+            Builtin current_builtin = GetCurrentBaselineBuiltin();
+            DCHECK(current_builtin == Builtin::kLoadICUninitializedBaseline ||
+                   IsMonomorphicLoadICHandler(current_builtin));
+#endif
+            return true;
+          }
           return false;
         }
 
@@ -820,36 +844,51 @@ Builtin CalculatePatchingTarget(Builtin current_builtin, Builtin handler) {
 }  // namespace
 #endif  // V8_ENABLE_SPARKPLUG_PLUS
 
+Builtin IC::GetCurrentBaselineBuiltin(Address* out_pc) const {
+  if (caller_frame_type() != CallerFrameType::kBaseline) {
+    return Builtin::kNoBuiltinId;
+  }
+#ifdef V8_ENABLE_SPARKPLUG_PLUS
+  if (!isolate()->is_short_builtin_calls_enabled()) {
+    return Builtin::kNoBuiltinId;
+  }
+  const Address entry = Isolate::c_entry_fp(isolate_->thread_local_top());
+  Address* pc_address =
+      reinterpret_cast<Address*>(entry + ExitFrameConstants::kCallerPCOffset);
+  Address pc =
+      StackFrame::ReadPC(pc_address) - Assembler::kCallTargetAddressOffset;
+  if (out_pc) *out_pc = pc;
+
+  Address current = Assembler::target_address_at(pc, kNullAddress);
+  Builtin current_builtin =
+      OffHeapInstructionStream::TryLookupCode(isolate_, current);
+  DCHECK_EQ(current, Builtins::EntryOf(current_builtin, isolate_));
+  return current_builtin;
+#else
+  return Builtin::kNoBuiltinId;
+#endif  // V8_ENABLE_SPARKPLUG_PLUS
+}
+
 void IC::MaybePatchCode(Builtin handler) {
   CHECK(v8_flags.sparkplug_plus);
 
 #ifdef V8_ENABLE_SPARKPLUG_PLUS
   if (handler == Builtin::kIllegal) return;
-  if (!isolate()->is_short_builtin_calls_enabled()) return;
 
-  // Patch baseline code if it is from baseline frame.
-  if (caller_frame_type() == CallerFrameType::kBaseline) {
-    const Address entry = Isolate::c_entry_fp(isolate_->thread_local_top());
-    Address* pc_address =
-        reinterpret_cast<Address*>(entry + ExitFrameConstants::kCallerPCOffset);
-    Address pc =
-        StackFrame::ReadPC(pc_address) - Assembler::kCallTargetAddressOffset;
+  Address pc;
+  Builtin current_builtin = GetCurrentBaselineBuiltin(&pc);
+  if (current_builtin == Builtin::kNoBuiltinId) return;
+  if (current_builtin == Builtin::kLoadICGenericBaseline) return;
 
-    Address current = Assembler::target_address_at(pc, kNullAddress);
-    // TODO(chromium:429351411): Consider using a cache.
-    Builtin current_builtin =
-        OffHeapInstructionStream::TryLookupCode(isolate_, current);
-    DCHECK_EQ(current, Builtins::EntryOf(current_builtin, isolate_));
-    Builtin target_builtin = CalculatePatchingTarget(current_builtin, handler);
-    if (target_builtin == Builtin::kNoBuiltinId) return;
+  Builtin target_builtin = CalculatePatchingTarget(current_builtin, handler);
+  if (target_builtin == Builtin::kNoBuiltinId) return;
 
-    Address target = Builtins::EntryOf(target_builtin, isolate_);
-    WritableJitAllocation jit_allocation =
-        WritableJitAllocation::ForPatchableBaselineJIT(
-            pc, Assembler::kCallTargetAddressOffset);
-    Assembler::set_target_address_at(pc, kNullAddress, target, &jit_allocation,
-                                     FLUSH_ICACHE_IF_NEEDED);
-  }
+  Address target = Builtins::EntryOf(target_builtin, isolate_);
+  WritableJitAllocation jit_allocation =
+      WritableJitAllocation::ForPatchableBaselineJIT(
+          pc, Assembler::kCallTargetAddressOffset);
+  Assembler::set_target_address_at(pc, kNullAddress, target, &jit_allocation,
+                                   FLUSH_ICACHE_IF_NEEDED);
 #endif  // V8_ENABLE_SPARKPLUG_PLUS
 }
 
@@ -891,11 +930,43 @@ Builtin IC::GetHandlerPolymorphic() {
   return Builtin::kIllegal;
 }
 
+Builtin IC::GetHandlerHomomorphic() {
+  if (IsLoadIC()) {
+    return Builtin::kLoadICGenericBaseline;
+  }
+  return Builtin::kIllegal;
+}
+
 Builtin IC::GetHandlerMegamorphic() {
   if (IsLoadIC()) {
     return Builtin::kLoadICGenericBaseline;
   }
   return Builtin::kIllegal;
+}
+
+bool IC::TryHealMonomorphicIC(const MaybeObjectHandle& handler) {
+  if (!v8_flags.sparkplug_plus) return false;
+  if (caller_frame_type() != CallerFrameType::kBaseline) return false;
+
+  Tagged<Map> feedback_map = nexus()->GetFirstMap();
+  if (feedback_map.is_null()) return false;
+  if (feedback_map != *lookup_start_object_map()) return false;
+
+  MaybeObjectDirectHandle feedback_handler =
+      nexus()->FindHandlerForMap(lookup_start_object_map());
+  if (feedback_handler.is_null()) return false;
+  if (!feedback_handler.is_identical_to(handler)) return false;
+
+  Builtin current_builtin = GetCurrentBaselineBuiltin();
+  DCHECK(current_builtin == Builtin::kLoadICUninitializedBaseline ||
+         IsMonomorphicLoadICHandler(current_builtin));
+  if (current_builtin != Builtin::kLoadICUninitializedBaseline) return false;
+
+  // The map/handler is already in the feedback, but we missed in baseline.
+  // This means the baseline code was out of sync (still uninitialized).
+  // We patch it to the monomorphic handler.
+  MaybePatchCode(FeedbackNexus::ic_handler(*feedback_handler, kind()));
+  return true;
 }
 
 void IC::SetCache(DirectHandle<Name> name, Handle<Object> handler) {
@@ -923,6 +994,7 @@ void IC::SetCache(DirectHandle<Name> name, const MaybeObjectHandle& handler) {
         UpdateMonomorphicIC(handler, name);
         break;
       }
+      if (TryHealMonomorphicIC(handler)) break;
       if (UpdateOneMapManyNamesIC(name)) break;
       [[fallthrough]];
     case POLYMORPHIC:
@@ -935,7 +1007,12 @@ void IC::SetCache(DirectHandle<Name> name, const MaybeObjectHandle& handler) {
       if (UpdateMegaDOMIC(handler, name)) break;
       [[fallthrough]];
     case HOMOMORPHIC:
-      if (UpdateHomomorphicIC(handler, name)) break;
+      if (UpdateHomomorphicIC(handler, name)) {
+        if (v8_flags.sparkplug_plus) {
+          MaybePatchCode(GetHandlerHomomorphic());
+        }
+        break;
+      }
       if (!is_keyed() || state() == RECOMPUTE_HANDLER) {
         CopyICToMegamorphicCache(name);
       }

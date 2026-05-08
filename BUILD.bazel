@@ -557,13 +557,19 @@ v8_config(
     }) + select(
         {
             "@v8//bazel/config:v8_target_ia32": ["V8_TARGET_ARCH_IA32"],
-            "@v8//bazel/config:v8_target_x64": ["V8_TARGET_ARCH_X64"],
+            "@v8//bazel/config:v8_target_x64": [
+                "V8_TARGET_ARCH_X64",
+                "V8_ENABLE_SPARKPLUG_PLUS",
+            ],
             "@v8//bazel/config:v8_target_arm": [
                 "V8_TARGET_ARCH_ARM",
                 "CAN_USE_ARMV7_INSTRUCTIONS",
                 "CAN_USE_VFP3_INSTRUCTIONS",
             ],
-            "@v8//bazel/config:v8_target_arm64": ["V8_TARGET_ARCH_ARM64"],
+            "@v8//bazel/config:v8_target_arm64": [
+                "V8_TARGET_ARCH_ARM64",
+                "V8_ENABLE_SPARKPLUG_PLUS",
+            ],
             "@v8//bazel/config:v8_target_s390x": [
                 "V8_TARGET_ARCH_S390X"
             ],

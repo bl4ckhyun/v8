@@ -568,6 +568,7 @@ def build_config_content(cpu, icu):
         ("full_debug", "false"),
         ("gdbjit", "false"),
         ("has_jitless", "false"),
+        ("sparkplug_plus", "true" if cpu in ['"x64"', '"arm64"'] else "false"),
         ("has_maglev", "true"),
         ("has_turbofan", "true"),
         ("has_webassembly", "false"),

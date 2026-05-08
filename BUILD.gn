@@ -643,6 +643,8 @@ if (v8_enable_external_code_space == "") {
 if (v8_enable_sparkplug == "") {
   v8_enable_sparkplug = !v8_jitless
 }
+v8_enable_sparkplug_plus = v8_enable_sparkplug && (v8_current_cpu == "x64" ||
+                                                   v8_current_cpu == "arm64")
 if (v8_enable_maglev == "") {
   v8_enable_maglev =
       v8_enable_turbofan &&
@@ -1448,6 +1450,9 @@ config("features") {
   }
   if (v8_enable_sparkplug) {
     defines += [ "V8_ENABLE_SPARKPLUG" ]
+  }
+  if (v8_enable_sparkplug_plus) {
+    defines += [ "V8_ENABLE_SPARKPLUG_PLUS" ]
   }
   if (v8_enable_maglev) {
     defines += [ "V8_ENABLE_MAGLEV" ]
@@ -3096,6 +3101,7 @@ action("v8_dump_build_config") {
     "full_debug=$is_full_debug",
     "gdbjit=$v8_enable_gdbjit",
     "has_jitless=$v8_jitless",
+    "sparkplug_plus=$v8_enable_sparkplug_plus",
     "has_maglev=$v8_enable_maglev",
     "has_turbofan=$v8_enable_turbofan",
     "has_webassembly=$v8_enable_webassembly",
