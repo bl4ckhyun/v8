@@ -36,6 +36,9 @@
 #include "src/objects/instance-type-checker.h"
 #include "src/objects/instance-type-inl.h"
 #include "src/objects/instance-type.h"
+#ifdef V8_INTL_SUPPORT
+#include "src/objects/intl-objects.h"
+#endif
 #include "src/objects/oddball.h"
 #include "src/objects/property-details.h"
 #include "src/objects/string-inl.h"
@@ -2959,6 +2962,164 @@ class MachineLoweringReducer : public Next {
     }
   }
 
+#ifdef V8_INTL_SUPPORT
+  // Inlines the ASCII fast path of String.prototype.localeCompare:
+  //   1. Bail unless both inputs are SeqOneByteString.
+  //   2. Pointer-eq receiver/arg -> 0 (after the type guards, so
+  //      localeCompare.call(null, null) still throws TypeError).
+  //   3. Byte-equality prefix loop, restricted to ASCII (<128); min length
+  //      capped at Intl::kInlineLocaleCompareMaxMinLength.
+  //   4. At first differing byte: lookup L1 collation weight; bail if
+  //      either weight is 0 or weights tie; else return sign(left - right).
+  //   5. Equal prefix with equal lengths -> 0; with unequal lengths -> bail.
+  V<Smi> REDUCE(StringLocaleCompareIntl)(V<JSFunction> locale_compare_fn,
+                                         V<Object> receiver,
+                                         V<Object> compare_str,
+                                         V<StringOrUndefined> locales,
+                                         V<FrameState> frame_state,
+                                         V<Context> context,
+                                         LazyDeoptOnThrow lazy_deopt_on_throw) {
+    // Static classification by output-graph ConstantOp: lets us skip the type
+    // guard on inputs that we already know are SeqOneByteString.
+    enum class StaticShape : uint8_t {
+      kUnknown,       // Runtime check needed.
+      kIsSeqOneByte,  // Constant SeqOneByteString; type guard can be elided.
+      kCantBe,        // Constant of any other shape; inline can never succeed.
+    };
+    auto classify = [&](V<Object> value) {
+      const ConstantOp* c =
+          __ Get(value).template TryCast<Opmask::kHeapConstant>();
+      if (!c) return StaticShape::kUnknown;
+      JSHeapBroker* broker = __ data() -> broker();
+      if (broker == nullptr) return StaticShape::kUnknown;
+      UnparkedScopeIfNeeded scope(broker);
+      AllowHandleDereference allow_handle_dereference;
+      HeapObjectRef ref = MakeRef(broker, c->handle());
+      if (!ref.IsString()) return StaticShape::kCantBe;
+      StringRef sref = ref.AsString();
+      if (sref.IsSeqString() && sref.IsOneByteRepresentation()) {
+        return StaticShape::kIsSeqOneByte;
+      }
+      return StaticShape::kCantBe;
+    };
+    StaticShape recv_shape = classify(receiver);
+    StaticShape arg_shape = classify(compare_str);
+    const bool skip_recv_check = recv_shape == StaticShape::kIsSeqOneByte;
+    const bool skip_arg_check = arg_shape == StaticShape::kIsSeqOneByte;
+    const bool always_bail =
+        recv_shape == StaticShape::kCantBe || arg_shape == StaticShape::kCantBe;
+
+    Label<Smi> done(this);
+    Label<> bailout(this);
+    Label<Word32, Word32> weight_compare(this);
+
+    auto emit_bailout = [&] {
+      return __ template CallBuiltin<builtin::StringFastLocaleCompare>(
+          frame_state, context,
+          {.locale_compare_fn = locale_compare_fn,
+           .left = receiver,
+           .right = compare_str,
+           .locales = locales},
+          lazy_deopt_on_throw);
+    };
+
+    if (always_bail) return emit_bailout();
+
+    // Both inputs must be SeqOneByteString. The mask covers the
+    // string/non-string bit and the representation+encoding bits, both of
+    // which fit in the 16-bit Map::instance_type.
+    static constexpr uint32_t kSeqOneByteCheckMask =
+        kIsNotStringMask | kStringRepresentationAndEncodingMask;
+    static_assert(
+        kSeqOneByteStringTag == (kSeqOneByteCheckMask & kSeqOneByteStringTag),
+        "kSeqOneByteStringTag must be representable in the check mask");
+
+    auto check_seq_1byte = [&](V<Object> value) {
+      GOTO_IF(__ ObjectIsSmi(value), bailout);
+      V<Map> map = __ LoadMapField(value);
+      V<Word32> instance_type = __ LoadInstanceTypeField(map);
+      V<Word32> masked =
+          __ Word32BitwiseAnd(instance_type, kSeqOneByteCheckMask);
+      GOTO_IF_NOT(__ Word32Equal(masked, kSeqOneByteStringTag), bailout);
+    };
+    if (!skip_recv_check) check_seq_1byte(receiver);
+    if (!skip_arg_check) check_seq_1byte(compare_str);
+
+    // Pointer-eq receiver/arg -> 0. Done after the type guards so a
+    // non-string receiver passed via .call falls through to the bailout
+    // (which lets the builtin invoke the original localeCompare and surface
+    // the right TypeError).
+    GOTO_IF(__ TaggedEqual(receiver, compare_str), done,
+            __ SmiConstant(Smi::FromInt(0)));
+
+    V<String> left = V<String>::Cast(receiver);
+    V<String> right = V<String>::Cast(compare_str);
+    V<Word32> left_length =
+        __ template LoadField<Word32>(left, AccessBuilder::ForStringLength());
+    V<Word32> right_length =
+        __ template LoadField<Word32>(right, AccessBuilder::ForStringLength());
+
+    // The prefix loop runs to min(left_length, right_length). It still has
+    // value for unequal-length strings: when a byte in the common prefix
+    // differs we return via L1 weights without a stub call.
+    V<Word32> min_length = __ Word32Select(
+        __ Int32LessThan(right_length, left_length), right_length, left_length);
+
+    // Cap the inlined prefix to bound the cost of fast-path-then-bail (the
+    // builtin restarts from index 0).
+    GOTO_IF(
+        __ Int32LessThan(Intl::kInlineLocaleCompareMaxMinLength, min_length),
+        bailout);
+
+    V<WordPtr> min_length_ptr = __ ChangeInt32ToIntPtr(min_length);
+    {
+      ScopedVar<WordPtr> i(this, 0);
+      WHILE(__ IntPtrLessThan(i, min_length_ptr)) {
+        V<Word32> lc = LoadFromSeqOneByteString(left, i);
+        V<Word32> rc = LoadFromSeqOneByteString(right, i);
+        // If bytes differ, lookup L1 weights.
+        GOTO_IF_NOT(__ Word32Equal(lc, rc), weight_compare, lc, rc);
+        // Bytes equal but >=128: contraction with the next char is possible,
+        // so bail. Sound because kCollationWeightsL1[i] == 0 for i >= 128
+        // (see static_assert in src/objects/intl-objects.cc).
+        GOTO_IF(__ Uint32LessThan(127, lc), bailout);
+        i = __ WordPtrAdd(i, 1);
+      }
+    }
+
+    // Equal prefix. Equal lengths -> 0; else bail so the builtin can check
+    // ignorable trailing chars (combining marks etc).
+    GOTO_IF(__ Word32Equal(left_length, right_length), done,
+            __ SmiConstant(Smi::FromInt(0)));
+    GOTO(bailout);
+
+    BIND(weight_compare, lc, rc);
+    {
+      V<WordPtr> l1_base = __ ExternalConstant(
+          ExternalReference::intl_ascii_collation_weights_l1());
+      V<Word32> lw =
+          __ Load(l1_base, __ ChangeInt32ToIntPtr(lc),
+                  LoadOp::Kind::RawAligned(), MemoryRepresentation::Uint8());
+      GOTO_IF(__ Word32Equal(lw, 0), bailout);
+      V<Word32> rw =
+          __ Load(l1_base, __ ChangeInt32ToIntPtr(rc),
+                  LoadOp::Kind::RawAligned(), MemoryRepresentation::Uint8());
+      GOTO_IF(__ Word32Equal(rw, 0), bailout);
+      // In case of L1 tie (e.g. 'a' vs 'A'): bail so the builtin breaks
+      // the tie via L3.
+      GOTO_IF(__ Word32Equal(lw, rw), bailout);
+      V<Word32> sign = __ Word32Select(__ Uint32LessThan(lw, rw), -1, 1);
+      GOTO(done, __ TagSmi(sign));
+    }
+
+    BIND(bailout);
+    GOTO(done, emit_bailout());
+
+    BIND(done, result);
+    return result;
+  }
+#endif  // V8_INTL_SUPPORT
+
   V<Smi> REDUCE(ArgumentsLength)(ArgumentsLengthOp::Kind kind,
                                  int formal_parameter_count) {
     V<WordPtr> count =
@@ -4381,14 +4542,17 @@ class MachineLoweringReducer : public Next {
         heap_object, AccessBuilder::ForHeapNumberOrOddballValue());
   }
 
+  V<Word32> LoadFromSeqOneByteString(V<Object> receiver, V<WordPtr> position) {
+    return __ template LoadNonArrayBufferElement<Word32>(
+        receiver, AccessBuilder::ForSeqOneByteStringCharacter(), position);
+  }
+
   V<Word32> LoadFromSeqString(V<Object> receiver, V<WordPtr> position,
                               V<Word32> onebyte) {
     Label<Word32> done(this);
 
     IF (onebyte) {
-      GOTO(done, __ template LoadNonArrayBufferElement<Word32>(
-                     receiver, AccessBuilder::ForSeqOneByteStringCharacter(),
-                     position));
+      GOTO(done, LoadFromSeqOneByteString(receiver, position));
     } ELSE {
       GOTO(done, __ template LoadNonArrayBufferElement<Word32>(
                      receiver, AccessBuilder::ForSeqTwoByteStringCharacter(),

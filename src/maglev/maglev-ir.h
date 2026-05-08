@@ -365,6 +365,7 @@ class ExceptionHandlerInfo;
   V(StringLength)                                                     \
   V(StringConcat)                                                     \
   V(StringIndexOf)                                                    \
+  IF_INTL(V, StringLocaleCompareIntl)                                 \
   V(SeqOneByteStringAt)                                               \
   V(ConsStringMap)                                                    \
   V(UnwrapStringWrapper)                                              \
@@ -9510,6 +9511,29 @@ class StringIndexOf : public FixedInputValueNodeT<3, StringIndexOf> {
   void SetValueLocationConstraints();
   void GenerateCode(MaglevAssembler*, const ProcessingState&);
 };
+
+#ifdef V8_INTL_SUPPORT
+class StringLocaleCompareIntl
+    : public FixedInputValueNodeT<4, StringLocaleCompareIntl> {
+ public:
+  explicit StringLocaleCompareIntl(uint64_t bitfield) : Base(bitfield) {}
+
+  // CanCallUserCode covers ToString conversion of receiver/compareString
+  // performed by the localeCompare builtin on bailout.
+  static constexpr OpProperties kProperties =
+      OpProperties::Call() | OpProperties::CanCallUserCode() |
+      OpProperties::CanAllocate() | OpProperties::LazyDeopt() |
+      OpProperties::CanThrow();
+
+  int MaxCallStackArgs() const { return 0; }
+
+  DECLARE_INPUTS(LocaleCompareFn, Left, Right, Locales)
+  DECLARE_INPUT_TYPES(Tagged, Tagged, Tagged, Tagged)
+
+  void SetValueLocationConstraints();
+  void GenerateCode(MaglevAssembler*, const ProcessingState&);
+};
+#endif  // V8_INTL_SUPPORT
 
 class StringConcat : public FixedInputValueNodeT<2, StringConcat> {
  public:

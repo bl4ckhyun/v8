@@ -5793,6 +5793,24 @@ void StringIndexOf::GenerateCode(MaglevAssembler* masm,
                                           PositionInput());
 }
 
+#ifdef V8_INTL_SUPPORT
+void StringLocaleCompareIntl::SetValueLocationConstraints() {
+  using D = CallInterfaceDescriptorFor<Builtin::kStringFastLocaleCompare>::type;
+  UseFixed(LocaleCompareFnInput(), D::GetRegisterParameter(0));
+  UseFixed(LeftInput(), D::GetRegisterParameter(1));
+  UseFixed(RightInput(), D::GetRegisterParameter(2));
+  UseFixed(LocalesInput(), D::GetRegisterParameter(3));
+  DefineAsFixed(this, kReturnRegister0);
+}
+void StringLocaleCompareIntl::GenerateCode(MaglevAssembler* masm,
+                                           const ProcessingState& state) {
+  __ CallBuiltin<Builtin::kStringFastLocaleCompare>(
+      masm->native_context().object(),  // context
+      LocaleCompareFnInput(), LeftInput(), RightInput(), LocalesInput());
+  masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
+}
+#endif  // V8_INTL_SUPPORT
+
 void StringSubstring::SetValueLocationConstraints() {
   using D = StringSubstringDescriptor;
   UseFixed(StringInput(), D::GetRegisterParameter(D::kString));

@@ -567,6 +567,7 @@
   V(StringLength)                           \
   V(StringWrapperLength)                    \
   V(StringSubstring)                        \
+  V(StringLocaleCompareIntl)                \
   V(StringToLowerCaseIntl)                  \
   V(StringToNumber)                         \
   V(StringToUpperCaseIntl)                  \

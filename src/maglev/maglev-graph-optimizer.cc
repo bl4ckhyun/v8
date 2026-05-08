@@ -2273,6 +2273,15 @@ ProcessResult MaglevGraphOptimizer::VisitStringIndexOf(
   return ProcessResult::kContinue;
 }
 
+#ifdef V8_INTL_SUPPORT
+ProcessResult MaglevGraphOptimizer::VisitStringLocaleCompareIntl(
+    StringLocaleCompareIntl* node, const ProcessingState& state) {
+  // Lowered to an inline ASCII fast path by Turboshaft (see
+  // MachineLoweringReducer::REDUCE(StringLocaleCompareIntl)).
+  return ProcessResult::kContinue;
+}
+#endif  // V8_INTL_SUPPORT
+
 ProcessResult MaglevGraphOptimizer::VisitStringConcat(
     StringConcat* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.

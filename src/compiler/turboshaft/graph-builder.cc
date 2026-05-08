@@ -1981,9 +1981,35 @@ OpIndex GraphBuilder::Process(
     case IrOpcode::kStringToUpperCaseIntl:
       return __ StringToUpperCaseIntl(
           Map(node->InputAt(0)), Map(node->InputAt(1)), Map(node->InputAt(2)));
+    case IrOpcode::kStringLocaleCompareIntl: {
+      V<JSFunction> locale_compare_fn = Map<JSFunction>(node->InputAt(0));
+      V<Object> left = Map<Object>(node->InputAt(1));
+      V<Object> right = Map<Object>(node->InputAt(2));
+      V<StringOrUndefined> locales = Map<StringOrUndefined>(node->InputAt(3));
+      V<Context> context = Map<Context>(node->InputAt(4));
+      V<turboshaft::FrameState> frame_state =
+          Map<turboshaft::FrameState>(node->InputAt(5));
+      // When the node terminates a block (followed by IfSuccess/IfException
+      // in the input graph), set up a catch scope around emission so the
+      // throwing op routes exceptions to the IfException successor, then
+      // Goto the IfSuccess successor.
+      std::optional<decltype(assembler)::CatchScope> catch_scope;
+      if (is_final_control) {
+        Block* catch_block = Map(block->SuccessorAt(1));
+        catch_scope.emplace(assembler, catch_block);
+      }
+      OpIndex result = __ StringLocaleCompareIntl(
+          locale_compare_fn, left, right, locales, frame_state, context,
+          LazyDeoptOnThrow::kNo);
+      if (is_final_control) {
+        __ Goto(Map(block->SuccessorAt(0)));
+      }
+      return result;
+    }
 #else
     case IrOpcode::kStringToLowerCaseIntl:
     case IrOpcode::kStringToUpperCaseIntl:
+    case IrOpcode::kStringLocaleCompareIntl:
       UNREACHABLE();
 #endif  // V8_INTL_SUPPORT
 

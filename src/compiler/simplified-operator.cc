@@ -1501,6 +1501,13 @@ struct SimplifiedOperatorGlobalCache final {
   };
   StringToUpperCaseIntlOperator kStringToUpperCaseIntl;
 
+  struct StringLocaleCompareIntlOperator final : public Operator {
+    StringLocaleCompareIntlOperator()
+        : Operator(IrOpcode::kStringLocaleCompareIntl, Operator::kNoProperties,
+                   "StringLocaleCompareIntl", 6, 1, 1, 1, 1, 2) {}
+  };
+  StringLocaleCompareIntlOperator kStringLocaleCompareIntl;
+
 #define SPECULATIVE_NUMBER_BINOP(Name)                                     \
   template <NumberOperationHint kHint>                                     \
   struct Name##Operator final : public Operator1<NumberOperationHint> {    \
@@ -1605,6 +1612,7 @@ GET_FROM_CACHE(FindOrderedHashMapEntryForInt32Key)
 GET_FROM_CACHE(LoadFieldByIndex)
 GET_FROM_CACHE(StringToLowerCaseIntl)
 GET_FROM_CACHE(StringToUpperCaseIntl)
+GET_FROM_CACHE(StringLocaleCompareIntl)
 #undef GET_FROM_CACHE
 
 const Operator* SimplifiedOperatorBuilder::FindOrderedCollectionEntry(

@@ -2416,6 +2416,13 @@ Type Typer::Visitor::TypeStringToUpperCaseIntl(Node* node) {
   return Type::String();
 }
 
+Type Typer::Visitor::TypeStringLocaleCompareIntl(Node* node) {
+  // ECMA-402 only requires negative/zero/positive; the tighter type
+  // relies on V8's implementation always returning ICU's UCollationResult
+  // enum {-1, 0, 1}. See DCHECKs in builtins-intl.cc.
+  return typer_->cache_->kMinusOneOrZeroOrOne;
+}
+
 Type Typer::Visitor::TypeStringCharCodeAt(Node* node) {
   return typer_->cache_->kUint16;
 }

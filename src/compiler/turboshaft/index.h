@@ -590,6 +590,7 @@ using BooleanOrNullOrUndefined = UnionOf<Boolean, Null, Undefined>;
 using NumberOrString = UnionOf<Number, String>;
 using PlainPrimitive = UnionOf<NumberOrString, BooleanOrNullOrUndefined>;
 using StringOrNull = UnionOf<String, Null>;
+using StringOrUndefined = UnionOf<String, Undefined>;
 using NumberOrUndefined = UnionOf<Number, Undefined>;
 using AnyFixedArray = UnionOf<FixedArray, FixedDoubleArray>;
 using NonBigIntPrimitive = UnionOf<Symbol, PlainPrimitive>;

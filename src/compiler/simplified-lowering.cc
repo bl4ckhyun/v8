@@ -4044,6 +4044,17 @@ class RepresentationSelector {
         SetOutput<T>(node, MachineRepresentation::kTaggedPointer);
         return;
       }
+      case IrOpcode::kStringLocaleCompareIntl: {
+        ProcessInput<T>(node, 0, UseInfo::AnyTagged());      // localeCompareFn
+        ProcessInput<T>(node, 1, UseInfo::AnyTagged());      // left
+        ProcessInput<T>(node, 2, UseInfo::AnyTagged());      // right
+        ProcessInput<T>(node, 3, UseInfo::AnyTagged());      // locales
+        ProcessInput<T>(node, 4, UseInfo::TaggedPointer());  // context
+        ProcessInput<T>(node, 5, UseInfo::TaggedPointer());  // frame_state
+        ProcessRemainingInputs<T>(node, 6);
+        SetOutput<T>(node, MachineRepresentation::kTaggedSigned);
+        return;
+      }
       case IrOpcode::kCheckBounds:
         return VisitCheckBounds<T>(node, lowering);
       case IrOpcode::kCheckHeapObject: {

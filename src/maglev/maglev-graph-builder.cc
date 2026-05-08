@@ -10095,7 +10095,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeLocaleCompareIntl(
       Intl::CompareStringsOptions::kTryFastPath) {
     return {};
   }
-  return BuildCallBuiltinWithTaggedInputs<Builtin::kStringFastLocaleCompare>(
+  return AddNewNode<StringLocaleCompareIntl>(
       {GetConstant(target), GetValueOrUndefined(args.receiver()), args[0],
        locales_node});
 }

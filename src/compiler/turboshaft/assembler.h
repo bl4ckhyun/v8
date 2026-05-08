@@ -4818,6 +4818,16 @@ class AssemblerOpInterface : public Next {
     return StringToCaseIntl(string, frame_state, context,
                             StringToCaseIntlOp::Kind::kUpper);
   }
+  V<Smi> StringLocaleCompareIntl(V<JSFunction> locale_compare_fn,
+                                 V<Object> left, V<Object> right,
+                                 V<StringOrUndefined> locales,
+                                 V<turboshaft::FrameState> frame_state,
+                                 V<Context> context,
+                                 LazyDeoptOnThrow lazy_deopt_on_throw) {
+    return ReduceIfReachableStringLocaleCompareIntl(
+        locale_compare_fn, left, right, locales, frame_state, context,
+        lazy_deopt_on_throw);
+  }
 #endif  // V8_INTL_SUPPORT
 
   V<Word32> StringLength(V<String> string) {

@@ -7894,24 +7894,20 @@ Reduction JSCallReducer::ReduceStringPrototypeLocaleCompareIntl(Node* node) {
     }
   }
 
-  Callable callable =
-      Builtins::CallableFor(isolate(), Builtin::kStringFastLocaleCompare);
-  auto call_descriptor = Linkage::GetStubCallDescriptor(
-      graph()->zone(), callable.descriptor(),
-      callable.descriptor().GetStackParameterCount(),
-      CallDescriptor::kNeedsFrameState);
+  // Reshape the JSCall's value inputs to match StringLocaleCompareIntl's
+  // input layout (target, receiver, compareString, locales, context,
+  // frame_state), then swap the operator in place. In-place rewrite
+  // preserves any IfException edge attached to the JSCall.
   node->RemoveInput(n.FeedbackVectorIndex());
   if (n.ArgumentCount() == 3) {
-    node->RemoveInput(n.ArgumentIndex(2));
+    node->RemoveInput(n.ArgumentIndex(2));  // drop options
   } else if (n.ArgumentCount() == 1) {
     node->InsertInput(graph()->zone(), n.LastArgumentIndex() + 1,
-                      jsgraph()->UndefinedConstant());
+                      jsgraph()->UndefinedConstant());  // pad locales
   } else {
     DCHECK_EQ(2, n.ArgumentCount());
   }
-  node->InsertInput(graph()->zone(), 0,
-                    jsgraph()->HeapConstantNoHole(callable.code()));
-  NodeProperties::ChangeOp(node, common()->Call(call_descriptor));
+  NodeProperties::ChangeOp(node, simplified()->StringLocaleCompareIntl());
   return Changed(node);
 }
 #endif  // V8_INTL_SUPPORT

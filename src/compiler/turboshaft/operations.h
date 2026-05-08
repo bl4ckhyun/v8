@@ -352,6 +352,7 @@ using Variable = SnapshotTable<OpIndex, VariableData>::Key;
 #define TURBOSHAFT_JS_THROWING_OPERATION_LIST(V) \
   V(GenericBinop)                                \
   V(GenericUnop)                                 \
+  IF_INTL(V, StringLocaleCompareIntl)            \
   IF_INTL(V, StringToCaseIntl)                   \
   V(ToNumberOrNumeric)
 
@@ -4448,8 +4449,8 @@ struct fast_hash<TSCallDescriptor> {
 };
 
 // If {target} is a HeapObject representing a builtin, return that builtin's ID.
-std::optional<Builtin> TryGetBuiltinId(const ConstantOp* target,
-                                       JSHeapBroker* broker);
+V8_EXPORT_PRIVATE std::optional<Builtin> TryGetBuiltinId(
+    const ConstantOp* target, JSHeapBroker* broker);
 
 struct CallOp : OperationT<CallOp> {
   const TSCallDescriptor* descriptor;
@@ -6028,6 +6029,45 @@ struct StringToCaseIntlOp : FixedArityOperationT<3, StringToCaseIntlOp> {
 };
 V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream& os,
                                            StringToCaseIntlOp::Kind kind);
+
+// Inlines the ASCII fast path of String.prototype.localeCompare. Lowering
+// emits a runtime check + byte-equality prefix loop, falling back to the
+// kStringFastLocaleCompare builtin on bailout. `left` and `right` are
+// V<Object>: the spec performs ToString on both, so non-strings flow through
+// the bailout.
+struct StringLocaleCompareIntlOp
+    : FixedArityOperationT<6, StringLocaleCompareIntlOp> {
+  // TODO(jgruber): Narrow effects when both inputs are known strings.
+  static constexpr OpEffects effects = OpEffects().CanCallAnything();
+
+  THROWING_OP_BOILERPLATE(RegisterRepresentation::Tagged())
+
+  base::Vector<const MaybeRegisterRepresentation> inputs_rep(
+      ZoneVector<MaybeRegisterRepresentation>& storage) const {
+    return MaybeRepVector<MaybeRegisterRepresentation::Tagged(),
+                          MaybeRegisterRepresentation::Tagged(),
+                          MaybeRegisterRepresentation::Tagged(),
+                          MaybeRegisterRepresentation::Tagged()>();
+  }
+
+  V<JSFunction> locale_compare_fn() const { return Base::input<JSFunction>(0); }
+  V<Object> left() const { return Base::input<Object>(1); }
+  V<Object> right() const { return Base::input<Object>(2); }
+  V<StringOrUndefined> locales() const {
+    return Base::input<StringOrUndefined>(3);
+  }
+  V<FrameState> frame_state() const { return Base::input<FrameState>(4); }
+  V<Context> context() const { return Base::input<Context>(5); }
+
+  StringLocaleCompareIntlOp(V<JSFunction> locale_compare_fn, V<Object> left,
+                            V<Object> right, V<StringOrUndefined> locales,
+                            V<FrameState> frame_state, V<Context> context,
+                            LazyDeoptOnThrow lazy_deopt_on_throw)
+      : Base(locale_compare_fn, left, right, locales, frame_state, context),
+        lazy_deopt_on_throw(lazy_deopt_on_throw) {}
+
+  auto options() const { return std::tuple{lazy_deopt_on_throw}; }
+};
 #endif  // V8_INTL_SUPPORT
 
 struct StringLengthOp : FixedArityOperationT<1, StringLengthOp> {

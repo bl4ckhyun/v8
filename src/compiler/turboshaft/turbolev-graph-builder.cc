@@ -3252,6 +3252,18 @@ class GraphBuildingNodeProcessor {
                                   Map(node->PositionInput())));
     return maglev::ProcessResult::kContinue;
   }
+#ifdef V8_INTL_SUPPORT
+  maglev::ProcessResult Process(maglev::StringLocaleCompareIntl* node,
+                                const maglev::ProcessingState& state) {
+    GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->lazy_deopt_info());
+    SetMap(node, __ StringLocaleCompareIntl(
+                     Map<JSFunction>(node->LocaleCompareFnInput()),
+                     Map(node->LeftInput()), Map(node->RightInput()),
+                     Map<StringOrUndefined>(node->LocalesInput()), frame_state,
+                     native_context(), ShouldLazyDeoptOnThrow(node)));
+    return maglev::ProcessResult::kContinue;
+  }
+#endif  // V8_INTL_SUPPORT
   maglev::ProcessResult Process(maglev::StringAt* node,
                                 const maglev::ProcessingState& state) {
     V<Word32> char_code =

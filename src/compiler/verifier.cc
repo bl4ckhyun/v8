@@ -1287,6 +1287,13 @@ void Verifier::Visitor::Check(Node* node, const AllNodes& all) {
       CheckValueInputIs(node, 0, Type::String());
       CheckTypeIs(node, Type::String());
       break;
+    case IrOpcode::kStringLocaleCompareIntl:
+      CheckValueInputIs(node, 0, Type::Any());
+      CheckValueInputIs(node, 1, Type::Any());
+      CheckValueInputIs(node, 2, Type::Any());
+      CheckValueInputIs(node, 3, Type::Any());
+      CheckTypeIs(node, Type::Number());
+      break;
     case IrOpcode::kStringSubstring:
       CheckValueInputIs(node, 0, Type::String());
       CheckValueInputIs(node, 1, Type::SignedSmall());
