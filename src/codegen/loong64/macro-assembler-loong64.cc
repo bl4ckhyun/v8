@@ -434,7 +434,7 @@ void MacroAssembler::LoadExternalPointerField(Register destination,
   if (tag_range.Size() == 1) {
     // The common and simple case: we expect exactly one tag.
     static_assert(kExternalPointerShiftedTagMask == 0x7f);
-    bstrpick_d(scratch, destination, kExternalPointerTagShift + 7,
+    bstrpick_d(scratch, destination, kExternalPointerTagShift + 6,
                kExternalPointerTagShift);
     SbxCheck(eq, AbortReason::kExternalPointerTagMismatch, scratch,
              Operand(tag_range.first));

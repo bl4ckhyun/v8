@@ -1491,7 +1491,7 @@ inline void MaglevAssembler::ShiftRightLogical32(Register dst, Register src,
 
 inline void MaglevAssembler::LoadBitsFromWord32(Register dst, Register src,
                                                 int width, int shift) {
-  Bstrpick_w(dst, src, shift + width, shift);
+  Bstrpick_w(dst, src, shift + width - 1, shift);
 }
 
 inline void MaglevAssembler::CompareInt32AndJumpIf(Register r1, Register r2,
