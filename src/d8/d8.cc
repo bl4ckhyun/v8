@@ -6487,6 +6487,9 @@ bool Shell::SetOptions(int argc, char* argv[]) {
     } else if (FlagMatches("--disallow-unsafe-flags", &argv[i],
                            /*keep_flag=*/true)) {
       disallow_unsafe_flags = true;
+    } else if (FlagMatches("--version", &argv[i])) {
+      printf("V8 version %s\n", V8::GetVersion());
+      base::OS::ExitProcess(0);
     } else if (FlagMatches("--shell", &argv[i])) {
       options.interactive_shell = true;
     } else if (FlagMatches("--test", &argv[i])) {
@@ -6741,6 +6744,7 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       "  -e        execute a string in V8\n"
       "  --shell   run an interactive JavaScript shell\n"
       "  --module  execute a file as a JavaScript module\n"
+      "  --version print V8 version and exit\n"
       "  -C        set the current working directory before executing "
       "subsequent files\n";
   using HelpOptions = i::FlagList::HelpOptions;
