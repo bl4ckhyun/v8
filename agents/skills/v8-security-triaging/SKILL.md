@@ -16,6 +16,12 @@ security vulnerability report.
 - **Technical Skepticism**: Treat all reporter claims (e.g., "OOB write", "RCE",
   "Silent Write") as **hypotheses**, not facts. Your primary job is empirical
   verification.
+- **Mandatory Local Reproduction**: A report MUST NOT be classified as a
+  "Vulnerability" unless it is empirically reproduced locally (e.g.,
+  demonstrating a crash, memory corruption, or a clear security boundary
+  violation). If the provided POC does not reproduce the claimed behavior, do
+  NOT classify it as a vulnerability. Instead, report that it did not reproduce
+  in the final report.
 - **Scope Limitation**: This skill is strictly for **triaging and impact
   analysis**. It does NOT include implementing a fix or creating a CL. Fixing is
   a separate task that must be explicitly requested by the user after triage is
@@ -160,7 +166,10 @@ Draft a concise synthesis based on verified subagent findings.
   (Status, Classification, Rationale, etc.) and ensure there are **double line
   breaks** between each list item for optimal rendering in Buganizer.
 - **Content**:
-  - **Classification**: Vulnerability / Bug / Not a Bug (Intended Behavior).
+  - **Classification**: Vulnerability / Bug / Not a Bug (Intended Behavior) /
+    Failed to Reproduce. **MANDATORY**: Only classify as "Vulnerability" if
+    local reproduction was successful. If reproduction fails, classify as
+    "Failed to Reproduce".
 
   - **Security Impact**: Provide the label (e.g., `Security_Impact-Head`) and a
     short explanation. Skip or simplify the CVSS vector unless requested.
