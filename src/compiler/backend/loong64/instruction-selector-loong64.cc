@@ -1049,6 +1049,8 @@ void InstructionSelector::VisitWord64MulWide(OpIndex node, bool is_signed) {
 
 void InstructionSelector::VisitUint64Add128(OpIndex node) { UNIMPLEMENTED(); }
 
+void InstructionSelector::VisitUint64Sub128(OpIndex node) { UNIMPLEMENTED(); }
+
 void InstructionSelector::VisitInt32Div(OpIndex node) {
   Loong64OperandGenerator g(this);
 
