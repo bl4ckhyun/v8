@@ -381,7 +381,7 @@ void StraightForwardRegisterAllocator::AllocateRegisters() {
   }
 
   // LINT.IfChange(maglev_constant_nodes)
-  for (const auto& [ref, constant] : graph_->constants()) {
+  for (const auto& [ref, constant] : graph_->heap_constants()) {
     constant->regalloc_info()->SetConstantLocation();
     USE(ref);
   }

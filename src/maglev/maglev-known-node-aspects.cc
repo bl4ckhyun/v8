@@ -297,7 +297,7 @@ void KnownNodeAspects::UpdateMayHaveAliasingContexts(
           may_have_aliasing_contexts_,
           ContextSlotLoadsAlias::kOnlyLoadsRelativeToCurrentContext);
       break;
-    case Opcode::kConstant:
+    case Opcode::kHeapConstant:
       may_have_aliasing_contexts_ = ContextSlotLoadsAliasMerge(
           may_have_aliasing_contexts_,
           ContextSlotLoadsAlias::kOnlyLoadsRelativeToConstant);

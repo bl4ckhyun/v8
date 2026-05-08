@@ -689,8 +689,8 @@ template <typename BaseT>
 std::optional<int32_t> MaglevReducer<BaseT>::TryGetInt32Constant(
     ValueNode* value) {
   switch (value->opcode()) {
-    case Opcode::kConstant: {
-      compiler::ObjectRef object = value->Cast<Constant>()->object();
+    case Opcode::kHeapConstant: {
+      compiler::ObjectRef object = value->Cast<HeapConstant>()->object();
       if (object.IsHeapNumber() &&
           IsInt32Double(object.AsHeapNumber().value())) {
         return static_cast<int32_t>(object.AsHeapNumber().value());
@@ -788,8 +788,8 @@ ReduceResult MaglevReducer<BaseT>::GetTruncatedInt32ForToNumber(
 
   // Process constants first to avoid allocating NodeInfo for them.
   switch (value->opcode()) {
-    case Opcode::kConstant: {
-      compiler::ObjectRef object = value->Cast<Constant>()->object();
+    case Opcode::kHeapConstant: {
+      compiler::ObjectRef object = value->Cast<HeapConstant>()->object();
       if (!object.IsHeapNumber()) break;
       int32_t truncated_value = DoubleToInt32(object.AsHeapNumber().value());
       return GetInt32Constant(truncated_value);
@@ -1136,8 +1136,8 @@ MaglevReducer<BaseT>::TryGetFloat64OrHoleyFloat64Constant(
   DCHECK(use_repr == UseRepresentation::kFloat64 ||
          use_repr == UseRepresentation::kHoleyFloat64);
   switch (value->opcode()) {
-    case Opcode::kConstant: {
-      compiler::ObjectRef object = value->Cast<Constant>()->object();
+    case Opcode::kHeapConstant: {
+      compiler::ObjectRef object = value->Cast<HeapConstant>()->object();
       if (object.IsHeapNumber()) {
         double cst = object.AsHeapNumber().value();
         if (std::isnan(cst)) {
@@ -1422,7 +1422,7 @@ template <typename BaseT>
 void MaglevReducer<BaseT>::SetKnownValue(ValueNode* node,
                                          compiler::ObjectRef ref,
                                          NodeType new_node_type) {
-  DCHECK(!node->Is<Constant>());
+  DCHECK(!node->Is<HeapConstant>());
   DCHECK(!node->Is<RootConstant>());
   NodeInfo* known_info = GetOrCreateInfoFor(node);
   // ref type should be compatible with type.

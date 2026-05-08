@@ -734,7 +734,7 @@ VISIT_CHECK(Symbol)
 ProcessResult MaglevGraphOptimizer::VisitCheckValue(
     CheckValue* node, const ProcessingState& state) {
   ValueNode* input = node->input_node(0);
-  if (Constant* constant = input->TryCast<Constant>()) {
+  if (HeapConstant* constant = input->TryCast<HeapConstant>()) {
     if (constant->object() == node->value()) {
       return ProcessResult::kRemove;
     }
@@ -1262,7 +1262,7 @@ ProcessResult MaglevGraphOptimizer::VisitCallBuiltin(
       ValueNode* object = node->input_node(0);
       ValueNode* callable = node->input_node(1);
       ValueNode* context = node->input_node(2);
-      if (Constant* callable_cst = callable->TryCast<Constant>()) {
+      if (HeapConstant* callable_cst = callable->TryCast<HeapConstant>()) {
         if (callable_cst->object().IsJSObject()) {
           REPLACE_AND_RETURN_IF_DONE(reducer_.TryBuildFastInstanceOf(
               context, object, callable_cst->object().AsJSObject(), nullptr));
@@ -1275,7 +1275,7 @@ ProcessResult MaglevGraphOptimizer::VisitCallBuiltin(
       ValueNode* callable = node->input_node(0);
       ValueNode* object = node->input_node(1);
       ValueNode* context = node->input_node(2);
-      if (Constant* callable_cst = callable->TryCast<Constant>()) {
+      if (HeapConstant* callable_cst = callable->TryCast<HeapConstant>()) {
         if (callable_cst->object().IsJSObject()) {
           REPLACE_AND_RETURN_IF_DONE(reducer_.TryBuildFastOrdinaryHasInstance(
               context, object, callable_cst->object().AsJSObject(), nullptr));
@@ -3085,8 +3085,8 @@ ProcessResult MaglevGraphOptimizer::VisitBranchIfToBooleanTrue(
     // Holes shouldn't flow up to here: there should be either a ThrowXXXIfHole
     // or a CheckNotHole before, which should have been constant-folded into
     // unconditional deopt/throw if their input is a hole.
-    DCHECK_IMPLIES(node->input_node(0)->Is<Constant>(),
-                   !node->input_node(0)->Cast<Constant>()->IsTheHole());
+    DCHECK_IMPLIES(node->input_node(0)->Is<HeapConstant>(),
+                   !node->input_node(0)->Cast<HeapConstant>()->IsTheHole());
 
     bool condition =
         FromConstantToBool(reducer_.local_isolate(), node->input_node(0));

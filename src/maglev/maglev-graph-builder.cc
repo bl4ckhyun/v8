@@ -150,7 +150,7 @@ class FunctionContextSpecialization final : public AllStatic {
  public:
   static compiler::OptionalContextRef TryToRef(
       const MaglevCompilationUnit* unit, ValueNode* context, size_t* depth) {
-    if (Constant* n = context->TryCast<Constant>()) {
+    if (HeapConstant* n = context->TryCast<HeapConstant>()) {
       return n->ref().AsContext().previous(unit->broker(), depth);
     }
     return {};
@@ -3019,9 +3019,9 @@ MaglevGraphBuilder::TrySpecializeLoadContextSlotToFunctionContext(
 
 ValueNode* MaglevGraphBuilder::TrySpecializeLoadContextCell(
     ValueNode* context_node, int index, MaybeAssignedFlag assigned) {
-  if (!context_node->Is<Constant>()) return {};
+  if (!context_node->Is<HeapConstant>()) return {};
   compiler::ContextRef context =
-      context_node->Cast<Constant>()->ref().AsContext();
+      context_node->Cast<HeapConstant>()->ref().AsContext();
   auto maybe_value = context.get(broker(), index);
   if (!maybe_value || maybe_value->IsTheHole() ||
       maybe_value->IsUndefinedContextCell()) {
@@ -3122,7 +3122,7 @@ MaybeReduceResult MaglevGraphBuilder::TrySpecializeStoreContextCell(
     ValueNode* context, int index, ValueNode* value,
     MaybeAssignedFlag assigned) {
   DCHECK(v8_flags.script_context_cells || v8_flags.function_context_cells);
-  if (!context->Is<Constant>()) {
+  if (!context->Is<HeapConstant>()) {
     DCHECK_EQ(assigned, kMaybeAssigned);
     return AddNewNode<StoreContextSlotWithWriteBarrier>({context, value},
                                                         index);
@@ -3133,7 +3133,7 @@ MaybeReduceResult MaglevGraphBuilder::TrySpecializeStoreContextCell(
   }
 
   compiler::ContextRef context_ref =
-      context->Cast<Constant>()->ref().AsContext();
+      context->Cast<HeapConstant>()->ref().AsContext();
   auto maybe_value = context_ref.get(broker(), index);
   if (!maybe_value || maybe_value->IsTheHole() ||
       maybe_value->IsUndefinedContextCell()) {
@@ -3438,9 +3438,9 @@ ReduceResult MaglevGraphBuilder::BuildTaggedEqual(ValueNode* lhs,
   if (reducer_.HaveDisjointTypes(tagged_lhs, tagged_rhs)) {
     return GetBooleanConstant(false);
   }
-  // TODO(victorgomes): We could retrieve the HeapObjectRef in Constant and
+  // TODO(victorgomes): We could retrieve the HeapObjectRef in HeapConstant and
   // compare them.
-  if (IsConstantNode(tagged_lhs->opcode()) && !tagged_lhs->Is<Constant>() &&
+  if (IsConstantNode(tagged_lhs->opcode()) && !tagged_lhs->Is<HeapConstant>() &&
       tagged_lhs->opcode() == tagged_rhs->opcode()) {
     // Constants nodes are canonicalized, except for the node holding
     // HeapObjectRef, so equal constants should have been handled above.
@@ -6154,7 +6154,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildElementAccessOnTypedArray(
   switch (keyed_mode.access_mode()) {
     case compiler::AccessMode::kLoad:
       DCHECK(!LoadModeHandlesOOB(keyed_mode.load_mode()));
-      if (auto constant = object->TryCast<Constant>()) {
+      if (auto constant = object->TryCast<HeapConstant>()) {
         compiler::HeapObjectRef constant_object = constant->object();
         if (constant_object.IsJSTypedArray() &&
             constant_object.AsJSTypedArray().is_off_heap_non_rab_gsab(
@@ -6166,7 +6166,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildElementAccessOnTypedArray(
       return BuildLoadTypedArrayElement(object, index, elements_kind);
     case compiler::AccessMode::kStore:
       DCHECK(StoreModeIsInBounds(keyed_mode.store_mode()));
-      if (auto constant = object->TryCast<Constant>()) {
+      if (auto constant = object->TryCast<HeapConstant>()) {
         compiler::HeapObjectRef constant_object = constant->object();
         if (constant_object.IsJSTypedArray() &&
             constant_object.AsJSTypedArray().is_off_heap_non_rab_gsab(
@@ -13035,7 +13035,7 @@ ReduceResult MaglevGraphBuilder::ReduceCallWithArrayLikeForArgumentsObject(
     return ReduceCall(target_node, new_args, feedback_source);
   }
 
-  if (Constant* constant_value = elements_value->TryCast<Constant>()) {
+  if (HeapConstant* constant_value = elements_value->TryCast<HeapConstant>()) {
     DCHECK(constant_value->object().IsFixedArray());
     compiler::FixedArrayRef elements = constant_value->object().AsFixedArray();
     base::SmallVector<ValueNode*, 8> arg_list;
@@ -16390,7 +16390,7 @@ MaglevGraphBuilder::BranchResult MaglevGraphBuilder::BuildBranchIfRootConstant(
   }
 
   if (root_index == RootIndex::kUndefinedValue) {
-    if (Constant* constant = node->TryCast<Constant>()) {
+    if (HeapConstant* constant = node->TryCast<HeapConstant>()) {
       return builder.FromBool(constant->object().IsUndefined());
     }
   }
@@ -18240,7 +18240,7 @@ std::optional<Float64> MaglevGraphBuilder::TryGetFloat64OrHoleyFloat64Constant(
 }
 
 MaybeHandle<String> MaglevGraphBuilder::TryGetStringConstant(ValueNode* value) {
-  if (Constant* constant = value->TryCast<Constant>()) {
+  if (HeapConstant* constant = value->TryCast<HeapConstant>()) {
     if (constant->object().IsString()) {
       return handle(Cast<String>(*constant->object().object()),
                     local_isolate());

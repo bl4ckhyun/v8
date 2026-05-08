@@ -173,7 +173,7 @@ class ExceptionHandlerInfo;
 
 // LINT.IfChange
 #define CONSTANT_VALUE_NODE_LIST(V) \
-  V(Constant)                       \
+  V(HeapConstant)                   \
   V(Float64Constant)                \
   V(HoleyFloat64Constant)           \
   V(Int32Constant)                  \
@@ -5136,11 +5136,11 @@ class TaggedIndexConstant
   const Tagged<TaggedIndex> value_;
 };
 
-class Constant : public FixedInputValueNodeT<0, Constant> {
+class HeapConstant : public FixedInputValueNodeT<0, HeapConstant> {
  public:
   using OutputRegister = Register;
 
-  explicit Constant(uint64_t bitfield, compiler::HeapObjectRef object)
+  explicit HeapConstant(uint64_t bitfield, compiler::HeapObjectRef object)
       : Base(bitfield), object_(object) {}
 
   bool ToBoolean(LocalIsolate* local_isolate) const {

@@ -606,7 +606,7 @@ void ValueNode::SetHint(compiler::InstructionOperand hint) {
 
 compiler::OptionalHeapObjectRef ValueNode::TryGetConstant(
     compiler::JSHeapBroker* broker) {
-  if (Constant* c = TryCast<Constant>()) {
+  if (HeapConstant* c = TryCast<HeapConstant>()) {
     return c->object();
   }
   if (RootConstant* c = TryCast<RootConstant>()) {
@@ -1008,7 +1008,7 @@ DirectHandle<Object> HoleyFloat64Constant::DoReify(
       value_.get_scalar());
 }
 
-DirectHandle<Object> Constant::DoReify(LocalIsolate* isolate) const {
+DirectHandle<Object> HeapConstant::DoReify(LocalIsolate* isolate) const {
   return object_.object();
 }
 
@@ -1117,7 +1117,7 @@ void HoleyFloat64Constant::DoLoadToRegister(MaglevAssembler* masm,
   __ Move(reg, value());
 }
 
-void Constant::DoLoadToRegister(MaglevAssembler* masm, Register reg) const {
+void HeapConstant::DoLoadToRegister(MaglevAssembler* masm, Register reg) const {
   __ Move(reg, object_.object());
 }
 
@@ -1180,9 +1180,9 @@ void HoleyFloat64Constant::SetValueLocationConstraints() {
 void HoleyFloat64Constant::GenerateCode(MaglevAssembler* masm,
                                         const ProcessingState& state) {}
 
-void Constant::SetValueLocationConstraints() { DefineAsConstant(this); }
-void Constant::GenerateCode(MaglevAssembler* masm,
-                            const ProcessingState& state) {}
+void HeapConstant::SetValueLocationConstraints() { DefineAsConstant(this); }
+void HeapConstant::GenerateCode(MaglevAssembler* masm,
+                                const ProcessingState& state) {}
 
 void TrustedConstant::SetValueLocationConstraints() { DefineAsConstant(this); }
 void TrustedConstant::GenerateCode(MaglevAssembler* masm,
@@ -8521,7 +8521,7 @@ void HoleyFloat64Constant::PrintParams(std::ostream& os) const {
   PrintFloat64(os, value());
 }
 
-void Constant::PrintParams(std::ostream& os) const {
+void HeapConstant::PrintParams(std::ostream& os) const {
   os << "(" << *object_.object() << ")";
 }
 

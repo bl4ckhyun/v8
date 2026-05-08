@@ -1097,7 +1097,7 @@ class GraphBuildingNodeProcessor {
     on_generator_switch_loop_ = false;
   }
 
-  maglev::ProcessResult Process(maglev::Constant* node,
+  maglev::ProcessResult Process(maglev::HeapConstant* node,
                                 const maglev::ProcessingState& state) {
     SetMap(node, __ HeapConstant(node->object().object()));
     return maglev::ProcessResult::kContinue;
@@ -6160,10 +6160,11 @@ class GraphBuildingNodeProcessor {
       const maglev::ValueNode* value) {
     if (maglev::IsConstantNode(value->opcode())) {
       switch (value->opcode()) {
-        case maglev::Opcode::kConstant:
+        case maglev::Opcode::kHeapConstant:
           builder.AddInput(
               MachineType::AnyTagged(),
-              __ HeapConstant(value->Cast<maglev::Constant>()->ref().object()));
+              __ HeapConstant(
+                  value->Cast<maglev::HeapConstant>()->ref().object()));
           break;
 
         case maglev::Opcode::kFloat64Constant: {
