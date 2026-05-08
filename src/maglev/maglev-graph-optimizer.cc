@@ -1551,7 +1551,7 @@ ProcessResult MaglevGraphOptimizer::VisitLoadTaggedField(
       }
     }
   }
-  if (node->offset() == JSFunction::kFeedbackCellOffset) {
+  if (node->offset() == offsetof(JSFunction, feedback_cell_)) {
     if (auto input = node->input_node(0)->TryCast<FastCreateClosure>()) {
       return ReplaceWith(reducer_.GetConstant(input->feedback_cell()));
     }
@@ -1559,7 +1559,7 @@ ProcessResult MaglevGraphOptimizer::VisitLoadTaggedField(
       return ReplaceWith(reducer_.GetConstant(input->feedback_cell()));
     }
   }
-  if (node->offset() == JSFunction::kContextOffset) {
+  if (node->offset() == offsetof(JSFunction, context_)) {
     if (auto input = node->input_node(0)->TryCast<FastCreateClosure>()) {
       return ReplaceWith(input->ContextInput().node());
     }

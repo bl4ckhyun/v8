@@ -5662,11 +5662,11 @@ class VirtualObject : public FixedInputValueNodeT<0, VirtualObject> {
       if (object_type() == vobj::ObjectType::kConsString) {
         // ConsString materialization uses a custom opcode that only cares about
         // these two fields.
-        vobj::Field fst = FieldForOffset(ConsString::kFirstOffset);
+        vobj::Field fst = FieldForOffset(offsetof(ConsString, first_));
         if (!callback(slots_[fst.slot_index], fst)) {
           return false;
         }
-        vobj::Field snd = FieldForOffset(ConsString::kSecondOffset);
+        vobj::Field snd = FieldForOffset(offsetof(ConsString, second_));
         return callback(slots_[snd.slot_index], snd);
       }
       if (object_type() == vobj::ObjectType::kHeapNumber) {
@@ -5833,14 +5833,14 @@ struct VirtualJSObjectShape : VirtualJSReceiverShape {
   static constexpr bool kInstancesHaveStaticSize = false;
   static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kTagged;
 #define FIELD_LIST(V) \
-  V(elements, JSObject::kElementsOffset, vobj::FieldType::kTagged)
+  V(elements, offsetof(JSObject, elements_), vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualJSReceiverShape, FIELD_LIST);
 #undef FIELD_LIST
 };
 
 struct VirtualJSArrayShape : VirtualJSObjectShape {
 #define FIELD_LIST(V) \
-  V(length, JSArray::kLengthOffset, vobj::FieldType::kTagged)
+  V(length, offsetof(JSArray, length_), vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualJSObjectShape, FIELD_LIST);
 #undef FIELD_LIST
 };
@@ -5883,10 +5883,10 @@ struct VirtualJSPrimitiveWrapperShape : VirtualJSObjectShape {
 struct VirtualJSRegExpShape : VirtualJSObjectShape {
   using T = JSRegExp;
 #define FIELD_LIST(V)                                         \
-  V(data, T::kDataOffset,                                     \
+  V(data, offsetof(T, data_),                                 \
     V8_ENABLE_SANDBOX_BOOL ? vobj::FieldType::kTrustedPointer \
                            : vobj::FieldType::kTagged)        \
-  V(flags, T::kFlagsOffset, vobj::FieldType::kTagged)
+  V(flags, offsetof(T, flags_), vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualJSObjectShape, FIELD_LIST);
 #undef FIELD_LIST
 };
@@ -5975,7 +5975,7 @@ struct ContextShape : VirtualHeapObjectShape {
   static constexpr vobj::FieldType kBodyFieldType = vobj::FieldType::kTagged;
 
 #define FIELD_LIST(V) \
-  V(length, Context::kLengthOffset, vobj::FieldType::kTagged)
+  V(length, offsetof(Context, length_), vobj::FieldType::kTagged)
 
   DEF_SHAPE(VirtualHeapObjectShape, FIELD_LIST);
 #undef FIELD_LIST
@@ -5999,7 +5999,7 @@ struct VirtualHeapNumberShape : VirtualPrimitiveHeapObjectShape {
   // Special handling needed; deopt materialization uses a special path.
   // TODO(jgruber): .. but could it take the standard path instead?
   static constexpr vobj::ObjectType kObjectType = vobj::ObjectType::kHeapNumber;
-#define FIELD_LIST(V) V(value, T::kValueOffset, vobj::FieldType::kFloat64)
+#define FIELD_LIST(V) V(value, offsetof(T, value_), vobj::FieldType::kFloat64)
   DEF_SHAPE(VirtualPrimitiveHeapObjectShape, FIELD_LIST);
 #undef FIELD_LIST
 };
@@ -6024,9 +6024,9 @@ struct VirtualConsStringShape : VirtualNameShape {
   // Special handling needed; the map may be non-constant, and deopt
   // materialization uses a special path.
   static constexpr vobj::ObjectType kObjectType = vobj::ObjectType::kConsString;
-#define FIELD_LIST(V)                                 \
-  V(first, T::kFirstOffset, vobj::FieldType::kTagged) \
-  V(second, T::kSecondOffset, vobj::FieldType::kTagged)
+#define FIELD_LIST(V)                                     \
+  V(first, offsetof(T, first_), vobj::FieldType::kTagged) \
+  V(second, offsetof(T, second_), vobj::FieldType::kTagged)
   DEF_SHAPE(VirtualStringShape, FIELD_LIST);
 #undef FIELD_LIST
 };

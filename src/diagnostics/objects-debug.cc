@@ -1944,8 +1944,8 @@ void ExposedTrustedObject::ExposedTrustedObjectVerify(Isolate* isolate) {
   }
   // We can't use ReadIndirectPointerField here because the tag is not a
   // compile-time constant.
-  IndirectPointerSlot slot =
-      RawIndirectPointerField(kSelfIndirectPointerOffset, tag);
+  IndirectPointerSlot slot = RawIndirectPointerField(
+      offsetof(ExposedTrustedObject, self_indirect_pointer_), tag);
   Tagged<Object> self = slot.load(isolate);
   CHECK_EQ(self, this);
   // If the object is in the read-only space, the self indirect pointer entry
@@ -2109,8 +2109,8 @@ void JSMap::JSMapVerify(Isolate* isolate) {
 void JSCollectionIterator::JSCollectionIteratorVerify(Isolate* isolate) {
   JSObjectVerify(isolate);
   CHECK(IsJSCollectionIterator(Tagged<JSCollectionIterator>(this)));
-  VerifyObjectField(isolate, kTableOffset);
-  VerifyObjectField(isolate, kIndexOffset);
+  VerifyObjectField(isolate, offsetof(JSCollectionIterator, table_));
+  VerifyObjectField(isolate, offsetof(JSCollectionIterator, index_));
 }
 
 void JSSetIterator::JSSetIteratorVerify(Isolate* isolate) {
@@ -2741,7 +2741,8 @@ void JSMessageObject::JSMessageObjectVerify(Isolate* isolate) {
 }
 
 void JSRegExp::JSRegExpVerify(Isolate* isolate) {
-  Tagged<Object> flags = TaggedField<Object>::load(this, kFlagsOffset);
+  Tagged<Object> flags =
+      TaggedField<Object>::load(this, offsetof(JSRegExp, flags_));
   CHECK(IsSmi(flags) || IsUndefined(flags));
   if (!has_data()) return;
 

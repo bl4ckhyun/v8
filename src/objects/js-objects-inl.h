@@ -879,7 +879,7 @@ DEF_GETTER(JSObject, GetElementsKind, ElementsKind) {
   ElementsKind kind = map()->elements_kind();
 #if VERIFY_HEAP && DEBUG
   Tagged<FixedArrayBase> fixed_array = UncheckedCast<FixedArrayBase>(
-      TaggedField<HeapObject, kElementsOffset>::load(this));
+      TaggedField<HeapObject, offsetof(JSObject, elements_)>::load(this));
 
   // If a GC was caused while constructing this object, the elements
   // pointer may point to a one pointer filler map.

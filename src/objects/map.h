@@ -1213,26 +1213,9 @@ V8_OBJECT class Map : public HeapObject {
  public:
   // Backwards-compatible offset constants. Defined out-of-line below
   // because offsetof / sizeof on Map cannot appear inside Map's own body.
-  static const int kInstanceSizeInWordsOffset;
-  static const int kInobjectPropertiesStartOrConstructorFunctionIndexOffset;
-  static const int kUsedOrUnusedInstanceSizeInWordsOffset;
-  static const int kVisitorIdOffset;
-  static const int kInstanceTypeOffset;
-  static const int kBitFieldOffset;
   static const int kBitFieldOffsetEnd;
-  static const int kBitField2Offset;
-  static const int kBitField3Offset;
-  static const int kPrototypeOffset;
-  static const int kConstructorOrBackPointerOrNativeContextOffset;
-  static const int kInstanceDescriptorsOffset;
-  static const int kDependentCodeOffset;
 #if V8_ENABLE_WEBASSEMBLY
-  static const int kImmediateSupertypeOffset;
 #endif
-  static const int kPrototypeValidityCellOffset;
-  static const int kTransitionsOrPrototypeInfoOffset;
-  static const int kStartOfStrongFieldsOffset;
-  static const int kEndOfStrongFieldsOffset;
   static const int kEndOfWeakFieldsOffset;
   static const int kHeaderSize;
   static const int kSize;
@@ -1265,43 +1248,16 @@ V8_OBJECT class Map : public HeapObject {
 
 // Backwards-compatible Map offset constants. Defined out-of-line because
 // offsetof / sizeof on Map cannot appear inside Map's own class body.
-inline constexpr int Map::kInstanceSizeInWordsOffset =
-    offsetof(Map, instance_size_in_words_);
-inline constexpr int
-    Map::kInobjectPropertiesStartOrConstructorFunctionIndexOffset =
-        offsetof(Map, inobject_properties_start_or_constructor_function_index_);
-inline constexpr int Map::kUsedOrUnusedInstanceSizeInWordsOffset =
-    offsetof(Map, used_or_unused_instance_size_in_words_);
-inline constexpr int Map::kVisitorIdOffset = offsetof(Map, visitor_id_);
-inline constexpr int Map::kInstanceTypeOffset = offsetof(Map, instance_type_);
-inline constexpr int Map::kBitFieldOffset = offsetof(Map, bit_field_);
 inline constexpr int Map::kBitFieldOffsetEnd =
     offsetof(Map, bit_field_) + sizeof(uint8_t) - 1;
-inline constexpr int Map::kBitField2Offset = offsetof(Map, bit_field2_);
-inline constexpr int Map::kBitField3Offset = offsetof(Map, bit_field3_);
-inline constexpr int Map::kPrototypeOffset = offsetof(Map, prototype_);
-inline constexpr int Map::kConstructorOrBackPointerOrNativeContextOffset =
-    offsetof(Map, constructor_or_back_pointer_or_native_context_);
-inline constexpr int Map::kInstanceDescriptorsOffset =
-    offsetof(Map, instance_descriptors_);
-inline constexpr int Map::kDependentCodeOffset = offsetof(Map, dependent_code_);
 #if V8_ENABLE_WEBASSEMBLY
-inline constexpr int Map::kImmediateSupertypeOffset =
-    offsetof(Map, dependent_code_);
 #endif
-inline constexpr int Map::kPrototypeValidityCellOffset =
-    offsetof(Map, prototype_validity_cell_);
-inline constexpr int Map::kTransitionsOrPrototypeInfoOffset =
-    offsetof(Map, transitions_or_prototype_info_);
-inline constexpr int Map::kStartOfStrongFieldsOffset =
-    offsetof(Map, prototype_);
-inline constexpr int Map::kEndOfStrongFieldsOffset =
-    offsetof(Map, transitions_or_prototype_info_);
 inline constexpr int Map::kEndOfWeakFieldsOffset = sizeof(Map);
 inline constexpr int Map::kHeaderSize = sizeof(Map);
 inline constexpr int Map::kSize = sizeof(Map);
 
-static_assert(Map::kInstanceTypeOffset == Internals::kMapInstanceTypeOffset);
+static_assert(offsetof(Map, instance_type_) ==
+              Internals::kMapInstanceTypeOffset);
 
 // Base class for Maps with extra fields. Subclasses must be defined with
 // @hasSameInstanceTypeAsParent and define padding fields up to kTaggedSize.

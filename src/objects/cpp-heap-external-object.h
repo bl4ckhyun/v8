@@ -22,15 +22,12 @@ V8_OBJECT class CppHeapExternalObject : public HeapObject {
 
   class BodyDescriptor;
 
-  static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
 
  public:
   CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
-inline constexpr int CppHeapExternalObject::kCppHeapWrappableOffset =
-    offsetof(CppHeapExternalObject, cpp_heap_wrappable_);
 inline constexpr int CppHeapExternalObject::kHeaderSize =
     sizeof(CppHeapExternalObject);
 

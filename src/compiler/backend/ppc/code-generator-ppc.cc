@@ -993,7 +993,8 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
           UseScratchRegisterScope temps(masm());
           Register scratch = temps.Acquire();
           __ LoadTaggedField(
-              scratch, FieldMemOperand(func, JSFunction::kContextOffset), r0);
+              scratch, FieldMemOperand(func, offsetof(JSFunction, context_)),
+              r0);
           __ CmpS64(cp, scratch);
           __ Assert(eq, AbortReason::kWrongFunctionContext);
         }

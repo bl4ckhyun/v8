@@ -853,7 +853,7 @@ void JSAPIObjectWithEmbedderSlotsPrintHeader(std::ostream& os,
   JSObjectPrintHeader(os, obj, id);
   os << "\n - cpp_heap_wrappable: "
      << obj->ReadField<uint32_t>(
-            JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset);
+            offsetof(JSAPIObjectWithEmbedderSlots, cpp_heap_wrappable_));
 }
 
 void JSObjectPrintBody(std::ostream& os, Tagged<JSObject> obj,

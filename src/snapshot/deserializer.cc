@@ -1493,7 +1493,7 @@ int Deserializer<IsolateT>::ReadInitializeSelfIndirectPointer(
   DCHECK_NE(slot_accessor.object()->address(), kNullAddress);
   DCHECK(IsExposedTrustedObject(*slot_accessor.object()));
   DCHECK_EQ(slot_accessor.offset(),
-            ExposedTrustedObject::kSelfIndirectPointerOffset);
+            offsetof(ExposedTrustedObject, self_indirect_pointer_));
 
   Tagged<ExposedTrustedObject> host =
       TrustedCast<ExposedTrustedObject>(*slot_accessor.object());

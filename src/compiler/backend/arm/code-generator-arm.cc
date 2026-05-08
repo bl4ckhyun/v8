@@ -865,7 +865,8 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
           UseScratchRegisterScope temps(masm());
           Register scratch = temps.Acquire();
           // Check the function's context matches the context argument.
-          __ ldr(scratch, FieldMemOperand(func, JSFunction::kContextOffset));
+          __ ldr(scratch,
+                 FieldMemOperand(func, offsetof(JSFunction, context_)));
           __ cmp(cp, scratch);
           __ Assert(eq, AbortReason::kWrongFunctionContext);
         }

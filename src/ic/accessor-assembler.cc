@@ -356,7 +356,7 @@ void AccessorAssembler::TryEnumeratedKeyedLoad(
   TNode<DescriptorArray> descriptors =
       LoadMapDescriptors(lookup_start_object_map);
   TNode<EnumCache> enum_cache = LoadObjectField<EnumCache>(
-      descriptors, DescriptorArray::kEnumCacheOffset);
+      descriptors, offsetof(DescriptorArray, enum_cache_));
   TNode<FixedArray> enum_keys =
       LoadObjectField<FixedArray>(enum_cache, offsetof(EnumCache, keys_));
   // |p->enum_index()| comes from the outer loop's ForIn state.
@@ -547,7 +547,8 @@ TNode<Code> AccessorAssembler::CastToCode(TNode<MaybeObject> code_candidate) {
   // to consolidate with a union of a Smi. The use of
   // TaggedMember<UnionOf<Smi,Code>> requires manual validation of the Code
   // object here.
-  code = LoadCodePointerFromObject(code, Code::kSelfIndirectPointerOffset);
+  code = LoadCodePointerFromObject(
+      code, offsetof(ExposedTrustedObject, self_indirect_pointer_));
 #endif
   return code;
 }
@@ -1114,8 +1115,8 @@ void AccessorAssembler::HandleLoadICSmiHandlerLoadNamedCase(
     Comment("module export");
     TNode<UintPtrT> index =
         DecodeWordFromWord32<LoadHandler::ExportsIndexBits>(handler_word);
-    TNode<Module> module =
-        LoadObjectField<Module>(CAST(holder), JSModuleNamespace::kModuleOffset);
+    TNode<Module> module = LoadObjectField<Module>(
+        CAST(holder), offsetof(JSModuleNamespace, module_));
     TNode<ObjectHashTable> exports =
         LoadObjectField<ObjectHashTable>(module, offsetof(Module, exports_));
     TNode<Cell> cell = CAST(LoadFixedArrayElement(exports, index));
@@ -1740,8 +1741,8 @@ void AccessorAssembler::HandleStoreICTransitionMapHandlerCase(
     StoreTransitionMapFlags flags) {
   DCHECK_EQ(0, flags & ~kStoreTransitionMapFlagsMask);
   if (flags & kCheckPrototypeValidity) {
-    TNode<Object> maybe_validity_cell =
-        LoadObjectField(transition_map, Map::kPrototypeValidityCellOffset);
+    TNode<Object> maybe_validity_cell = LoadObjectField(
+        transition_map, offsetof(Map, prototype_validity_cell_));
     CheckPrototypeValidityCell(maybe_validity_cell, miss);
   }
 
@@ -2950,7 +2951,7 @@ void AccessorAssembler::InvalidateValidityCellIfPrototype(
   BIND(&is_prototype);
   {
     TNode<Object> maybe_prototype_info =
-        LoadObjectField(map, Map::kTransitionsOrPrototypeInfoOffset);
+        LoadObjectField(map, offsetof(Map, transitions_or_prototype_info_));
     // If there's no prototype info then there's nothing to invalidate.
     GotoIf(TaggedIsSmi(maybe_prototype_info), &cont);
 

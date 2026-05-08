@@ -44,7 +44,7 @@ TEST_PAIR(TestWrongTypeInNormalField) {
   v8::Local<v8::Value> v = CompileRun("({a: 3, b: 4})");
   DirectHandle<JSObject> o = Cast<JSObject>(v8::Utils::OpenDirectHandle(*v));
   DirectHandle<Object> original_elements(
-      TaggedField<Object>::load(*o, JSObject::kElementsOffset), i_isolate);
+      TaggedField<Object>::load(*o, offsetof(JSObject, elements_)), i_isolate);
   CHECK(IsFixedArrayBase(*original_elements));
 
   // There must be no GC (and therefore no verifiers running) until we can
@@ -53,13 +53,14 @@ TEST_PAIR(TestWrongTypeInNormalField) {
 
   // Elements must be FixedArrayBase according to the Torque definition, so a
   // JSObject should cause a failure.
-  TaggedField<Object>::store(*o, JSObject::kElementsOffset, *o);
+  TaggedField<Object>::store(*o, offsetof(JSObject, elements_), *o);
   if (should_fail) {
     o->JSObjectVerify(i_isolate);
   }
 
   // Put back the original value in case verifiers run on test shutdown.
-  TaggedField<Object>::store(*o, JSObject::kElementsOffset, *original_elements);
+  TaggedField<Object>::store(*o, offsetof(JSObject, elements_),
+                             *original_elements);
 }
 
 TEST_PAIR(TestWrongStrongTypeInIndexedStructField) {

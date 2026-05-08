@@ -1350,8 +1350,9 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
         Register func = i.InputRegister(0);
         if (v8_flags.debug_code) {
           // Check the function's context matches the context argument.
-          __ LoadTaggedField(kScratchReg,
-                             FieldMemOperand(func, JSFunction::kContextOffset));
+          __ LoadTaggedField(
+              kScratchReg,
+              FieldMemOperand(func, offsetof(JSFunction, context_)));
           __ CmpS64(cp, kScratchReg);
           __ Assert(eq, AbortReason::kWrongFunctionContext);
         }

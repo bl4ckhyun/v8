@@ -184,7 +184,8 @@ void BytecodeArray::SetSourcePositionsFailedToCollect() {
   // matters for non-Smi values, so any future caller must keep using
   // TrustedSpaceCompressionScheme here.
   TaggedField<Object, 0, TrustedSpaceCompressionScheme>::Release_Store(
-      Tagged(this), kSourcePositionTableOffset, Smi::zero());
+      Tagged(this), offsetof(BytecodeArray, source_position_table_),
+      Smi::zero());
 }
 
 Tagged<Union<Smi, TrustedFixedArray>> BytecodeArray::raw_constant_pool() const {

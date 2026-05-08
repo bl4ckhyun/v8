@@ -512,16 +512,6 @@ V8_OBJECT class FeedbackVector : public HeapObject {
 
   class BodyDescriptor;
 
-  // Back-compat layout constants. Defined out-of-line.
-  static const int kLengthOffset;
-  static const int kInvocationCountOffset;
-  static const int kInvocationCountBeforeStableOffset;
-  static const int kOsrStateOffset;
-  static const int kFlagsOffset;
-  static const int kSharedFunctionInfoOffset;
-  static const int kClosureFeedbackCellArrayOffset;
-  static const int kParentFeedbackCellOffset;
-  static const int kStartOfStrongFieldsOffset;
   static const int kHeaderSize;
   static const int kRawFeedbackSlotsOffset;
 
@@ -572,24 +562,6 @@ V8_OBJECT class FeedbackVector : public HeapObject {
   FLEXIBLE_ARRAY_MEMBER(TaggedMember<MaybeObject>, raw_feedback_slots);
 } V8_OBJECT_END;
 
-inline constexpr int FeedbackVector::kLengthOffset =
-    offsetof(FeedbackVector, length_);
-inline constexpr int FeedbackVector::kInvocationCountOffset =
-    offsetof(FeedbackVector, invocation_count_);
-inline constexpr int FeedbackVector::kInvocationCountBeforeStableOffset =
-    offsetof(FeedbackVector, invocation_count_before_stable_);
-inline constexpr int FeedbackVector::kOsrStateOffset =
-    offsetof(FeedbackVector, osr_state_);
-inline constexpr int FeedbackVector::kFlagsOffset =
-    offsetof(FeedbackVector, flags_);
-inline constexpr int FeedbackVector::kSharedFunctionInfoOffset =
-    offsetof(FeedbackVector, shared_function_info_);
-inline constexpr int FeedbackVector::kClosureFeedbackCellArrayOffset =
-    offsetof(FeedbackVector, closure_feedback_cell_array_);
-inline constexpr int FeedbackVector::kParentFeedbackCellOffset =
-    offsetof(FeedbackVector, parent_feedback_cell_);
-inline constexpr int FeedbackVector::kStartOfStrongFieldsOffset =
-    offsetof(FeedbackVector, shared_function_info_);
 inline constexpr int FeedbackVector::kHeaderSize =
     OFFSET_OF_DATA_START(FeedbackVector);
 inline constexpr int FeedbackVector::kRawFeedbackSlotsOffset =
@@ -833,9 +805,6 @@ V8_OBJECT class FeedbackMetadata : public HeapObject {
                                 create_closure_slot_count * kUInt16Size);
   }
 
-  // Back-compat offset/size constants.
-  static const int kSlotCountOffset;
-  static const int kCreateClosureSlotCountOffset;
   static const int kHeaderSize;
 
   class BodyDescriptor;
@@ -870,10 +839,6 @@ V8_OBJECT class FeedbackMetadata : public HeapObject {
   int32_t create_closure_slot_count_;
 } V8_OBJECT_END;
 
-inline constexpr int FeedbackMetadata::kSlotCountOffset =
-    offsetof(FeedbackMetadata, slot_count_);
-inline constexpr int FeedbackMetadata::kCreateClosureSlotCountOffset =
-    offsetof(FeedbackMetadata, create_closure_slot_count_);
 inline constexpr int FeedbackMetadata::kHeaderSize = sizeof(FeedbackMetadata);
 
 // Verify that an empty hash field looks like a tagged object, but can't

@@ -80,7 +80,7 @@ void CorruptSFIAndAbort(const v8::FunctionCallbackInfo<v8::Value>& info) {
   auto target_function =
       i::Cast<i::JSFunction>(*v8::Utils::OpenDirectHandle(*func_arg));
   target_function->Relaxed_WriteField<i::Tagged_t>(
-      i::JSFunction::kSharedFunctionInfoOffset, kBogusTaggedValue);
+      offsetof(i::JSFunction, shared_function_info_), kBogusTaggedValue);
   abort();
 }
 

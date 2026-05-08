@@ -154,7 +154,8 @@ bool ExposedTrustedObject::IsPublished(IsolateForSandbox isolate) const {
   IndirectPointerTag tag =
       IndirectPointerTagFromInstanceType(instance_type, SharedFlag::kNo);
   return !TrustedPointerField::IsTrustedPointerFieldUnpublished(
-      this, kSelfIndirectPointerOffset, tag, isolate);
+      this, offsetof(ExposedTrustedObject, self_indirect_pointer_), tag,
+      isolate);
 #else
   return true;
 #endif

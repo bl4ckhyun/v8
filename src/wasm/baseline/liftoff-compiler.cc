@@ -1284,7 +1284,8 @@ class LiftoffCompiler {
       __ LoadMap(scratch, instance);
       // Load the instance type.
       __ Load(LiftoffRegister{scratch}, scratch, no_reg,
-              Map::kInstanceTypeOffset - kHeapObjectTag, LoadType::kI32Load16U);
+              offsetof(Map, instance_type_) - kHeapObjectTag,
+              LoadType::kI32Load16U);
       // If not WASM_TRUSTED_INSTANCE_DATA_TYPE -> error.
       Label ok;
       FreezeCacheState frozen{asm_};
@@ -1746,7 +1747,7 @@ class LiftoffCompiler {
           js_tag.gp(), js_tag.gp(), no_reg,
           NativeContext::SlotOffset(Context::WASM_JS_TAG_INDEX));
       __ LoadTaggedPointer(js_tag.gp(), js_tag.gp(), no_reg,
-                           WasmTagObject::kTagOffset - kHeapObjectTag);
+                           offsetof(WasmTagObject, tag_) - kHeapObjectTag);
       {
         LiftoffAssembler::CacheState initial_state(zone_);
         LiftoffAssembler::CacheState end_state(zone_);
@@ -1937,7 +1938,7 @@ class LiftoffCompiler {
           js_tag.gp(), js_tag.gp(), no_reg,
           NativeContext::SlotOffset(Context::WASM_JS_TAG_INDEX));
       __ LoadTaggedPointer(js_tag.gp(), js_tag.gp(), no_reg,
-                           WasmTagObject::kTagOffset - kHeapObjectTag);
+                           offsetof(WasmTagObject, tag_) - kHeapObjectTag);
       {
         LiftoffAssembler::CacheState initial_state(zone_);
         LiftoffAssembler::CacheState end_state(zone_);
@@ -7544,11 +7545,11 @@ class LiftoffCompiler {
         FixedArray::OffsetOfElementAt(imm.index) - kHeapObjectTag);
 
     int length_field_size = WasmTableObject::kCurrentLengthOffsetEnd -
-                            WasmTableObject::kCurrentLengthOffset + 1;
+                            offsetof(WasmTableObject, current_length_) + 1;
 
     Register result = table;
     __ Load(LiftoffRegister(result), table, no_reg,
-            WasmTableObject::kCurrentLengthOffset - kHeapObjectTag,
+            offsetof(WasmTableObject, current_length_) - kHeapObjectTag,
             length_field_size == 4 ? LoadType::kI32Load : LoadType::kI64Load);
 
     __ SmiUntag(result);
@@ -7894,8 +7895,8 @@ class LiftoffCompiler {
           array.type.is_nullable() &&
           null_check_strategy_ == compiler::NullCheckStrategy::kTrapHandler;
       LoadObjectField(decoder, array_length, array_reg.gp(), no_reg,
-                      WasmArray::kLengthOffset - kHeapObjectTag, kI32, false,
-                      implicit_null_check, pinned);
+                      offsetof(WasmArray, length_) - kHeapObjectTag, kI32,
+                      false, implicit_null_check, pinned);
       LiftoffRegister index = pinned.set(__ PeekToRegister(2, pinned));
       LiftoffRegister length = pinned.set(__ PeekToRegister(0, pinned));
       LiftoffRegister index_plus_length =
@@ -8040,7 +8041,7 @@ class LiftoffCompiler {
       MaybeEmitNullCheck(decoder, obj.gp(), pinned, array_obj.type);
     }
     LiftoffRegister len = __ GetUnusedRegister(kGpReg, pinned);
-    int kLengthOffset = WasmArray::kLengthOffset - kHeapObjectTag;
+    int kLengthOffset = offsetof(WasmArray, length_) - kHeapObjectTag;
     bool implicit_null_check =
         array_obj.type.is_nullable() &&
         null_check_strategy_ == compiler::NullCheckStrategy::kTrapHandler;
@@ -8353,7 +8354,7 @@ class LiftoffCompiler {
     LiftoffRegister value = __ GetUnusedRegister(kGpReg, pinned);
     __ LoadMap(value.gp(), ref.gp());
     LoadObjectField(decoder, value, value.gp(), no_reg,
-                    Map::kInstanceDescriptorsOffset - kHeapObjectTag, kRef,
+                    offsetof(Map, instance_descriptors_) - kHeapObjectTag, kRef,
                     false, false, pinned);
     __ PushRegister(kRef, value);
   }
@@ -8445,7 +8446,7 @@ class LiftoffCompiler {
       if (is_cast_from_any) {
         // Check for map being a map for a wasm object (struct, array, func).
         __ Load(LiftoffRegister(scratch2), tmp1, no_reg,
-                Map::kInstanceTypeOffset - kHeapObjectTag,
+                offsetof(Map, instance_type_) - kHeapObjectTag,
                 LoadType::kI32Load16U);
         __ emit_i32_subi(scratch2, scratch2, FIRST_WASM_OBJECT_TYPE);
         __ emit_i32_cond_jumpi(kUnsignedGreaterThan, no_match, scratch2,
@@ -8458,15 +8459,15 @@ class LiftoffCompiler {
       if (compare_last_super) {
         DCHECK(type.has_descriptor());
         __ LoadTaggedPointer(tmp1, tmp1, no_reg,
-                             Map::kImmediateSupertypeOffset - kHeapObjectTag);
+                             offsetof(Map, dependent_code_) - kHeapObjectTag);
       } else {
         // Load the WasmTypeInfo into {tmp1}.
         constexpr int kTypeInfoOffset =
-            Map::kConstructorOrBackPointerOrNativeContextOffset -
+            offsetof(Map, constructor_or_back_pointer_or_native_context_) -
             kHeapObjectTag;
         __ LoadTaggedPointer(tmp1, tmp1, no_reg, kTypeInfoOffset);
         constexpr int kLengthOffset =
-            WasmTypeInfo::kSupertypesLengthOffset - kHeapObjectTag;
+            offsetof(WasmTypeInfo, supertypes_length_) - kHeapObjectTag;
         // Check the list's length if needed.
         uint32_t rtt_depth = GetSubtypingDepth(module, target_type.ref_index());
         if (rtt_depth >= kMinimumSupertypeArraySize) {
@@ -9040,7 +9041,7 @@ class LiftoffCompiler {
                       frozen);
     __ LoadMap(check.instance_type(), check.obj_reg);
     __ Load(LiftoffRegister(check.instance_type()), check.instance_type(),
-            no_reg, Map::kInstanceTypeOffset - kHeapObjectTag,
+            no_reg, offsetof(Map, instance_type_) - kHeapObjectTag,
             LoadType::kI32Load16U);
   }
 
@@ -10280,7 +10281,7 @@ class LiftoffCompiler {
         // the supertypes list.
         // Step 1: load the WasmTypeInfo.
         constexpr int kTypeInfoOffset =
-            Map::kConstructorOrBackPointerOrNativeContextOffset -
+            offsetof(Map, constructor_or_back_pointer_or_native_context_) -
             kHeapObjectTag;
         ScopedTempRegister type_info{std::move(real_rtt)};
         __ LoadTaggedPointer(type_info.gp_reg(), type_info.gp_reg(), no_reg,
@@ -10290,7 +10291,8 @@ class LiftoffCompiler {
             GetSubtypingDepth(decoder->module_, imm.sig_imm.index);
         if (rtt_depth >= kMinimumSupertypeArraySize) {
           ScopedTempRegister list_length{temps, kGpReg};
-          int offset = WasmTypeInfo::kSupertypesLengthOffset - kHeapObjectTag;
+          int offset =
+              offsetof(WasmTypeInfo, supertypes_length_) - kHeapObjectTag;
           __ LoadSmiAsInt32(list_length.reg(), type_info.gp_reg(), offset);
           __ emit_i32_cond_jumpi(kUnsignedLessThanEqual, sig_mismatch.label(),
                                  list_length.gp_reg(), rtt_depth,
@@ -10533,17 +10535,17 @@ class LiftoffCompiler {
       Register internal_function = func_ref;
       __ LoadTrustedPointer(
           internal_function, func_ref,
-          WasmFuncRef::kTrustedInternalOffset - kHeapObjectTag,
+          offsetof(WasmFuncRef, trusted_internal_) - kHeapObjectTag,
           kWasmInternalFunctionIndirectPointerTag);
 
       // Load the implicit argument (WasmTrustedInstanceData or WasmImportData)
       // and target.
       __ LoadProtectedPointer(
           implicit_arg_reg, internal_function,
-          WasmInternalFunction::kProtectedImplicitArgOffset);
+          offsetof(WasmInternalFunction, protected_implicit_arg_));
 
       __ LoadCodePointer(target_reg, internal_function,
-                         WasmInternalFunction::kRawCallTargetOffset);
+                         offsetof(WasmInternalFunction, raw_call_target_));
 
       // Now the call target is in {target_reg} and the first parameter
       // (WasmTrustedInstanceData or WasmImportData) is in
@@ -10616,7 +10618,7 @@ class LiftoffCompiler {
     if (V8_UNLIKELY(v8_flags.experimental_wasm_skip_bounds_checks)) return;
     SCOPED_CODE_COMMENT("array bounds check");
     LiftoffRegister length = __ GetUnusedRegister(kGpReg, pinned);
-    constexpr int kLengthOffset = WasmArray::kLengthOffset - kHeapObjectTag;
+    constexpr int kLengthOffset = offsetof(WasmArray, length_) - kHeapObjectTag;
     uint32_t trapping_instruction_pc = 0;
     __ Load(length, array.gp(), no_reg, kLengthOffset, LoadType::kI32Load,
             implicit_null_check ? &trapping_instruction_pc : nullptr);

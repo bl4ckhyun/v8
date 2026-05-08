@@ -1075,11 +1075,6 @@ V8_OBJECT class ConsString : public String {
   // Minimum length for a cons string.
   static const uint32_t kMinLength = 13;
 
-  // Expose these for convenience since not all classes can be friends (classes
-  // in anonymous namespaces).
-  static const int kFirstOffset;
-  static const int kSecondOffset;
-
   DECL_VERIFIER(ConsString)
 
  private:
@@ -1098,12 +1093,11 @@ V8_OBJECT class ConsString : public String {
 
   friend Tagged<String> String::GetUnderlying() const;
 
+ public:
   TaggedMember<String> first_;
   TaggedMember<String> second_;
 } V8_OBJECT_END;
 
-constexpr int ConsString::kFirstOffset = offsetof(ConsString, first_);
-constexpr int ConsString::kSecondOffset = offsetof(ConsString, second_);
 
 template <>
 struct ObjectTraits<ConsString> {

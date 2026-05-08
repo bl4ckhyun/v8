@@ -1789,7 +1789,8 @@ class GraphBuildingNodeProcessor {
 
     V<HeapObject> constructor = Map(node->ConstructorInput());
     V<i::Map> map = __ LoadMapField(constructor);
-    static_assert(Map::kBitFieldOffsetEnd + 1 - Map::kBitFieldOffset == 1);
+    static_assert(
+        i::Map::kBitFieldOffsetEnd + 1 - offsetof(i::Map, bit_field_) == 1);
     V<Word32> bitfield =
         __ template LoadField<Word32>(map, AccessBuilder::ForMapBitField());
     IF_NOT (LIKELY(__ Word32BitwiseAnd(bitfield,

@@ -3733,7 +3733,7 @@ void MarkCompactCollector::FlushBytecodeFromSFI(
   IndirectPointerSlot self_indirect_pointer_slot =
       Cast<ExposedTrustedObject>(uncompiled_data)
           ->RawIndirectPointerField(
-              ExposedTrustedObject::kSelfIndirectPointerOffset,
+              offsetof(ExposedTrustedObject, self_indirect_pointer_),
               kUncompiledDataIndirectPointerTag);
   table.Mark(space, self_indirect_pointer_slot.Relaxed_LoadHandle());
 #endif
@@ -3779,7 +3779,7 @@ void MarkCompactCollector::ProcessOldCodeCandidates() {
     if (is_unpublished) {
       IndirectPointerHandle handle =
           flushing_candidate->Relaxed_ReadField<IndirectPointerHandle>(
-              SharedFunctionInfo::kTrustedFunctionDataOffset);
+              offsetof(SharedFunctionInfo, trusted_function_data_));
 
       // Read the object from the table. It is now an UncompiledData.
       Address obj_addr = isolate->trusted_pointer_table().GetMaybeUnpublished(
@@ -3813,7 +3813,7 @@ void MarkCompactCollector::ProcessOldCodeCandidates() {
     // does not need to be updated during mark-compact (because the pointer in
     // the pointer table will be updated), so no action is needed here.
     ObjectSlot slot = flushing_candidate->RawField(
-        SharedFunctionInfo::kTrustedFunctionDataOffset);
+        offsetof(SharedFunctionInfo, trusted_function_data_));
     if (IsHeapObject(*slot)) {
       RecordSlot(flushing_candidate, slot, Cast<HeapObject>(*slot));
     }

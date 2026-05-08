@@ -519,10 +519,6 @@ V8_OBJECT class Context : public HeapObject {
                                     DirectHandle<Object> new_value,
                                     Isolate* isolate);
 
-  // Back-compat offset constants. Defined out-of-line below the class so
-  // they can use `offsetof(Context, ...)` / `OFFSET_OF_DATA_START(Context)`
-  // (which require the type to be complete).
-  static const int kLengthOffset;
   static const int kElementsOffset;
   static const int kHeaderSize;
   static const int kScopeInfoOffset;
@@ -750,10 +746,6 @@ V8_OBJECT class Context : public HeapObject {
   FLEXIBLE_ARRAY_MEMBER(TaggedMember<Object>, elements);
 } V8_OBJECT_END;
 
-// Back-compat offset constants. Defined here because `offsetof` /
-// `OFFSET_OF_DATA_START` on a not-yet-complete class cannot appear inside
-// the class body.
-inline constexpr int Context::kLengthOffset = offsetof(Context, length_);
 inline constexpr int Context::kElementsOffset = OFFSET_OF_DATA_START(Context);
 inline constexpr int Context::kHeaderSize = Context::kElementsOffset;
 inline constexpr int Context::kScopeInfoOffset = Context::kElementsOffset;

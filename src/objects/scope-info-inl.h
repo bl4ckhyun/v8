@@ -429,9 +429,9 @@ void ScopeInfo::InitializeTaggedMembers(Tagged<Object> value, int tail_length) {
   // Covers the fixed TaggedMember<Smi> header slots
   // (parameter_count_..position_info_end_) plus the |tail_length| tail
   // slots. Matches the GC-visible range of ScopeInfo::BodyDescriptor.
-  MemsetTagged(
-      ObjectSlot(reinterpret_cast<Address>(this) + kFirstTaggedSlotOffset),
-      value, kFixedTaggedHeaderSlotCount + tail_length);
+  MemsetTagged(ObjectSlot(reinterpret_cast<Address>(this) +
+                          offsetof(ScopeInfo, parameter_count_)),
+               value, kFixedTaggedHeaderSlotCount + tail_length);
 }
 
 bool ScopeInfo::HasInlinedLocalNames() const {

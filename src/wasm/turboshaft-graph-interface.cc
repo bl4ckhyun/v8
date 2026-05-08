@@ -1963,7 +1963,7 @@ class TurboshaftGraphBuildingInterface
     V<Object> data = __ LoadFixedArrayElement(imports_array, func_index);
     V<Object> cached_map = __ Load(data, LoadOp::Kind::TaggedBase(),
                                    MemoryRepresentation::TaggedPointer(),
-                                   WasmFastApiCallData::kCachedMapOffset);
+                                   offsetof(WasmFastApiCallData, cached_map_));
 
     Label<> if_equal_maps(&asm_);
     Label<> if_unknown_receiver(&asm_);
@@ -2090,7 +2090,7 @@ class TurboshaftGraphBuildingInterface
       V<Object> callback_data =
           __ Load(data, LoadOp::Kind::TaggedBase(),
                   MemoryRepresentation::TaggedPointer(),
-                  WasmFastApiCallData::kCallbackDataOffset);
+                  offsetof(WasmFastApiCallData, callback_data_));
       V<WordPtr> data_argument_to_pass = __ AdaptLocalArgument(callback_data);
 
       __ StoreOffHeap(options_object, data_argument_to_pass,
@@ -3847,7 +3847,7 @@ class TurboshaftGraphBuildingInterface
             NativeContext::OffsetOfElementAt(Context::WASM_JS_TAG_INDEX));
         V<Object> js_tag = __ Load(tag_object, LoadOp::Kind::TaggedBase(),
                                    MemoryRepresentation::TaggedPointer(),
-                                   WasmTagObject::kTagOffset);
+                                   offsetof(WasmTagObject, tag_));
         GOTO_IF(__ TaggedEqual(expected_tag, js_tag), if_catch,
                 block->exception);
         GOTO(no_catch_merge);
@@ -3982,7 +3982,7 @@ class TurboshaftGraphBuildingInterface
             NativeContext::OffsetOfElementAt(Context::WASM_JS_TAG_INDEX));
         V<Object> js_tag = __ Load(tag_object, LoadOp::Kind::TaggedBase(),
                                    MemoryRepresentation::TaggedPointer(),
-                                   WasmTagObject::kTagOffset);
+                                   offsetof(WasmTagObject, tag_));
         GOTO_IF(__ TaggedEqual(expected_tag, js_tag), if_catch,
                 block->exception);
         GOTO(no_catch_merge);
@@ -4053,9 +4053,9 @@ class TurboshaftGraphBuildingInterface
     V<WasmStackObject> stack_obj =
         __ Load(cont_ref.op, LoadOp::Kind::TaggedBase(),
                 MemoryRepresentation::TaggedPointer(),
-                WasmContinuationObject::kStackObjOffset);
+                offsetof(WasmContinuationObject, stack_obj_));
     V<WordPtr> stack = __ LoadExternalPointerFromObject(
-        stack_obj, WasmStackObject::kStackOffset, kWasmStackMemoryTag);
+        stack_obj, offsetof(WasmStackObject, stack_), kWasmStackMemoryTag);
     __ TrapIf(__ Equal(stack, __ WordPtrConstant(0),
                        RegisterRepresentation::WordPtr()),
               TrapId::kTrapResume);
@@ -4332,11 +4332,11 @@ class TurboshaftGraphBuildingInterface
                        AccessBuilder::ForMap(compiler::kNoWriteBarrier), map);
     // The {stack_obj_} field is initialized properly in the
     // {suspend_wasmfx_stack} or {switch_wasmfx_stack} C call.
-    __ InitializeField(
-        uninitialized_cont,
-        AccessBuilder::ForJSObjectOffset(
-            WasmContinuationObject::kStackObjOffset, compiler::kNoWriteBarrier),
-        __ LoadRoot<RootIndex::kUndefinedValue>());
+    __ InitializeField(uninitialized_cont,
+                       AccessBuilder::ForJSObjectOffset(
+                           offsetof(WasmContinuationObject, stack_obj_),
+                           compiler::kNoWriteBarrier),
+                       __ LoadRoot<RootIndex::kUndefinedValue>());
     return __ FinishInitialization(std::move(uninitialized_cont));
   }
 
@@ -4982,7 +4982,7 @@ class TurboshaftGraphBuildingInterface
     V<WasmTableObject> table = LoadTable(decoder, imm);
     V<Smi> size_smi = __ Load(table, LoadOp::Kind::TaggedBase(),
                               MemoryRepresentation::TaggedSigned(),
-                              WasmTableObject::kCurrentLengthOffset);
+                              offsetof(WasmTableObject, current_length_));
     V<WordPtr> index_wordptr = TableAddressToUintPtrOrOOBTrap(
         imm.table->address_type, index.get<Word>());
     DCHECK_GE(kSmiMaxValue, wasm::max_table_size());
@@ -4991,7 +4991,7 @@ class TurboshaftGraphBuildingInterface
     __ TrapIfNot(in_bounds, TrapId::kTrapTableOutOfBounds);
     V<FixedArray> entries = __ Load(table, LoadOp::Kind::TaggedBase(),
                                     MemoryRepresentation::TaggedPointer(),
-                                    WasmTableObject::kEntriesOffset);
+                                    offsetof(WasmTableObject, entries_));
     OpIndex entry = __ LoadFixedArrayElement(entries, index_wordptr);
 
     if (imm.table->type.ref_type_kind() == RefTypeKind::kFunction) {
@@ -5162,7 +5162,7 @@ class TurboshaftGraphBuildingInterface
     V<WasmTableObject> table = LoadTable(decoder, imm);
     V<Word32> size_word32 = __ UntagSmi(__ Load(
         table, LoadOp::Kind::TaggedBase(), MemoryRepresentation::TaggedSigned(),
-        WasmTableObject::kCurrentLengthOffset));
+        offsetof(WasmTableObject, current_length_)));
     if (imm.table->is_table64()) {
       result->op = __ ChangeUint32ToUint64(size_word32);
     } else {
@@ -8502,10 +8502,10 @@ class TurboshaftGraphBuildingInterface
             V<Map>::Cast(__ BitcastWordPtrToTagged(__ WordPtrBitwiseAnd(
                 __ BitcastHeapObjectToWordPtr(V<HeapObject>::Cast(weak_rtt)),
                 ~kWeakHeapObjectMask)));
-        V<WasmTypeInfo> type_info =
-            __ Load(real_rtt, LoadOp::Kind::TaggedBase(),
-                    MemoryRepresentation::TaggedPointer(),
-                    Map::kConstructorOrBackPointerOrNativeContextOffset);
+        V<WasmTypeInfo> type_info = __ Load(
+            real_rtt, LoadOp::Kind::TaggedBase(),
+            MemoryRepresentation::TaggedPointer(),
+            offsetof(Map, constructor_or_back_pointer_or_native_context_));
         // If the depth of the rtt is known to be less than the minimum
         // supertype array length, we can access the supertype without
         // bounds-checking the supertype array.
@@ -8514,7 +8514,7 @@ class TurboshaftGraphBuildingInterface
           V<Word32> supertypes_length =
               __ UntagSmi(__ Load(type_info, LoadOp::Kind::TaggedBase(),
                                   MemoryRepresentation::TaggedSigned(),
-                                  WasmTypeInfo::kSupertypesLengthOffset));
+                                  offsetof(WasmTypeInfo, supertypes_length_)));
           __ TrapIfNot(__ Uint32LessThan(rtt_depth, supertypes_length),
                        OpIndex::Invalid(), TrapId::kTrapFuncSigMismatch);
         }
@@ -8579,7 +8579,7 @@ class TurboshaftGraphBuildingInterface
     V<WasmInternalFunction> internal_function =
         V<WasmInternalFunction>::Cast(__ LoadTrustedPointer(
             func_ref, load_kind, kWasmInternalFunctionIndirectPointerTag,
-            WasmFuncRef::kTrustedInternalOffset));
+            offsetof(WasmFuncRef, trusted_internal_)));
     return BuildFunctionTargetAndImplicitArg(internal_function);
   }
 

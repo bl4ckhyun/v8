@@ -817,9 +817,9 @@ Register GetTSANValueRegister(MacroAssembler* masm, Register value,
     // Indirect pointer fields contain an index to a pointer table entry, which
     // is obtained from the referenced object.
     Register value_reg = i.TempRegister(1);
-    masm->movl(
-        value_reg,
-        FieldOperand(value, ExposedTrustedObject::kSelfIndirectPointerOffset));
+    masm->movl(value_reg,
+               FieldOperand(value, offsetof(ExposedTrustedObject,
+                                            self_indirect_pointer_)));
     return value_reg;
   }
   return value;
@@ -843,8 +843,8 @@ Register GetTSANValueRegister<std::memory_order_relaxed>(
     // Indirect pointer fields contain an index to a pointer table entry, which
     // is obtained from the referenced object.
     masm->movl(value_reg,
-               FieldOperand(value_reg,
-                            ExposedTrustedObject::kSelfIndirectPointerOffset));
+               FieldOperand(value_reg, offsetof(ExposedTrustedObject,
+                                                self_indirect_pointer_)));
   }
   return value_reg;
 }
@@ -1837,7 +1837,8 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
         Register func = i.InputRegister(0);
         if (v8_flags.debug_code) {
           // Check the function's context matches the context argument.
-          __ cmp_tagged(rsi, FieldOperand(func, JSFunction::kContextOffset));
+          __ cmp_tagged(rsi,
+                        FieldOperand(func, offsetof(JSFunction, context_)));
           __ Assert(equal, AbortReason::kWrongFunctionContext);
         }
         __ CallJSFunction(func, num_arguments);

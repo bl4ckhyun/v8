@@ -1540,7 +1540,7 @@ class MaglevFrameTranslationBuilder {
 
   void BuildHeapNumber(const VirtualObject* vobject) {
     DCHECK_EQ(vobject->object_type(), vobj::ObjectType::kHeapNumber);
-    ValueNode* value_node = vobject->get(HeapNumber::kValueOffset);
+    ValueNode* value_node = vobject->get(offsetof(HeapNumber, value_));
     return BuildHeapNumber(value_node->Cast<Float64Constant>()->value());
   }
 

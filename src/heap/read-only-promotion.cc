@@ -693,7 +693,8 @@ class ReadOnlyPromotionImpl final : public AllStatic {
       CHECK(HeapLayout::InReadOnlySpace(code));
 
       IndirectPointerSlot slot = code->RawIndirectPointerField(
-          Code::kSelfIndirectPointerOffset, kCodeIndirectPointerTag);
+          offsetof(ExposedTrustedObject, self_indirect_pointer_),
+          kCodeIndirectPointerTag);
       CodeEntrypointTag entrypoint_tag = code->entrypoint_tag();
 
       IndirectPointerHandle old_handle = slot.Relaxed_LoadHandle();

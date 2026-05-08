@@ -338,11 +338,12 @@ void WasmGraphAssembler::StoreMap(Node* heap_object, Node* map) {
 }
 
 Node* WasmGraphAssembler::LoadInstanceType(Node* map) {
-  return LoadImmutableFromObject(MachineType::Uint16(), map,
-                                 Map::kInstanceTypeOffset - kHeapObjectTag);
+  return LoadImmutableFromObject(
+      MachineType::Uint16(), map,
+      offsetof(Map, instance_type_) - kHeapObjectTag);
 }
 Node* WasmGraphAssembler::LoadWasmTypeInfo(Node* map) {
-  int offset = Map::kConstructorOrBackPointerOrNativeContextOffset;
+  int offset = offsetof(Map, constructor_or_back_pointer_or_native_context_);
   return LoadImmutableFromObject(MachineType::TaggedPointer(), map,
                                  offset - kHeapObjectTag);
 }
@@ -455,17 +456,18 @@ Node* WasmGraphAssembler::StoreFixedArrayElement(Node* array, int index,
 Node* WasmGraphAssembler::LoadSharedFunctionInfo(Node* js_function) {
   return LoadImmutableFromObject(
       MachineType::TaggedPointer(), js_function,
-      JSFunction::kSharedFunctionInfoOffset - kHeapObjectTag);
+      offsetof(JSFunction, shared_function_info_) - kHeapObjectTag);
 }
 Node* WasmGraphAssembler::LoadContextNoCellFromJSFunction(Node* js_function) {
   return LoadFromObject(MachineType::TaggedPointer(), js_function,
-                        JSFunction::kContextOffset - kHeapObjectTag);
+                        offsetof(JSFunction, context_) - kHeapObjectTag);
 }
 
 Node* WasmGraphAssembler::LoadFunctionDataFromJSFunction(Node* js_function) {
   Node* shared = LoadSharedFunctionInfo(js_function);
   return LoadImmutableTrustedPointerFromObject(
-      shared, SharedFunctionInfo::kTrustedFunctionDataOffset - kHeapObjectTag,
+      shared,
+      offsetof(SharedFunctionInfo, trusted_function_data_) - kHeapObjectTag,
       kWasmExportedFunctionDataIndirectPointerTag);
 }
 
@@ -473,14 +475,15 @@ Node* WasmGraphAssembler::LoadExportedFunctionInstanceData(
     Node* exported_function_data) {
   return LoadImmutableProtectedPointerFromObject(
       exported_function_data,
-      WasmExportedFunctionData::kProtectedInstanceDataOffset - kHeapObjectTag);
+      offsetof(WasmExportedFunctionData, protected_instance_data_) -
+          kHeapObjectTag);
 }
 
 // JavaScript objects.
 
 Node* WasmGraphAssembler::LoadJSArrayElements(Node* js_array) {
   return LoadFromObject(MachineType::AnyTagged(), js_array,
-                        JSObject::kElementsOffset - kHeapObjectTag);
+                        offsetof(JSObject, elements_) - kHeapObjectTag);
 }
 
 // WasmGC objects.
@@ -622,7 +625,8 @@ Node* WasmGraphAssembler::StringPrepareForGetCodeunit(Node* string) {
 Node* WasmGraphAssembler::LoadTrustedDataFromInstanceObject(
     Node* instance_object) {
   return LoadImmutableTrustedPointerFromObject(
-      instance_object, WasmInstanceObject::kTrustedDataOffset - kHeapObjectTag,
+      instance_object,
+      offsetof(WasmInstanceObject, trusted_data_) - kHeapObjectTag,
       kWasmTrustedInstanceDataIndirectPointerTag);
 }
 

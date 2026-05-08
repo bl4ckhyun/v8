@@ -2454,7 +2454,7 @@ IGNITION_HANDLER(JumpLoop, InterpreterAssembler) {
   // Perhaps we've got cached baseline code?
   Label maybe_osr_because_baseline(this);
   TNode<SharedFunctionInfo> sfi = LoadObjectField<SharedFunctionInfo>(
-      LoadFunctionClosure(), JSFunction::kSharedFunctionInfoOffset);
+      LoadFunctionClosure(), offsetof(JSFunction, shared_function_info_));
   GotoIfSharedFunctionInfoHasBaselineCode(sfi, &maybe_osr_because_baseline);
   Goto(&ok);
 
@@ -2816,7 +2816,7 @@ IGNITION_HANDLER(GetTemplateObject, InterpreterAssembler) {
   TNode<Context> context = GetContext();
   TNode<JSFunction> closure = LoadFunctionClosure();
   TNode<SharedFunctionInfo> shared_info = LoadObjectField<SharedFunctionInfo>(
-      closure, JSFunction::kSharedFunctionInfoOffset);
+      closure, offsetof(JSFunction, shared_function_info_));
   TNode<Object> description = LoadConstantPoolEntryAtOperandIndex(0);
   TNode<UintPtrT> slot = BytecodeOperandFeedbackSlot(1);
   TNode<Union<FeedbackVector, Undefined>> maybe_feedback_vector =
@@ -2974,9 +2974,9 @@ IGNITION_HANDLER(CreateMappedArguments, InterpreterAssembler) {
   // TODO(rmcilroy): Remove this check when FastNewSloppyArgumentsStub supports
   // duplicate parameters.
   TNode<SharedFunctionInfo> shared_info = LoadObjectField<SharedFunctionInfo>(
-      closure, JSFunction::kSharedFunctionInfoOffset);
-  TNode<Uint32T> flags =
-      LoadObjectField<Uint32T>(shared_info, SharedFunctionInfo::kFlagsOffset);
+      closure, offsetof(JSFunction, shared_function_info_));
+  TNode<Uint32T> flags = LoadObjectField<Uint32T>(
+      shared_info, offsetof(SharedFunctionInfo, flags_));
   TNode<BoolT> has_duplicate_parameters =
       IsSetWord32<SharedFunctionInfo::HasDuplicateParametersBit>(flags);
   Branch(has_duplicate_parameters, &if_duplicate_parameters,

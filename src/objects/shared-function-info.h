@@ -873,25 +873,6 @@ V8_OBJECT class SharedFunctionInfo : public HeapObject {
   static const uint16_t kFunctionTokenOutOfRange = static_cast<uint16_t>(-1);
   static_assert(kMaximumFunctionTokenOffset + 1 == kFunctionTokenOutOfRange);
 
-  // Back-compat layout constants. Defined out-of-line below the class using
-  // offsetof() / sizeof() so external call sites (builtins, compiler, CSA,
-  // serializer) keep compiling against SharedFunctionInfo::kXxxOffset.
-  static const int kTrustedFunctionDataOffset;
-  static const int kUntrustedFunctionDataOffset;
-  static const int kNameOrScopeInfoOffset;
-  static const int kOuterScopeInfoOrFeedbackMetadataOffset;
-  static const int kScriptOffset;
-  static const int kLengthOffset;
-  static const int kFormalParameterCountOffset;
-  static const int kFunctionTokenOffsetOffset;
-  static const int kExpectedNofPropertiesOffset;
-  static const int kFlags2Offset;
-  static const int kFlagsOffset;
-  static const int kFunctionLiteralIdOffset;
-  static const int kUniqueIdOffset;
-  static const int kAgeOffset;
-  static const int kFeedbackSlotOffset;
-  static const int kStartOfStrongFieldsOffset;
   static const int kEndOfStrongFieldsOffset;
   static const int kSize;
   static const int kHeaderSize;
@@ -956,6 +937,7 @@ V8_OBJECT class SharedFunctionInfo : public HeapObject {
 
   inline Tagged<BytecodeArray> GetBytecodeArrayInternal(Isolate* isolate) const;
 
+ public:
   // trusted_function_data may point at any concrete ExposedTrustedObject, so
   // the indirect-pointer tag range covers all trusted tags.
   TrustedPointerMember<ExposedTrustedObject, kAllIndirectPointerTags>
@@ -977,41 +959,6 @@ V8_OBJECT class SharedFunctionInfo : public HeapObject {
   std::atomic<uint16_t> feedback_slot_;
 } V8_OBJECT_END;
 
-// Back-compat layout constants. Defined here because offsetof()/sizeof() on
-// a not-yet-complete class cannot appear inside the class body.
-inline constexpr int SharedFunctionInfo::kTrustedFunctionDataOffset =
-    offsetof(SharedFunctionInfo, trusted_function_data_);
-inline constexpr int SharedFunctionInfo::kUntrustedFunctionDataOffset =
-    offsetof(SharedFunctionInfo, untrusted_function_data_);
-inline constexpr int SharedFunctionInfo::kNameOrScopeInfoOffset =
-    offsetof(SharedFunctionInfo, name_or_scope_info_);
-inline constexpr int
-    SharedFunctionInfo::kOuterScopeInfoOrFeedbackMetadataOffset =
-        offsetof(SharedFunctionInfo, outer_scope_info_or_feedback_metadata_);
-inline constexpr int SharedFunctionInfo::kScriptOffset =
-    offsetof(SharedFunctionInfo, script_);
-inline constexpr int SharedFunctionInfo::kLengthOffset =
-    offsetof(SharedFunctionInfo, length_);
-inline constexpr int SharedFunctionInfo::kFormalParameterCountOffset =
-    offsetof(SharedFunctionInfo, formal_parameter_count_);
-inline constexpr int SharedFunctionInfo::kFunctionTokenOffsetOffset =
-    offsetof(SharedFunctionInfo, function_token_offset_);
-inline constexpr int SharedFunctionInfo::kExpectedNofPropertiesOffset =
-    offsetof(SharedFunctionInfo, expected_nof_properties_);
-inline constexpr int SharedFunctionInfo::kFlags2Offset =
-    offsetof(SharedFunctionInfo, flags2_);
-inline constexpr int SharedFunctionInfo::kFlagsOffset =
-    offsetof(SharedFunctionInfo, flags_);
-inline constexpr int SharedFunctionInfo::kFunctionLiteralIdOffset =
-    offsetof(SharedFunctionInfo, function_literal_id_);
-inline constexpr int SharedFunctionInfo::kUniqueIdOffset =
-    offsetof(SharedFunctionInfo, unique_id_);
-inline constexpr int SharedFunctionInfo::kAgeOffset =
-    offsetof(SharedFunctionInfo, age_);
-inline constexpr int SharedFunctionInfo::kFeedbackSlotOffset =
-    offsetof(SharedFunctionInfo, feedback_slot_);
-inline constexpr int SharedFunctionInfo::kStartOfStrongFieldsOffset =
-    offsetof(SharedFunctionInfo, untrusted_function_data_);
 inline constexpr int SharedFunctionInfo::kEndOfStrongFieldsOffset =
     offsetof(SharedFunctionInfo, script_) + kTaggedSize;
 inline constexpr int SharedFunctionInfo::kSize = sizeof(SharedFunctionInfo);
@@ -1032,8 +979,6 @@ V8_OBJECT class SharedFunctionInfoWrapper : public TrustedObject {
   DECL_PRINTER(SharedFunctionInfoWrapper)
   DECL_VERIFIER(SharedFunctionInfoWrapper)
 
-  // Back-compat offset/size constants.
-  static const int kSharedInfoOffset;
   static const int kHeaderSize;
   static const int kSize;
 
@@ -1041,8 +986,6 @@ V8_OBJECT class SharedFunctionInfoWrapper : public TrustedObject {
   TaggedMember<SharedFunctionInfo> shared_info_;
 } V8_OBJECT_END;
 
-inline constexpr int SharedFunctionInfoWrapper::kSharedInfoOffset =
-    offsetof(SharedFunctionInfoWrapper, shared_info_);
 inline constexpr int SharedFunctionInfoWrapper::kHeaderSize =
     sizeof(SharedFunctionInfoWrapper);
 inline constexpr int SharedFunctionInfoWrapper::kSize =

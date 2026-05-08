@@ -1583,11 +1583,12 @@ void MacroAssembler::InvokeFunctionWithNewTarget(
   Register temp_reg = r7;
 
   LoadTaggedField(
-      temp_reg, FieldMemOperand(r4, JSFunction::kSharedFunctionInfoOffset), r0);
-  LoadTaggedField(cp, FieldMemOperand(r4, JSFunction::kContextOffset), r0);
+      temp_reg,
+      FieldMemOperand(r4, offsetof(JSFunction, shared_function_info_)), r0);
+  LoadTaggedField(cp, FieldMemOperand(r4, offsetof(JSFunction, context_)), r0);
   LoadU16(expected_reg,
-          FieldMemOperand(temp_reg,
-                          SharedFunctionInfo::kFormalParameterCountOffset));
+          FieldMemOperand(
+              temp_reg, offsetof(SharedFunctionInfo, formal_parameter_count_)));
 
   InvokeFunctionCode(fun, new_target, expected_reg, actual_parameter_count,
                      type);
@@ -1604,7 +1605,7 @@ void MacroAssembler::InvokeFunction(Register function,
   DCHECK_EQ(function, r4);
 
   // Get the function and setup the context.
-  LoadTaggedField(cp, FieldMemOperand(r4, JSFunction::kContextOffset), r0);
+  LoadTaggedField(cp, FieldMemOperand(r4, offsetof(JSFunction, context_)), r0);
 
   InvokeFunctionCode(r4, no_reg, expected_parameter_count,
                      actual_parameter_count, type);
@@ -1672,7 +1673,7 @@ void MacroAssembler::CompareInstanceTypeRange(Register map, Register type_reg,
                                               InstanceType lower_limit,
                                               InstanceType higher_limit) {
   DCHECK_LT(lower_limit, higher_limit);
-  LoadU16(type_reg, FieldMemOperand(map, Map::kInstanceTypeOffset));
+  LoadU16(type_reg, FieldMemOperand(map, offsetof(Map, instance_type_)));
   CompareRange(type_reg, scratch, lower_limit, higher_limit);
 }
 
@@ -1959,7 +1960,7 @@ void MacroAssembler::LoadMap(Register destination, Register object) {
 
 void MacroAssembler::LoadFeedbackCell(Register dst, Register closure) {
   LoadTaggedField(
-      dst, FieldMemOperand(closure, JSFunction::kFeedbackCellOffset), r0);
+      dst, FieldMemOperand(closure, offsetof(JSFunction, feedback_cell_)), r0);
 }
 
 void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
@@ -1973,7 +1974,7 @@ void MacroAssembler::LoadFeedbackVectorFromCell(Register dst,
   // Check if feedback vector is valid.
   LoadTaggedField(scratch, FieldMemOperand(dst, offsetof(HeapObject, map_)),
                   r0);
-  LoadU16(scratch, FieldMemOperand(scratch, Map::kInstanceTypeOffset));
+  LoadU16(scratch, FieldMemOperand(scratch, offsetof(Map, instance_type_)));
   CmpS32(scratch, Operand(FEEDBACK_VECTOR_TYPE), r0);
   b(eq, &done);
 
@@ -2024,7 +2025,8 @@ void MacroAssembler::LoadNativeContextSlot(Register dst, int index) {
   LoadMap(dst, cp);
   LoadTaggedField(
       dst,
-      FieldMemOperand(dst, Map::kConstructorOrBackPointerOrNativeContextOffset),
+      FieldMemOperand(
+          dst, offsetof(Map, constructor_or_back_pointer_or_native_context_)),
       r0);
   LoadTaggedField(dst, MemOperand(dst, Context::SlotOffset(index)), r0);
 }
@@ -2081,7 +2083,7 @@ void MacroAssembler::AssertConstructor(Register object) {
     Check(ne, AbortReason::kOperandIsASmiAndNotAConstructor, cr0);
     push(object);
     LoadMap(object, object);
-    lbz(object, FieldMemOperand(object, Map::kBitFieldOffset));
+    lbz(object, FieldMemOperand(object, offsetof(Map, bit_field_)));
     andi(object, object, Operand(Map::Bits1::IsConstructorBit::kMask));
     pop(object);
     Check(ne, AbortReason::kOperandIsNotAConstructor, cr0);
@@ -4779,8 +4781,9 @@ void MacroAssembler::CallJSFunction(Register function_object,
                                     uint16_t argument_count) {
   Register code = kJavaScriptCallCodeStartRegister;
   Register dispatch_handle = r0;
-  LoadU32(dispatch_handle,
-          FieldMemOperand(function_object, JSFunction::kDispatchHandleOffset));
+  LoadU32(
+      dispatch_handle,
+      FieldMemOperand(function_object, offsetof(JSFunction, dispatch_handle_)));
   LoadEntrypointFromJSDispatchTable(code, dispatch_handle, ip);
   Call(code);
 }
@@ -4809,8 +4812,9 @@ void MacroAssembler::JumpJSFunction(Register function_object, Register scratch,
                                     JumpMode jump_mode) {
   Register code = kJavaScriptCallCodeStartRegister;
   Register dispatch_handle = r0;
-  LoadU32(dispatch_handle,
-          FieldMemOperand(function_object, JSFunction::kDispatchHandleOffset));
+  LoadU32(
+      dispatch_handle,
+      FieldMemOperand(function_object, offsetof(JSFunction, dispatch_handle_)));
   LoadEntrypointFromJSDispatchTable(code, dispatch_handle, ip);
   Jump(code);
 }

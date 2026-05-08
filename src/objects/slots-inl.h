@@ -370,7 +370,7 @@ void IndirectPointerSlot::Relaxed_Store(
     Tagged<ExposedTrustedObject> value) const {
 #ifdef V8_ENABLE_SANDBOX
   IndirectPointerHandle handle = value->ReadField<IndirectPointerHandle>(
-      ExposedTrustedObject::kSelfIndirectPointerOffset);
+      offsetof(ExposedTrustedObject, self_indirect_pointer_));
   DCHECK_NE(handle, kNullIndirectPointerHandle);
   Relaxed_StoreHandle(handle);
 #else
@@ -382,7 +382,7 @@ void IndirectPointerSlot::Release_Store(
     Tagged<ExposedTrustedObject> value) const {
 #ifdef V8_ENABLE_SANDBOX
   IndirectPointerHandle handle = value->ReadField<IndirectPointerHandle>(
-      ExposedTrustedObject::kSelfIndirectPointerOffset);
+      offsetof(ExposedTrustedObject, self_indirect_pointer_));
   Release_StoreHandle(handle);
 #else
   UNREACHABLE();

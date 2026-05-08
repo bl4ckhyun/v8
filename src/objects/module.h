@@ -205,8 +205,6 @@ V8_OBJECT class JSModuleNamespace : public JSSpecialObject {
     kInObjectFieldCount,
   };
 
-  // Back-compat offset/size constants.
-  static const int kModuleOffset;
   static const int kHeaderSize;
   // We need to include in-object fields
   // TODO(v8:8944): improve handling of in-object fields
@@ -216,8 +214,6 @@ V8_OBJECT class JSModuleNamespace : public JSSpecialObject {
   TaggedMember<Module> module_;
 } V8_OBJECT_END;
 
-inline constexpr int JSModuleNamespace::kModuleOffset =
-    offsetof(JSModuleNamespace, module_);
 inline constexpr int JSModuleNamespace::kHeaderSize = sizeof(JSModuleNamespace);
 inline constexpr int JSModuleNamespace::kSize =
     JSModuleNamespace::kHeaderSize + (kTaggedSize * kInObjectFieldCount);

@@ -130,16 +130,6 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObject {
 
   class BodyDescriptor;
 
-  // Back-compat offset/size constants.
-  static const int kLengthOffset;
-  static const int kWrapperOffset;
-  static const int kSourcePositionTableOffset;
-  static const int kHandlerTableOffset;
-  static const int kConstantPoolOffset;
-  static const int kFrameSizeOffset;
-  static const int kParameterSizeOffset;
-  static const int kMaxArgumentsOffset;
-  static const int kIncomingNewTargetOrGeneratorRegisterOffset;
   static const int kHeaderSize;
   static const int kBytesOffset;
 
@@ -175,25 +165,6 @@ V8_OBJECT class BytecodeArray : public ExposedTrustedObject {
   FLEXIBLE_ARRAY_MEMBER(uint8_t, bytes);
 } V8_OBJECT_END;
 
-inline constexpr int BytecodeArray::kLengthOffset =
-    offsetof(BytecodeArray, length_);
-inline constexpr int BytecodeArray::kWrapperOffset =
-    offsetof(BytecodeArray, wrapper_);
-inline constexpr int BytecodeArray::kSourcePositionTableOffset =
-    offsetof(BytecodeArray, source_position_table_);
-inline constexpr int BytecodeArray::kHandlerTableOffset =
-    offsetof(BytecodeArray, handler_table_);
-inline constexpr int BytecodeArray::kConstantPoolOffset =
-    offsetof(BytecodeArray, constant_pool_);
-inline constexpr int BytecodeArray::kFrameSizeOffset =
-    offsetof(BytecodeArray, frame_size_);
-inline constexpr int BytecodeArray::kParameterSizeOffset =
-    offsetof(BytecodeArray, parameter_size_);
-inline constexpr int BytecodeArray::kMaxArgumentsOffset =
-    offsetof(BytecodeArray, max_arguments_);
-inline constexpr int
-    BytecodeArray::kIncomingNewTargetOrGeneratorRegisterOffset =
-        offsetof(BytecodeArray, incoming_new_target_or_generator_register_);
 inline constexpr int BytecodeArray::kHeaderSize =
     OFFSET_OF_DATA_START(BytecodeArray);
 inline constexpr int BytecodeArray::kBytesOffset =

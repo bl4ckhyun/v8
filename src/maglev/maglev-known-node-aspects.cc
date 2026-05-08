@@ -313,7 +313,7 @@ void KnownNodeAspects::UpdateMayHaveAliasingContexts(
       // Currently, the only way to leak a context via load tagged field is with
       // JSFunction or JSGeneratorObject.
       USE(load);
-      DCHECK(load->offset() == JSFunction::kContextOffset ||
+      DCHECK(load->offset() == offsetof(JSFunction, context_) ||
              load->offset() == offsetof(JSGeneratorObject, context_));
       may_have_aliasing_contexts_ = ContextSlotLoadsAlias::kYes;
       DCHECK(NodeTypeIs(GetTypeUnchecked(broker, context), NodeType::kContext));

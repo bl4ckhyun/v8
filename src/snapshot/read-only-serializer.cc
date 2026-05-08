@@ -88,24 +88,24 @@ class ObjectPreProcessor final {
 
   void PreProcessAccessorInfo(Tagged<AccessorInfo> o) {
     EncodeExternalPointerSlot(
-        o->RawExternalPointerField(AccessorInfo::kGetterOffset,
+        o->RawExternalPointerField(offsetof(AccessorInfo, getter_),
                                    kAccessorInfoGetterTag),
         o->getter(isolate_));  // Pass the non-redirected value.
     EncodeExternalPointerSlot(o->RawExternalPointerField(
-        AccessorInfo::kSetterOffset, kAccessorInfoSetterTag));
+        offsetof(AccessorInfo, setter_), kAccessorInfoSetterTag));
   }
   void PreProcessInterceptorInfo(Tagged<InterceptorInfo> o) {
     const bool is_named = o->is_named();
 
 #define PROCESS_NAMED_FIELD(Name, name)                                 \
   EncodeExternalPointerSlot(                                            \
-      o->RawExternalPointerField(InterceptorInfo::k##Name##Offset,      \
+      o->RawExternalPointerField(offsetof(InterceptorInfo, name##_),    \
                                  kApiNamedProperty##Name##CallbackTag), \
       o->named_##name(isolate_) /* non-redirected */);
 
 #define PROCESS_INDEXED_FIELD(Name, name)                                 \
   EncodeExternalPointerSlot(                                              \
-      o->RawExternalPointerField(InterceptorInfo::k##Name##Offset,        \
+      o->RawExternalPointerField(offsetof(InterceptorInfo, name##_),      \
                                  kApiIndexedProperty##Name##CallbackTag), \
       o->indexed_##name(isolate_) /* non-redirected */);
 

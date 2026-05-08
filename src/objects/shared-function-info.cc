@@ -31,9 +31,10 @@ V8_EXPORT_PRIVATE constexpr Tagged<Smi>
 Tagged<Union<Smi, TrustedObject>> SharedFunctionInfo::GetTrustedData(
     IsolateForSandbox isolate) const {
   return TrustedPointerField::ReadMaybeEmptyTrustedPointerField<
-      kTrustedDataIndirectPointerRange>(Tagged<HeapObject>(this),
-                                        kTrustedFunctionDataOffset, isolate,
-                                        kAcquireLoad);
+      kTrustedDataIndirectPointerRange>(
+      Tagged<HeapObject>(this),
+      offsetof(SharedFunctionInfo, trusted_function_data_), isolate,
+      kAcquireLoad);
 }
 
 uint32_t SharedFunctionInfo::Hash() {
@@ -274,11 +275,11 @@ void SharedFunctionInfo::CopyFrom(Tagged<SharedFunctionInfo> other,
   // field (could be reset concurrently). Compare content before age field now:
   DCHECK_EQ(memcmp(reinterpret_cast<void*>(address()),
                    reinterpret_cast<void*>(other.address()),
-                   SharedFunctionInfo::kAgeOffset),
+                   offsetof(SharedFunctionInfo, age_)),
             0);
   // Compare content after age field.
   constexpr Address kPastAgeOffset =
-      SharedFunctionInfo::kAgeOffset + SharedFunctionInfo::kAgeSize;
+      offsetof(SharedFunctionInfo, age_) + SharedFunctionInfo::kAgeSize;
   DCHECK_EQ(memcmp(reinterpret_cast<void*>(address() + kPastAgeOffset),
                    reinterpret_cast<void*>(other.address() + kPastAgeOffset),
                    SharedFunctionInfo::kSize - kPastAgeOffset),
@@ -407,7 +408,8 @@ void SharedFunctionInfo::DiscardCompiledMetadata(
       set_raw_outer_scope_info_or_feedback_metadata(outer_scope_info);
       gc_notify_updated_slot(
           this,
-          RawField(SharedFunctionInfo::kOuterScopeInfoOrFeedbackMetadataOffset),
+          RawField(offsetof(SharedFunctionInfo,
+                            outer_scope_info_or_feedback_metadata_)),
           outer_scope_info);
     } else {
       // Raw setter to avoid validity checks, since we're performing the unusual

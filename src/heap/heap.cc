@@ -7163,7 +7163,7 @@ void Heap::EnqueueDirtyJSFinalizationRegistry(
         dirty_js_finalization_registries_list_tail());
     tail->set_next_dirty(finalization_registry, write_barrier_mode);
     gc_notify_updated_slot(
-        tail, tail->RawField(JSFinalizationRegistry::kNextDirtyOffset),
+        tail, tail->RawField(offsetof(JSFinalizationRegistry, next_dirty_)),
         finalization_registry);
   }
   set_dirty_js_finalization_registries_list_tail(finalization_registry);

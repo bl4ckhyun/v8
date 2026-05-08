@@ -309,10 +309,10 @@ class ObjectPostProcessor final {
   }
   void PostProcessAccessorInfo(Tagged<AccessorInfo> o) {
     DecodeExternalPointerSlot(
-        o, o->RawExternalPointerField(AccessorInfo::kSetterOffset,
+        o, o->RawExternalPointerField(offsetof(AccessorInfo, setter_),
                                       kAccessorInfoSetterTag));
     DecodeExternalPointerSlot(
-        o, o->RawExternalPointerField(AccessorInfo::kGetterOffset,
+        o, o->RawExternalPointerField(offsetof(AccessorInfo, getter_),
                                       kAccessorInfoGetterTag));
     if (USE_SIMULATOR_BOOL) {
       o->RestoreCallbackRedirectionAfterDeserialization(isolate_);
@@ -321,14 +321,14 @@ class ObjectPostProcessor final {
   void PostProcessInterceptorInfo(Tagged<InterceptorInfo> o) {
     const bool is_named = o->is_named();
 
-#define PROCESS_NAMED_FIELD(Name, name)                               \
-  DecodeLazilyInitializedExternalPointerSlot(                         \
-      o, o->RawExternalPointerField(InterceptorInfo::k##Name##Offset, \
+#define PROCESS_NAMED_FIELD(Name, name)                                 \
+  DecodeLazilyInitializedExternalPointerSlot(                           \
+      o, o->RawExternalPointerField(offsetof(InterceptorInfo, name##_), \
                                     kApiNamedProperty##Name##CallbackTag));
 
-#define PROCESS_INDEXED_FIELD(Name, name)                             \
-  DecodeLazilyInitializedExternalPointerSlot(                         \
-      o, o->RawExternalPointerField(InterceptorInfo::k##Name##Offset, \
+#define PROCESS_INDEXED_FIELD(Name, name)                               \
+  DecodeLazilyInitializedExternalPointerSlot(                           \
+      o, o->RawExternalPointerField(offsetof(InterceptorInfo, name##_), \
                                     kApiIndexedProperty##Name##CallbackTag));
 
     if (is_named) {

@@ -5080,9 +5080,10 @@ ReduceResult MaglevGraphBuilder::BuildLoadJSArrayLength(ValueNode* js_array,
   }
 
   ValueNode* length;
-  GET_VALUE_OR_ABORT(length, BuildLoadTaggedField(
-                                 js_array, JSArray::kLengthOffset, length_type,
-                                 false, broker()->length_string()));
+  GET_VALUE_OR_ABORT(
+      length,
+      BuildLoadTaggedField(js_array, offsetof(JSArray, length_), length_type,
+                           false, broker()->length_string()));
   RecordKnownProperty(js_array, broker()->length_string(), length, false,
                       compiler::AccessMode::kLoad);
   return length;
@@ -5136,7 +5137,7 @@ ReduceResult MaglevGraphBuilder::BuildLoadJSFunctionFeedbackCell(
   }
   // The feedback cell is only set when the JSFunction is allocated, or via
   // LiveEdit, but that doesn't concern optimized code, so treat it as const.
-  return BuildLoadTaggedField(closure, JSFunction::kFeedbackCellOffset,
+  return BuildLoadTaggedField(closure, offsetof(JSFunction, feedback_cell_),
                               LoadType::kUnknown, true);
 }
 
@@ -5152,7 +5153,7 @@ ReduceResult MaglevGraphBuilder::BuildLoadJSFunctionContext(
   if (auto slow_closure = closure->TryCast<CreateClosure>()) {
     return slow_closure->ContextInput().node();
   }
-  return BuildLoadTaggedField(closure, JSFunction::kContextOffset,
+  return BuildLoadTaggedField(closure, offsetof(JSFunction, context_),
                               LoadType::kContext);
 }
 
@@ -5905,10 +5906,9 @@ ReduceResult MaglevGraphBuilder::BuildLoadElements(
     return known_elements;
   }
 
-  DCHECK_EQ(JSObject::kElementsOffset, JSArray::kElementsOffset);
   ValueNode* elements;
-  GET_VALUE_OR_ABORT(elements,
-                     BuildLoadTaggedField(object, JSObject::kElementsOffset));
+  GET_VALUE_OR_ABORT(
+      elements, BuildLoadTaggedField(object, offsetof(JSObject, elements_)));
   RecordKnownProperty(object, PropertyKey::Elements(), elements, false,
                       compiler::AccessMode::kLoad);
   if (is_turbolev() && kind.has_value()) {
@@ -6322,7 +6322,7 @@ std::optional<int32_t> MaglevGraphBuilder::CanElideBoundCheckAndResizing(
   if (!vobj->map() || !vobj->map()->IsJSArrayMap()) return {};
 
   SmiConstant* array_length =
-      vobj->get(JSArray::kLengthOffset)->TryCast<SmiConstant>();
+      vobj->get(offsetof(JSArray, length_))->TryCast<SmiConstant>();
   if (!array_length) return {};
 
   if (array_length->value().value() <= *int32_index) return {};
@@ -7406,7 +7406,7 @@ ReduceResult MaglevGraphBuilder::VisitGetNamedPropertyFromSuper() {
   ValueNode* lookup_start_object;
   GET_VALUE_OR_ABORT(
       lookup_start_object,
-      BuildLoadTaggedField(home_object_map, Map::kPrototypeOffset));
+      BuildLoadTaggedField(home_object_map, offsetof(Map, prototype_)));
 
   auto build_generic_access = [this, &receiver, &lookup_start_object, &name,
                                &feedback_source]() {
@@ -8215,7 +8215,7 @@ ReduceResult MaglevGraphBuilder::VisitGetSuperConstructor() {
   GET_VALUE(map,
             BuildLoadTaggedField(active_function, offsetof(HeapObject, map_)));
   ValueNode* map_proto;
-  GET_VALUE(map_proto, BuildLoadTaggedField(map, Map::kPrototypeOffset));
+  GET_VALUE(map_proto, BuildLoadTaggedField(map, offsetof(Map, prototype_)));
   StoreRegister(iterator_.GetRegisterOperand(0), map_proto);
   return ReduceResult::Done();
 }
@@ -8878,7 +8878,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayMap(
     GET_VALUE_OR_ABORT(
         array, CreateJSArray(holey_smi_map, holey_smi_map.instance_size(),
                              length_smi));
-    array->set(JSArray::kElementsOffset, elements);
+    array->set(offsetof(JSObject, elements_), elements);
     GET_VALUE_OR_ABORT(result_array,
                        BuildInlinedAllocation(array, AllocationType::kYoung));
     return ReduceResult::Done();
@@ -11273,7 +11273,8 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypePush(
     GET_VALUE_OR_ABORT(new_array_length_smi,
                        AddNewNode<UnsafeSmiTagInt32>({new_array_length}));
     RETURN_IF_ABORT(AddNewNode<StoreTaggedFieldNoWriteBarrier>(
-        {receiver, new_array_length_smi}, JSArray::kLengthOffset,
+        {receiver, new_array_length_smi},
+        static_cast<int>(offsetof(JSArray, length_)),
         StoreTaggedMode::kDefault));
 
     for (int index = 0; index < static_cast<int>(args_to_store.size());
@@ -11427,8 +11428,9 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypePop(
 
     // Store new length.
     RETURN_IF_ABORT(AddNewNode<StoreTaggedFieldNoWriteBarrier>(
-        {receiver, new_array_length_smi}, JSArray::kLengthOffset,
-        StoreTaggedMode::kDefault, broker()->length_string()));
+        {receiver, new_array_length_smi},
+        static_cast<int>(offsetof(JSArray, length_)), StoreTaggedMode::kDefault,
+        broker()->length_string()));
 
     // Load the value and store the hole in it's place.
     ValueNode* value;
@@ -13018,7 +13020,7 @@ ReduceResult MaglevGraphBuilder::ReduceCallWithArrayLikeForArgumentsObject(
          arguments_object->map()->IsJSArrayMap());
   args.PopArrayLikeArgument();
   ValueNode* elements_value =
-      arguments_object->get(JSArgumentsObject::kElementsOffset);
+      arguments_object->get(offsetof(JSObject, elements_));
   if (ArgumentsElements* arguments_elements =
           elements_value->TryCast<ArgumentsElements>()) {
     return BuildCallForwardArgumentsElements<CallForwardVarargs>(
@@ -13080,7 +13082,7 @@ MaglevGraphBuilder::TryReduceConstructWithSpreadForArgumentsObject(
          arguments_object->map()->IsJSArrayMap());
 
   ValueNode* elements_value =
-      arguments_object->get(JSArgumentsObject::kElementsOffset);
+      arguments_object->get(offsetof(JSObject, elements_));
   if (ArgumentsElements* arguments_elements =
           elements_value->TryCast<ArgumentsElements>()) {
     // For call/construct with spread, we need to also install a code
@@ -13130,8 +13132,8 @@ MaglevGraphBuilder::TryGetNonEscapingArgumentsObject(ValueNode* value) {
   compiler::MapRef map = *object->map();
   // It is a rest parameter, if it is an array with ArgumentsElements node as
   // the elements array.
-  if (map.IsJSArrayMap() && object->get(JSArgumentsObject::kElementsOffset)
-                                ->Is<ArgumentsElements>()) {
+  if (map.IsJSArrayMap() &&
+      object->get(offsetof(JSObject, elements_))->Is<ArgumentsElements>()) {
     return object;
   }
   // TODO(victorgomes): We can loosen the IsSloppyMappedArgumentsObject
@@ -13717,7 +13719,7 @@ ReduceResult MaglevGraphBuilder::BuildAndAllocateKeyValueArray(
   VirtualObject* array;
   GET_VALUE_OR_ABORT(
       array, CreateJSArray(map, map.instance_size(), GetInt32Constant(2)));
-  array->set(JSArray::kElementsOffset, elements);
+  array->set(offsetof(JSObject, elements_), elements);
   return BuildInlinedAllocation(array, AllocationType::kYoung);
 }
 
@@ -13729,7 +13731,7 @@ ReduceResult MaglevGraphBuilder::BuildAndAllocateJSArray(
   GET_VALUE_OR_ABORT(
       array,
       CreateJSArray(map, slack_tracking_prediction.instance_size(), length));
-  array->set(JSArray::kElementsOffset, elements);
+  array->set(offsetof(JSObject, elements_), elements);
   for (int i = 0; i < slack_tracking_prediction.inobject_property_count();
        i++) {
     array->set(map.GetInObjectPropertyOffset(i),
@@ -14682,7 +14684,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
   if (!maybe_elements.has_value()) return {};
   compiler::FixedArrayBaseRef boilerplate_elements = maybe_elements.value();
   broker()->dependencies()->DependOnObjectSlotValue(
-      boilerplate, JSObject::kElementsOffset, boilerplate_elements);
+      boilerplate, offsetof(JSObject, elements_), boilerplate_elements);
   const uint32_t elements_length = boilerplate_elements.length();
 
   VirtualObject* fast_literal;
@@ -14768,7 +14770,6 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
     fast_literal->set(offset, GetRootConstant(RootIndex::kUndefinedValue));
   }
 
-  DCHECK_EQ(JSObject::kElementsOffset, JSArray::kElementsOffset);
   // Empty or copy-on-write elements just store a constant.
   compiler::MapRef elements_map = boilerplate_elements.map(broker());
   // Protect against concurrent changes to the boilerplate object by checking
@@ -14781,7 +14782,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
         !boilerplate.IsElementsTenured(boilerplate_elements)) {
       return {};
     }
-    fast_literal->set(JSObject::kElementsOffset,
+    fast_literal->set(offsetof(JSObject, elements_),
                       GetConstant(boilerplate_elements));
   } else {
     // Compute the elements to store first (might have effects).
@@ -14798,7 +14799,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
             boilerplate_elements_as_fda.GetFromImmutableFixedDoubleArray(i)));
       }
 
-      fast_literal->set(JSObject::kElementsOffset,
+      fast_literal->set(offsetof(JSObject, elements_),
                         CreateFixedDoubleArray(base::VectorOf(values)));
     } else {
       int const size = FixedArray::SizeFor(elements_length);
@@ -14829,7 +14830,7 @@ MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
       }
 
       VirtualObject* elements = CreateFixedArray(base::VectorOf(values));
-      fast_literal->set(JSObject::kElementsOffset, elements);
+      fast_literal->set(offsetof(JSObject, elements_), elements);
     }
   }
 
@@ -14885,7 +14886,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSObject(compiler::MapRef map) {
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSObject::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
 
   // Initialize all in-object property slots to undefined.
@@ -14914,9 +14915,9 @@ ReduceResult MaglevGraphBuilder::CreateJSArray(compiler::MapRef map,
   // TODO(454485895): Consider removing this workaround since
   // HoleyFloat64ToTagged now canonicalizes by default.
   RETURN_IF_ABORT(GetSmiValue(length));
-  vobj->set(JSArray::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSArray::kLengthOffset, length);
+  vobj->set(offsetof(JSArray, length_), length);
   return vobj;
 }
 
@@ -14932,7 +14933,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSStringWrapper(ValueNode* value) {
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSObject::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSPrimitiveWrapper, value_), value);
   return vobj;
@@ -14973,7 +14974,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSConstructor(
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSObject, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSObject::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   if (prediction.inobject_property_count() != 0) {
     ValueNode* undefined = GetRootConstant(RootIndex::kUndefinedValue);
@@ -15066,7 +15067,7 @@ VirtualObject* MaglevGraphBuilder::CreateContext(
       zone(), 0, NewObjectId(), this, &Shape::kObjectLayout, map, slot_count);
 
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
-  vobj->set(Context::kLengthOffset, GetSmiConstant(length));
+  vobj->set(offsetof(Context, length_), GetSmiConstant(length));
   vobj->set(Context::OffsetOfElementAt(Context::SCOPE_INFO_INDEX),
             GetConstant(scope_info));
   vobj->set(Context::OffsetOfElementAt(Context::PREVIOUS_INDEX),
@@ -15090,8 +15091,8 @@ VirtualObject* MaglevGraphBuilder::CreateArgumentsObject(
     compiler::MapRef map, ValueNode* length, ValueNode* elements,
     std::optional<ValueNode*> callee) {
   using Shape = VirtualJSObjectShape;
-  DCHECK_EQ(JSSloppyArgumentsObject::kLengthOffset, JSArray::kLengthOffset);
-  DCHECK_EQ(JSStrictArgumentsObject::kLengthOffset, JSArray::kLengthOffset);
+  DCHECK_EQ(JSSloppyArgumentsObject::kLengthOffset, offsetof(JSArray, length_));
+  DCHECK_EQ(JSStrictArgumentsObject::kLengthOffset, offsetof(JSArray, length_));
   int slot_count = map.instance_size() / kTaggedSize;
   SBXCHECK_EQ(slot_count, callee.has_value() ? 5 : 4);
   VirtualObject* vobj = NodeBase::New<VirtualObject>(
@@ -15099,10 +15100,10 @@ VirtualObject* MaglevGraphBuilder::CreateArgumentsObject(
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSArray, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSArray::kElementsOffset, elements);
+  vobj->set(offsetof(JSObject, elements_), elements);
   CHECK(length->Is<Int32Constant>() || length->Is<ArgumentsLength>() ||
         length->Is<RestLength>());
-  vobj->set(JSArray::kLengthOffset, length);
+  vobj->set(offsetof(JSArray, length_), length);
   if (callee.has_value()) {
     vobj->set(JSSloppyArgumentsObject::kCalleeOffset, callee.value());
   }
@@ -15145,12 +15146,12 @@ VirtualObject* MaglevGraphBuilder::CreateRegExpLiteralObject(
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSRegExp, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSRegExp::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSRegExp::kDataOffset,
+  vobj->set(offsetof(JSRegExp, data_),
             GetTrustedConstant(literal.data(broker()),
                                kRegExpDataIndirectPointerTag));
-  vobj->set(JSRegExp::kFlagsOffset, GetInt32Constant(literal.flags()));
+  vobj->set(offsetof(JSRegExp, flags_), GetInt32Constant(literal.flags()));
   vobj->set(JSRegExp::kLastIndexOffset,
             GetInt32Constant(JSRegExp::kInitialLastIndexValue));
   return vobj;
@@ -15247,7 +15248,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSPromiseObject() {
   vobj->set(offsetof(HeapObject, map_), GetConstant(promise_map));
   vobj->set(offsetof(JSPromise, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSPromise::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(offsetof(JSPromise, reactions_or_result_), GetSmiConstant(0));
   static_assert(v8::Promise::kPending == 0);
@@ -15273,7 +15274,7 @@ VirtualObject* MaglevGraphBuilder::CreateJSIteratorResult(compiler::MapRef map,
   vobj->set(offsetof(HeapObject, map_), GetConstant(map));
   vobj->set(offsetof(JSIteratorResult, properties_or_hash_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
-  vobj->set(JSIteratorResult::kElementsOffset,
+  vobj->set(offsetof(JSObject, elements_),
             GetRootConstant(RootIndex::kEmptyFixedArray));
   vobj->set(JSIteratorResult::kValueOffset, value);
   vobj->set(JSIteratorResult::kDoneOffset, done);
@@ -16825,13 +16826,13 @@ ReduceResult MaglevGraphBuilder::VisitForInPrepare() {
           {receiver_map, enumerator}, DeoptimizeReason::kWrongMapDynamic));
 
       ValueNode* descriptor_array;
-      GET_VALUE_OR_ABORT(
-          descriptor_array,
-          BuildLoadTaggedField(enumerator, Map::kInstanceDescriptorsOffset));
+      GET_VALUE_OR_ABORT(descriptor_array,
+                         BuildLoadTaggedField(
+                             enumerator, offsetof(Map, instance_descriptors_)));
       ValueNode* enum_cache;
       GET_VALUE(enum_cache,
                 BuildLoadTaggedField(descriptor_array,
-                                     DescriptorArray::kEnumCacheOffset));
+                                     offsetof(DescriptorArray, enum_cache_)));
       ValueNode* cache_array;
       GET_VALUE(cache_array,
                 BuildLoadTaggedField(enum_cache, offsetof(EnumCache, keys_)));

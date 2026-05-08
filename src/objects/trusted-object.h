@@ -150,18 +150,14 @@ V8_OBJECT class ExposedTrustedObject : public TrustedObject {
 
   DECL_VERIFIER(ExposedTrustedObject)
 
-  // Back-compat offset/size constants. Defined after the member declarations
-  // using offsetof / sizeof so the collapse doesn't churn call sites that
-  // reference e.g. `ExposedTrustedObject::kSelfIndirectPointerOffset` or
-  // `ExposedTrustedObject::kHeaderSize`.
 #ifdef V8_ENABLE_SANDBOX
-  static const int kSelfIndirectPointerOffset;
 #endif  // V8_ENABLE_SANDBOX
   static const int kHeaderSize;
 
  private:
   friend class TorqueGeneratedExposedTrustedObjectAsserts;
 
+ public:
 #ifdef V8_ENABLE_SANDBOX
   // The 'self' indirect pointer is only available when the sandbox is enabled.
   // Otherwise, these objects are referenced through direct pointers.
@@ -170,8 +166,6 @@ V8_OBJECT class ExposedTrustedObject : public TrustedObject {
 } V8_OBJECT_END;
 
 #ifdef V8_ENABLE_SANDBOX
-inline constexpr int ExposedTrustedObject::kSelfIndirectPointerOffset =
-    offsetof(ExposedTrustedObject, self_indirect_pointer_);
 #endif  // V8_ENABLE_SANDBOX
 inline constexpr int ExposedTrustedObject::kHeaderSize =
     sizeof(ExposedTrustedObject);

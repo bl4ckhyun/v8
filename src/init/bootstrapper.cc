@@ -6433,7 +6433,7 @@ bool Genesis::InstallABunchOfRandomThings() {
         FieldIndex index =
             FieldIndex::ForDescriptor(template_object->map(), descriptor_index);
         CHECK(index.is_inobject());
-        CHECK_EQ(index.offset(), TemplateLiteralObject::kRawOffset);
+        CHECK_EQ(index.offset(), offsetof(TemplateLiteralObject, raw_));
       }
 
       {
@@ -6445,7 +6445,7 @@ bool Genesis::InstallABunchOfRandomThings() {
             FieldIndex::ForDescriptor(template_object->map(), descriptor_index);
         CHECK(index.is_inobject());
         CHECK_EQ(index.offset(),
-                 TemplateLiteralObject::kFunctionLiteralIdOffset);
+                 offsetof(TemplateLiteralObject, function_literal_id_));
       }
 
       {
@@ -6456,7 +6456,7 @@ bool Genesis::InstallABunchOfRandomThings() {
         FieldIndex index =
             FieldIndex::ForDescriptor(template_object->map(), descriptor_index);
         CHECK(index.is_inobject());
-        CHECK_EQ(index.offset(), TemplateLiteralObject::kSlotIdOffset);
+        CHECK_EQ(index.offset(), offsetof(TemplateLiteralObject, slot_id_));
       }
     }
 

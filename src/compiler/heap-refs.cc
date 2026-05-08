@@ -435,7 +435,7 @@ V8_NOINLINE
 #endif
 size_t RacyReadJSTypedArrayLength(Tagged<JSTypedArray> object) {
   Address field_address =
-      object->address() + JSArrayBufferView::kRawByteLengthOffset;
+      object->address() + offsetof(JSArrayBufferView, raw_byte_length_);
 #ifdef V8_ENABLE_SANDBOX
   size_t raw_value = base::ReadUnalignedValue<size_t>(field_address);
   return raw_value >> kBoundedSizeShift;
@@ -944,7 +944,7 @@ bool IsReadOnlyLengthDescriptor(JSHeapBroker* broker, MapRef jsarray_map) {
   DCHECK(!jsarray_map.is_dictionary_map());
   DescriptorArrayRef descriptors = jsarray_map.instance_descriptors(broker);
   static_assert(
-      JSArray::kLengthOffset == JSObject::kHeaderSize,
+      offsetof(JSArray, length_) == JSObject::kHeaderSize,
       "The length should be the first property on the descriptor array");
   InternalIndex offset(0);
   return descriptors.GetPropertyDetails(offset).IsReadOnly();

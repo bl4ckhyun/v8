@@ -1867,8 +1867,9 @@ class MergeAssumptionChecker final : public ObjectVisitor {
                      host.address() + offsetof(Script, eval_from_scope_info_)));
         } else if (IsScript(obj)) {
           CHECK(IsSharedFunctionInfo(host) &&
-                current == MaybeObjectSlot(host.address() +
-                                           SharedFunctionInfo::kScriptOffset));
+                current ==
+                    MaybeObjectSlot(host.address() +
+                                    offsetof(SharedFunctionInfo, script_)));
         } else if (IsFixedArray(obj) && current_object_kind_ == kConstantPool) {
           // Constant pools can contain nested fixed arrays, which in turn can
           // point to SFIs.

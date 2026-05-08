@@ -222,7 +222,8 @@ void WasmGraphBuilder::Start(unsigned params) {
                AbortReason::kUnexpectedInstanceType);
       }
       instance_data_node_ = gasm_->LoadProtectedPointerFromObject(
-          param, WasmImportData::kProtectedInstanceDataOffset - kHeapObjectTag);
+          param,
+          offsetof(WasmImportData, protected_instance_data_) - kHeapObjectTag);
       break;
     }
     case kJSFunctionAbiMode: {
@@ -508,13 +509,13 @@ class WasmWrapperGraphBuilder : public WasmGraphBuilder {
     // target independent, in particular for tier-up.
     Node* internal = gasm_->LoadImmutableProtectedPointerFromObject(
         function_data,
-        WasmFunctionData::kProtectedInternalOffset - kHeapObjectTag);
+        offsetof(WasmFunctionData, protected_internal_) - kHeapObjectTag);
     args[0] = gasm_->LoadFromObject(
         MachineType::Uint32(), internal,
-        WasmInternalFunction::kRawCallTargetOffset - kHeapObjectTag);
+        offsetof(WasmInternalFunction, raw_call_target_) - kHeapObjectTag);
     Node* implicit_arg = gasm_->LoadImmutableProtectedPointerFromObject(
-        internal,
-        WasmInternalFunction::kProtectedImplicitArgOffset - kHeapObjectTag);
+        internal, offsetof(WasmInternalFunction, protected_implicit_arg_) -
+                      kHeapObjectTag);
     BuildWasmCall(wrapper_sig_, base::VectorOf(args), base::VectorOf(rets),
                   implicit_arg, true, frame_state);
 

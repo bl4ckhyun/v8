@@ -1419,11 +1419,11 @@ Handle<Map> Map::Normalize(Isolate* isolate, DirectHandle<Map> fast_map,
         Map::SetPrototype(isolate, fresh, new_prototype);
       }
 
-      static_assert(Map::kPrototypeValidityCellOffset ==
-                    Map::kDependentCodeOffset + kTaggedSize);
+      static_assert(offsetof(Map, prototype_validity_cell_) ==
+                    offsetof(Map, dependent_code_) + kTaggedSize);
       DCHECK_EQ(0, memcmp(reinterpret_cast<void*>(fresh->address()),
                           reinterpret_cast<void*>(new_map->address()),
-                          Map::kBitField3Offset));
+                          offsetof(Map, bit_field3_)));
       // The IsInRetainedMapListBit might be different if the {new_map}
       // that we got from the {cache} was already embedded into optimized
       // code somewhere.
@@ -1434,16 +1434,16 @@ Handle<Map> Map::Normalize(Isolate* isolate, DirectHandle<Map> fast_map,
           Bits3::IsMigrationTargetBit::kMask;
       DCHECK_EQ(fresh->bit_field3() & ~ignored_bit_field3_bits,
                 new_map->bit_field3() & ~ignored_bit_field3_bits);
-      int offset = Map::kBitField3Offset + kInt32Size;
+      int offset = offsetof(Map, bit_field3_) + kInt32Size;
       DCHECK_EQ(0, memcmp(reinterpret_cast<void*>(fresh->address() + offset),
                           reinterpret_cast<void*>(new_map->address() + offset),
-                          Map::kDependentCodeOffset - offset));
-      offset = Map::kPrototypeValidityCellOffset + kTaggedSize;
+                          offsetof(Map, dependent_code_) - offset));
+      offset = offsetof(Map, prototype_validity_cell_) + kTaggedSize;
       if (new_map->is_prototype_map()) {
         // For prototype maps, the PrototypeInfo is not copied.
-        static_assert(Map::kTransitionsOrPrototypeInfoOffset ==
-                      Map::kPrototypeValidityCellOffset + kTaggedSize);
-        offset = kTransitionsOrPrototypeInfoOffset + kTaggedSize;
+        static_assert(offsetof(Map, transitions_or_prototype_info_) ==
+                      offsetof(Map, prototype_validity_cell_) + kTaggedSize);
+        offset = offsetof(Map, transitions_or_prototype_info_) + kTaggedSize;
         DCHECK_EQ(fresh->raw_transitions(), Smi::zero());
       }
       DCHECK_EQ(0, memcmp(reinterpret_cast<void*>(fresh->address() + offset),

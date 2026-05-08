@@ -4765,16 +4765,16 @@ JSCallReducer::ReduceCallOrConstructWithArrayLikeOrSpreadOfCreateArguments(
       case IrOpcode::kLoadField: {
         DCHECK_EQ(arguments_list, user->InputAt(0));
         FieldAccess const& access = FieldAccessOf(user->op());
-        if (access.offset == JSArray::kLengthOffset) {
+        if (access.offset == offsetof(JSArray, length_)) {
           // Ignore uses for arguments#length.
           static_assert(
-              static_cast<int>(JSArray::kLengthOffset) ==
+              static_cast<int>(offsetof(JSArray, length_)) ==
               static_cast<int>(JSStrictArgumentsObject::kLengthOffset));
           static_assert(
-              static_cast<int>(JSArray::kLengthOffset) ==
+              static_cast<int>(offsetof(JSArray, length_)) ==
               static_cast<int>(JSSloppyArgumentsObject::kLengthOffset));
           continue;
-        } else if (access.offset == JSObject::kElementsOffset) {
+        } else if (access.offset == offsetof(JSObject, elements_)) {
           // Ignore safe uses for arguments#elements.
           if (IsSafeArgumentsElements(user)) continue;
         }

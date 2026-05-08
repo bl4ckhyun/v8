@@ -204,7 +204,7 @@ class TurbolevEarlyLoweringReducer : public Next {
       V<Smi> new_length_tagged = __ TagSmi(new_length_raw);
       __ Store(object, new_length_tagged, StoreOp::Kind::TaggedBase(),
                MemoryRepresentation::TaggedSigned(),
-               WriteBarrierKind::kNoWriteBarrier, JSArray::kLengthOffset);
+               WriteBarrierKind::kNoWriteBarrier, offsetof(JSArray, length_));
       GOTO(done, new_length_tagged);
     }
 

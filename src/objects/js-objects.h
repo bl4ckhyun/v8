@@ -383,10 +383,6 @@ V8_OBJECT class JSReceiver : public HeapObject {
 // caching.
 V8_OBJECT class JSObject : public JSReceiver {
  public:
-  // Back-compat offset/size constants. Defined out-of-line below so they
-  // can use sizeof(JSObject) / offsetof(JSObject, ...) once the class is
-  // complete.
-  static const int kElementsOffset;
   static const int kEndOfStrongFieldsOffset;
   static const int kHeaderSize;
   static constexpr int kMapOffset = offsetof(HeapObject, map_);
@@ -1036,9 +1032,8 @@ V8_OBJECT class JSObject : public JSReceiver {
   TaggedMember<FixedArrayBase> elements_;
 } V8_OBJECT_END;
 
-inline constexpr int JSObject::kElementsOffset = offsetof(JSObject, elements_);
 inline constexpr int JSObject::kEndOfStrongFieldsOffset =
-    JSObject::kElementsOffset + kTaggedSize;
+    offsetof(JSObject, elements_) + kTaggedSize;
 inline constexpr int JSObject::kHeaderSize = sizeof(JSObject);
 
 inline constexpr int JSObject::kMaxInObjectProperties =
@@ -1055,7 +1050,7 @@ inline constexpr int JSObject::kMaxJSApiObjectEmbedderFields =
      kCppHeapPointerSlotSize) /
     kEmbedderDataSlotSize;
 
-static_assert(JSObject::kElementsOffset == sizeof(JSReceiver));
+static_assert(offsetof(JSObject, elements_) == sizeof(JSReceiver));
 static_assert(JSObject::kHeaderSize == Internals::kJSObjectHeaderSize);
 static_assert(JSObject::kMaxInObjectProperties <= kMaxNumberOfDescriptors);
 static_assert(JSObject::kHeaderSize + JSObject::kMaxEmbedderFields *
@@ -1087,15 +1082,12 @@ V8_OBJECT class JSAPIObjectWithEmbedderSlots : public JSObject {
  public:
   class BodyDescriptor;
 
-  static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
 
  public:
   CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
-inline constexpr int JSAPIObjectWithEmbedderSlots::kCppHeapWrappableOffset =
-    offsetof(JSAPIObjectWithEmbedderSlots, cpp_heap_wrappable_);
 inline constexpr int JSAPIObjectWithEmbedderSlots::kHeaderSize =
     sizeof(JSAPIObjectWithEmbedderSlots);
 
@@ -1121,15 +1113,12 @@ static_assert(JSCustomElementsObject::kHeaderSize == JSObject::kHeaderSize);
 // static_assert in cpp-heap-object-wrapper.h).
 V8_OBJECT class JSSpecialObject : public JSCustomElementsObject {
  public:
-  static const int kCppHeapWrappableOffset;
   static const int kHeaderSize;
 
  public:
   CppHeapPointerMember cpp_heap_wrappable_;
 } V8_OBJECT_END;
 
-inline constexpr int JSSpecialObject::kCppHeapWrappableOffset =
-    offsetof(JSSpecialObject, cpp_heap_wrappable_);
 inline constexpr int JSSpecialObject::kHeaderSize = sizeof(JSSpecialObject);
 
 // The set of tags that a JSExternalObject's value may carry. Any user-
@@ -1285,9 +1274,6 @@ V8_OBJECT class JSGlobalObject : public JSSpecialObject {
   DECL_PRINTER(JSGlobalObject)
   DECL_VERIFIER(JSGlobalObject)
 
-  // Back-compat offset/size constants.
-  static const int kGlobalProxyOffset;
-  static const int kGlobalProxyForApiOffset;
   static const int kHeaderSize;
 
  public:
@@ -1295,10 +1281,6 @@ V8_OBJECT class JSGlobalObject : public JSSpecialObject {
   TaggedMember<JSGlobalProxy> global_proxy_for_api_;
 } V8_OBJECT_END;
 
-inline constexpr int JSGlobalObject::kGlobalProxyOffset =
-    offsetof(JSGlobalObject, global_proxy_);
-inline constexpr int JSGlobalObject::kGlobalProxyForApiOffset =
-    offsetof(JSGlobalObject, global_proxy_for_api_);
 inline constexpr int JSGlobalObject::kHeaderSize = sizeof(JSGlobalObject);
 
 // Representation for JS Wrapper objects, String, Number, Boolean, etc.

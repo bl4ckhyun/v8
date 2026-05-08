@@ -1060,8 +1060,8 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
           // Check the function's context matches the context argument.
           UseScratchRegisterScope scope(masm());
           Register temp = scope.AcquireX();
-          __ LoadTaggedField(temp,
-                             FieldMemOperand(func, JSFunction::kContextOffset));
+          __ LoadTaggedField(
+              temp, FieldMemOperand(func, offsetof(JSFunction, context_)));
           __ cmp(cp, temp);
           __ Assert(eq, AbortReason::kWrongFunctionContext);
         }

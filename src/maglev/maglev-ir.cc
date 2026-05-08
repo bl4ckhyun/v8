@@ -2347,7 +2347,8 @@ void CheckHomomorphicMap::GenerateCode(MaglevAssembler* masm,
 
   // 1. Check descriptor count.
   Register descriptor_count = scratch;
-  __ LoadInt32(descriptor_count, FieldMemOperand(map, Map::kBitField3Offset));
+  __ LoadInt32(descriptor_count,
+               FieldMemOperand(map, offsetof(Map, bit_field3_)));
   __ AndInt32(descriptor_count, Map::Bits3::NumberOfOwnDescriptorsBits::kMask);
 
   // Check if descriptor_index (encoded) < scratch.
@@ -2360,8 +2361,8 @@ void CheckHomomorphicMap::GenerateCode(MaglevAssembler* masm,
   descriptor_count = Register::no_reg();
 
   // 2. Load descriptor array.
-  __ LoadTaggedField(scratch,
-                     FieldMemOperand(map, Map::kInstanceDescriptorsOffset));
+  __ LoadTaggedField(
+      scratch, FieldMemOperand(map, offsetof(Map, instance_descriptors_)));
 
   // 3. Check key.
   Register descriptor_key = scratch2;
@@ -2499,7 +2500,8 @@ void CheckMapsWithMigrationAndDeopt::GenerateCode(
             Label* deopt = __ GetDeoptLabel(node, DeoptimizeReason::kWrongMap);
             // If the map is not deprecated, we fail the map check.
             __ TestInt32AndJumpIfAllClear(
-                FieldMemOperand(map_compare.GetMap(), Map::kBitField3Offset),
+                FieldMemOperand(map_compare.GetMap(),
+                                offsetof(Map, bit_field3_)),
                 Map::Bits3::IsDeprecatedBit::kMask, deopt);
 
             // Otherwise, try migrating the object.
@@ -2585,7 +2587,8 @@ void CheckMapsWithMigration::GenerateCode(MaglevAssembler* masm,
             Label* deopt = __ GetDeoptLabel(node, DeoptimizeReason::kWrongMap);
             // If the map is not deprecated, we fail the map check.
             __ TestInt32AndJumpIfAllClear(
-                FieldMemOperand(map_compare.GetMap(), Map::kBitField3Offset),
+                FieldMemOperand(map_compare.GetMap(),
+                                offsetof(Map, bit_field3_)),
                 Map::Bits3::IsDeprecatedBit::kMask, deopt);
 
             // Otherwise, try migrating the object.
@@ -2669,7 +2672,7 @@ void MigrateMapIfNeeded::GenerateCode(MaglevAssembler* masm,
 
   // If the map is deprecated, jump to the deferred code which will migrate it.
   __ TestInt32AndJumpIfAnySet(
-      FieldMemOperand(map, Map::kBitField3Offset),
+      FieldMemOperand(map, offsetof(Map, bit_field3_)),
       Map::Bits3::IsDeprecatedBit::kMask,
       __ MakeDeferredCode(
           [](MaglevAssembler* masm, RegisterSnapshot register_snapshot,
@@ -3700,7 +3703,7 @@ void LoadEnumCacheLength::GenerateCode(MaglevAssembler* masm,
   Register result_reg = ToRegister(result());
   __ AssertMap(map);
   __ LoadBitField<Map::Bits3::EnumLengthBits>(
-      result_reg, FieldMemOperand(map, Map::kBitField3Offset));
+      result_reg, FieldMemOperand(map, offsetof(Map, bit_field3_)));
 }
 
 int LoadGlobal::MaxCallStackArgs() const {
@@ -4141,7 +4144,7 @@ void CheckStringOrStringWrapper::GenerateCode(MaglevAssembler* masm,
                          deopt);
   __ LoadMap(scratch, object);
   __ LoadBitField<Map::Bits2::ElementsKindBits>(
-      scratch, FieldMemOperand(scratch, Map::kBitField2Offset));
+      scratch, FieldMemOperand(scratch, offsetof(Map, bit_field2_)));
   static_assert(FAST_STRING_WRAPPER_ELEMENTS + 1 ==
                 SLOW_STRING_WRAPPER_ELEMENTS);
   __ CompareInt32AndJumpIf(scratch, FAST_STRING_WRAPPER_ELEMENTS, kLessThan,
@@ -4635,7 +4638,7 @@ void HasInPrototypeChain::GenerateCode(MaglevAssembler* masm,
           int mask = Map::Bits1::HasNamedInterceptorBit::kMask |
                      Map::Bits1::IsAccessCheckNeededBit::kMask;
           __ TestUint8AndJumpIfAllClear(
-              FieldMemOperand(map, Map::kBitFieldOffset), mask,
+              FieldMemOperand(map, offsetof(Map, bit_field_)), mask,
               *if_objectisdirect);
 
           __ bind(&return_runtime);
@@ -4659,7 +4662,7 @@ void HasInPrototypeChain::GenerateCode(MaglevAssembler* masm,
     __ bind(*if_objectisdirect);
     // Check the current {object} prototype.
     Register object_prototype = scratch;
-    __ LoadTaggedField(object_prototype, map, Map::kPrototypeOffset);
+    __ LoadTaggedField(object_prototype, map, offsetof(Map, prototype_));
     __ JumpIfRoot(object_prototype, RootIndex::kNullValue, &return_false,
                   v8_flags.debug_code ? Label::kFar : Label::kNear);
     __ CompareTaggedAndJumpIf(object_prototype, prototype().object(), kEqual,
@@ -4890,7 +4893,7 @@ void UpdateJSArrayLength::GenerateCode(MaglevAssembler* masm,
                            Label::kNear);
   __ IncrementInt32(index);  // This cannot overflow.
   __ SmiTag(length, index);
-  __ StoreTaggedSignedField(object, JSArray::kLengthOffset, length);
+  __ StoreTaggedSignedField(object, offsetof(JSArray, length_), length);
   __ Jump(&done, Label::kNear);
   __ bind(&tag_length);
   __ SmiTag(length);
@@ -5900,13 +5903,14 @@ void ConsStringMap::GenerateCode(MaglevAssembler* masm,
   Register scratch = temps.AcquireScratch();
   static_assert(kTwoByteStringTag == 0);
   if (left_contains_one_byte_res_map) {
-    __ LoadByte(scratch, FieldMemOperand(right, Map::kInstanceTypeOffset));
+    __ LoadByte(scratch, FieldMemOperand(right, offsetof(Map, instance_type_)));
     __ TestInt32AndJumpIfAllClear(scratch, kStringEncodingMask, &two_byte,
                                   Label::kNear);
   } else {
-    __ LoadByte(left, FieldMemOperand(left, Map::kInstanceTypeOffset));
+    __ LoadByte(left, FieldMemOperand(left, offsetof(Map, instance_type_)));
     if (left != right) {
-      __ LoadByte(scratch, FieldMemOperand(right, Map::kInstanceTypeOffset));
+      __ LoadByte(scratch,
+                  FieldMemOperand(right, offsetof(Map, instance_type_)));
       __ AndInt32(scratch, left);
     }
     __ TestInt32AndJumpIfAllClear(scratch, kStringEncodingMask, &two_byte,
@@ -6375,9 +6379,9 @@ void ThrowIfNotSuperConstructor::GenerateCode(MaglevAssembler* masm,
   MaglevAssembler::TemporaryRegisterScope temps(masm);
   Register scratch = temps.Acquire();
   __ LoadMap(scratch, ToRegister(ConstructorInput()));
-  static_assert(Map::kBitFieldOffsetEnd + 1 - Map::kBitFieldOffset == 1);
+  static_assert(Map::kBitFieldOffsetEnd + 1 - offsetof(Map, bit_field_) == 1);
   __ TestUint8AndJumpIfAllClear(
-      FieldMemOperand(scratch, Map::kBitFieldOffset),
+      FieldMemOperand(scratch, offsetof(Map, bit_field_)),
       Map::Bits1::IsConstructorBit::kMask,
       __ MakeDeferredCode(
           [](MaglevAssembler* masm, ThrowIfNotSuperConstructor* node) {
@@ -7894,7 +7898,7 @@ void LoadDataViewByteLength::GenerateCode(MaglevAssembler* masm,
 
   // Normal DataView (backed by AB / SAB) or non-length tracking backed by GSAB.
   __ LoadBoundedSizeFromObject(return_value, object,
-                               JSDataView::kRawByteLengthOffset);
+                               offsetof(JSArrayBufferView, raw_byte_length_));
 }
 
 void LoadDataViewDataPointer::SetValueLocationConstraints() {
@@ -7913,7 +7917,9 @@ void LoadDataViewDataPointer::GenerateCode(MaglevAssembler* masm,
                         AbortReason::kUnexpectedValue);
   }
   __ LoadExternalPointerField(
-      return_value, FieldMemOperand(object, JSDataView::kDataPointerOffset));
+      return_value,
+      FieldMemOperand(object,
+                      offsetof(JSDataViewOrRabGsabDataView, data_pointer_)));
 }
 
 // ---
@@ -7965,15 +7971,15 @@ void AttemptOnStackReplacement(MaglevAssembler* masm,
 
   // Case 2).
   {
-    __ LoadByte(scratch1,
-                FieldMemOperand(scratch0, FeedbackVector::kOsrStateOffset));
+    __ LoadByte(scratch1, FieldMemOperand(
+                              scratch0, offsetof(FeedbackVector, osr_state_)));
     __ DecodeField<FeedbackVector::OsrUrgencyBits>(scratch1);
     __ JumpIfByte(kUnsignedLessThanEqual, scratch1, loop_depth,
                   *no_code_for_osr);
 
     // If tiering is already in progress wait.
     __ LoadByte(scratch1,
-                FieldMemOperand(scratch0, FeedbackVector::kFlagsOffset));
+                FieldMemOperand(scratch0, offsetof(FeedbackVector, flags_)));
     __ DecodeField<FeedbackVector::OsrTieringInProgressBit>(scratch1);
     __ JumpIfByte(kNotEqual, scratch1, 0, *no_code_for_osr);
 
@@ -8035,7 +8041,7 @@ void TryOnStackReplacement::GenerateCode(MaglevAssembler* masm,
   __ Move(scratch0, unit_->feedback().object());
   __ AssertFeedbackVector(scratch0, scratch1);
   __ LoadByte(osr_state,
-              FieldMemOperand(scratch0, FeedbackVector::kOsrStateOffset));
+              FieldMemOperand(scratch0, offsetof(FeedbackVector, osr_state_)));
 
   ZoneLabelRef no_code_for_osr(masm);
 

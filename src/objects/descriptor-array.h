@@ -234,13 +234,6 @@ V8_OBJECT class DescriptorArray : public HeapObject {
   static const int kEntryDetailsOffset = kEntryDetailsIndex * kTaggedSize;
   static const int kEntryValueOffset = kEntryValueIndex * kTaggedSize;
 
-  // Back-compat offset constants. Defined out-of-line because `offsetof` /
-  // `sizeof` on DescriptorArray cannot appear inside its own class body.
-  static const int kNumberOfAllDescriptorsOffset;
-  static const int kNumberOfDescriptorsOffset;
-  static const int kRawGcStateOffset;
-  static const int kFlagsOffset;
-  static const int kEnumCacheOffset;
   static const int kHeaderSize;
   static const int kDescriptorsOffset;
 
@@ -344,18 +337,6 @@ static_assert(offsetof(DescriptorArray::Entry, details) ==
 static_assert(offsetof(DescriptorArray::Entry, value) ==
               DescriptorArray::kEntryValueOffset);
 
-// Back-compat offset constants. Defined here because `offsetof` / `sizeof`
-// on a not-yet-complete class cannot appear inside the class body.
-inline constexpr int DescriptorArray::kNumberOfAllDescriptorsOffset =
-    offsetof(DescriptorArray, number_of_all_descriptors_);
-inline constexpr int DescriptorArray::kNumberOfDescriptorsOffset =
-    offsetof(DescriptorArray, number_of_descriptors_);
-inline constexpr int DescriptorArray::kRawGcStateOffset =
-    offsetof(DescriptorArray, raw_gc_state_);
-inline constexpr int DescriptorArray::kFlagsOffset =
-    offsetof(DescriptorArray, flags_);
-inline constexpr int DescriptorArray::kEnumCacheOffset =
-    offsetof(DescriptorArray, enum_cache_);
 inline constexpr int DescriptorArray::kHeaderSize =
     OFFSET_OF_DATA_START(DescriptorArray);
 inline constexpr int DescriptorArray::kDescriptorsOffset =

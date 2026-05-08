@@ -82,7 +82,8 @@ bool Accessors::IsJSObjectFieldAccessor(Isolate* isolate, DirectHandle<Map> map,
             InternalIndex(LoadHandler::kArrayLengthFieldDescriptorIndex);
       }
       return CheckForName(isolate, name, isolate->factory()->length_string(),
-                          JSArray::kLengthOffset, FieldIndex::kTagged, index);
+                          offsetof(JSArray, length_), FieldIndex::kTagged,
+                          index);
     default:
       DCHECK_IMPLIES(
           InstanceTypeChecker::IsString(map->instance_type()),

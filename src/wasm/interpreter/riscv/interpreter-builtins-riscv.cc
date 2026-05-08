@@ -184,13 +184,13 @@ void LoadWasmInstanceFromFunctionData(MacroAssembler* masm,
   __ DecompressProtected(
       trusted_instance_data,
       MemOperand(function_data,
-                 WasmExportedFunctionData::kProtectedInstanceDataOffset -
+                 offsetof(WasmExportedFunctionData, protected_instance_data_) -
                      kHeapObjectTag));
 #else
   __ LoadTaggedField(
       trusted_instance_data,
       MemOperand(function_data,
-                 WasmExportedFunctionData::kProtectedInstanceDataOffset -
+                 offsetof(WasmExportedFunctionData, protected_instance_data_) -
                      kHeapObjectTag));
 #endif
   __ LoadTaggedField(
@@ -206,12 +206,12 @@ void LoadFunctionDataAndWasmInstance(MacroAssembler* masm,
   Register shared_function_info = closure;
   __ LoadTaggedField(
       shared_function_info,
-      FieldMemOperand(closure, JSFunction::kSharedFunctionInfoOffset));
+      FieldMemOperand(closure, offsetof(JSFunction, shared_function_info_)));
   closure = no_reg;
   __ LoadTrustedPointerField(
       function_data,
       FieldMemOperand(shared_function_info,
-                      SharedFunctionInfo::kTrustedFunctionDataOffset),
+                      offsetof(SharedFunctionInfo, trusted_function_data_)),
       kWasmFunctionDataIndirectPointerTag);
   shared_function_info = no_reg;
 
@@ -236,7 +236,7 @@ void LoadValueTypesArray(MacroAssembler* masm, Register function_data,
   __ LoadTaggedField(
       signature_data,
       FieldMemOperand(function_data,
-                      WasmExportedFunctionData::kPackedArgsSizeOffset));
+                      offsetof(WasmExportedFunctionData, packed_args_size_)));
   __ SmiToInt32(signature_data);
 
   Register internal_function = valuetypes_array_ptr;
@@ -244,12 +244,12 @@ void LoadValueTypesArray(MacroAssembler* masm, Register function_data,
       internal_function,
       MemOperand(
           function_data,
-          WasmExportedFunctionData::kProtectedInternalOffset - kHeapObjectTag));
+          offsetof(WasmFunctionData, protected_internal_) - kHeapObjectTag));
 
   Register signature = internal_function;
-  __ LoadWord(signature,
-              MemOperand(internal_function,
-                         WasmInternalFunction::kSigOffset - kHeapObjectTag));
+  __ LoadWord(signature, MemOperand(internal_function,
+                                    offsetof(WasmInternalFunction, sig_) -
+                                        kHeapObjectTag));
   LoadFromSignature(masm, valuetypes_array_ptr, return_count, param_count);
 }
 
@@ -563,15 +563,16 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
                  WasmToJSInterpreterFrameConstants::kGCScanSlotLimitOffset));
 
   DEFINE_REG(shared_function_info);
-  __ LoadTaggedField(shared_function_info,
-                     FieldMemOperand(target_js_function,
-                                     JSFunction::kSharedFunctionInfoOffset));
+  __ LoadTaggedField(
+      shared_function_info,
+      FieldMemOperand(target_js_function,
+                      offsetof(JSFunction, shared_function_info_)));
 
   // Set the context of the function; the call has to run in the function
   // context.
   DEFINE_PINNED(context, cp);
-  __ LoadTaggedField(
-      context, FieldMemOperand(target_js_function, JSFunction::kContextOffset));
+  __ LoadTaggedField(context, FieldMemOperand(target_js_function,
+                                              offsetof(JSFunction, context_)));
   __ StoreWord(context, MemOperand(fp, kContextOffset));
 
   // Load global receiver if sloppy else use undefined.
@@ -580,7 +581,7 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
   DEFINE_REG(receiver);
   DEFINE_REG(flags);
   __ LoadWord(flags, FieldMemOperand(shared_function_info,
-                                     SharedFunctionInfo::kFlagsOffset));
+                                     offsetof(SharedFunctionInfo, flags_)));
   __ Branch(&receiver_undefined, ne, flags,
             Operand(SharedFunctionInfo::IsNativeBit::kMask |
                     SharedFunctionInfo::IsStrictBit::kMask));

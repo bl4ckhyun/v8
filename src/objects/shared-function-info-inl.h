@@ -204,7 +204,8 @@ template <typename T, IndirectPointerTagRange tag_range>
 Tagged<T> SharedFunctionInfo::GetTrustedData(IsolateForSandbox isolate) const {
   static_assert(tag_range != kAllIndirectPointerTags);
   return Cast<T>(TrustedPointerField::ReadTrustedPointerField<tag_range>(
-      Tagged<HeapObject>(this), kTrustedFunctionDataOffset, isolate,
+      Tagged<HeapObject>(this),
+      offsetof(SharedFunctionInfo, trusted_function_data_), isolate,
       kAcquireLoad));
 }
 

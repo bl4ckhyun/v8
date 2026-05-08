@@ -1229,22 +1229,23 @@ SandboxTesting::FieldOffsetMap& SandboxTesting::GetFieldOffsetMap() {
   bool is_initialized = fields.size() != 0;
   if (!is_initialized) {
     fields[JS_FUNCTION_TYPE]["dispatch_handle"] =
-        JSFunction::kDispatchHandleOffset;
+        offsetof(JSFunction, dispatch_handle_);
     fields[JS_FUNCTION_TYPE]["shared_function_info"] =
-        JSFunction::kSharedFunctionInfoOffset;
-    fields[JS_FUNCTION_TYPE]["feedback_cell"] = JSFunction::kFeedbackCellOffset;
+        offsetof(JSFunction, shared_function_info_);
+    fields[JS_FUNCTION_TYPE]["feedback_cell"] =
+        offsetof(JSFunction, feedback_cell_);
     fields[JS_BOUND_FUNCTION_TYPE]["bound_arguments"] =
-        JSBoundFunction::kBoundArgumentsOffset;
-    fields[JS_ARRAY_TYPE]["elements"] = JSArray::kElementsOffset;
-    fields[JS_ARRAY_TYPE]["length"] = JSArray::kLengthOffset;
+        offsetof(JSBoundFunction, bound_arguments_);
+    fields[JS_ARRAY_TYPE]["elements"] = offsetof(JSObject, elements_);
+    fields[JS_ARRAY_TYPE]["length"] = offsetof(JSArray, length_);
     fields[JS_TYPED_ARRAY_TYPE]["byte_length"] =
-        JSTypedArray::kRawByteLengthOffset;
+        offsetof(JSArrayBufferView, raw_byte_length_);
     fields[JS_TYPED_ARRAY_TYPE]["byte_offset"] =
-        JSTypedArray::kRawByteOffsetOffset;
+        offsetof(JSArrayBufferView, raw_byte_offset_);
     fields[JS_TYPED_ARRAY_TYPE]["external_pointer"] =
-        JSTypedArray::kExternalPointerOffset;
+        offsetof(JSTypedArray, external_pointer_);
     fields[JS_TYPED_ARRAY_TYPE]["base_pointer"] =
-        JSTypedArray::kBasePointerOffset;
+        offsetof(JSTypedArray, base_pointer_);
     for (std::underlying_type_t<InstanceType> string_type = FIRST_STRING_TYPE;
          string_type <= LAST_STRING_TYPE; ++string_type) {
       InstanceType instance_type = static_cast<InstanceType>(string_type);
@@ -1256,15 +1257,15 @@ SandboxTesting::FieldOffsetMap& SandboxTesting::GetFieldOffsetMap() {
     fields[CONS_ONE_BYTE_STRING_TYPE]["first"] = offsetof(ConsString, first_);
     fields[CONS_ONE_BYTE_STRING_TYPE]["second"] = offsetof(ConsString, second_);
     fields[SHARED_FUNCTION_INFO_TYPE]["trusted_function_data"] =
-        SharedFunctionInfo::kTrustedFunctionDataOffset;
+        offsetof(SharedFunctionInfo, trusted_function_data_);
     fields[SHARED_FUNCTION_INFO_TYPE]["length"] =
-        SharedFunctionInfo::kLengthOffset;
+        offsetof(SharedFunctionInfo, length_);
     fields[SHARED_FUNCTION_INFO_TYPE]["formal_parameter_count"] =
-        SharedFunctionInfo::kFormalParameterCountOffset;
+        offsetof(SharedFunctionInfo, formal_parameter_count_);
     fields[SHARED_FUNCTION_INFO_TYPE]["function_data"] =
-        SharedFunctionInfo::kUntrustedFunctionDataOffset;
+        offsetof(SharedFunctionInfo, untrusted_function_data_);
     fields[SHARED_FUNCTION_INFO_TYPE]["script"] =
-        SharedFunctionInfo::kScriptOffset;
+        offsetof(SharedFunctionInfo, script_);
     fields[SCRIPT_TYPE]["wasm_managed_native_module"] =
         offsetof(Script, eval_from_position_);
     fields[JS_PROMISE_TYPE]["reactions_or_result"] =
@@ -1274,27 +1275,29 @@ SandboxTesting::FieldOffsetMap& SandboxTesting::GetFieldOffsetMap() {
     fields[FEEDBACK_CELL_TYPE]["value"] = offsetof(FeedbackCell, value_);
 #ifdef V8_INTL_SUPPORT
     fields[JS_SEGMENTS_TYPE]["icu_iterator_with_text"] =
-        JSSegments::kIcuIteratorWithTextOffset;
+        offsetof(JSSegments, icu_iterator_with_text_);
 #endif  // V8_INTL_SUPPORT
 #ifdef V8_ENABLE_WEBASSEMBLY
     fields[WASM_MODULE_OBJECT_TYPE]["managed_native_module"] =
-        WasmModuleObject::kManagedNativeModuleOffset;
-    fields[WASM_MODULE_OBJECT_TYPE]["script"] = WasmModuleObject::kScriptOffset;
+        offsetof(WasmModuleObject, managed_native_module_);
+    fields[WASM_MODULE_OBJECT_TYPE]["script"] =
+        offsetof(WasmModuleObject, script_);
     fields[WASM_INSTANCE_OBJECT_TYPE]["module_object"] =
-        WasmInstanceObject::kModuleObjectOffset;
+        offsetof(WasmInstanceObject, module_object_);
     fields[WASM_FUNC_REF_TYPE]["trusted_internal"] =
-        WasmFuncRef::kTrustedInternalOffset;
-    fields[WASM_TABLE_OBJECT_TYPE]["entries"] = WasmTableObject::kEntriesOffset;
+        offsetof(WasmFuncRef, trusted_internal_);
+    fields[WASM_TABLE_OBJECT_TYPE]["entries"] =
+        offsetof(WasmTableObject, entries_);
     fields[WASM_TABLE_OBJECT_TYPE]["current_length"] =
-        WasmTableObject::kCurrentLengthOffset;
+        offsetof(WasmTableObject, current_length_);
     fields[WASM_TABLE_OBJECT_TYPE]["maximum_length"] =
-        WasmTableObject::kMaximumLengthOffset;
+        offsetof(WasmTableObject, maximum_length_);
     fields[WASM_TABLE_OBJECT_TYPE]["raw_type"] =
-        WasmTableObject::kRawTypeOffset;
+        offsetof(WasmTableObject, raw_type_);
     fields[WASM_RESUME_DATA_TYPE]["trusted_suspender"] =
-        WasmResumeData::kTrustedSuspenderOffset;
+        offsetof(WasmResumeData, trusted_suspender_);
     fields[WASM_GLOBAL_OBJECT_TYPE]["raw_type"] =
-        WasmGlobalObject::kRawTypeOffset;
+        offsetof(WasmGlobalObject, raw_type_);
 #endif  // V8_ENABLE_WEBASSEMBLY
   }
   return fields;
