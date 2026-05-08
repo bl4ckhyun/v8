@@ -3243,16 +3243,21 @@ V8_INLINE size_t hash_value(LoadOp::Kind kind) {
 
 #if V8_ENABLE_SANDBOX
 struct LoadTrustedPointerOp : FixedArityOperationT<2, LoadTrustedPointerOp> {
-  const bool is_immutable;
+  LoadOp::Kind kind;
   IndirectPointerTagRange tag_range;
+  const int offset;
 
   static constexpr OpEffects effects =
       OpEffects().CanReadMemory().CanDependOnChecks();
 
-  explicit LoadTrustedPointerOp(V<WordPtr> table, V<Word32> handle,
-                                bool is_immutable,
-                                IndirectPointerTagRange tag_range)
-      : Base(table, handle), is_immutable(is_immutable), tag_range(tag_range) {}
+  explicit LoadTrustedPointerOp(V<HeapObject> base, V<WordPtr> table,
+                                LoadOp::Kind kind,
+                                IndirectPointerTagRange tag_range, int offset)
+      : Base(base, table), kind(kind), tag_range(tag_range), offset(offset) {
+    DCHECK(kind.tagged_base);
+    DCHECK(!kind.is_atomic);
+    DCHECK(!kind.maybe_unaligned);
+  }
 
   base::Vector<const RegisterRepresentation> outputs_rep() const {
     return RepVector<RegisterRepresentation::Tagged()>();
@@ -3260,15 +3265,15 @@ struct LoadTrustedPointerOp : FixedArityOperationT<2, LoadTrustedPointerOp> {
 
   base::Vector<const MaybeRegisterRepresentation> inputs_rep(
       ZoneVector<MaybeRegisterRepresentation>& storage) const {
-    return MaybeRepVector<MaybeRegisterRepresentation::WordPtr(),
-                          MaybeRegisterRepresentation::Word32()>();
+    return MaybeRepVector<MaybeRegisterRepresentation::Tagged(),
+                          MaybeRegisterRepresentation::WordPtr()>();
   }
 
-  V<WordPtr> table() const { return input<WordPtr>(0); }
-  V<Word32> handle() const { return input<Word32>(1); }
+  V<HeapObject> base() const { return input<HeapObject>(0); }
+  V<WordPtr> table() const { return input<WordPtr>(1); }
 
   void PrintOptions(std::ostream& os) const;
-  auto options() const { return std::tuple{is_immutable, tag_range}; }
+  auto options() const { return std::tuple{kind, tag_range, offset}; }
 };
 #endif
 

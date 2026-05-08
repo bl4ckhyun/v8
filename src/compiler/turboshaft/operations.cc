@@ -810,8 +810,10 @@ void LoadExternalPointerOp::PrintOptions(std::ostream& os) const {
 #if V8_ENABLE_SANDBOX
 void LoadTrustedPointerOp::PrintOptions(std::ostream& os) const {
   os << '[';
-  os << "is_immutable: " << is_immutable << ", ";
-  os << "tag_range: [" << tag_range.first << ", " << tag_range.last << "]";
+  if (kind.with_trap_handler) os << "trapping, ";
+  if (kind.is_immutable) os << "immutable, ";
+  os << "tag_range: [" << tag_range.first << ", " << tag_range.last << "], ";
+  os << "offset: " << offset;
   os << ']';
 }
 #endif

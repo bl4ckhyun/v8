@@ -2945,42 +2945,30 @@ class AssemblerOpInterface : public Next {
   }
 
   // Load a trusted (indirect) pointer. Returns Smi or ExposedTrustedObject.
-  V<Object> LoadTrustedPointer(V<HeapObject> base, OptionalV<Word32> index,
-                               LoadOp::Kind kind,
-                               IndirectPointerTagRange tag_range,
-                               int offset = 0) {
+  V<Object> LoadTrustedPointer(V<HeapObject> base, LoadOp::Kind kind,
+                               IndirectPointerTagRange tag_range, int offset) {
 #if V8_ENABLE_SANDBOX
     static_assert(COMPRESS_POINTERS_BOOL);
-    V<Word32> handle =
-        Load(base, index, kind, MemoryRepresentation::Uint32(), offset);
     V<WordPtr> table =
         Load(LoadRootRegister(), LoadOp::Kind::RawAligned().Immutable(),
              MemoryRepresentation::UintPtr(),
              IsolateData::trusted_pointer_table_offset() +
                  Internals::kExternalEntityTableBasePointerOffset);
-    return LoadTrustedPointer(table, handle, kind.is_immutable, tag_range);
+    return LoadTrustedPointer(base, table, kind, tag_range, offset);
 #else
-    return Load(base, index, kind, MemoryRepresentation::TaggedPointer(),
-                offset);
+    return Load(base, kind, MemoryRepresentation::TaggedPointer(), offset);
 #endif  // V8_ENABLE_SANDBOX
   }
 
 #if V8_ENABLE_SANDBOX
-  V<Object> LoadTrustedPointer(V<WordPtr> table, V<Word32> handle,
-                               bool is_immutable,
-                               IndirectPointerTagRange tag_range) {
-    return ReduceIfReachableLoadTrustedPointer(table, handle, is_immutable,
-                                               tag_range);
+  V<Object> LoadTrustedPointer(V<HeapObject> base, V<WordPtr> table,
+                               LoadOp::Kind kind,
+                               IndirectPointerTagRange tag_range,
+                               int32_t offset) {
+    return ReduceIfReachableLoadTrustedPointer(base, table, kind, tag_range,
+                                               offset);
   }
 #endif
-
-  // Load a trusted (indirect) pointer. Returns Smi or ExposedTrustedObject.
-  V<Object> LoadTrustedPointer(V<HeapObject> base, LoadOp::Kind kind,
-                               IndirectPointerTagRange tag_range,
-                               int offset = 0) {
-    return LoadTrustedPointer(base, OpIndex::Invalid(), kind, tag_range,
-                              offset);
-  }
 
   V<WordPtr> LoadExternalPointerFromObject(V<Object> object, int offset,
                                            ExternalPointerTag tag) {
