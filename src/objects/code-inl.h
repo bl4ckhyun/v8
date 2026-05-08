@@ -132,18 +132,20 @@ inline bool Code::has_deoptimization_data_or_interpreter_data() const {
       kDeoptimizationDataOrInterpreterDataOffset);
 }
 
-Tagged<TrustedObject> Code::bytecode_or_interpreter_data() const {
+Tagged<UnionOf<BytecodeArray, InterpreterData>>
+Code::bytecode_or_interpreter_data() const {
   // It's important to CHECK that the Code object is baseline code. We trust
   // baseline code to have bytecode/interpreter data here, but the reference to
   // this code might be corrupted, such that we get type confusion on this field
   // in cases where we assume that it must be baseline code.
   SBXCHECK_EQ(kind(), CodeKind::BASELINE);
-  return ReadProtectedPointerField(kDeoptimizationDataOrInterpreterDataOffset);
+  return TrustedCast<UnionOf<BytecodeArray, InterpreterData>>(
+      ReadProtectedPointerField(kDeoptimizationDataOrInterpreterDataOffset));
 }
-void Code::set_bytecode_or_interpreter_data(Tagged<TrustedObject> value,
-                                            WriteBarrierMode mode) {
+void Code::set_bytecode_or_interpreter_data(
+    Tagged<UnionOf<BytecodeArray, InterpreterData>> value,
+    WriteBarrierMode mode) {
   SBXCHECK_EQ(kind(), CodeKind::BASELINE);
-  DCHECK(IsBytecodeArray(value) || IsInterpreterData(value));
 
   WriteProtectedPointerField(kDeoptimizationDataOrInterpreterDataOffset, value);
   CONDITIONAL_PROTECTED_POINTER_WRITE_BARRIER(

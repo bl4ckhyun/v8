@@ -1338,7 +1338,7 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
     }
 
     inline CodeBuilder& set_interpreter_data(
-        Handle<TrustedObject> interpreter_data);
+        Handle<UnionOf<BytecodeArray, InterpreterData>> interpreter_data);
 
     CodeBuilder& set_is_context_specialized() {
       DCHECK(!CodeKindIsUnoptimizedJSFunction(kind_));
@@ -1389,7 +1389,7 @@ class V8_EXPORT_PRIVATE Factory : public FactoryBase<Factory> {
     MaybeHandle<TrustedByteArray> bytecode_offset_table_;
     MaybeHandle<TrustedByteArray> source_position_table_;
     MaybeHandle<DeoptimizationData> deoptimization_data_;
-    MaybeHandle<TrustedObject> interpreter_data_;
+    MaybeHandle<UnionOf<BytecodeArray, InterpreterData>> interpreter_data_;
     BasicBlockProfilerData* profiler_data_ = nullptr;
     bool is_context_specialized_ = false;
     bool is_turbofanned_ = false;

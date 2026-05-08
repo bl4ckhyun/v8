@@ -156,9 +156,10 @@ V8_OBJECT class Code : public ExposedTrustedObject {
 
   // [bytecode_or_interpreter_data]: BytecodeArray or InterpreterData for
   // baseline code.
-  inline Tagged<TrustedObject> bytecode_or_interpreter_data() const;
+  inline Tagged<UnionOf<BytecodeArray, InterpreterData>>
+  bytecode_or_interpreter_data() const;
   inline void set_bytecode_or_interpreter_data(
-      Tagged<TrustedObject> value,
+      Tagged<UnionOf<BytecodeArray, InterpreterData>> value,
       WriteBarrierMode mode = UPDATE_WRITE_BARRIER);
   // [source_position_table]: ByteArray for the source positions table for
   // non-baseline code.

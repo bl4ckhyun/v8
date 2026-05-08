@@ -727,9 +727,15 @@ V8_OBJECT class SharedFunctionInfo : public HeapObject {
   // Whether this function is defined in user-provided JavaScript code.
   inline bool IsUserJavaScript() const;
 
-  // True if one can flush compiled code from this function, in such a way that
-  // it can later be re-compiled.
-  inline bool CanDiscardCompiled() const;
+#if V8_ENABLE_WEBASSEMBLY
+  using DiscardableData = UnionOf<BytecodeArray, InterpreterData, Code,
+                                  UncompiledDataWithPreparseData, AsmWasmData>;
+#else
+  using DiscardableData = UnionOf<BytecodeArray, InterpreterData, Code,
+                                  UncompiledDataWithPreparseData>;
+#endif
+  inline bool CanDiscardCompiled(
+      Tagged<DiscardableData>* out_data = nullptr) const;
 
   // Flush compiled data from this function, setting it back to CompileLazy and
   // clearing any compiled metadata.

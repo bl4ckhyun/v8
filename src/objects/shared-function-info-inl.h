@@ -885,10 +885,7 @@ DEF_GETTER(SharedFunctionInfo, HasBytecodeArray, bool) {
       GetTrustedData(GetCurrentIsolateForSandbox());
   // If the SFI has no trusted data, GetTrustedData() will return Smi::zero().
   if (IsSmi(data)) return false;
-  InstanceType instance_type = Cast<HeapObject>(data)->map()->instance_type();
-  return InstanceTypeChecker::IsBytecodeArray(instance_type) ||
-         InstanceTypeChecker::IsInterpreterData(instance_type) ||
-         InstanceTypeChecker::IsCode(instance_type);
+  return IsBytecodeArray(data) || IsInterpreterData(data) || IsCode(data);
 }
 
 template <typename IsolateT>
@@ -1252,13 +1249,26 @@ bool SharedFunctionInfo::IsSubjectToDebugging() const {
   return IsUserJavaScript();
 }
 
-bool SharedFunctionInfo::CanDiscardCompiled() const {
-#if V8_ENABLE_WEBASSEMBLY
-  if (HasAsmWasmData()) return true;
-#endif  // V8_ENABLE_WEBASSEMBLY
-  return HasBytecodeArray() ||
-         HasUncompiledDataWithPreparseData(GetCurrentIsolateForSandbox()) ||
-         HasBaselineCode();
+bool SharedFunctionInfo::CanDiscardCompiled(
+    Tagged<DiscardableData>* out_data) const {
+  Tagged<Union<Smi, TrustedObject>> data =
+      GetTrustedData(GetCurrentIsolateForSandbox());
+
+  // If the SFI has no trusted data, GetTrustedData() will return Smi::zero().
+  if (IsSmi(data)) {
+    return false;
+  }
+
+  Tagged<DiscardableData> discardable_data;
+  if (!TryCast(data, &discardable_data)) return false;
+  DCHECK_IMPLIES(
+      IsCode(discardable_data),
+      TrustedCast<Code>(discardable_data)->kind() == CodeKind::BASELINE);
+
+  if (out_data != nullptr) {
+    *out_data = discardable_data;
+  }
+  return true;
 }
 
 bool SharedFunctionInfo::is_class_constructor() const {

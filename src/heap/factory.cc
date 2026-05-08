@@ -3413,7 +3413,7 @@ DirectHandle<Code> Factory::NewCodeObjectForEmbeddedBuiltin(
       code->code_comments_offset(),
       code->jump_table_info_offset(),
       code->unwinding_info_offset(),
-      MaybeHandle<TrustedObject>{},
+      MaybeHandle<UnionOf<BytecodeArray, InterpreterData>>{},
       MaybeHandle<DeoptimizationData>{},
       /*bytecode_offset_table=*/MaybeHandle<TrustedByteArray>{},
       /*source_position_table=*/MaybeHandle<TrustedByteArray>{},

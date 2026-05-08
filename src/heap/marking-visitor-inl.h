@@ -506,11 +506,13 @@ bool MarkingVisitorBase<ConcreteVisitor>::HasBytecodeArrayForFlushing(
     return false;
   }
 
-  // Get a snapshot of the function data field, and if it is a bytecode array,
-  // check if it is old. Note, this is done this way since this function can be
-  // called by the concurrent marker.
-  Tagged<Object> data = sfi->GetTrustedData(heap_->isolate());
-  if (IsCode(data)) {
+  // Get a snapshot of the function data field if it is discardable. Note, this
+  // is done this way since this function can be called by the concurrent
+  // marker.
+  Tagged<SharedFunctionInfo::DiscardableData> data;
+  if (!sfi->CanDiscardCompiled(&data)) return false;
+
+  if (Is<Code>(data)) {
     Tagged<Code> baseline_code = TrustedCast<Code>(data);
     DCHECK_EQ(baseline_code->kind(), CodeKind::BASELINE);
     // If baseline code flushing isn't enabled and we have baseline data on SFI
@@ -523,6 +525,7 @@ bool MarkingVisitorBase<ConcreteVisitor>::HasBytecodeArrayForFlushing(
     return false;
   }
 
+  // TODO(leszeks): Support flushing of InterpreterData.
   return IsBytecodeArray(data);
 }
 
