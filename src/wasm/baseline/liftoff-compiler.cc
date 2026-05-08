@@ -3082,7 +3082,17 @@ class LiftoffCompiler {
     __ LoadSpillAddress(addr_reg.gp(), stack_offset,
                         __ cache_state()->stack_state.back().kind());
 
-    ExternalReference ext_ref = ExternalReference::wasm_int128_add();
+    ExternalReference ext_ref;
+    switch (opcode) {
+      case kExprI64Add128:
+        ext_ref = ExternalReference::wasm_int128_add();
+        break;
+      case kExprI64Sub128:
+        ext_ref = ExternalReference::wasm_int128_sub();
+        break;
+      default:
+        UNREACHABLE();
+    }
     GenerateCCall(kVoid, {VarState{kI32, addr_reg, 0}}, ext_ref);
 
     __ DropValues(2);

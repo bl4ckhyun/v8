@@ -927,35 +927,40 @@ class TurboshaftGraphBuildingInterface
                const Value& ah, const Value& bl, const Value& bh,
                Value* result_low, Value* result_high) {
 #if V8_TARGET_ARCH_IA32 || V8_TARGET_ARCH_ARM
-    if (opcode == kExprI64Add128) {
-      // Possible future ops that might want to reuse the wide op stack buffer
-      // might need other sizes.
-      static_assert(4 * kInt64Size <= kWideOpsStackBufferSize);
-      V<WordPtr> stack_slot = GetWideOpsStackBuffer();
+    // Possible future ops that might want to reuse the wide op stack buffer
+    // might need other sizes.
+    static_assert(4 * kInt64Size <= kWideOpsStackBufferSize);
+    V<WordPtr> stack_slot = GetWideOpsStackBuffer();
 
-      __ Store(stack_slot, bh.get<Word64>(), StoreOp::Kind::RawAligned(),
-               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier, 0);
-      __ Store(stack_slot, bl.get<Word64>(), StoreOp::Kind::RawAligned(),
-               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
-               kInt64Size);
-      __ Store(stack_slot, ah.get<Word64>(), StoreOp::Kind::RawAligned(),
-               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
-               2 * kInt64Size);
-      __ Store(stack_slot, al.get<Word64>(), StoreOp::Kind::RawAligned(),
-               MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
-               3 * kInt64Size);
+    __ Store(stack_slot, bh.get<Word64>(), StoreOp::Kind::RawAligned(),
+             MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier, 0);
+    __ Store(stack_slot, bl.get<Word64>(), StoreOp::Kind::RawAligned(),
+             MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+             kInt64Size);
+    __ Store(stack_slot, ah.get<Word64>(), StoreOp::Kind::RawAligned(),
+             MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+             2 * kInt64Size);
+    __ Store(stack_slot, al.get<Word64>(), StoreOp::Kind::RawAligned(),
+             MemoryRepresentation::Uint64(), compiler::kNoWriteBarrier,
+             3 * kInt64Size);
 
-      MachineType reps[]{MachineType::Pointer()};
-      MachineSignature sig(0, 1, reps);
-      CallC(&sig, ExternalReference::wasm_int128_add(), stack_slot);
-
-      result_low->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
-                               MemoryRepresentation::Uint64(), 3 * kInt64Size);
-      result_high->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
-                                MemoryRepresentation::Uint64(), 2 * kInt64Size);
-      return;
+    MachineType reps[]{MachineType::Pointer()};
+    MachineSignature sig(0, 1, reps);
+    switch (opcode) {
+      case kExprI64Add128:
+        CallC(&sig, ExternalReference::wasm_int128_add(), stack_slot);
+        break;
+      case kExprI64Sub128:
+        CallC(&sig, ExternalReference::wasm_int128_sub(), stack_slot);
+        break;
+      default:
+        UNREACHABLE();
     }
-#endif
+    result_low->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
+                             MemoryRepresentation::Uint64(), 3 * kInt64Size);
+    result_high->op = __ Load(stack_slot, LoadOp::Kind::RawAligned(),
+                              MemoryRepresentation::Uint64(), 2 * kInt64Size);
+#else
     V<compiler::turboshaft::Word64Pair> op;
     switch (opcode) {
       case kExprI64Add128:
@@ -972,6 +977,7 @@ class TurboshaftGraphBuildingInterface
     }
     result_low->op = __ template Projection<0>(op);
     result_high->op = __ template Projection<1>(op);
+#endif
   }
 
   void TraceInstruction(FullDecoder* decoder, uint32_t markid) {

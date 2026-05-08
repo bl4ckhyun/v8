@@ -7910,7 +7910,6 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
       }
       case kExprI64Sub128: {
         CHECK_PROTOTYPE_OPCODE(wide_arithmetic);
-#if V8_TARGET_ARCH_X64 || V8_TARGET_ARCH_ARM64
         auto [a_lo, a_hi, b_lo, b_hi] =
             Pop(kWasmI64, kWasmI64, kWasmI64, kWasmI64);
         Value* result_l = Push(kWasmI64);
@@ -7918,10 +7917,6 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
         CALL_INTERFACE_IF_OK_AND_REACHABLE(WideOp4, opcode, a_lo, a_hi, b_lo,
                                            b_hi, result_l, result_h);
         return opcode_length;
-#else
-        this->DecodeError("Wide arithmetic opcodes are not yet implemented.");
-        return 0;
-#endif
       }
       default:
         this->DecodeError("invalid numeric opcode: 0x%x", opcode);
