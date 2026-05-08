@@ -5174,7 +5174,20 @@ class RootConstant : public FixedInputValueNodeT<0, RootConstant> {
   using OutputRegister = Register;
 
   explicit RootConstant(uint64_t bitfield, RootIndex index)
-      : Base(bitfield), index_(index) {}
+      : Base(bitfield), index_(index) {
+#ifdef DEBUG
+    // Making sure that this is a HeapConstant and not a Smi.
+    switch (index) {
+#define CASE(type, name, label) case RootIndex::k##label:
+      SMI_ROOT_LIST(CASE)
+      FATAL(
+          "SmiConstant should be used for Smi roots instead of RootConstant.");
+#undef CASE
+      default:
+        break;
+    }
+#endif
+  }
 
   bool ToBoolean(LocalIsolate* local_isolate) const;
 
