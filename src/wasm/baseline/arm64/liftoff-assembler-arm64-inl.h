@@ -1721,6 +1721,17 @@ void LiftoffAssembler::emit_i64_add128(Register dst_low, Register dst_high,
   Adc(dst_high.X(), ah.X(), bh.X());
 }
 
+void LiftoffAssembler::emit_i64_sub128(Register dst_low, Register dst_high,
+                                       Register al, Register ah, Register bl,
+                                       Register bh) {
+  DCHECK_NE(dst_low, ah);
+  DCHECK_NE(dst_low, bh);
+  DCHECK_NE(dst_low, dst_high);
+
+  Subs(dst_low.X(), al.X(), bl.X());
+  Sbc(dst_high.X(), ah.X(), bh.X());
+}
+
 void LiftoffAssembler::emit_i64_sub(LiftoffRegister dst, LiftoffRegister lhs,
                                     LiftoffRegister rhs) {
   Sub(dst.gp().X(), lhs.gp().X(), rhs.gp().X());

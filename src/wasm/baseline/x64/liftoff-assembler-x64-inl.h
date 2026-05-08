@@ -1685,19 +1685,39 @@ void LiftoffAssembler::emit_i64_add128(Register dst_low, Register dst_high,
   DCHECK_NE(dst_low, dst_high);
   if (dst_low == al) {
     addq(dst_low, bl);
-  } else if (dst_low == bl) {
-    addq(dst_low, al);
   } else {
+    DCHECK_NE(dst_low, bl);
     movq(dst_low, al);
     addq(dst_low, bl);
   }
   if (dst_high == ah) {
     adcq(dst_high, bh);
-  } else if (dst_high == bh) {
-    adcq(dst_high, ah);
   } else {
+    DCHECK_NE(dst_high, bh);
     movq(dst_high, ah);
     adcq(dst_high, bh);
+  }
+}
+
+void LiftoffAssembler::emit_i64_sub128(Register dst_low, Register dst_high,
+                                       Register al, Register ah, Register bl,
+                                       Register bh) {
+  DCHECK_NE(dst_low, ah);
+  DCHECK_NE(dst_low, bh);
+  DCHECK_NE(dst_low, dst_high);
+  if (dst_low == al) {
+    subq(dst_low, bl);
+  } else {
+    DCHECK_NE(dst_low, bl);
+    movq(dst_low, al);
+    subq(dst_low, bl);
+  }
+  if (dst_high == ah) {
+    sbbq(dst_high, bh);
+  } else {
+    DCHECK_NE(dst_high, bh);
+    movq(dst_high, ah);
+    sbbq(dst_high, bh);
   }
 }
 

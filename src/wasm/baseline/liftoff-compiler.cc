@@ -3058,8 +3058,8 @@ class LiftoffCompiler {
         break;
       }
       case kExprI64Sub128: {
-        // TODO(ryandiaz): Implement sub128.
-        unsupported(decoder, kUnsupportedArchitecture, "wide arithmetic");
+        __ emit_i64_sub128(dest_low.gp(), dest_high.gp(), al.gp(), ah.gp(),
+                           bl.gp(), bh.gp());
         break;
       }
       default:
