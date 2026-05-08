@@ -2378,9 +2378,9 @@ class LiftoffCompiler {
 
   enum TypeConversionTrapping : bool { kCanTrap = true, kNoTrap = false };
   template <ValueKind dst_kind, ValueKind src_kind,
-            TypeConversionTrapping can_trap>
-  void EmitTypeConversion(FullDecoder* decoder, WasmOpcode opcode,
-                          ExternalReference (*fallback_fn)()) {
+            TypeConversionTrapping can_trap,
+            ExternalReference (*fallback_fn)() = nullptr>
+  void EmitTypeConversion(FullDecoder* decoder, WasmOpcode opcode) {
     static constexpr RegClass src_rc = reg_class_for(src_kind);
     static constexpr RegClass dst_rc = reg_class_for(dst_kind);
     LiftoffRegister src = __ PopToRegister();
@@ -2394,7 +2394,9 @@ class LiftoffCompiler {
                        .label()
                  : nullptr);
     if (!emitted) {
-      DCHECK_NOT_NULL(fallback_fn);
+      if constexpr (fallback_fn == nullptr) {
+        UNREACHABLE();
+      }
       ExternalReference ext_ref = fallback_fn();
       if (can_trap) {
         // External references for potentially trapping conversions return int.
@@ -2452,8 +2454,8 @@ class LiftoffCompiler {
                                                &ExternalReference::wasm_##fn);
 #define CASE_TYPE_CONVERSION(opcode, dst_kind, src_kind, ext_ref, can_trap) \
   case kExpr##opcode:                                                       \
-    return EmitTypeConversion<k##dst_kind, k##src_kind, can_trap>(          \
-        decoder, kExpr##opcode, ext_ref);
+    return EmitTypeConversion<k##dst_kind, k##src_kind, can_trap, ext_ref>( \
+        decoder, kExpr##opcode);
     switch (opcode) {
       CASE_I32_UNOP(I32Clz, i32_clz)
       CASE_I32_UNOP(I32Ctz, i32_ctz)
