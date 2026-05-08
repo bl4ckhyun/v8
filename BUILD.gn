@@ -1692,9 +1692,11 @@ config("toolchain") {
       defines += [ "CAN_USE_RVV_INSTRUCTIONS" ]
       defines += [ "RVV_VLEN=${riscv_rvv_vlen}" ]
     }
-
     if (riscv_use_zicfiss) {
       defines += [ "V8_ENABLE_RISCV_SHADOW_STACK" ]
+    }
+    if (riscv_profile == "rva23u64") {
+      defines += [ "CAN_USE_RVA23U64_INSTRUCTIONS" ]
     }
     if (riscv_use_zicond) {
       defines += [ "__riscv_zicond" ]
@@ -1707,9 +1709,6 @@ config("toolchain") {
     }
     if (riscv_use_zbs) {
       defines += [ "__riscv_zbs" ]
-    }
-    if (riscv_profile == "rva23u64") {
-      defines += [ "__riscv_zfa" ]
     }
     defines += [ "RISCV_CODE_ALIGNMENT=${riscv_code_alignment}" ]
     defines +=
