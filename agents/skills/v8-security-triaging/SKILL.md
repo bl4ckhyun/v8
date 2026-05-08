@@ -149,7 +149,7 @@ of impact.
 - **Deep Dive**: Task **Debugger** to capture the crash in GDB and verify the
   primitive (Read/Write) and attacker control. Review the provided backtrace.
 
-### 5. Phase: Reporting Findings
+### 5. Phase: Drafting Findings
 
 Draft a concise synthesis based on verified subagent findings.
 
@@ -197,8 +197,58 @@ Draft a concise synthesis based on verified subagent findings.
     provide all necessary details for a manual upload (repro file, job name,
     issue ID, and flags) to the user. Explicitly advise the user to perform the
     upload.
-- **Action**: Present the draft analysis and (if applicable) the ClusterFuzz
-  upload info to the user for approval. Clarify that the ClusterFuzz info is for
-  the user's manual action and will NOT be posted to Buganizer.
-- **Post Update**: Use `mcp_Buganizer_add_buganizer_comment` to post ONLY the
-  approved analysis message if available; otherwise, ask the user to post it.
+
+### 6. Phase: Verification & Self-Correction (Audit)
+
+Task a **Generalist** subagent acting as a "Security Triage Auditor" to review
+the draft.
+
+- **Orchestrator Instruction**: "Audit the attached triage draft against
+  `docs/security/triaging.md` and the Technical Quality Checklist. Ensure the
+  classification is technically sound and the formatting is correct. If errors
+  are found, distinguish between text-only corrections and missing technical
+  work."
+- **Loop-back Mandate**: If the Auditor identifies missing technical evidence
+  (e.g., skipped boundary checks, missing GDB analysis, or unverified impact on
+  Release builds), the Orchestrator **MUST** return to the relevant previous
+  phase (Phase 2, 3, or 4) and re-delegate the work to the appropriate subagent
+  before proceeding.
+- **Review**: The auditor must verify that:
+  - The classification (Vulnerability vs. Bug) is consistent with the
+    reproduction results (e.g., if it needs experimental flags, it's a Bug).
+  - The "Local Reproduction Findings" section contains the exact d8 command, V8
+    version, git hash, and the observed result.
+  - The formatting (double line breaks between list items) is strictly followed.
+  - The conversation ID is valid or "N/A".
+- **Action**: Present the *audited and verified* analysis to the user for
+  approval ONLY after all technical gaps identified by the auditor have been
+  addressed.
+
+## Technical Quality Checklist
+
+- [ ] **Classification Accuracy**: Does the result match the criteria in
+  `docs/security/triaging.md`? (e.g., `nullptr` is a Bug, safe termination is
+  Intended Behavior).
+- [ ] **Boundary Verification**: Was the POC tested with the security filter
+  flag (`--run-as-[sandbox]-security-poc`)?
+- [ ] **Mandatory Data**: Are the V8 version and git hash included in the Build
+  description?
+- [ ] **Formatting**: Are there double line breaks between all bulleted list
+  items?
+- [ ] **Impact Evidence**: Is the Verified Impact supported by GDB analysis or
+  ASan/UBSan logs?
+- [ ] **Component Mapping**: Does the proposed component exist with the stated
+  ID and is it the most specific one available (not just `V8`)?
+
+## Common Misclassification Pitfalls
+
+- **Experimental Flags**: If a bug requires `--experimental-*` flags and is not
+  part of `--future` or `--wasm-staging`, it is a **Bug**, not a Vulnerability.
+- **DCHECK vs. CHECK**: `DCHECK` failures are **Bugs**. `CHECK` failures are
+  **Intended Behavior** (safe termination) unless they are in-sandbox and part
+  of a sandbox bypass claim.
+- **Sandbox Read-only**: Sandbox bypasses that only provide **Read** access are
+  currently **Bugs**.
+- **d8-only Flags**: Bugs requiring flags like `--shell` or `--isolate` are
+  **Bugs**.
+- **nullptr Dereference**: Always a **Bug**, never a Vulnerability.
