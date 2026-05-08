@@ -92,6 +92,10 @@ Buganizer.
 - **Extraction**: The summary must include the POC script, required `d8` flags,
   the reporter's environment (commit hash/version), and the identified
   **introduction commit (regression range)**.
+- **Version and Commit Identification**: Always retrieve the current V8 version
+  number from `src/utils/version.h` and the specific git hash using
+  `git rev-parse HEAD`. Prioritize referencing specific git hashes over generic
+  terms like "HEAD" in triage reports.
 - **Attachment Check**: Ensure the subagent checks for mentioned files (e.g.,
   "poc.html", "crash.log") that are NOT in the attachments list.
 - **Stop Condition**: If the subagent reports that critical attachments (POC,
@@ -147,8 +151,8 @@ of impact.
 Draft a concise synthesis based on verified subagent findings.
 
 - **Mandatory First Sentence**: "This analysis is AI-generated using the
-  `v8-security-triaging` skill (Conversation ID: `<id>`)." (Use
-  `INVOKER_INFO_SESSION_ID`).
+  `v8-security-triaging` skill (Conversation ID: `<id>`)." You **MUST** retrieve
+  the `<id>` from the `INVOKER_INFO_SESSION_ID` environment variable.
 - **Formatting Requirement**: Use a **bulleted list** format for the main points
   (Status, Classification, Rationale, etc.) and ensure there are **double line
   breaks** between each list item for optimal rendering in Buganizer.
@@ -169,8 +173,9 @@ Draft a concise synthesis based on verified subagent findings.
 
   - **Local Reproduction Findings**: Follow the structure and mandatory fields
     defined in the **Classification Guidelines** of `v8-poc-classification`.
-    Ensure all technical data (Status, Reproduction command, Result, Build,
-    Verified Impact, and GDB Backtrace) is included here.
+    Ensure all technical data (Status, Reproduction command, Result, Build
+    (including version from `src/utils/version.h` and git hash), Verified
+    Impact, and optional GDB Backtrace) is included here.
 
   - **Proposed Owner**: Based on expert discovery. Include a very short (half
     sentence) explanation for the choice (e.g., "author of affected code",
