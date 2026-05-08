@@ -578,10 +578,9 @@ V8_OBJECT class JSObject : public JSReceiver {
 
   // Sets the property value in a normalized object given (key, value, details).
   // Handles the special representation of JS global objects.
-  static void SetNormalizedProperty(DirectHandle<JSObject> object,
-                                    DirectHandle<Name> name,
-                                    DirectHandle<Object> value,
-                                    PropertyDetails details);
+  static V8_WARN_UNUSED_RESULT Maybe<bool> SetNormalizedProperty(
+      DirectHandle<JSObject> object, DirectHandle<Name> name,
+      DirectHandle<Object> value, PropertyDetails details);
   static void SetNormalizedElement(DirectHandle<JSObject> object,
                                    uint32_t index, DirectHandle<Object> value,
                                    PropertyDetails details);

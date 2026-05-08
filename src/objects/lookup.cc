@@ -847,7 +847,7 @@ void LookupIterator::Delete() {
   state_ = NOT_FOUND;
 }
 
-void LookupIterator::TransitionToAccessorProperty(
+Maybe<bool> LookupIterator::TransitionToAccessorProperty(
     DirectHandle<Object> getter, DirectHandle<Object> setter,
     PropertyAttributes attributes) {
   DCHECK(!IsNull(*getter, isolate_) || !IsNull(*setter, isolate_));
@@ -881,11 +881,11 @@ void LookupIterator::TransitionToAccessorProperty(
       number_ = new_map->LastAdded();
       property_details_ = new_map->GetLastDescriptorDetails();
       state_ = ACCESSOR;
-      return;
+      return Just(true);
     }
 
     ReloadPropertyInformation<false>();
-    if (!new_map->is_dictionary_map()) return;
+    if (!new_map->is_dictionary_map()) return Just(true);
   }
 
   DirectHandle<AccessorPair> pair;
@@ -895,7 +895,7 @@ void LookupIterator::TransitionToAccessorProperty(
     if (pair->Equals(*getter, *setter)) {
       if (property_details().attributes() == attributes) {
         if (!IsElement(*receiver)) JSObject::ReoptimizeIfPrototype(receiver);
-        return;
+        return Just(true);
       }
     } else {
       pair = AccessorPair::Copy(isolate(), pair);
@@ -906,17 +906,18 @@ void LookupIterator::TransitionToAccessorProperty(
     pair->SetComponents(*getter, *setter);
   }
 
-  TransitionToAccessorPair(pair, attributes);
+  Maybe<bool> result = TransitionToAccessorPair(pair, attributes);
 
 #if VERIFY_HEAP
-  if (v8_flags.verify_heap) {
+  if (v8_flags.verify_heap || result.IsNothing()) {
     receiver->JSObjectVerify(isolate());
   }
 #endif
+  return result;
 }
 
-void LookupIterator::TransitionToAccessorPair(DirectHandle<Object> pair,
-                                              PropertyAttributes attributes) {
+Maybe<bool> LookupIterator::TransitionToAccessorPair(
+    DirectHandle<Object> pair, PropertyAttributes attributes) {
   DirectHandle<JSObject> receiver = GetStoreTarget<JSObject>();
   holder_ = receiver;
 
@@ -958,11 +959,14 @@ void LookupIterator::TransitionToAccessorPair(DirectHandle<Object> pair,
     JSObject::NormalizeProperties(isolate_, receiver, mode, 0,
                                   "TransitionToAccessorPair");
 
-    JSObject::SetNormalizedProperty(receiver, name_, pair, details);
+    MAYBE_RETURN(
+        JSObject::SetNormalizedProperty(receiver, name_, pair, details),
+        Nothing<bool>());
     JSObject::ReoptimizeIfPrototype(receiver);
 
     ReloadPropertyInformation<false>();
   }
+  return Just(true);
 }
 
 Tagged<JSObject> LookupIterator::GetHolderForApi() const {

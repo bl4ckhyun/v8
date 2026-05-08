@@ -2662,7 +2662,8 @@ void InstanceBuilder::ProcessExports() {
                                details.attributes());
     } else {
       // Add a property to the dictionary.
-      JSObject::SetNormalizedProperty(exports_object, name, value, details);
+      JSObject::SetNormalizedProperty(exports_object, name, value, details)
+          .Check();
     }
   }
 

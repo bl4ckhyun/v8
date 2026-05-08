@@ -4,19 +4,19 @@
 
 // Flags: --allow-natives-syntax --no-enable-slow-asserts --no-verify-heap
 
-// Regression test: adding named data properties to a dictionary-properties
+// Regression test: adding named accessor properties to a dictionary-properties
 // object should throw RangeError when the NameDictionary capacity limit is
 // exceeded, not crash with a fatal "invalid table size" OOM.
 
-function TestDictionaryDataPropertiesOverflow() {
+function TestDictionaryAccessorPropertiesOverflow() {
   let obj = {};
   %OptimizeObjectForAddingMultipleProperties(obj, 0);
   assertFalse(%HasFastProperties(obj));
 
   for (let i = 0; ; i++) {
-    obj['p' + i] = i;
+    Object.defineProperty(obj, 'p' + i, {get() { return i; }});
   }
 }
 
-assertThrows(TestDictionaryDataPropertiesOverflow, RangeError,
+assertThrows(TestDictionaryAccessorPropertiesOverflow, RangeError,
              /Too many properties/);

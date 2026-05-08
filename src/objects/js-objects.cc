@@ -2832,10 +2832,10 @@ Maybe<bool> JSObject::SetPropertyWithFailedAccessCheck(
   UNREACHABLE();
 }
 
-void JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
-                                     DirectHandle<Name> name,
-                                     DirectHandle<Object> value,
-                                     PropertyDetails details) {
+Maybe<bool> JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
+                                            DirectHandle<Name> name,
+                                            DirectHandle<Object> value,
+                                            PropertyDetails details) {
   DCHECK(!object->HasFastProperties());
   DCHECK(IsUniqueName(*name));
   Isolate* isolate = Isolate::Current();
@@ -2856,9 +2856,9 @@ void JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
                                                   : PropertyCellType::kConstant;
       details = details.set_cell_type(cell_type);
       auto cell = isolate->factory()->NewPropertyCell(name, details, value);
-      dictionary =
-          GlobalDictionary::Add(isolate, dictionary, name, cell, details)
-              .ToHandleChecked();
+      ASSIGN_RETURN_ON_EXCEPTION(
+          isolate, dictionary,
+          GlobalDictionary::Add(isolate, dictionary, name, cell, details));
       global_obj->set_global_dictionary(*dictionary, kReleaseStore);
     } else {
       PropertyCell::PrepareForAndSetValue(isolate, dictionary, entry, value,
@@ -2887,9 +2887,9 @@ void JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
       if (entry.is_not_found()) {
         DCHECK_IMPLIES(object->map()->is_prototype_map(),
                        !object->map()->IsPrototypeValidityCellValid());
-        dictionary =
-            NameDictionary::Add(isolate, dictionary, name, value, details)
-                .ToHandleChecked();
+        ASSIGN_RETURN_ON_EXCEPTION(
+            isolate, dictionary,
+            NameDictionary::Add(isolate, dictionary, name, value, details));
         object->SetProperties(*dictionary);
       } else {
         PropertyDetails original_details = dictionary->DetailsAt(entry);
@@ -2904,6 +2904,7 @@ void JSObject::SetNormalizedProperty(DirectHandle<JSObject> object,
       }
     }
   }
+  return Just(true);
 }
 
 void JSObject::SetNormalizedElement(DirectHandle<JSObject> object,
@@ -3869,7 +3870,8 @@ Maybe<bool> JSObject::DefineOwnPropertyIgnoreAttributes(
           // Update the attributes before calling the setter. The setter may
           // later change the shape of the property.
           if (current_attributes != attributes) {
-            it->TransitionToAccessorPair(accessors, attributes);
+            RETURN_ON_EXCEPTION(it->isolate(), it->TransitionToAccessorPair(
+                                                   accessors, attributes));
           }
 
           return Object::SetPropertyWithAccessor(it, value, should_throw);
@@ -4888,7 +4890,8 @@ MaybeDirectHandle<Object> JSObject::DefineOwnAccessorIgnoreAttributes(
          IsNull(*getter, isolate) || IsFunctionTemplateInfo(*getter));
   DCHECK(IsCallable(*setter) || IsUndefined(*setter, isolate) ||
          IsNull(*setter, isolate) || IsFunctionTemplateInfo(*setter));
-  it->TransitionToAccessorProperty(getter, setter, attributes);
+  RETURN_ON_EXCEPTION(
+      isolate, it->TransitionToAccessorProperty(getter, setter, attributes));
 
   return isolate->factory()->undefined_value();
 }
@@ -4922,7 +4925,8 @@ MaybeDirectHandle<Object> JSObject::SetAccessor(DirectHandle<JSObject> object,
   MAYBE_RETURN_NULL(can_define);
   if (!can_define.FromJust()) return it.factory()->undefined_value();
 
-  it.TransitionToAccessorPair(info, attributes);
+  MAYBE_RETURN(it.TransitionToAccessorPair(info, attributes),
+               MaybeDirectHandle<Object>());
 
   return object;
 }

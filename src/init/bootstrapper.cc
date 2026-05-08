@@ -6937,7 +6937,7 @@ void Genesis::TransferNamedProperties(DirectHandle<JSObject> from,
         DirectHandle<Object> value(descs->GetStrongValue(i), isolate());
         PropertyDetails d(PropertyKind::kAccessor, details.attributes(),
                           PropertyCellType::kMutable);
-        JSObject::SetNormalizedProperty(to, key, value, d);
+        JSObject::SetNormalizedProperty(to, key, value, d).Check();
       }
     }
   } else if (IsJSGlobalObject(*from)) {
@@ -6965,7 +6965,7 @@ void Genesis::TransferNamedProperties(DirectHandle<JSObject> from,
         DCHECK(!to->HasFastProperties());
         PropertyDetails d(PropertyKind::kAccessor, details.attributes(),
                           PropertyCellType::kMutable);
-        JSObject::SetNormalizedProperty(to, key, value, d);
+        JSObject::SetNormalizedProperty(to, key, value, d).Check();
       }
     }
 

@@ -406,7 +406,8 @@ DirectHandle<JSModuleNamespace> Module::GetModuleNamespace(
       JSObject::SetNormalizedProperty(
           ns, name, module_namespace_property_accessor,
           PropertyDetails(PropertyKind::kAccessor, attr,
-                          PropertyCellType::kMutable));
+                          PropertyCellType::kMutable))
+          .Check();
     }
   }
   JSObject::PreventExtensions(isolate, ns, kThrowOnError).ToChecked();
