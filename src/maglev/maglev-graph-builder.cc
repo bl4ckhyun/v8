@@ -5620,7 +5620,7 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildHomomorphicNamedAccess(
     RETURN_IF_ABORT(AddNewNode<CheckInstanceType>(
         {lookup_start_object}, CheckType::kCheckHeapObject, JS_ARRAY_TYPE,
         JS_ARRAY_TYPE));
-    return BuildLoadJSArrayLength(lookup_start_object);
+    return BuildLoadJSArrayLength(lookup_start_object, LoadType::kNumber);
   }
 
   RETURN_IF_ABORT(AddNewNode<CheckHomomorphicMap>(
