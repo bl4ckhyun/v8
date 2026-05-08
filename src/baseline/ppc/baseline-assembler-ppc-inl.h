@@ -607,7 +607,8 @@ void BaselineAssembler::Switch(Register reg, int case_value_base,
   // Ensure to emit the constant pool first if necessary.
   int entry_size_log2 = 3;
   __ ShiftLeftU32(reg, reg, Operand(entry_size_log2));
-  __ mov_label_addr(ip, &jump_table);
+  DCHECK_NE(reg, r0);
+  __ GetLabelAddress(ip, &jump_table, r0);
   __ AddS64(reg, reg, ip);
   __ Jump(reg);
   __ b(&fallthrough);
