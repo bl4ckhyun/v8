@@ -2151,8 +2151,9 @@ EnumerateCompiledFunctions(Heap* heap) {
       seen(8, hash);
 
   auto record = [&](Tagged<SharedFunctionInfo> sfi, Tagged<AbstractCode> c) {
-    if (auto [iter, inserted] = seen.emplace(sfi, c); inserted)
+    if (auto [iter, inserted] = seen.emplace(sfi, c); inserted) {
       compiled_funcs.emplace_back(handle(sfi, isolate), handle(c, isolate));
+    }
   };
 
   // Iterate the heap to find JSFunctions and record their optimized code.

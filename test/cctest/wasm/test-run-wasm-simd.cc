@@ -3005,8 +3005,9 @@ void BuildShuffle(const std::vector<Shuffle>& shuffles,
   size_t row_index = (shuffles.size() - 1) / 2;
   for (size_t i = row_index; i < shuffles.size(); ++i) {
     uint8_t operands[] = {WASM_GLOBAL_GET(0), WASM_GLOBAL_GET(1)};
-    for (size_t j = 0; j < arraysize(operands); ++j)
+    for (size_t j = 0; j < arraysize(operands); ++j) {
       buffer->push_back(operands[j]);
+    }
     AppendShuffle(shuffles[i], buffer);
   }
   // Now perform inner shuffles in the correct order on operands on the stack.
@@ -7033,8 +7034,9 @@ TEST(RunWasmTurbofan_I64x4Splat) {
 TEST(RunWasmTurbofan_F16x16Splat) {
   EXPERIMENTAL_FLAG_SCOPE(revectorize);
   EXPERIMENTAL_FLAG_SCOPE(fp16);
-  if (!CpuFeatures::IsSupported(AVX2) || !CpuFeatures::IsSupported(F16C))
+  if (!CpuFeatures::IsSupported(AVX2) || !CpuFeatures::IsSupported(F16C)) {
     return;
+  }
   WasmRunner<int32_t, float> r(TestExecutionTier::kTurbofan);
   uint16_t* memory = r.builder().AddMemoryElems<uint16_t>(16);
   float param1 = 0;

@@ -50,8 +50,9 @@ bool ToPropertyDescriptorFastPath(Isolate* isolate,
     Tagged<Map> raw_map = raw_obj->map();
     if (raw_map->instance_type() != JS_OBJECT_TYPE) return false;
     if (raw_map->is_access_check_needed()) return false;
-    if (raw_map->prototype() != *isolate->initial_object_prototype())
+    if (raw_map->prototype() != *isolate->initial_object_prototype()) {
       return false;
+    }
     // During bootstrapping, the object_function_prototype_map hasn't been
     // set up yet.
     if (isolate->bootstrapper()->IsActive()) return false;
@@ -256,8 +257,9 @@ bool PropertyDescriptor::ToPropertyDescriptor(Isolate* isolate,
     return false;
   }
   // 15c. Set the [[Writable]] field of desc to writable.
-  if (!writable.is_null())
+  if (!writable.is_null()) {
     desc->set_writable(Object::BooleanValue(*writable, isolate));
+  }
 
   // getter?
   Handle<JSAny> getter;

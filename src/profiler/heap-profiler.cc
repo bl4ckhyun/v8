@@ -71,8 +71,9 @@ std::vector<v8::Local<v8::Value>> HeapProfiler::GetDetachedJSWrapperObjects() {
     v8::EmbedderGraph::Node::Detachedness detachedness =
         GetDetachedness(data, 0);
 
-    if (detachedness != v8::EmbedderGraph::Node::Detachedness::kDetached)
+    if (detachedness != v8::EmbedderGraph::Node::Detachedness::kDetached) {
       continue;
+    }
 
     js_objects_found.push_back(data);
   }
@@ -90,8 +91,9 @@ void HeapProfiler::RemoveBuildEmbedderGraphCallback(
   auto it = std::find(build_embedder_graph_callbacks_.begin(),
                       build_embedder_graph_callbacks_.end(),
                       std::make_pair(callback, data));
-  if (it != build_embedder_graph_callbacks_.end())
+  if (it != build_embedder_graph_callbacks_.end()) {
     build_embedder_graph_callbacks_.erase(it);
+  }
 }
 
 void HeapProfiler::BuildEmbedderGraph(Isolate* isolate,
@@ -340,8 +342,9 @@ DirectHandle<HeapObject> HeapProfiler::FindHeapObjectById(SnapshotObjectId id) {
   // Make sure that the object with the given id is still reachable.
   for (Tagged<HeapObject> obj = iterator.Next(); !obj.is_null();
        obj = iterator.Next()) {
-    if (ids_->FindEntry(obj.address()) == id)
+    if (ids_->FindEntry(obj.address()) == id) {
       return DirectHandle<HeapObject>(obj, isolate());
+    }
   }
   return DirectHandle<HeapObject>();
 }

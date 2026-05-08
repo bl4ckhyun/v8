@@ -295,8 +295,9 @@ bool SharedFunctionInfo::HasDebugInfo(Isolate* isolate) const {
 int SharedFunctionInfo::UniqueIdInScript() const {
   // Script scopes start "before" the script to avoid clashing with a scope that
   // starts on character 0.
-  if (function_literal_id(kRelaxedLoad) == kFunctionLiteralIdTopLevel)
+  if (function_literal_id(kRelaxedLoad) == kFunctionLiteralIdTopLevel) {
     return -2;
+  }
   // Wrapped functions start before the function body, but after the script
   // start, to avoid clashing with a scope starting on character 0.
   if (syntax_kind() == FunctionSyntaxKind::kWrapped) return -1;

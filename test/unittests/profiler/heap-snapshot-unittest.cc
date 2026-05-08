@@ -74,10 +74,11 @@ TEST_F(HeapSnapshotTest, PositionOnSharedFunctionInfo) {
   const HeapEntry* lazy = nullptr;
   for (const HeapEntry& entry : snapshot->entries()) {
     if (entry.type() == HeapEntry::kClosure) {
-      if (strcmp(entry.name(), "compiled") == 0)
+      if (strcmp(entry.name(), "compiled") == 0) {
         compiled = &entry;
-      else if (strcmp(entry.name(), "lazy") == 0)
+      } else if (strcmp(entry.name(), "lazy") == 0) {
         lazy = &entry;
+      }
     }
   }
   CHECK_NOT_NULL(compiled);
@@ -168,10 +169,11 @@ TEST_F(HeapSnapshotTest, ScopeInfoProperties) {
   const HeapEntry* f_closure = nullptr;
   for (const HeapEntry& entry : snapshot->entries()) {
     if (entry.type() == HeapEntry::kClosure) {
-      if (strcmp(entry.name(), "g_func") == 0)
+      if (strcmp(entry.name(), "g_func") == 0) {
         g_closure = &entry;
-      else if (strcmp(entry.name(), "f_func") == 0)
+      } else if (strcmp(entry.name(), "f_func") == 0) {
         f_closure = &entry;
+      }
     }
   }
   ASSERT_NE(nullptr, g_closure);

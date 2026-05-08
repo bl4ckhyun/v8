@@ -254,8 +254,9 @@ bool MatchHelper(const uint8_t* input, uint8_t* output) {
   for (int i = 0; i < kLanes; ++i) {
     if (input[i * kLaneBytes] % kLaneBytes != 0) return false;
     for (int j = 1; j < kLaneBytes; ++j) {
-      if (input[i * kLaneBytes + j] - input[i * kLaneBytes + j - 1] != 1)
+      if (input[i * kLaneBytes + j] - input[i * kLaneBytes + j - 1] != 1) {
         return false;
+      }
     }
     output[i] = input[i * kLaneBytes] / kLaneBytes;
   }
@@ -334,8 +335,10 @@ bool SimdShuffle::TryMatchBlend(const uint8_t* shuffle) {
 bool SimdShuffle::TryMatchByteToDwordZeroExtend(const uint8_t* shuffle) {
   for (int i = 0; i < 16; ++i) {
     if ((i % 4 != 0) && (shuffle[i] < 16)) return false;
-    if ((i % 4 == 0) && (shuffle[i] > 15 || (shuffle[i] != shuffle[0] + i / 4)))
+    if ((i % 4 == 0) &&
+        (shuffle[i] > 15 || (shuffle[i] != shuffle[0] + i / 4))) {
       return false;
+    }
   }
   return true;
 }

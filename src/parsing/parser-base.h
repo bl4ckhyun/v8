@@ -3265,8 +3265,9 @@ ParserBase<Impl>::ParseConditionalChainAssignmentExpressionCoverGrammar() {
 
   Token::Value op = peek();
 
-  if (!Token::IsArrowOrAssignmentOp(op) || peek() == Token::kConditional)
+  if (!Token::IsArrowOrAssignmentOp(op) || peek() == Token::kConditional) {
     return expression;
+  }
 
   return ParseAssignmentExpressionCoverGrammarContinuation(lhs_beg_pos,
                                                            expression);
@@ -4442,8 +4443,9 @@ void ParserBase<Impl>::ParseFormalParameter(FormalParametersT* parameters) {
     // (x = 1, y = (x = 2)) => {}
     // and even:
     // (x = (x = 2)) => {}.
-    if (var->initializer_position() == kNoSourcePosition)
+    if (var->initializer_position() == kNoSourcePosition) {
       var->clear_maybe_assigned();
+    }
     var->set_initializer_position(initializer_end);
   }
 

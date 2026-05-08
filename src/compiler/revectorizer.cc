@@ -560,8 +560,9 @@ bool SLPTree::IsSideEffectFreeLoad(const ZoneVector<Node*>& node_group) {
   // We only allows Loads that are connected by effect edges.
   if (node_group[0] != node_group[1] &&
       NodeProperties::GetEffectInput(node_group[0]) != node_group[1] &&
-      NodeProperties::GetEffectInput(node_group[1]) != node_group[0])
+      NodeProperties::GetEffectInput(node_group[1]) != node_group[0]) {
     return false;
+  }
 
   std::stack<Node*> to_visit;
   std::unordered_set<Node*> visited;
@@ -950,10 +951,11 @@ void Revectorizer::SetEffectInput(PackNode* pnode, int index, Node*& input) {
     Node* node128 = nodes[i];
     PackNode* effect = GetPackNode(node128->InputAt(index));
     if (effect == pnode) continue;
-    if (effect)
+    if (effect) {
       pnode->SetOperand(index, effect);
-    else
+    } else {
       input = node128->InputAt(index);
+    }
     break;
   }
 }

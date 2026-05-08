@@ -51,8 +51,9 @@ class InnerPointerResolutionTest
   InnerPointerResolutionTest() = default;
 
   ~InnerPointerResolutionTest() override {
-    for (auto [id, page] : pages_)
+    for (auto [id, page] : pages_) {
       allocator()->Free(MemoryAllocator::FreeMode::kImmediately, page);
+    }
   }
 
   InnerPointerResolutionTest(const InnerPointerResolutionTest&) = delete;
@@ -242,10 +243,11 @@ class InnerPointerResolutionTest
     Address base_ptr = ResolveInnerPointer(object.address + offset);
     bool should_return_null =
         !IsPageAlive(object.page_id) || object.type == ObjectRequest::FREE;
-    if (should_return_null)
+    if (should_return_null) {
       EXPECT_EQ(kNullAddress, base_ptr);
-    else
+    } else {
       EXPECT_EQ(object.address, base_ptr);
+    }
   }
 
   // This must be called with an address not contained in any created object.

@@ -916,8 +916,9 @@ TEST(Utf8Conversion) {
     size_t written = mixed->WriteUtf8(CcTest::isolate(), buffer, i);
     CHECK_EQ(lengths[i], written);
     // Check that the contents are correct
-    for (uint32_t j = 0; j < lengths[i]; j++)
+    for (uint32_t j = 0; j < lengths[i]; j++) {
       CHECK_EQ(as_utf8[j], static_cast<unsigned char>(buffer[j]));
+    }
     // Check that the rest of the buffer hasn't been touched
     for (uint32_t j = lengths[i]; j < 11; j++) CHECK_EQ(kNoChar, buffer[j]);
   }

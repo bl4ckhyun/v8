@@ -503,8 +503,9 @@ std::pair<Handle<String>, Handle<Map>> TransitionsAccessor::ExpectedTransition(
       int entries = array->number_of_transitions();
       // Do linear search for small entries.
       const int kMaxEntriesForLinearSearch = 8;
-      if (entries > kMaxEntriesForLinearSearch)
+      if (entries > kMaxEntriesForLinearSearch) {
         return {Handle<String>::null(), Handle<Map>::null()};
+      }
       for (int i = entries - 1; i >= 0; i--) {
         Tagged<Name> name = array->GetKey(i);
         Tagged<Map> target = array->GetTarget(i);

@@ -2012,8 +2012,9 @@ TEST(TestInternalWeakLists) {
   // and hence are incompatible with this test case.
   if (v8_flags.gc_global || v8_flags.stress_compaction ||
       v8_flags.stress_incremental_marking || v8_flags.single_generation ||
-      v8_flags.stress_concurrent_allocation)
+      v8_flags.stress_concurrent_allocation) {
     return;
+  }
   v8_flags.retain_maps_for_n_gc = 0;
 
   static const int kNumTestContexts = 10;
@@ -3065,8 +3066,9 @@ TEST(OptimizedPretenuringDoubleArrayProperties) {
   if (!CcTest::i_isolate()->use_optimizer()) return;
   if (v8_flags.gc_global || v8_flags.stress_compaction ||
       v8_flags.stress_incremental_marking || v8_flags.single_generation ||
-      v8_flags.stress_concurrent_allocation || v8_flags.scavenger_chaos_mode)
+      v8_flags.stress_concurrent_allocation || v8_flags.scavenger_chaos_mode) {
     return;
+  }
   v8::HandleScope scope(CcTest::isolate());
   ManualGCScope manual_gc_scope;
   GrowNewSpaceToMaximumCapacity(CcTest::heap());
@@ -3303,8 +3305,9 @@ TEST(OptimizedAllocationArrayLiterals) {
   CcTest::InitializeVM();
   if (!CcTest::i_isolate()->use_optimizer()) return;
   if (v8_flags.gc_global || v8_flags.stress_compaction ||
-      v8_flags.stress_incremental_marking)
+      v8_flags.stress_incremental_marking) {
     return;
+  }
   v8::HandleScope scope(CcTest::isolate());
   v8::Local<v8::Context> ctx = CcTest::isolate()->GetCurrentContext();
   v8::Local<v8::Value> res = CompileRun(
@@ -3987,8 +3990,9 @@ TEST(Regress169928) {
   // and hence are incompatible with this test case.
   if (v8_flags.gc_global || v8_flags.stress_compaction ||
       v8_flags.stress_incremental_marking || v8_flags.single_generation ||
-      v8_flags.minor_ms)
+      v8_flags.minor_ms) {
     return;
+  }
 
   // Prepare the environment
   CompileRun(
@@ -5769,8 +5773,9 @@ HEAP_TEST(Regress587004) {
 }
 
 HEAP_TEST(Regress589413) {
-  if (!v8_flags.incremental_marking || v8_flags.stress_concurrent_allocation)
+  if (!v8_flags.incremental_marking || v8_flags.stress_concurrent_allocation) {
     return;
+  }
   v8_flags.stress_compaction = true;
   ManualGCScope manual_gc_scope;
   heap::ManualEvacuationCandidatesSelectionScope
@@ -6809,8 +6814,9 @@ UNINITIALIZED_TEST(OutOfMemory) {
 UNINITIALIZED_TEST(OutOfMemoryIneffectiveGC) {
   if (!v8_flags.detect_ineffective_gcs_near_heap_limit) return;
   if (v8_flags.stress_incremental_marking ||
-      v8_flags.stress_concurrent_allocation)
+      v8_flags.stress_concurrent_allocation) {
     return;
+  }
 #ifdef VERIFY_HEAP
   if (v8_flags.verify_heap) return;
 #endif

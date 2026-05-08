@@ -890,10 +890,11 @@ double acos(double x) {
     uint32_t lx;
     GET_LOW_WORD(lx, x);
     if (((ix - 0x3FF00000) | lx) == 0) { /* |x|==1 */
-      if (hx > 0)
+      if (hx > 0) {
         return 0.0; /* acos(1) = 0  */
-      else
+      } else {
         return pi + 2.0 * pio2_lo; /* acos(-1)= pi */
+      }
     }
     return std::numeric_limits<double>::signaling_NaN();  // acos(|x|>1) is NaN
   }
@@ -1055,10 +1056,11 @@ double asin(double x) {
     q = pio4_hi - 2.0 * w;
     t = pio4_hi - (p - q);
   }
-  if (hx > 0)
+  if (hx > 0) {
     return t;
-  else
+  } else {
     return -t;
+  }
 }
 /* asinh(x)
  * Method :
@@ -1158,12 +1160,14 @@ double atan(double x) {
   if (ix >= 0x44100000) { /* if |x| >= 2^66 */
     uint32_t low;
     GET_LOW_WORD(low, x);
-    if (ix > 0x7FF00000 || (ix == 0x7FF00000 && (low != 0)))
+    if (ix > 0x7FF00000 || (ix == 0x7FF00000 && (low != 0))) {
       return x + x; /* NaN */
-    if (hx > 0)
+    }
+    if (hx > 0) {
       return atanhi[3] + *const_cast<volatile double*>(&atanlo[3]);
-    else
+    } else {
       return -atanhi[3] - *const_cast<volatile double*>(&atanlo[3]);
+    }
   }
   if (ix < 0x3FDC0000) {            /* |x| < 0.4375 */
     if (ix < 0x3E400000) {          /* |x| < 2^-27 */
@@ -1486,10 +1490,11 @@ double exp(double x) {
     if (hx >= 0x7FF00000) {
       uint32_t lx;
       GET_LOW_WORD(lx, x);
-      if (((hx & 0xFFFFF) | lx) != 0)
+      if (((hx & 0xFFFFF) | lx) != 0) {
         return x + x; /* NaN */
-      else
+      } else {
         return (xsb == 0) ? x : 0.0; /* exp(+-inf)={inf,0} */
+      }
     }
     if (x > o_threshold) return huge * huge;         /* overflow */
     if (x < u_threshold) return twom1000 * twom1000; /* underflow */
@@ -1585,10 +1590,11 @@ double atanh(double x) {
   } else {
     t = 0.5 * log1p((x + x) / (one - x));
   }
-  if (hx >= 0)
+  if (hx >= 0) {
     return t;
-  else
+  } else {
     return -t;
+  }
 }
 
 /* log(x)
@@ -1710,15 +1716,17 @@ double log(double x) {
   R = t2 + t1;
   if (i > 0) {
     hfsq = 0.5 * f * f;
-    if (k == 0)
+    if (k == 0) {
       return f - (hfsq - s * (hfsq + R));
-    else
+    } else {
       return dk * ln2_hi - ((hfsq - (s * (hfsq + R) + dk * ln2_lo)) - f);
+    }
   } else {
-    if (k == 0)
+    if (k == 0) {
       return f - s * (f - R);
-    else
+    } else {
       return dk * ln2_hi - ((s * (f - R) - dk * ln2_lo) - f);
+    }
   }
 }
 
@@ -1810,17 +1818,19 @@ double log1p(double x) {
   k = 1;
   if (hx < 0x3FDA827A) {    /* 1+x < sqrt(2)+ */
     if (ax >= 0x3FF00000) { /* x <= -1.0 */
-      if (x == -1.0)
+      if (x == -1.0) {
         return -std::numeric_limits<double>::infinity(); /* log1p(-1)=+inf */
-      else
+      } else {
         return std::numeric_limits<double>::signaling_NaN();  // log1p(x<-1)=NaN
+      }
     }
     if (ax < 0x3E200000) {    /* |x| < 2**-29 */
       if (two54 + x > zero    /* raise inexact */
-          && ax < 0x3C900000) /* |x| < 2**-54 */
+          && ax < 0x3C900000) { /* |x| < 2**-54 */
         return x;
-      else
+      } else {
         return x - x * x * 0.5;
+      }
     }
     if (hx > 0 || hx <= static_cast<int32_t>(0xBFD2BEC4)) {
       k = 0;
@@ -1870,19 +1880,21 @@ double log1p(double x) {
       }
     }
     R = hfsq * (1.0 - 0.66666666666666666 * f);
-    if (k == 0)
+    if (k == 0) {
       return f - R;
-    else
+    } else {
       return k * ln2_hi - ((R - (k * ln2_lo + c)) - f);
+    }
   }
   s = f / (2.0 + f);
   z = s * s;
   R = z * (Lp1 +
            z * (Lp2 + z * (Lp3 + z * (Lp4 + z * (Lp5 + z * (Lp6 + z * Lp7))))));
-  if (k == 0)
+  if (k == 0) {
     return f - (hfsq - s * (hfsq + R));
-  else
+  } else {
     return k * ln2_hi - ((hfsq - (s * (hfsq + R) + (k * ln2_lo + c))) - f);
+  }
 }
 
 /*
@@ -2248,16 +2260,18 @@ double expm1(double x) {
       if (hx >= 0x7FF00000) {
         uint32_t low;
         GET_LOW_WORD(low, x);
-        if (((hx & 0xFFFFF) | low) != 0)
+        if (((hx & 0xFFFFF) | low) != 0) {
           return x + x; /* NaN */
-        else
+        } else {
           return (xsb == 0) ? x : -1.0; /* exp(+-inf)={inf,-1} */
+        }
       }
       if (x > o_threshold) return huge * huge; /* overflow */
     }
     if (xsb != 0) {        /* x < -56*ln2, return -1.0 with inexact */
-      if (x + tiny < 0.0)  /* raise inexact */
+      if (x + tiny < 0.0) { /* raise inexact */
         return tiny - one; /* return -1 */
+      }
     }
   }
 
@@ -2305,20 +2319,22 @@ double expm1(double x) {
     e -= hxs;
     if (k == -1) return 0.5 * (x - e) - 0.5;
     if (k == 1) {
-      if (x < -0.25)
+      if (x < -0.25) {
         return -2.0 * (e - (x + 0.5));
-      else
+      } else {
         return one + 2.0 * (x - e);
+      }
     }
     if (k <= -2 || k > 56) { /* suffice to return exp(x)-1 */
       y = one - (e - x);
       // TODO(mvstanton): is this replacement for the hex float
       // sufficient?
       // if (k == 1024) y = y*2.0*0x1p1023;
-      if (k == 1024)
+      if (k == 1024) {
         y = y * 2.0 * 8.98846567431158e+307;
-      else
+      } else {
         y = y * twopk;
+      }
       return y - one;
     }
     t = one;

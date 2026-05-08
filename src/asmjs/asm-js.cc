@@ -60,8 +60,9 @@ bool AreStdlibMembersValid(Isolate* isolate, DirectHandle<JSReceiver> stdlib,
     DirectHandle<Name> name = isolate->factory()->Infinity_string();
     DirectHandle<Object> value =
         JSReceiver::GetDataProperty(isolate, stdlib, name);
-    if (!IsNumber(*value) || !std::isinf(Object::NumberValue(*value)))
+    if (!IsNumber(*value) || !std::isinf(Object::NumberValue(*value))) {
       return false;
+    }
   }
   if (members.contains(wasm::AsmJsParser::StandardMember::kNaN)) {
     members.Remove(wasm::AsmJsParser::StandardMember::kNaN);

@@ -285,8 +285,9 @@ void ArrayBufferSweeper::RequestSweep(
     SweepingType type, TreatAllYoungAsPromoted treat_all_young_as_promoted) {
   DCHECK(!sweeping_in_progress());
 
-  if (young_.IsEmpty() && (old_.IsEmpty() || type == SweepingType::kYoung))
+  if (young_.IsEmpty() && (old_.IsEmpty() || type == SweepingType::kYoung)) {
     return;
+  }
 
   GCTracer::Scope::ScopeId scope_id =
       type == SweepingType::kYoung
@@ -465,8 +466,9 @@ void ArrayBufferSweeper::SweepingState::SweepingJob::Sweep(
 bool ArrayBufferSweeper::SweepingState::SweepingJob::SweepFull(
     JobDelegate* delegate) {
   DCHECK_EQ(SweepingType::kFull, type_);
-  if (!SweepListFull(delegate, young_, ArrayBufferExtension::Age::kYoung))
+  if (!SweepListFull(delegate, young_, ArrayBufferExtension::Age::kYoung)) {
     return false;
+  }
   return SweepListFull(delegate, old_, ArrayBufferExtension::Age::kOld);
 }
 

@@ -604,15 +604,17 @@ template <typename Char>
 class CharBuffer {
  public:
   void Reset(size_t length) {
-    if (length >= kInlinedBufferSize)
+    if (length >= kInlinedBufferSize) {
       outofline_ = std::make_unique<Char[]>(length);
+    }
   }
 
   Char* Data() {
-    if (outofline_)
+    if (outofline_) {
       return outofline_.get();
-    else
+    } else {
       return inlined_;
+    }
   }
 
  private:

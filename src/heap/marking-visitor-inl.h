@@ -868,8 +868,9 @@ size_t MarkingVisitorBase<ConcreteVisitor>::VisitDescriptorArray(
 template <typename ConcreteVisitor>
 void MarkingVisitorBase<ConcreteVisitor>::VisitDescriptorsForMap(
     Tagged<Map> map) {
-  if (!concrete_visitor()->CanUpdateValuesInHeap() || !map->CanTransition())
+  if (!concrete_visitor()->CanUpdateValuesInHeap() || !map->CanTransition()) {
     return;
+  }
 
   // Maps that can transition share their descriptor arrays and require
   // special visiting logic to avoid memory leaks.

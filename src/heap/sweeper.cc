@@ -1382,8 +1382,9 @@ bool Sweeper::TryRemovePromotedPageSafe(MutablePage* chunk) {
   auto position =
       std::find(sweeping_list_for_promoted_page_iteration_.begin(),
                 sweeping_list_for_promoted_page_iteration_.end(), chunk);
-  if (position == sweeping_list_for_promoted_page_iteration_.end())
+  if (position == sweeping_list_for_promoted_page_iteration_.end()) {
     return false;
+  }
   sweeping_list_for_promoted_page_iteration_.erase(position);
   return true;
 }
@@ -1628,8 +1629,9 @@ bool Sweeper::HasUnsweptPagesForMajorSweeping() const {
     DCHECK_EQ(IsSweepingDoneForSpace(space),
               sweeping_list_[GetSweepSpaceIndex(space)].empty());
     if (space == NEW_SPACE) return;
-    if (!sweeping_list_[GetSweepSpaceIndex(space)].empty())
+    if (!sweeping_list_[GetSweepSpaceIndex(space)].empty()) {
       has_unswept_pages = true;
+    }
   });
   return has_unswept_pages;
 }

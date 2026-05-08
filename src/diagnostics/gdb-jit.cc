@@ -1988,8 +1988,9 @@ GetOverlappingRegions(CodeMap* map, const base::AddressRegion region) {
 
   // Return a range containing intersecting regions.
 
-  if (std::distance(start_it, end_it) < 1)
+  if (std::distance(start_it, end_it) < 1) {
     return {};  // No overlapping entries.
+  }
 
   return {{start_it, end_it}};
 }

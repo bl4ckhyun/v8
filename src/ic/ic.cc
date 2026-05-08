@@ -1285,8 +1285,9 @@ MaybeObjectHandle LoadIC::ComputeHandler(LookupIterator* lookup) {
         InternalIndex descriptor = lookup->GetFieldDescriptorIndex();
         smi_handler = LoadHandler::LoadField(isolate(), field, descriptor);
         TRACE_HANDLER_STATS(isolate(), LoadIC_LoadFieldDH);
-        if (holder_is_lookup_start_object)
+        if (holder_is_lookup_start_object) {
           return MaybeObjectHandle(smi_handler);
+        }
         TRACE_HANDLER_STATS(isolate(), LoadIC_LoadFieldFromPrototypeDH);
       }
       if (lookup->constness() == PropertyConstness::kConst &&

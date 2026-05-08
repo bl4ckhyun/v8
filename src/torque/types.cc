@@ -35,8 +35,9 @@ Type::Type(TypeBase::Kind kind, const Type* parent,
       constexpr_version_(nullptr) {}
 
 std::string Type::ToString() const {
-  if (aliases_.empty())
+  if (aliases_.empty()) {
     return ComputeName(ToExplicitString(), GetSpecializedFrom());
+  }
   if (aliases_.size() == 1) return *aliases_.begin();
   std::stringstream result;
   int i = 0;
@@ -1447,8 +1448,9 @@ std::optional<NameAndType> ExtractSimpleFieldArraySize(
   IdentifierExpression* identifier =
       IdentifierExpression::DynamicCast(array_size);
   if (!identifier || !identifier->generic_arguments.empty() ||
-      !identifier->namespace_qualification.empty())
+      !identifier->namespace_qualification.empty()) {
     return {};
+  }
   if (!class_type.HasField(identifier->name->value)) return {};
   return class_type.LookupField(identifier->name->value).name_and_type;
 }

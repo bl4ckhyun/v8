@@ -1046,8 +1046,9 @@ Reduction JSNativeContextSpecialization::ReduceGlobalAccess(
     // conditions hold.
     if ((property_details.IsConfigurable() || !property_details.IsReadOnly()) &&
         property_details.cell_type() != PropertyCellType::kConstant &&
-        property_details.cell_type() != PropertyCellType::kUndefined)
+        property_details.cell_type() != PropertyCellType::kUndefined) {
       return NoChange();
+    }
   }
 
   // Ensure that {key} matches the specified {name} (if {key} is given).
@@ -3428,8 +3429,9 @@ JSNativeContextSpecialization::ReduceJSDefineKeyedOwnPropertyInLiteral(
   NumberMatcher mflags(n.flags());
   CHECK(mflags.HasResolvedValue());
   DefineKeyedOwnPropertyInLiteralFlags cflags(mflags.ResolvedValue());
-  if (cflags & DefineKeyedOwnPropertyInLiteralFlag::kSetFunctionName)
+  if (cflags & DefineKeyedOwnPropertyInLiteralFlag::kSetFunctionName) {
     return NoChange();
+  }
 
   return ReducePropertyAccess(node, n.name(), std::nullopt, n.value(),
                               FeedbackSource(p.feedback()),

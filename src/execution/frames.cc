@@ -970,8 +970,9 @@ StackFrame::Type StackFrameIterator::ComputeStackFrameType(
     }
     case CodeKind::BASELINE:
       // Baseline code can be deoptimized by DiscardBaselineCodeVisitor.
-      if (lookup_result.value()->marked_for_deoptimization())
+      if (lookup_result.value()->marked_for_deoptimization()) {
         return StackFrame::INTERPRETED;
+      }
       return StackFrame::BASELINE;
     case CodeKind::MAGLEV:
       if (StackFrame::IsTypeMarker(marker)) {

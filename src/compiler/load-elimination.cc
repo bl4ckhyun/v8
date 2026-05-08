@@ -362,8 +362,9 @@ LoadElimination::AbstractMaps const* LoadElimination::AbstractMaps::Kill(
     if (alias_info.MayAlias(info1.first)) {
       AbstractMaps* that = zone->New<AbstractMaps>(zone);
       for (auto info2 : this->info_for_node_) {
-        if (!alias_info.MayAlias(info2.first))
+        if (!alias_info.MayAlias(info2.first)) {
           that->info_for_node_.insert(info2);
+        }
       }
       return that;
     }

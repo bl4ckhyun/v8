@@ -130,8 +130,9 @@ inline bool IsJSArrayWithAddableFastElements(Isolate* isolate,
                                              DirectHandle<Object> receiver,
                                              ElementsKind* kind,
                                              DirectHandle<JSArray>* array) {
-  if (!IsJSArrayWithExtensibleFastElements(isolate, receiver, kind, array))
+  if (!IsJSArrayWithExtensibleFastElements(isolate, receiver, kind, array)) {
     return false;
+  }
 
   // If there may be elements accessors in the prototype chain, the fast path
   // cannot be used if there arguments to add to the array.
@@ -1443,8 +1444,9 @@ static Maybe<bool> IsConcatSpreadable(Isolate* isolate,
     MaybeDirectHandle<Object> maybeValue =
         i::Runtime::GetObjectProperty(isolate, receiver, key);
     if (!maybeValue.ToHandle(&value)) return Nothing<bool>();
-    if (!IsUndefined(*value, isolate))
+    if (!IsUndefined(*value, isolate)) {
       return Just(Object::BooleanValue(*value, isolate));
+    }
   }
   return Object::IsArray(receiver);
 }

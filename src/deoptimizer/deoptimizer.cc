@@ -587,8 +587,9 @@ Address Deoptimizer::EnsureValidReturnAddress(Isolate* isolate,
 
   // NotifyDeoptimized is used for continuation.
   if (builtins->code(Builtin::kNotifyDeoptimized)->instruction_start() ==
-      address)
+      address) {
     return address;
+  }
 
 #if V8_ENABLE_WEBASSEMBLY
   if (v8_flags.wasm_deopt &&
@@ -2368,8 +2369,9 @@ void Deoptimizer::DoComputeInlinedExtraArguments(
     // frame will do that.
     value_iterator++;  // Skip function.
     value_iterator++;  // Skip receiver.
-    for (int i = 0; i < formal_parameter_count_without_receiver; i++)
+    for (int i = 0; i < formal_parameter_count_without_receiver; i++) {
       value_iterator++;
+    }
     frame_writer.PushStackJSArguments(value_iterator, extra_argument_count);
   }
 }

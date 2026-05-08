@@ -1216,8 +1216,9 @@ void WasmScript::AddBreakpointToInfo(DirectHandle<Script> script, int position,
         2 * breakpoint_infos_len, AllocationType::kOld);
     script->set_wasm_breakpoint_infos(*new_breakpoint_infos);
     // Copy over the entries [0, insert_pos).
-    for (int i = 0; i < insert_pos; ++i)
+    for (int i = 0; i < insert_pos; ++i) {
       new_breakpoint_infos->set(i, breakpoint_infos->get(i));
+    }
   }
 
   // Move elements [insert_pos, ...] up by one.
@@ -1344,8 +1345,9 @@ MaybeDirectHandle<FixedArray> WasmScript::CheckBreakPoints(
                                             isolate);
   int insert_pos =
       FindBreakpointInfoInsertPos(isolate, breakpoint_infos, position);
-  if (insert_pos >= static_cast<int>(breakpoint_infos->ulength().value()))
+  if (insert_pos >= static_cast<int>(breakpoint_infos->ulength().value())) {
     return {};
+  }
 
   DirectHandle<Object> maybe_breakpoint_info(breakpoint_infos->get(insert_pos),
                                              isolate);

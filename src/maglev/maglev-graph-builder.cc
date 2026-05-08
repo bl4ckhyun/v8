@@ -4095,8 +4095,9 @@ ReduceResult MaglevGraphBuilder::BuildCheckStringOrStringWrapper(
           IntersectType(GetType(object), NodeType::kStringOrStringWrapper))) {
     return EmitUnconditionalDeopt(DeoptimizeReason::kNotAStringOrStringWrapper);
   }
-  if (EnsureType(object, NodeType::kStringOrStringWrapper, &known_type))
+  if (EnsureType(object, NodeType::kStringOrStringWrapper, &known_type)) {
     return ReduceResult::Done();
+  }
   return AddNewNode<CheckStringOrStringWrapper>(
       {object}, GetCheckType(known_type, object));
 }
@@ -4133,8 +4134,9 @@ ReduceResult MaglevGraphBuilder::BuildCheckSymbol(ValueNode* object) {
   if (IsEmptyNodeType(IntersectType(GetType(object), NodeType::kSymbol))) {
     return EmitUnconditionalDeopt(DeoptimizeReason::kNotASymbol);
   }
-  if (EnsureType(object, NodeType::kSymbol, &known_type))
+  if (EnsureType(object, NodeType::kSymbol, &known_type)) {
     return ReduceResult::Done();
+  }
   return AddNewNode<CheckSymbol>({object}, GetCheckType(known_type, object));
 }
 
@@ -4145,8 +4147,9 @@ ReduceResult MaglevGraphBuilder::BuildCheckJSFunction(ValueNode* object) {
   if (IsEmptyNodeType(IntersectType(GetType(object), NodeType::kJSFunction))) {
     return EmitUnconditionalDeopt(DeoptimizeReason::kWrongInstanceType);
   }
-  if (EnsureType(object, NodeType::kJSFunction, &known_type))
+  if (EnsureType(object, NodeType::kJSFunction, &known_type)) {
     return ReduceResult::Done();
+  }
   return AddNewNode<CheckInstanceType>(
       {object}, GetCheckType(known_type, object), FIRST_JS_FUNCTION_TYPE,
       LAST_JS_FUNCTION_TYPE);
@@ -4159,8 +4162,9 @@ ReduceResult MaglevGraphBuilder::BuildCheckJSReceiver(ValueNode* object) {
   if (IsEmptyNodeType(IntersectType(GetType(object), NodeType::kJSReceiver))) {
     return EmitUnconditionalDeopt(DeoptimizeReason::kWrongInstanceType);
   }
-  if (EnsureType(object, NodeType::kJSReceiver, &known_type))
+  if (EnsureType(object, NodeType::kJSReceiver, &known_type)) {
     return ReduceResult::Done();
+  }
   return AddNewNode<CheckInstanceType>(
       {object}, GetCheckType(known_type, object), FIRST_JS_RECEIVER_TYPE,
       LAST_JS_RECEIVER_TYPE);
@@ -17713,8 +17717,9 @@ bool MaglevGraphBuilder::ShouldEmitInterruptBudgetChecks() {
 }
 
 bool MaglevGraphBuilder::ShouldEmitOsrInterruptBudgetChecks() {
-  if (!v8_flags.turbofan || !v8_flags.use_osr || !v8_flags.osr_from_maglev)
+  if (!v8_flags.turbofan || !v8_flags.use_osr || !v8_flags.osr_from_maglev) {
     return false;
+  }
   if (!graph_->is_osr() && !v8_flags.always_osr_from_maglev) {
     return false;
   }

@@ -1017,8 +1017,9 @@ void FeedbackNexus::ConfigureCloneObject(
         DirectHandle<Map> cached_map(Cast<Map>(feedback_map.GetHeapObject()),
                                      isolate);
         if (cached_map.is_identical_to(source_map) ||
-            cached_map->is_deprecated())
+            cached_map->is_deprecated()) {
           break;
+        }
       }
 
       if (i >= array_len) {

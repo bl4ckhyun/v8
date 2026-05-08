@@ -4897,8 +4897,9 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
 
     EffectHandlerTableImmediate handler_table_imm(
         this, this->pc_ + 1 + imm.length, validate);
-    if (!this->Validate(this->pc_ + imm.length + 1, handler_table_imm))
+    if (!this->Validate(this->pc_ + imm.length + 1, handler_table_imm)) {
       return 0;
+    }
 
     base::Vector<HandlerCase> handlers =
         this->zone_->template AllocateVector<HandlerCase>(
@@ -4941,8 +4942,9 @@ class WasmFullDecoder : public WasmDecoder<ValidationTag, decoding_mode> {
     EffectHandlerTableImmediate handler_table_imm(
         this, this->pc_ + cont_imm.length + exc_imm.length + 1, validate);
     if (!this->Validate(this->pc_ + cont_imm.length + exc_imm.length + 1,
-                        handler_table_imm))
+                        handler_table_imm)) {
       return 0;
+    }
 
     base::Vector<HandlerCase> handlers =
         this->zone_->template AllocateVector<HandlerCase>(

@@ -1167,8 +1167,9 @@ class LiteralBoilerplateBuilder {
     int flags = AggregateLiteral::kNoFlags;
     if (is_shallow()) flags |= AggregateLiteral::kIsShallow;
     if (disable_mementos) flags |= AggregateLiteral::kDisableMementos;
-    if (needs_initial_allocation_site())
+    if (needs_initial_allocation_site()) {
       flags |= AggregateLiteral::kNeedsInitialAllocationSite;
+    }
     return flags;
   }
 

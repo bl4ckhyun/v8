@@ -271,8 +271,9 @@ void i::V8::FatalProcessOutOfMemory(i::Isolate* i_isolate, const char* location,
 
     if (!v8_flags.correctness_fuzzer_suppressions) {
       char* first_newline = strchr(heap_stats.last_few_messages, '\n');
-      if (first_newline == nullptr || first_newline[1] == '\0')
+      if (first_newline == nullptr || first_newline[1] == '\0') {
         first_newline = heap_stats.last_few_messages;
+      }
       base::OS::PrintError("\n<--- Last few GCs --->\n%s\n", first_newline);
     }
   }
@@ -2544,15 +2545,17 @@ Module::GetStalledTopLevelAwaitMessages(Isolate* isolate) {
   if (size_t stalled_awaits_count = stalled_awaits.first.size();
       stalled_awaits_count > 0) {
     modules.reserve(stalled_awaits_count);
-    for (auto module : stalled_awaits.first)
+    for (auto module : stalled_awaits.first) {
       modules.push_back(ToApiHandle<Module>(module));
+    }
   }
   LocalVector<Message> messages(isolate);
   if (size_t stalled_awaits_count = stalled_awaits.second.size();
       stalled_awaits_count > 0) {
     messages.reserve(stalled_awaits_count);
-    for (auto message : stalled_awaits.second)
+    for (auto message : stalled_awaits.second) {
       messages.push_back(ToApiHandle<Message>(message));
+    }
   }
 
   return {modules, messages};
@@ -10354,8 +10357,9 @@ Local<Value> Isolate::GetContinuationPreservedEmbedderData() {
 void Isolate::SetContinuationPreservedEmbedderData(Local<Value> data) {
 #ifdef V8_ENABLE_CONTINUATION_PRESERVED_EMBEDDER_DATA
   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
-  if (data.IsEmpty())
+  if (data.IsEmpty()) {
     data = v8::Undefined(reinterpret_cast<v8::Isolate*>(this));
+  }
   i_isolate->isolate_data()->set_continuation_preserved_embedder_data(
       *Utils::OpenDirectHandle(*data));
 #endif  // V8_ENABLE_CONTINUATION_PRESERVED_EMBEDDER_DATA
@@ -10629,8 +10633,9 @@ void Isolate::EnqueueMicrotask(Local<Function> v8_function) {
   auto function = Utils::OpenDirectHandle(*v8_function);
   i::DirectHandle<i::NativeContext> handler_context;
   if (!i::JSReceiver::GetContextForMicrotask(function).ToHandle(
-          &handler_context))
+          &handler_context)) {
     handler_context = i_isolate->native_context();
+  }
   MicrotaskQueue* microtask_queue = handler_context->microtask_queue();
   if (microtask_queue) microtask_queue->EnqueueMicrotask(this, v8_function);
 }

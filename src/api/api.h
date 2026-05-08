@@ -336,8 +336,9 @@ class HandleScopeImplementer {
 
     ~EnteredContextRewindScope() {
       DCHECK_LE(saved_entered_context_count_, hsi_->EnteredContextCount());
-      while (saved_entered_context_count_ < hsi_->EnteredContextCount())
+      while (saved_entered_context_count_ < hsi_->EnteredContextCount()) {
         hsi_->LeaveContext();
+      }
     }
 
    private:

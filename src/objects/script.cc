@@ -404,8 +404,9 @@ template <typename LineEndsContainer>
 bool Script::GetPositionInfoInternal(
     const LineEndsContainer& ends, int position, Script::PositionInfo* info,
     const DisallowGarbageCollection& no_gc) const {
-  if (!GetLineEndsContainerPositionInfo(ends, position, info, no_gc))
+  if (!GetLineEndsContainerPositionInfo(ends, position, info, no_gc)) {
     return false;
+  }
 
   // Line end is position of the linebreak character.
   info->line_end = GetLineEnd(ends, info->line);

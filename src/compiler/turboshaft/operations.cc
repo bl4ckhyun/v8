@@ -656,8 +656,9 @@ void LoadOp::PrintOptions(std::ostream& os) const {
   if (kind.is_immutable) os << ", immutable";
   os << ", " << loaded_rep;
   os << ", " << result_rep;
-  if (element_size_log2 != 0)
+  if (element_size_log2 != 0) {
     os << ", element size: 2^" << int{element_size_log2};
+  }
   if (offset != 0) os << ", offset: " << offset;
   os << ']';
 }
@@ -744,8 +745,9 @@ void StoreOp::PrintOptions(std::ostream& os) const {
   os << ", " << stored_rep;
   os << ", " << write_barrier;
   if (kind.is_atomic) os << ", atomic with memory order " << memory_order_;
-  if (element_size_log2 != 0)
+  if (element_size_log2 != 0) {
     os << ", element size: 2^" << int{element_size_log2};
+  }
   if (offset != 0) os << ", offset: " << offset;
   if (maybe_initializing_or_transitioning) os << ", initializing";
   os << ']';
@@ -1210,10 +1212,11 @@ std::ostream& operator<<(std::ostream& os, EffectHandler h) {
 std::ostream& operator<<(std::ostream& os, base::Vector<EffectHandler> hs) {
   os << "effect handlers: ";
   for (auto& h : hs) {
-    if (h.is_switch())
+    if (h.is_switch()) {
       os << h.tag_index() << "[switch]" << (&h == &hs.last() ? "" : " ");
-    else
+    } else {
       os << h.tag_index() << ":" << h.block << (&h == &hs.last() ? "" : " ");
+    }
   }
   return os;
 }

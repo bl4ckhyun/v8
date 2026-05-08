@@ -193,8 +193,9 @@ void CpuFeatures::ProbeImpl(bool cross_compile) {
   } else if (strcmp(v8_flags.mcpu, "atom") == 0) {
     SetSupported(INTEL_ATOM);
   }
-  if (cpu.has_intel_jcc_erratum() && v8_flags.intel_jcc_erratum_mitigation)
+  if (cpu.has_intel_jcc_erratum() && v8_flags.intel_jcc_erratum_mitigation) {
     SetSupported(INTEL_JCC_ERRATUM_MITIGATION);
+  }
 #ifdef V8_ENABLE_APX_F
   if (cpu.has_apx_f() && cpu.has_osxsave() && OSHasAPXFSupport())
     SetSupported(APX_F);
@@ -211,8 +212,9 @@ void CpuFeatures::ProbeImpl(bool cross_compile) {
   if (!v8_flags.enable_avx || !IsSupported(SSE4_2)) SetUnsupported(AVX);
   if (!v8_flags.enable_avx2 || !IsSupported(AVX)) SetUnsupported(AVX2);
   if (!v8_flags.enable_avx_vnni || !IsSupported(AVX)) SetUnsupported(AVX_VNNI);
-  if (!v8_flags.enable_avx_vnni_int8 || !IsSupported(AVX))
+  if (!v8_flags.enable_avx_vnni_int8 || !IsSupported(AVX)) {
     SetUnsupported(AVX_VNNI_INT8);
+  }
   if (!v8_flags.enable_fma3 || !IsSupported(AVX)) SetUnsupported(FMA3);
   if (!v8_flags.enable_f16c || !IsSupported(AVX)) SetUnsupported(F16C);
 #ifdef V8_ENABLE_APX_F
@@ -373,8 +375,9 @@ bool ConstPool::TryRecordEntry(intptr_t data, RelocInfo::Mode mode) {
   // Currently, partial constant pool only handles the following kinds of
   // RelocInfo.
   if (mode != RelocInfo::NO_INFO && mode != RelocInfo::EXTERNAL_REFERENCE &&
-      mode != RelocInfo::OFF_HEAP_TARGET)
+      mode != RelocInfo::OFF_HEAP_TARGET) {
     return false;
+  }
 
   uint64_t raw_data = static_cast<uint64_t>(data);
   int offset = assm_->pc_offset();

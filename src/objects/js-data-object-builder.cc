@@ -41,8 +41,9 @@ bool JSDataObjectBuilder::TryInitializeMapFromExpectedFinalMap() {
 
   int property_count_in_expected_final_map =
       expected_final_map_->NumberOfOwnDescriptors();
-  if (property_count_in_expected_final_map < expected_property_count_)
+  if (property_count_in_expected_final_map < expected_property_count_) {
     return false;
+  }
 
   map_ = expected_final_map_;
   property_count_in_expected_final_map_ = property_count_in_expected_final_map;

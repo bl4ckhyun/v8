@@ -3784,12 +3784,13 @@ Expression* Parser::CloseTemplateLiteral(TemplateLiteralState* state, int start,
 
 void Parser::SetLanguageMode(Scope* scope, LanguageMode mode) {
   v8::Isolate::UseCounterFeature feature;
-  if (is_sloppy(mode))
+  if (is_sloppy(mode)) {
     feature = v8::Isolate::kSloppyMode;
-  else if (is_strict(mode))
+  } else if (is_strict(mode)) {
     feature = v8::Isolate::kStrictMode;
-  else
+  } else {
     UNREACHABLE();
+  }
   ++use_counts_[feature];
   scope->SetLanguageMode(mode);
 }

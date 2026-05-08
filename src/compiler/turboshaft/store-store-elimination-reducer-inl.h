@@ -215,8 +215,6 @@ class MaybeRedundantStoresTable
     // some sort of aliasing information.
     for (Key key : active_keys_) {
       if (key.data().offset == offset) {
-        TRACE(">> " << key.data().base << "@" << key.data().offset
-                    << "  ==> Observable");
         Set(key, StoreObservability::kObservable);
       }
     }

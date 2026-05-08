@@ -3778,9 +3778,10 @@ void StoreHandler::StoreHandlerPrint(std::ostream& os) {
 
 void AllocationSite::AllocationSitePrint(std::ostream& os) {
   PrintHeader(os, "AllocationSite");
-  if (this->HasWeakNext())
+  if (this->HasWeakNext()) {
     os << "\n - weak_next: "
        << Brief(Cast<AllocationSiteWithWeakNext>(this)->weak_next());
+  }
   os << "\n - dependent code: " << Brief(dependent_code());
   os << "\n - nested site: " << Brief(nested_site());
   os << "\n - memento found count: "
@@ -4163,16 +4164,18 @@ void ScopeInfo::ScopeInfoPrint(std::ostream& os) {
   }
   if (ClassScopeHasPrivateBrand()) os << "\n - class scope has private brand";
   if (HasSavedClassVariable()) os << "\n - has saved class variable";
-  if (CanOnlyAccessFixedFormalParameters())
+  if (CanOnlyAccessFixedFormalParameters()) {
     os << "\n - can only access fixed formal parameters";
+  }
   if (HasFunctionName()) {
     os << "\n - function name(" << FunctionVariableBits::decode(flags) << "): ";
     ShortPrint(FunctionName(), os);
   }
   if (IsAsmModule()) os << "\n - asm module";
   if (HasSimpleParameters()) os << "\n - simple parameters";
-  if (PrivateNameLookupSkipsOuterClass())
+  if (PrivateNameLookupSkipsOuterClass()) {
     os << "\n - private name lookup skips outer class";
+  }
   os << "\n - function kind: " << function_kind();
   if (HasOuterScopeInfo()) {
     os << "\n - outer scope info: " << Brief(OuterScopeInfo());

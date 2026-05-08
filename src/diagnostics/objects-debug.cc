@@ -839,8 +839,9 @@ void Map::MapVerify(Isolate* isolate) {
         CHECK(HeapLayout::InAnySharedSpace(this));
         CHECK(IsUndefined(GetBackPointer(), isolate));
         Tagged<Object> maybe_cell = prototype_validity_cell(kRelaxedLoad);
-        if (IsCell(maybe_cell))
+        if (IsCell(maybe_cell)) {
           CHECK(HeapLayout::InAnySharedSpace(Cast<Cell>(maybe_cell)));
+        }
         CHECK(!is_extensible());
         CHECK(!is_prototype_map());
         CHECK(OnlyHasSimpleProperties());

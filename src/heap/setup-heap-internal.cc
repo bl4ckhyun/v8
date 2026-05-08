@@ -727,8 +727,9 @@ bool Heap::CreateLateReadOnlyNonJSReceiverMaps() {
       if (is_important_struct(entry.type)) continue;
       Tagged<Map> map;
       if (!AllocateMap(AllocationType::kReadOnly, entry.type, entry.size)
-               .To(&map))
+               .To(&map)) {
         return false;
+      }
       roots_table()[entry.index] = map.ptr();
     }
 

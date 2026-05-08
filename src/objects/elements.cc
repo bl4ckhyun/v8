@@ -207,8 +207,9 @@ WriteBarrierModeScope GetWriteBarrierMode(
     Tagged<FixedArrayBase> elements, ElementsKind kind,
     const DisallowGarbageCollection& promise) {
   if (IsSmiElementsKind(kind)) return WriteBarrierModeScope(SKIP_WRITE_BARRIER);
-  if (IsDoubleElementsKind(kind))
+  if (IsDoubleElementsKind(kind)) {
     return WriteBarrierModeScope(SKIP_WRITE_BARRIER);
+  }
   return elements->GetWriteBarrierMode(promise);
 }
 
@@ -5297,8 +5298,9 @@ class SloppyArgumentsElementsAccessor
     uint32_t length = elements->ulength().value();
 
     for (uint32_t i = 0; i < length; ++i) {
-      if (IsTheHole(elements->mapped_entries(i, kRelaxedLoad), isolate))
+      if (IsTheHole(elements->mapped_entries(i, kRelaxedLoad), isolate)) {
         continue;
+      }
       if (convert == GetKeysConversion::kConvertToString) {
         DirectHandle<String> index_string =
             isolate->factory()->Uint32ToString(i);

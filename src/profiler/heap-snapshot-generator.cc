@@ -386,10 +386,11 @@ void HeapEntry::Print(const char* prefix, const char* edge_name, int max_depth,
     base::OS::Print("\"");
     const char* c = name_;
     while (*c && (c - name_) <= 40) {
-      if (*c != '\n')
+      if (*c != '\n') {
         base::OS::Print("%c", *c);
-      else
+      } else {
         base::OS::Print("\\n");
+      }
       ++c;
     }
     base::OS::Print("\"\n");
@@ -753,8 +754,9 @@ SnapshotObjectId HeapObjectsMap::FindOrAddEntry(
 
 SnapshotObjectId HeapObjectsMap::FindMergedNativeEntry(NativeObject addr) {
   auto it = merged_native_entries_map_.find(addr);
-  if (it == merged_native_entries_map_.end())
+  if (it == merged_native_entries_map_.end()) {
     return v8::HeapProfiler::kUnknownObjectId;
+  }
   return entries_[it->second].id;
 }
 
@@ -1053,10 +1055,11 @@ HeapEntry* V8HeapExplorer::AddEntry(Tagged<HeapObject> object) {
                       names_->GetName(Cast<String>(object)));
     }
   } else if (InstanceTypeChecker::IsSymbol(instance_type)) {
-    if (Cast<Symbol>(object)->is_any_private())
+    if (Cast<Symbol>(object)->is_any_private()) {
       return AddEntry(object, HeapEntry::kSymbol, "private symbol");
-    else
+    } else {
       return AddEntry(object, HeapEntry::kSymbol, "symbol");
+    }
 
   } else if (InstanceTypeChecker::IsBigInt(instance_type)) {
     return AddEntry(object, HeapEntry::kBigInt, "bigint");
@@ -1296,8 +1299,9 @@ uint32_t V8HeapExplorer::EstimateObjectsCount() {
   // progress for a longer period of time, but we do not expect to have that
   // many objects.
   while (!it.Next().is_null() &&
-         objects_count != std::numeric_limits<uint32_t>::max())
+         objects_count != std::numeric_limits<uint32_t>::max()) {
     ++objects_count;
+  }
   return objects_count;
 }
 
@@ -2133,8 +2137,9 @@ void V8HeapExplorer::ExtractCodeReferences(HeapEntry* entry,
 void V8HeapExplorer::ExtractInstructionStreamReferences(
     HeapEntry* entry, Tagged<InstructionStream> istream) {
   Tagged<Code> code;
-  if (!istream->TryGetCode(&code, kAcquireLoad))
+  if (!istream->TryGetCode(&code, kAcquireLoad)) {
     return;  // Not yet initialized.
+  }
   TagObject(code, "(code)", HeapEntry::kCode);
   SetInternalReference(entry, "code", code, InstructionStream::kCodeOffset);
 
@@ -2843,14 +2848,17 @@ bool V8HeapExplorer::IsEssentialObject(Tagged<Object> object) {
 bool V8HeapExplorer::IsEssentialHiddenReference(Tagged<Object> parent,
                                                 int field_offset) {
   if (IsAllocationSite(parent) &&
-      field_offset == offsetof(AllocationSiteWithWeakNext, weak_next_))
+      field_offset == offsetof(AllocationSiteWithWeakNext, weak_next_)) {
     return false;
+  }
   if (IsContext(parent) &&
-      field_offset == Context::OffsetOfElementAt(Context::NEXT_CONTEXT_LINK))
+      field_offset == Context::OffsetOfElementAt(Context::NEXT_CONTEXT_LINK)) {
     return false;
+  }
   if (IsJSFinalizationRegistry(parent) &&
-      field_offset == JSFinalizationRegistry::kNextDirtyOffset)
+      field_offset == JSFinalizationRegistry::kNextDirtyOffset) {
     return false;
+  }
   return true;
 }
 

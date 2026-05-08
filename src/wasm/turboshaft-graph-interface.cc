@@ -9344,12 +9344,14 @@ class TurboshaftGraphBuildingInterface
     if (sig->parameter_count() != inlinee->parameter_count()) return false;
     if (sig->return_count() != inlinee->return_count()) return false;
     for (size_t i = 0; i < sig->return_count(); ++i) {
-      if (!IsSubtypeOf(inlinee->GetReturn(i), sig->GetReturn(i), module))
+      if (!IsSubtypeOf(inlinee->GetReturn(i), sig->GetReturn(i), module)) {
         return false;
+      }
     }
     for (size_t i = 0; i < sig->parameter_count(); ++i) {
-      if (!IsSubtypeOf(sig->GetParam(i), inlinee->GetParam(i), module))
+      if (!IsSubtypeOf(sig->GetParam(i), inlinee->GetParam(i), module)) {
         return false;
+      }
     }
     return true;
   }

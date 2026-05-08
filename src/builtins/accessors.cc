@@ -77,9 +77,10 @@ bool Accessors::IsJSObjectFieldAccessor(Isolate* isolate, DirectHandle<Map> map,
 
   switch (map->instance_type()) {
     case JS_ARRAY_TYPE:
-      if (fake_descriptor_index)
+      if (fake_descriptor_index) {
         *fake_descriptor_index =
             InternalIndex(LoadHandler::kArrayLengthFieldDescriptorIndex);
+      }
       return CheckForName(isolate, name, isolate->factory()->length_string(),
                           JSArray::kLengthOffset, FieldIndex::kTagged, index);
     default:

@@ -3329,8 +3329,9 @@ bool FastJsonStringifier<Char>::CheckCycle() {
   for (uint32_t i = 0; i < stack_.size(); i++) {
     ContinuationRecord rec = stack_[i];
     if (rec.type() == ContinuationRecord::kObjectKey ||
-        rec.type() == ContinuationRecord::kSimpleObject)
+        rec.type() == ContinuationRecord::kSimpleObject) {
       continue;
+    }
     Tagged<Object> obj = rec.object();
     if (V8_UNLIKELY(set.find(obj.ptr()) != set.end())) {
       return true;

@@ -1815,16 +1815,18 @@ uint32_t BytecodeArrayBuilder::GetInputOutputRegisterOperand(Register reg) {
 uint32_t BytecodeArrayBuilder::GetInputRegisterListOperand(
     RegisterList reg_list) {
   DCHECK(RegisterListIsValid(reg_list));
-  if (register_optimizer_)
+  if (register_optimizer_) {
     reg_list = register_optimizer_->GetInputRegisterList(reg_list);
+  }
   return static_cast<uint32_t>(reg_list.first_register().ToOperand());
 }
 
 uint32_t BytecodeArrayBuilder::GetOutputRegisterListOperand(
     RegisterList reg_list) {
   DCHECK(RegisterListIsValid(reg_list));
-  if (register_optimizer_)
+  if (register_optimizer_) {
     register_optimizer_->PrepareOutputRegisterList(reg_list);
+  }
   return static_cast<uint32_t>(reg_list.first_register().ToOperand());
 }
 

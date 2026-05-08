@@ -3402,8 +3402,9 @@ MachineType MachineTypeForNarrow(InstructionSelector* selector, OpIndex node,
         }
       } else if (hint == MachineType::Uint32()) {
         if (constant >= std::numeric_limits<uint32_t>::min() &&
-            constant <= std::numeric_limits<uint32_t>::max())
+            constant <= std::numeric_limits<uint32_t>::max()) {
           return hint;
+        }
       }
     }
   }

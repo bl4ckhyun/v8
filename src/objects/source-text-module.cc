@@ -738,9 +738,10 @@ void SourceTextModule::FetchStarExports(Isolate* isolate,
         isolate);
 
     // Recurse.
-    if (IsSourceTextModule(*requested_module))
+    if (IsSourceTextModule(*requested_module)) {
       FetchStarExports(isolate, Cast<SourceTextModule>(requested_module), zone,
                        visited);
+    }
 
     // Collect all of [requested_module]'s exports that must be added to
     // [module]'s exports (i.e. to [exports]).  We record these in

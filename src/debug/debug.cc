@@ -2667,8 +2667,9 @@ void Debug::OnDebugBreak(DirectHandle<FixedArray> break_points_hit,
   }
   {
     RCS_SCOPE(isolate_, RuntimeCallCounterId::kDebuggerCallback);
-    if (lastStepAction != StepAction::StepNone)
+    if (lastStepAction != StepAction::StepNone) {
       break_reasons.Add(debug::BreakReason::kStep);
+    }
     debug_delegate_->BreakProgramRequested(
         v8::Utils::ToLocal(isolate_->native_context()),
         inspector_break_points_hit, break_reasons);
@@ -3408,9 +3409,10 @@ bool Debug::GetTemporaryObjectTrackingDisabled() const {
 
 void Debug::PrepareRestartFrame(JavaScriptFrame* frame,
                                 int inlined_frame_index) {
-  if (frame->is_optimized())
+  if (frame->is_optimized()) {
     Deoptimizer::DeoptimizeFunction(frame->function(),
                                     LazyDeoptimizeReason::kDebugger);
+  }
 
   thread_local_.restart_frame_id_ = frame->id();
   thread_local_.restart_inline_frame_index_ = inlined_frame_index;

@@ -796,14 +796,16 @@ namespace {
 Tagged<Object> MarkObject(Tagged<Object> obj, TracedNode& node,
                           TracedHandles::MarkMode mark_mode) {
   if (mark_mode == TracedHandles::MarkMode::kOnlyYoung &&
-      !node.is_in_young_list())
+      !node.is_in_young_list()) {
     return Smi::zero();
+  }
   node.set_markbit();
   // Being in the young list, the node may still point to an old object, in
   // which case we want to keep the node marked, but not follow the reference.
   if (mark_mode == TracedHandles::MarkMode::kOnlyYoung &&
-      !HeapLayout::InYoungGeneration(obj))
+      !HeapLayout::InYoungGeneration(obj)) {
     return Smi::zero();
+  }
   return obj;
 }
 }  // namespace

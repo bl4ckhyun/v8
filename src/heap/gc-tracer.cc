@@ -606,8 +606,9 @@ void GCTracer::StopYoungCycleIfFinished() {
   if (!notified_young_sweeping_completed_) return;
   // Check if young cppgc was scheduled but hasn't completed yet.
   if (heap_->cpp_heap() && notified_young_cppgc_running_ &&
-      !notified_young_cppgc_completed_)
+      !notified_young_cppgc_completed_) {
     return;
+  }
   bool was_young_gc_during_full_gc_sweeping_ =
       young_gc_during_full_gc_sweeping_;
   StopCycle(current_.type == Event::Type::SCAVENGER
@@ -637,8 +638,9 @@ void GCTracer::NotifyFullSweepingCompletedAndStopCycleIfFinished() {
     // NotifyYoungSweepingCompletedAndStopCycleIfFinished checks if the full
     // cycle needs to be stopped as well. If full sweeping was already notified,
     // nothing more needs to be done here.
-    if (!was_young_gc_during_full_gc_sweeping || was_full_sweeping_notified)
+    if (!was_young_gc_during_full_gc_sweeping || was_full_sweeping_notified) {
       return;
+    }
   }
 
   DCHECK(!Event::IsYoungGenerationEvent(current_.type));
@@ -1327,14 +1329,16 @@ std::optional<double> GCTracer::OldGenerationSpeedInBytesPerMillisecond() {
   }
 
   const double kMinimumMarkingSpeed = 0.5;
-  if (combined_mark_compact_speed_cache_.has_value())
+  if (combined_mark_compact_speed_cache_.has_value()) {
     return combined_mark_compact_speed_cache_;
+  }
   // MarkCompact speed is more stable than incremental marking speed, because
   // there might not be many incremental marking steps because of concurrent
   // marking.
   combined_mark_compact_speed_cache_ = MarkCompactSpeedInBytesPerMillisecond();
-  if (combined_mark_compact_speed_cache_.has_value())
+  if (combined_mark_compact_speed_cache_.has_value()) {
     return combined_mark_compact_speed_cache_;
+  }
   double speed1 = IncrementalMarkingSpeedInBytesPerMillisecond();
   double speed2 =
       FinalIncrementalMarkCompactSpeedInBytesPerMillisecond().value_or(0.0);
@@ -1552,8 +1556,9 @@ void CopySizeMetrics(
 ::v8::metrics::Recorder::ContextId GetContextId(
     v8::internal::Isolate* isolate) {
   DCHECK_NOT_NULL(isolate);
-  if (isolate->context().is_null())
+  if (isolate->context().is_null()) {
     return v8::metrics::Recorder::ContextId::Empty();
+  }
   HandleScope scope(isolate);
   return isolate->GetOrRegisterRecorderContextId(isolate->native_context());
 }

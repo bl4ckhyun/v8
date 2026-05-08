@@ -561,10 +561,11 @@ TEST_F(FeedbackVectorTest, VectorLoadICOnSmi) {
   bool number_map_found = false;
   bool o_map_found = false;
   for (DirectHandle<Map> current : maps) {
-    if (*current == number_map)
+    if (*current == number_map) {
       number_map_found = true;
-    else if (*current == o->map())
+    } else if (*current == o->map()) {
       o_map_found = true;
+    }
   }
   CHECK(number_map_found && o_map_found);
 

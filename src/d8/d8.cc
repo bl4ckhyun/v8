@@ -1175,8 +1175,9 @@ std::string NormalizePath(const std::string& path,
 std::string NormalizeModuleSpecifier(const std::string& specifier,
                                      const std::string& dir_name) {
   if (specifier.starts_with(kDataURLPrefix) ||
-      specifier.starts_with("http://") || specifier.starts_with("https://"))
+      specifier.starts_with("http://") || specifier.starts_with("https://")) {
     return specifier;
+  }
   return NormalizePath(specifier, dir_name);
 }
 

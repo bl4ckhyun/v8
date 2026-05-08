@@ -370,8 +370,9 @@ bool Sandbox::InitializeAsPartiallyReservedSandbox(v8::VirtualAddressSpace* vas,
 
     // Take this base if it meets the requirements or if this is the last
     // attempt.
-    if (reservation_base_ <= highest_allowed_address || i == kMaxAttempts)
+    if (reservation_base_ <= highest_allowed_address || i == kMaxAttempts) {
       break;
+    }
 
     // Can't use this base, so free the reservation and try again
     vas->FreePages(reservation_base_, size_to_reserve);

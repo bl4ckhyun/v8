@@ -407,9 +407,10 @@ template <template <typename> typename HandleType>
 typename HandleType<Number>::MaybeType Object::ConvertToUint32(
     Isolate* isolate, HandleType<Object> input) {
   ASSIGN_RETURN_ON_EXCEPTION(isolate, input, ConvertToNumber(isolate, input));
-  if (IsSmi(*input))
+  if (IsSmi(*input)) {
     return typename HandleType<Number>::MaybeType(
         Smi::ToUint32Smi(Cast<Smi>(*input)), isolate);
+  }
   return isolate->factory()->NewNumberFromUint(
       DoubleToUint32(Cast<HeapNumber>(*input)->value()));
 }
@@ -758,8 +759,9 @@ template <template <typename> typename HandleType>
   requires(std::is_convertible_v<HandleType<Object>, DirectHandle<Object>>)
 typename HandleType<Number>::MaybeType Object::ConvertToIndex(
     Isolate* isolate, HandleType<Object> input, MessageTemplate error_index) {
-  if (IsUndefined(*input, isolate))
+  if (IsUndefined(*input, isolate)) {
     return HandleType<Number>(Smi::zero(), isolate);
+  }
   ASSIGN_RETURN_ON_EXCEPTION(isolate, input, ToNumber(isolate, input));
   if (IsSmi(*input) && Smi::ToInt(*input) >= 0) return Cast<Smi>(input);
   double len = DoubleToInteger(Object::NumberValue(Cast<Number>(*input)));
@@ -1008,8 +1010,9 @@ bool Object::StrictEquals(Tagged<Object> obj, Tagged<Object> that) {
 // static
 Handle<String> Object::TypeOf(Isolate* isolate, DirectHandle<Object> object) {
   if (IsNumber(*object)) return isolate->factory()->number_string();
-  if (IsOddball(*object))
+  if (IsOddball(*object)) {
     return handle(Cast<Oddball>(*object)->type_of(), isolate);
+  }
   if (IsUndetectable(*object)) {
     return isolate->factory()->undefined_string();
   }

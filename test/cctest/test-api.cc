@@ -10918,14 +10918,16 @@ THREADED_TEST(ObjectGetOwnPropertyNames) {
   for (uint32_t i = 0; i < properties->Length(); ++i) {
     CHECK(properties->Get(context.local(), i).ToLocal(&property));
     if (!property->IsString()) continue;
-    if (!concat_found)
+    if (!concat_found) {
       concat_found = property.As<v8::String>()
                          ->Equals(context.local(), v8_str("concat"))
                          .FromMaybe(false);
-    if (!starts_with_found)
+    }
+    if (!starts_with_found) {
       starts_with_found = property.As<v8::String>()
                               ->Equals(context.local(), v8_str("startsWith"))
                               .FromMaybe(false);
+    }
   }
   CHECK(concat_found && starts_with_found);
 }
@@ -13828,13 +13830,15 @@ void ApiTestFuzzer::TearDown() {
 
 void ApiTestFuzzer::CallTest() {
   v8::Isolate::Scope scope(CcTest::isolate());
-  if (kLogThreading)
+  if (kLogThreading) {
     printf("Start test %s #%d\n",
            RegisterThreadedTest::nth(test_number_)->name(), test_number_);
+  }
   (RegisterThreadedTest::nth(test_number_)->callback())();
-  if (kLogThreading)
+  if (kLogThreading) {
     printf("End test %s #%d\n", RegisterThreadedTest::nth(test_number_)->name(),
            test_number_);
+  }
 }
 
 #define THREADING_TEST(INDEX, NAME)            \
@@ -14322,8 +14326,9 @@ static bool FunctionNameIs(const char* expected,
     return true;
   }
 
-  if (tail_len != expected_len)
+  if (tail_len != expected_len) {
     return false;
+  }
 
   return strncmp(tail, expected, expected_len) == 0;
 }
@@ -15627,14 +15632,16 @@ THREADED_TEST(MorphCompositeStringTest) {
               .FromJust());
 
     // This avoids the GC from trying to free a stack allocated resource.
-    if (IsExternalOneByteString(*ilhs))
+    if (IsExternalOneByteString(*ilhs)) {
       i::Cast<i::ExternalOneByteString>(*ilhs)->SetResource(i_isolate, nullptr);
-    else
+    } else {
       i::Cast<i::ExternalTwoByteString>(*ilhs)->SetResource(i_isolate, nullptr);
-    if (IsExternalOneByteString(*irhs))
+    }
+    if (IsExternalOneByteString(*irhs)) {
       i::Cast<i::ExternalOneByteString>(*irhs)->SetResource(i_isolate, nullptr);
-    else
+    } else {
       i::Cast<i::ExternalTwoByteString>(*irhs)->SetResource(i_isolate, nullptr);
+    }
   }
   i::DeleteArray(two_byte_string);
 }

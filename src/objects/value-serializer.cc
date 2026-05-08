@@ -575,8 +575,9 @@ void ValueSerializer::WriteString(DirectHandle<String> string) {
     base::Vector<const base::uc16> chars = flat.ToUC16Vector();
     uint32_t byte_length = chars.length() * sizeof(base::uc16);
     // The existing reading code expects 16-byte strings to be aligned.
-    if ((buffer_size_ + 1 + BytesNeededForVarint(byte_length)) & 1)
+    if ((buffer_size_ + 1 + BytesNeededForVarint(byte_length)) & 1) {
       WriteTag(SerializationTag::kPadding);
+    }
     WriteTag(SerializationTag::kTwoByteString);
     WriteTwoByteString(chars);
   } else {
@@ -1668,8 +1669,9 @@ MaybeDirectHandle<Object> ValueDeserializer::ReadObjectInternal() {
   switch (tag) {
     case SerializationTag::kVerifyObjectCount:
       // Read the count and ignore it.
-      if (ReadVarint<uint32_t>().IsNothing())
+      if (ReadVarint<uint32_t>().IsNothing()) {
         return MaybeDirectHandle<Object>();
+      }
       return ReadObject();
     case SerializationTag::kUndefined:
       return isolate_->factory()->undefined_value();
@@ -1992,8 +1994,9 @@ MaybeDirectHandle<JSPrimitiveWrapper> ValueDeserializer::ReadJSPrimitiveWrapper(
       break;
     case SerializationTag::kNumberObject: {
       double number;
-      if (!ReadDouble().To(&number))
+      if (!ReadDouble().To(&number)) {
         return MaybeDirectHandle<JSPrimitiveWrapper>();
+      }
       value = Cast<JSPrimitiveWrapper>(
           isolate_->factory()->NewJSObject(isolate_->number_function()));
       DirectHandle<Number> number_object =
@@ -2003,8 +2006,9 @@ MaybeDirectHandle<JSPrimitiveWrapper> ValueDeserializer::ReadJSPrimitiveWrapper(
     }
     case SerializationTag::kBigIntObject: {
       DirectHandle<BigInt> bigint;
-      if (!ReadBigInt().ToHandle(&bigint))
+      if (!ReadBigInt().ToHandle(&bigint)) {
         return MaybeDirectHandle<JSPrimitiveWrapper>();
+      }
       value = Cast<JSPrimitiveWrapper>(
           isolate_->factory()->NewJSObject(isolate_->bigint_function()));
       value->set_value(*bigint);
@@ -2012,8 +2016,9 @@ MaybeDirectHandle<JSPrimitiveWrapper> ValueDeserializer::ReadJSPrimitiveWrapper(
     }
     case SerializationTag::kStringObject: {
       DirectHandle<String> string;
-      if (!ReadString().ToHandle(&string))
+      if (!ReadString().ToHandle(&string)) {
         return MaybeDirectHandle<JSPrimitiveWrapper>();
+      }
       value = Cast<JSPrimitiveWrapper>(
           isolate_->factory()->NewJSObject(isolate_->string_function()));
       value->set_value(*string);
@@ -2900,8 +2905,9 @@ ValueDeserializer::ReadObjectUsingEntireBufferForLegacyFormat() {
         return MaybeDirectHandle<Object>();
       }
       default:
-        if (!ReadObject().ToHandle(&new_object))
+        if (!ReadObject().ToHandle(&new_object)) {
           return MaybeDirectHandle<Object>();
+        }
         break;
     }
     stack.push_back(new_object);

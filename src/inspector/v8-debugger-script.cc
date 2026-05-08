@@ -35,8 +35,9 @@ String16 calculateHash(v8::Isolate* isolate, v8::Local<v8::String> source) {
   v8::internal::SHA256_hash(data, sizeInBytes, hash);
 
   String16Builder formatted_hash;
-  for (size_t i = 0; i < kSizeOfSha256Digest; i++)
+  for (size_t i = 0; i < kSizeOfSha256Digest; i++) {
     formatted_hash.appendUnsignedAsHex(static_cast<uint8_t>(hash[i]));
+  }
 
   return formatted_hash.toString();
 }
@@ -84,8 +85,9 @@ v8::Maybe<std::vector<uint8_t>> V8DebuggerScript::getWasmBytecode(
 std::vector<v8::debug::WasmScript::DebugSymbols>
 V8DebuggerScript::getDebugSymbols() const {
   auto script = this->script();
-  if (!script->IsWasm())
+  if (!script->IsWasm()) {
     return std::vector<v8::debug::WasmScript::DebugSymbols>();
+  }
   return v8::debug::WasmScript::Cast(*script)->GetDebugSymbols();
 }
 
@@ -248,8 +250,9 @@ String16 V8DebuggerScript::GetScriptURL(v8::Isolate* isolate,
                                         v8::Local<v8::debug::Script> script,
                                         V8InspectorClient* client) {
   v8::Local<v8::String> sourceURL;
-  if (script->SourceURL().ToLocal(&sourceURL) && sourceURL->Length() > 0)
+  if (script->SourceURL().ToLocal(&sourceURL) && sourceURL->Length() > 0) {
     return toProtocolString(isolate, sourceURL);
+  }
   return GetScriptName(isolate, script, client);
 }
 
@@ -275,8 +278,9 @@ void V8DebuggerScript::Initialize(v8::Local<v8::debug::Script> script) {
   v8::Local<v8::String> tmp;
   m_hasSourceURLComment =
       script->SourceURL().ToLocal(&tmp) && tmp->Length() > 0;
-  if (script->SourceMappingURL().ToLocal(&tmp))
+  if (script->SourceMappingURL().ToLocal(&tmp)) {
     m_sourceMappingURL = toProtocolString(m_isolate, tmp);
+  }
   m_startLine = script->StartLine();
   m_startColumn = script->StartColumn();
   m_endLine = script->EndLine();

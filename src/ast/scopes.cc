@@ -1406,8 +1406,9 @@ Declaration* DeclarationScope::CheckConflictingVarDeclarations(
         decl->AsVariableDeclaration()->AsNested() != nullptr) {
       Scope* current = decl->AsVariableDeclaration()->AsNested()->scope();
       if (decl->var()->mode() != VariableMode::kVar &&
-          decl->var()->mode() != VariableMode::kDynamic)
+          decl->var()->mode() != VariableMode::kDynamic) {
         continue;
+      }
       // Iterate through all scopes until the declaration scope.
       do {
         // There is a conflict if there exists a non-VAR binding.
@@ -2002,10 +2003,11 @@ void PrintLocation(Variable* var) {
 void PrintVar(int indent, Variable* var) {
   Indent(indent, VariableMode2String(var->mode()));
   PrintF(" ");
-  if (var->raw_name()->IsEmpty())
+  if (var->raw_name()->IsEmpty()) {
     PrintF(".%p", reinterpret_cast<void*>(var));
-  else
+  } else {
     PrintName(var->raw_name());
+  }
   PrintF(";  // (%p) ", reinterpret_cast<void*>(var));
   PrintLocation(var);
   bool comma = !var->IsUnallocated();
@@ -2766,13 +2768,15 @@ void Scope::AllocateNonParameterLocalsAndDeclaredGlobals() {
     // temporaries to make the local variable ordering stable when reparsing to
     // collect source positions.
     for (Variable* local : locals_) {
-      if (local->mode() != VariableMode::kTemporary)
+      if (local->mode() != VariableMode::kTemporary) {
         AllocateNonParameterLocal(local);
+      }
     }
 
     for (Variable* local : locals_) {
-      if (local->mode() == VariableMode::kTemporary)
+      if (local->mode() == VariableMode::kTemporary) {
         AllocateNonParameterLocal(local);
+      }
     }
   } else {
     for (Variable* local : locals_) {

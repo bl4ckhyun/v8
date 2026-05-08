@@ -588,9 +588,10 @@ Maybe<temporal_rs::ArithmeticOverflow> ToTemporalOverflowHandleUndefined(
     const char* method_name) {
   DirectHandle<Object> options;
   // Default is "constrain"
-  if (!maybe_options.ToHandle(&options) || IsUndefined(*options))
+  if (!maybe_options.ToHandle(&options) || IsUndefined(*options)) {
     return Just(temporal_rs::ArithmeticOverflow(
         temporal_rs::ArithmeticOverflow::Constrain));
+  }
   auto overflow_ident = isolate->factory()->overflow_string();
   if (!IsJSReceiver(*options)) {
     // (GetOptionsObject) 3. Throw a TypeError exception.

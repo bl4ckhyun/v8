@@ -2456,8 +2456,9 @@ void Heap::CompleteSweepingYoung(CompleteSweepingReason reason) {
   // Always complete sweeping if young generation is enabled.
   if (cpp_heap()) {
     if (auto* iheap = CppHeap::From(cpp_heap());
-        iheap->generational_gc_supported())
+        iheap->generational_gc_supported()) {
       iheap->FinishSweepingIfRunning();
+    }
   }
 #endif  // defined(CPPGC_YOUNG_GENERATION)
 }
@@ -2651,8 +2652,9 @@ void Heap::ExternalStringTable::UpdateReferences(
   if (!old_strings_.empty()) {
     FullObjectSlot start(old_strings_.data());
     FullObjectSlot end(old_strings_.data() + old_strings_.size());
-    for (FullObjectSlot p = start; p < end; ++p)
+    for (FullObjectSlot p = start; p < end; ++p) {
       p.store(updater_func(heap_, p));
+    }
   }
 }
 
@@ -2828,8 +2830,9 @@ int Heap::GetMaximumFillToAlign(AllocationAlignment alignment) {
 // static
 int Heap::GetFillToAlign(Address address, AllocationAlignment alignment) {
   if (V8_COMPRESS_POINTERS_8GB_BOOL) return 0;
-  if (alignment == kDoubleAligned && (address & kDoubleAlignmentMask) != 0)
+  if (alignment == kDoubleAligned && (address & kDoubleAlignmentMask) != 0) {
     return kTaggedSize;
+  }
   if (alignment == kDoubleUnaligned && (address & kDoubleAlignmentMask) == 0) {
     return kDoubleSize - kTaggedSize;  // No fill if double is always aligned.
   }
@@ -5161,10 +5164,11 @@ void Heap::RecordStats(HeapStats* stats) {
 
 size_t Heap::OldGenerationSizeOfObjects() const {
   size_t total = 0;
-  if (v8_flags.sticky_mark_bits)
+  if (v8_flags.sticky_mark_bits) {
     total += sticky_space()->old_objects_size();
-  else
+  } else {
     total += old_space()->SizeOfObjects();
+  }
   total += lo_space()->SizeOfObjects();
   total += code_space()->SizeOfObjects();
   total += code_lo_space()->SizeOfObjects();
@@ -6628,9 +6632,10 @@ class PrintHandleVisitor : public RootVisitor {
  public:
   void VisitRootPointers(Root root, const char* description,
                          FullObjectSlot start, FullObjectSlot end) override {
-    for (FullObjectSlot p = start; p < end; ++p)
+    for (FullObjectSlot p = start; p < end; ++p) {
       PrintF("  handle %p to %p\n", p.ToVoidPtr(),
              reinterpret_cast<void*>((*p).ptr()));
+    }
   }
 };
 
@@ -7243,14 +7248,18 @@ size_t Heap::NumberOfTrackedHeapObjectTypes() {
 }
 
 size_t Heap::ObjectCountAtLastGC(size_t index) {
-  if (live_object_stats_ == nullptr || index >= ObjectStats::OBJECT_STATS_COUNT)
+  if (live_object_stats_ == nullptr ||
+      index >= ObjectStats::OBJECT_STATS_COUNT) {
     return 0;
+  }
   return live_object_stats_->object_count_last_gc(index);
 }
 
 size_t Heap::ObjectSizeAtLastGC(size_t index) {
-  if (live_object_stats_ == nullptr || index >= ObjectStats::OBJECT_STATS_COUNT)
+  if (live_object_stats_ == nullptr ||
+      index >= ObjectStats::OBJECT_STATS_COUNT) {
     return 0;
+  }
   return live_object_stats_->object_size_last_gc(index);
 }
 

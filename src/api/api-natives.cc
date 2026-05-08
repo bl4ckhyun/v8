@@ -470,8 +470,9 @@ void AddPropertyToPropertyList(Isolate* isolate,
   }
   info->set_number_of_properties(info->number_of_properties() + 1);
   for (DirectHandle<Object> value : data) {
-    if (value.is_null())
+    if (value.is_null()) {
       value = Cast<Object>(isolate->factory()->undefined_value());
+    }
     list = ArrayList::Add(isolate, list, value);
   }
   info->set_property_list(*list);

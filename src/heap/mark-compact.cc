@@ -868,8 +868,9 @@ void MarkCompactCollector::VerifyMarking() {
     heap_->code_space()->VerifyLiveBytes();
     if (heap_->shared_space()) heap_->shared_space()->VerifyLiveBytes();
     heap_->trusted_space()->VerifyLiveBytes();
-    if (v8_flags.minor_ms && heap_->paged_new_space())
+    if (v8_flags.minor_ms && heap_->paged_new_space()) {
       heap_->paged_new_space()->paged_space()->VerifyLiveBytes();
+    }
   }
 #endif  // VERIFY_HEAP
 }
@@ -1096,8 +1097,9 @@ class MarkCompactCollector::SharedHeapObjectVisitor final
   void VisitPointer(Tagged<HeapObject> host, MaybeObjectSlot p) final {
     Tagged<MaybeObject> object = p.load(cage_base());
     Tagged<HeapObject> heap_object;
-    if (object.GetHeapObject(&heap_object))
+    if (object.GetHeapObject(&heap_object)) {
       CheckForSharedObject(host, ObjectSlot(p), heap_object);
+    }
   }
 
   void VisitMapPointer(Tagged<HeapObject> host) final {
@@ -3063,8 +3065,9 @@ class SharedStructTypeRegistryCleaner final : public RootVisitor {
       if (IsMap(o)) {
         Tagged<HeapObject> map = Cast<Map>(o);
         DCHECK(HeapLayout::InAnySharedSpace(map));
-        if (MarkingHelper::IsMarkedOrAlwaysLive(heap_, marking_state, map))
+        if (MarkingHelper::IsMarkedOrAlwaysLive(heap_, marking_state, map)) {
           continue;
+        }
         elements_removed_++;
         p.store(SharedStructTypeRegistry::deleted_element());
       }
@@ -5716,8 +5719,10 @@ class RememberedSetUpdatingItem : public UpdatingItem {
   }
 
   void UpdateTypedOldToNewPointers(WritableJitPage& jit_page) {
-    if (page_->typed_slot_set<OLD_TO_NEW, AccessMode::NON_ATOMIC>() == nullptr)
+    if (page_->typed_slot_set<OLD_TO_NEW, AccessMode::NON_ATOMIC>() ==
+        nullptr) {
       return;
+    }
     const PtrComprCageBase cage_base = heap_->isolate();
     const auto check_and_update_old_to_new_slot_fn =
         [this, cage_base](FullMaybeObjectSlot slot) {
@@ -5750,8 +5755,10 @@ class RememberedSetUpdatingItem : public UpdatingItem {
   }
 
   void UpdateTypedOldToOldPointers(WritableJitPage& jit_page) {
-    if (page_->typed_slot_set<OLD_TO_OLD, AccessMode::NON_ATOMIC>() == nullptr)
+    if (page_->typed_slot_set<OLD_TO_OLD, AccessMode::NON_ATOMIC>() ==
+        nullptr) {
       return;
+    }
     PtrComprCageBase cage_base = heap_->isolate();
     RememberedSet<OLD_TO_OLD>::IterateTyped(
         page_, [this, cage_base, &jit_page](SlotType slot_type, Address slot) {
@@ -5962,8 +5969,9 @@ void MarkCompactCollector::UpdatePointersInClientHeap(Isolate* client) {
                 return UpdateStrongOldToSharedSlot(cage_base, slot);
               });
         });
-    if (typed_slot_count == 0 || chunk->InYoungGeneration())
+    if (typed_slot_count == 0 || chunk->InYoungGeneration()) {
       page->ReleaseTypedSlotSet(OLD_TO_SHARED);
+    }
   }
 }
 

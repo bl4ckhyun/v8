@@ -643,8 +643,9 @@ v8::CpuProfile* ProfilerHelper::Run(v8::Local<v8::Function> function,
 
 static unsigned TotalHitCount(const v8::CpuProfileNode* node) {
   unsigned hit_count = node->GetHitCount();
-  for (int i = 0, count = node->GetChildrenCount(); i < count; ++i)
+  for (int i = 0, count = node->GetChildrenCount(); i < count; ++i) {
     hit_count += TotalHitCount(node->GetChild(i));
+  }
   return hit_count;
 }
 
@@ -652,8 +653,9 @@ static unsigned TotalHitCount(const v8::CpuProfileNode* node,
                               const std::string& name) {
   if (name.compare(node->GetFunctionNameStr()) == 0) return TotalHitCount(node);
   unsigned hit_count = 0;
-  for (int i = 0, count = node->GetChildrenCount(); i < count; ++i)
+  for (int i = 0, count = node->GetChildrenCount(); i < count; ++i) {
     hit_count += TotalHitCount(node->GetChild(i), name);
+  }
   return hit_count;
 }
 
@@ -1388,8 +1390,9 @@ static void TickLines(bool optimize) {
   int hit_line = 5;
   int hit_col = 1;
   int hit_count = 10;
-  for (int i = 0; i < hit_count; i++)
+  for (int i = 0; i < hit_count; i++) {
     func_node->IncrementLineAndColumnTicks({hit_line, hit_col});
+  }
 
   unsigned int line_count = func_node->GetHitLineCount();
   CHECK_EQ(2u, line_count);  // Expect two hit source lines - #1 and #5.
@@ -1398,11 +1401,12 @@ static void TickLines(bool optimize) {
           line_count);
   CHECK(func_node->GetLineTicks(&entries[0], line_count));
   int value = 0;
-  for (size_t i = 0; i < entries.size(); i++)
+  for (size_t i = 0; i < entries.size(); i++) {
     if (entries[i].line == hit_line && entries[i].column == hit_col) {
       value = entries[i].hit_count;
       break;
     }
+  }
   CHECK_EQ(hit_count, value);
 }
 
@@ -3016,8 +3020,9 @@ class CpuProfileEventChecker : public v8::platform::tracing::TraceWriter {
  public:
   void AppendTraceEvent(TraceObject* trace_event) override {
     if (trace_event->name() != std::string("Profile") &&
-        trace_event->name() != std::string("ProfileChunk"))
+        trace_event->name() != std::string("ProfileChunk")) {
       return;
+    }
     CHECK(!profile_id_ || trace_event->id() == profile_id_);
     CHECK_EQ(1, trace_event->num_args());
     CHECK_EQ(TRACE_VALUE_TYPE_CONVERTABLE, trace_event->arg_types()[0]);

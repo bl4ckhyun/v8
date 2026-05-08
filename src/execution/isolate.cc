@@ -403,12 +403,13 @@ void Isolate::SetEmbeddedBlob(const uint8_t* code, uint32_t code_size,
         PrintF(
             "Warning: Embedded blob code section checksum verification failed, "
             "but debugger is attached. Skipping.\n");
-      } else
+      } else {
         FATAL(
             "Embedded blob code section checksum verification failed. This "
             "indicates that the embedded blob has been modified since "
             "compilation time. A common cause is a debugging breakpoint set "
             "within builtin code.");
+      }
     }
   }
 #endif  // DEBUG
@@ -6445,8 +6446,9 @@ bool Isolate::Init(SnapshotData* startup_snapshot_data,
   clear_pending_message();
 
   // Quiet the heap NaN if needed on target platform.
-  if (!create_heap_objects)
+  if (!create_heap_objects) {
     Assembler::QuietNaN(ReadOnlyRoots(this).nan_value());
+  }
 
   if (v8_flags.trace_turbo) {
     // Create an empty file.
@@ -8202,8 +8204,9 @@ v8::metrics::Recorder::ContextId Isolate::GetOrRegisterRecorderContextId(
 MaybeLocal<v8::Context> Isolate::GetContextFromRecorderContextId(
     v8::metrics::Recorder::ContextId id) {
   auto result = recorder_context_id_map_.find(id.id_);
-  if (result == recorder_context_id_map_.end() || result->second.IsEmpty())
+  if (result == recorder_context_id_map_.end() || result->second.IsEmpty()) {
     return MaybeLocal<v8::Context>();
+  }
   return result->second.Get(reinterpret_cast<v8::Isolate*>(this));
 }
 

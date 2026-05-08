@@ -11701,8 +11701,9 @@ inline void NodeBase::ForAllInputsInRegallocAssignmentOrder(Function&& f) {
       switch (compiler::UnallocatedOperand::cast(input.operand())
                   .extended_policy()) {
         case compiler::UnallocatedOperand::MUST_HAVE_REGISTER:
-          if (category == InputAllocationPolicy::kArbitraryRegister)
+          if (category == InputAllocationPolicy::kArbitraryRegister) {
             f(category, input);
+          }
           break;
 
         case compiler::UnallocatedOperand::REGISTER_OR_SLOT_OR_CONSTANT:
@@ -11711,8 +11712,9 @@ inline void NodeBase::ForAllInputsInRegallocAssignmentOrder(Function&& f) {
 
         case compiler::UnallocatedOperand::FIXED_REGISTER:
         case compiler::UnallocatedOperand::FIXED_FP_REGISTER:
-          if (category == InputAllocationPolicy::kFixedRegister)
+          if (category == InputAllocationPolicy::kFixedRegister) {
             f(category, input);
+          }
           break;
 
         case compiler::UnallocatedOperand::REGISTER_OR_SLOT:

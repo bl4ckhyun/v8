@@ -682,8 +682,9 @@ int Map::NumberOfFields(ConcurrencyMode cmode) const {
                                             : instance_descriptors();
   int result = 0;
   for (InternalIndex i : IterateOwnDescriptors()) {
-    if (descriptors->GetDetails(i).location() == PropertyLocation::kField)
+    if (descriptors->GetDetails(i).location() == PropertyLocation::kField) {
       result++;
+    }
   }
   return result;
 }
@@ -1038,8 +1039,9 @@ static bool ContainsMap(MapHandlesSpan maps, Tagged<Map> map) {
 
 static bool HasElementsKind(MapHandlesSpan maps, ElementsKind elements_kind) {
   for (DirectHandle<Map> current : maps) {
-    if (!current.is_null() && current->elements_kind() == elements_kind)
+    if (!current.is_null() && current->elements_kind() == elements_kind) {
       return true;
+    }
   }
   return false;
 }

@@ -428,8 +428,9 @@ bool TransitionsAccessor::PutPrototypeTransition(Isolate* isolate,
   // Don't cache prototype transition if this map is either shared, or a map of
   // a prototype.
   if (map->is_prototype_map()) return false;
-  if (map->is_dictionary_map() || !v8_flags.cache_prototype_transitions)
+  if (map->is_dictionary_map() || !v8_flags.cache_prototype_transitions) {
     return false;
+  }
 
   const uint32_t header = TransitionArray::kProtoTransitionHeaderSize;
 
@@ -450,8 +451,9 @@ bool TransitionsAccessor::PutPrototypeTransition(Isolate* isolate,
           TransitionArray::CompactPrototypeTransitionArray(isolate, *cache);
     }
     if (!compacted) {
-      if (capacity == TransitionArray::kMaxCachedPrototypeTransitions)
+      if (capacity == TransitionArray::kMaxCachedPrototypeTransitions) {
         return false;
+      }
 
       cache = TransitionArray::GrowPrototypeTransitionArray(
           cache, 2 * transitions, isolate);

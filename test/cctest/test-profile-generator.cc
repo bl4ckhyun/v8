@@ -804,8 +804,9 @@ TEST(Issue51919) {
   }
   CHECK_EQ(CpuProfilingStatus::kErrorTooManyProfilers,
            collection.StartProfiling("maximum").status);
-  for (int i = 0; i < CpuProfilesCollection::kMaxSimultaneousProfiles; ++i)
+  for (int i = 0; i < CpuProfilesCollection::kMaxSimultaneousProfiles; ++i) {
     i::DeleteArray(titles[i]);
+  }
 }
 
 static const v8::CpuProfileNode* PickChild(const v8::CpuProfileNode* parent,

@@ -1636,8 +1636,9 @@ bool ShouldClearOutputRegisterBeforeInstruction(CodeGenerator* g,
       Register reg = i.OutputRegister(instr->OutputCount() - 1);
       // Do not clear output register when it is also input register.
       for (size_t index = 0; index < instr->InputCount(); ++index) {
-        if (HasRegisterInput(instr, index) && reg == i.InputRegister(index))
+        if (HasRegisterInput(instr, index) && reg == i.InputRegister(index)) {
           return false;
+        }
       }
       return true;
     }

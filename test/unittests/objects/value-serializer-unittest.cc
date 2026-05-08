@@ -138,10 +138,11 @@ class ValueSerializerTest : public TestWithIsolate {
     }
     std::pair<uint8_t*, size_t> buffer = serializer.Release();
     std::vector<uint8_t> result(buffer.first, buffer.first + buffer.second);
-    if (auto* delegate = GetSerializerDelegate())
+    if (auto* delegate = GetSerializerDelegate()) {
       delegate->FreeBufferMemory(buffer.first);
-    else
+    } else {
       free(buffer.first);
+    }
     return Just(std::move(result));
   }
 

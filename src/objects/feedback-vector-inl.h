@@ -616,8 +616,9 @@ Builtin FeedbackNexus::GetLoadICHandlerForStorageOffset(int storage_offset,
     // Currently we have eight handlers that support loading in-object field
     // with fixed index 0~7.
     int kMaxIndex = 7;
-    if (in_object_index > kMaxIndex)
+    if (in_object_index > kMaxIndex) {
       return Builtin::kLoadICInObjectNonDoubleFieldBaseline;
+    }
 
     LOAD_IC_IN_OBJECT_FIELD_WITH_INDEX_HANDLER_LIST(
         /*V*/, ASSERT_BUILTIN_ID_CONSECUTIVE)
@@ -632,8 +633,9 @@ Builtin FeedbackNexus::GetLoadICHandlerForStorageOffset(int storage_offset,
     // Currently we have four handlers that support loading out-of-object
     // field with fixed index 0~3.
     int kMaxIndex = 3;
-    if (out_of_object_index > kMaxIndex)
+    if (out_of_object_index > kMaxIndex) {
       return Builtin::kLoadICOutOfObjectNonDoubleFieldBaseline;
+    }
 
     LOAD_IC_OUT_OF_OBJECT_FIELD_WITH_INDEX_HANDLER_LIST(
         /*V*/, ASSERT_BUILTIN_ID_CONSECUTIVE)

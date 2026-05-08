@@ -770,8 +770,9 @@ void ConcurrentMarking::RescheduleJobIfNeeded(
       heap_->minor_mark_sweep_collector()->local_marking_worklists()->Publish();
     }
     if (!IsWorkLeft()) return;
-    if (priority != TaskPriority::kUserVisible)
+    if (priority != TaskPriority::kUserVisible) {
       job_handle_->UpdatePriority(priority);
+    }
     DCHECK(current_job_trace_id_.has_value());
     TRACE_GC_NOTE_WITH_FLOW(
         garbage_collector_ == GarbageCollector::MARK_COMPACTOR

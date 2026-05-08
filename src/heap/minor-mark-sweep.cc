@@ -205,17 +205,20 @@ void YoungGenerationRememberedSetsMarkingWorklist::MarkingItem::
     MergeAndDeleteRememberedSets() {
   DCHECK(IsAcquired());
   if (slots_type_ == SlotsType::kRegularSlots) {
-    if (slot_set_)
+    if (slot_set_) {
       RememberedSet<OLD_TO_NEW>::MergeAndDelete(chunk_, std::move(*slot_set_));
-    if (background_slot_set_)
+    }
+    if (background_slot_set_) {
       RememberedSet<OLD_TO_NEW_BACKGROUND>::MergeAndDelete(
           chunk_, std::move(*background_slot_set_));
+    }
   } else {
     DCHECK_EQ(slots_type_, SlotsType::kTypedSlots);
     DCHECK_NULL(background_slot_set_);
-    if (typed_slot_set_)
+    if (typed_slot_set_) {
       RememberedSet<OLD_TO_NEW>::MergeAndDeleteTyped(
           chunk_, std::move(*typed_slot_set_));
+    }
   }
 }
 
@@ -228,8 +231,9 @@ void YoungGenerationRememberedSetsMarkingWorklist::MarkingItem::
   } else {
     DCHECK_EQ(slots_type_, SlotsType::kTypedSlots);
     DCHECK_NULL(background_slot_set_);
-    if (typed_slot_set_)
+    if (typed_slot_set_) {
       RememberedSet<OLD_TO_NEW>::DeleteTyped(std::move(*typed_slot_set_));
+    }
   }
 }
 
@@ -1077,8 +1081,9 @@ void MinorMarkSweepCollector::Sweep() {
 void MinorMarkSweepCollector::RequestGC() {
   if (is_in_atomic_pause()) return;
   DCHECK(v8_flags.concurrent_minor_ms_marking);
-  if (gc_finalization_requested_.exchange(true, std::memory_order_relaxed))
+  if (gc_finalization_requested_.exchange(true, std::memory_order_relaxed)) {
     return;
+  }
   heap_->isolate()->stack_guard()->RequestGC();
 }
 }  // namespace internal

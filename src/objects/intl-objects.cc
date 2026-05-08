@@ -954,8 +954,9 @@ MaybeDirectHandle<String> Intl::StringLocaleConvertCase(
     Isolate* isolate, DirectHandle<String> s, bool to_upper,
     DirectHandle<Object> locales) {
   std::vector<std::string> requested_locales;
-  if (!CanonicalizeLocaleList(isolate, locales, true).To(&requested_locales))
+  if (!CanonicalizeLocaleList(isolate, locales, true).To(&requested_locales)) {
     return {};
+  }
   std::string_view requested_locale = requested_locales.empty()
                                           ? isolate->DefaultLocale()
                                           : requested_locales[0];

@@ -1800,8 +1800,9 @@ RUNTIME_FUNCTION(Runtime_PretenureAllocationSite) {
   PretenuringHandler* pretenuring_handler = heap->pretenuring_handler();
   Tagged<AllocationMemento> memento = PretenuringHandler::FindAllocationMemento<
       PretenuringHandler::kForRuntime>(heap, object->map(), object);
-  if (memento.is_null())
+  if (memento.is_null()) {
     return ReturnFuzzSafe(ReadOnlyRoots(isolate).false_value(), isolate);
+  }
   Tagged<AllocationSite> site = memento->GetAllocationSite();
   pretenuring_handler->PretenureAllocationSiteOnNextCollection(site);
   return ReturnFuzzSafe(ReadOnlyRoots(isolate).true_value(), isolate);

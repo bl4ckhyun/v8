@@ -1599,8 +1599,9 @@ std::optional<Tagged<Object>> ConcurrentLookupIterator::TryGetOwnCowElement(
   // The former is the source of truth, but due to concurrent reads it may not
   // match the given `array_elements`.
   if (index >= static_cast<size_t>(array_length)) return {};
-  if (index >= static_cast<size_t>(array_elements->ulength().value()))
+  if (index >= static_cast<size_t>(array_elements->ulength().value())) {
     return {};
+  }
 
   Tagged<Object> result = array_elements->get(static_cast<int>(index));
 
@@ -1752,8 +1753,9 @@ ConcurrentLookupIterator::TryGetPropertyCell(
         kRelaxedLoad);
     if (!maybe_cell.has_value()) return {};
     cell = maybe_cell.value();
-    if (cell->property_details(kAcquireLoad).kind() != PropertyKind::kData)
+    if (cell->property_details(kAcquireLoad).kind() != PropertyKind::kData) {
       return {};
+    }
   }
 
   DCHECK(maybe_cell.has_value());

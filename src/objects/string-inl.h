@@ -1725,8 +1725,9 @@ void StringCharacterStream::Reset(Tagged<String> string, int offset) {
   iter_.Reset(cons_string, offset);
   if (!cons_string.is_null()) {
     string = iter_.Next(&offset);
-    if (!string.is_null())
+    if (!string.is_null()) {
       String::VisitFlat(this, string, offset, access_guard_);
+    }
   }
 }
 

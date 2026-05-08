@@ -562,8 +562,9 @@ Handle<JSObject> CreateObjectLiteral(
   for (int i = 0; i < length; i++) {
     uint32_t element_index = 0;
     if (!Object::ToArrayIndex(object_boilerplate_description->name(i),
-                              &element_index))
+                              &element_index)) {
       continue;
+    }
 
     DirectHandle<Object> value =
         direct_handle(object_boilerplate_description->value(i), isolate);

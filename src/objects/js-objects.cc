@@ -2343,8 +2343,9 @@ MaybeDirectHandle<FixedArray> GetOwnValuesOrEntries(
   if (try_fast_path && filter == ENUMERABLE_STRINGS) {
     Maybe<bool> fast_values_or_entries = FastGetOwnValuesOrEntries(
         isolate, object, get_entries, &values_or_entries);
-    if (fast_values_or_entries.IsNothing())
+    if (fast_values_or_entries.IsNothing()) {
       return MaybeDirectHandle<FixedArray>();
+    }
     if (fast_values_or_entries.FromJust()) return values_or_entries;
   }
 

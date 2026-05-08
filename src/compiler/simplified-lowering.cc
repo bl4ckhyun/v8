@@ -1033,8 +1033,9 @@ class RepresentationSelector {
   void ConvertInput(Node* node, int index, UseInfo use,
                     Type input_type = Type::Invalid()) {
     // In the change phase, insert a change before the use if necessary.
-    if (use.representation() == MachineRepresentation::kNone)
+    if (use.representation() == MachineRepresentation::kNone) {
       return;  // No input requirement on the use.
+    }
     Node* input = node->InputAt(index);
     DCHECK_NOT_NULL(input);
     NodeInfo* input_info = GetInfo(input);
@@ -2740,12 +2741,14 @@ class RepresentationSelector {
         // TODO(bmeurer): Optimize somewhat based on input type?
         if (truncation.IsUsedAsWord32()) {
           SetOutput<T>(node, MachineRepresentation::kWord32);
-          if (lower<T>())
+          if (lower<T>()) {
             lowering->DoJSToNumberOrNumericTruncatesToWord32(node, this);
+          }
         } else if (truncation.TruncatesOddballAndBigIntToNumber()) {
           SetOutput<T>(node, MachineRepresentation::kFloat64);
-          if (lower<T>())
+          if (lower<T>()) {
             lowering->DoJSToNumberOrNumericTruncatesToFloat64(node, this);
+          }
         } else {
           SetOutput<T>(node, MachineRepresentation::kTagged);
         }
@@ -5190,15 +5193,17 @@ class RepresentationSelector {
   void ChangeOp(Node* node, const Operator* new_op) {
     compiler::NodeProperties::ChangeOp(node, new_op);
 
-    if (V8_UNLIKELY(observe_node_manager_ != nullptr))
+    if (V8_UNLIKELY(observe_node_manager_ != nullptr)) {
       observe_node_manager_->OnNodeChanged(kSimplifiedLoweringReducerName, node,
                                            node);
+    }
   }
 
   void NotifyNodeReplaced(Node* node, Node* replacement) {
-    if (V8_UNLIKELY(observe_node_manager_ != nullptr))
+    if (V8_UNLIKELY(observe_node_manager_ != nullptr)) {
       observe_node_manager_->OnNodeChanged(kSimplifiedLoweringReducerName, node,
                                            replacement);
+    }
   }
 
   Type true_type() const { return singleton_true_; }
@@ -6153,9 +6158,10 @@ Operator const* SimplifiedLowering::ToNumericOperator() {
 void SimplifiedLowering::ChangeOp(Node* node, const Operator* new_op) {
   compiler::NodeProperties::ChangeOp(node, new_op);
 
-  if (V8_UNLIKELY(observe_node_manager_ != nullptr))
+  if (V8_UNLIKELY(observe_node_manager_ != nullptr)) {
     observe_node_manager_->OnNodeChanged(kSimplifiedLoweringReducerName, node,
                                          node);
+  }
 }
 
 #undef TRACE

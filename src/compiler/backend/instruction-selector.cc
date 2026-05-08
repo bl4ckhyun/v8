@@ -127,8 +127,9 @@ std::optional<BailoutReason> InstructionSelector::SelectInstructions() {
   // Visit each basic block in post order.
   for (const Block* block : base::Reversed(blocks)) {
     VisitBlock(block);
-    if (instruction_selection_failed())
+    if (instruction_selection_failed()) {
       return BailoutReason::kTurbofanCodeGenerationFailed;
+    }
   }
 
   // Schedule the selected instructions.
