@@ -1146,7 +1146,7 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
   }
   ValueNode* converted_receiver = converted_receiver_result.value();
 
-  ValueNode* context = node->ContextInput().node();
+  ValueNode* context = reducer_.GetConstant(target_function->context(broker()));
   ValueNode* new_target = reducer_.GetRootConstant(RootIndex::kUndefinedValue);
   if (shared.HasBuiltinId()) {
     Builtin builtin_id = shared.builtin_id();
