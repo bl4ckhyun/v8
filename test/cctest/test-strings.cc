@@ -1975,16 +1975,31 @@ TEST(InternalizeExternalString) {
 }
 
 // Show that it is possible to internalize an external string without a copy, as
-// long as it is not uncached. Two byte version.
+// long as it is not uncached. Two byte version with genuine non-Latin-1
+// content; the 2-byte representation is preserved through internalization.
 TEST(InternalizeExternalStringTwoByte) {
   CcTest::InitializeVM();
   Factory* factory = CcTest::i_isolate()->factory();
   v8::HandleScope scope(CcTest::isolate());
 
-  // Create the string.
-  const char* raw_string = "external";
-  Resource* resource =
-      new Resource(AsciiToTwoByteString(raw_string), strlen(raw_string));
+  // Build the buffer explicitly rather than via a u"..." literal: the
+  // first code unit is a non-Latin-1 character (U+4E2D) so the content
+  // stays 2-byte and the test exercises the in-place external -> internalized
+  // path (otherwise internalization canonicalizes to a 1-byte copy; see
+  // InternalizeExternalStringTwoByteOneByteContent below). MSVC has had
+  // bugs parsing UCN escapes inside char16_t literals, so we sidestep that
+  // entirely.
+  static const size_t kLength = 8;
+  uint16_t* data = i::NewArray<uint16_t>(kLength);
+  data[0] = 0x4E2D;
+  data[1] = 'x';
+  data[2] = 't';
+  data[3] = 'e';
+  data[4] = 'r';
+  data[5] = 'n';
+  data[6] = 'a';
+  data[7] = 'l';
+  Resource* resource = new Resource(data, kLength);
   DirectHandle<String> string =
       factory->NewExternalStringFromTwoByte(resource).ToHandleChecked();
   CHECK(IsExternalString(*string));
@@ -1997,6 +2012,32 @@ TEST(InternalizeExternalStringTwoByte) {
   DirectHandle<String> internal = factory->InternalizeString(external);
   CHECK(IsInternalizedString(*string));
   CHECK(string.equals(internal));
+}
+
+// An external 2-byte string whose content fits in one byte is canonicalized
+// to a SeqOneByteString during internalization; identity is NOT preserved.
+TEST(InternalizeExternalStringTwoByteOneByteContent) {
+  CcTest::InitializeVM();
+  Factory* factory = CcTest::i_isolate()->factory();
+  v8::HandleScope scope(CcTest::isolate());
+
+  const char* raw_string = "external";
+  Resource* resource =
+      new Resource(AsciiToTwoByteString(raw_string), strlen(raw_string));
+  DirectHandle<String> string =
+      factory->NewExternalStringFromTwoByte(resource).ToHandleChecked();
+  CHECK(IsExternalString(*string));
+  CHECK(string->IsTwoByteRepresentation());
+
+  DirectHandle<ExternalString> external = Cast<ExternalString>(string);
+  CHECK(!external->is_uncached());
+
+  DirectHandle<String> internal = factory->InternalizeString(external);
+  CHECK(IsInternalizedString(*internal));
+  CHECK(internal->IsOneByteRepresentation());
+  CHECK(!string.equals(internal));
+  // The original external string is left untouched (no in-place transition).
+  CHECK(!IsInternalizedString(*string));
 }
 
 class UncachedExternalOneByteResource
