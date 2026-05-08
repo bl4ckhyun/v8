@@ -7399,6 +7399,8 @@ v8_component("v8_libbase") {
     deps += [ ":libm" ]
   }
 
+  deps += [ "//third_party/llvm-libc:headers" ]
+
   # TODO(infra): Add support for qnx, freebsd, openbsd, netbsd, and solaris.
 }
 
