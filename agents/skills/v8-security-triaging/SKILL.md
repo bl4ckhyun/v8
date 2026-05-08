@@ -142,7 +142,10 @@ of impact.
 - **Verification**: Task **Tester** to verify on Standard Release and ASan
   builds.
 - **Minimization**: Task **Generalist** to reduce the POC and flags to the
-  smallest possible set.
+  smallest possible set using the methodology in `v8-poc-classification`.
+  - **Security Impact Check**: If minimization/bisection shows that a
+    vulnerability only reproduces with flags disabled in production (e.g., a
+    developer flag), it should be classified as `Security_Impact-None`.
 - **Deep Dive**: Task **Debugger** to capture the crash in GDB and verify the
   primitive (Read/Write) and attacker control. Review the provided backtrace.
 

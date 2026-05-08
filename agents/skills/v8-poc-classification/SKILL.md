@@ -37,6 +37,9 @@ Confirm the bug exists as reported.
 - **Escalation**: If it doesn't reproduce, try multiple revisions (Reporter's
   commit and Main) and build configurations (Debug, ASan, Release).
 - **Deep Dive**: Capture the initial backtrace and faulting instruction in GDB.
+- **Check for Explicit Aborts:** Look for evidence that execution was
+  intentionally terminated by V8 (e.g., via `SBXCHECK`, `FATAL`, or traps). If
+  so, this is typically **Intended Behavior** (see guidelines below).
 
 ### 2. Security Boundary Investigation (The Filter)
 
@@ -61,6 +64,15 @@ Technical proof of the vulnerability's severity.
 
 - **Minimization**: Strip the POC and flags to the absolute minimum required to
   trigger the crash under the security POC flags.
+  - **Flag Bisection**: If reproduction requires catch-all flags like
+    `--future`, you MUST identify the minimal set of flags responsible for the
+    behavior.
+    - **Identify Implications:** Search `src/flags/flag-definitions.h` for flags
+      implied by the reported flags.
+    - **Check Production Defaults:** Verify if the identified flags are enabled
+      or disabled by default in production.
+    - **Systematic Testing:** Test each implied flag individually (or in groups)
+      with the POC to pinpoint the specific optimization or feature at fault.
 - **Impact Escalation**: If the bug exists but does NOT cause a crash (e.g., a
   "stale value" or "logical type confusion"), you MUST attempt to escalate it to
   a memory safety violation. Prove that the logical flaw can bypass V8's
@@ -111,8 +123,12 @@ the threat model:
   security POC flags (`--run-as-security-poc`).
 - **Type=Bug**: Requires experimental flags (not in `--future`), developer
   flags, or only triggers a `DCHECK` or reliable `CHECK` (safe termination).
-- **Intended Behavior**: Safe termination via `SBXCHECK`, `FATAL`, or hardened
-  libc++ checks.
+- **Intended Behavior**: Safe termination (e.g., via `SBXCHECK`, `FATAL`, or
+  hardened libc++ checks).
+  - **Indicators:** Look for traps like `int3` (x64), `brk #0` (arm64), or calls
+    to the Abort builtin or the runtime function in the backtrace/disassembly.
+    Also look for "Fatal error" or "Safely terminating process" in stderr, or
+    calls to `v8::base::OS::Abort` in the backtrace.
 
 #### Sandbox Bypasses (Starts with in-sandbox write/corruption)
 
