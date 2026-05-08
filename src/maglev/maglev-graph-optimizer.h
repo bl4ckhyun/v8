@@ -65,9 +65,7 @@ class MaglevGraphOptimizer {
   std::tuple<DeoptFrame*, interpreter::Register, int> GetDeoptFrameForLazyDeopt(
       bool can_throw) {
     DCHECK(current_node()->properties().can_lazy_deopt());
-    LazyDeoptInfo* info = current_node()->lazy_deopt_info();
-    return std::make_tuple(&info->top_frame(), info->result_location(),
-                           info->result_size());
+    return current_node()->lazy_deopt_info()->GetFrameForCloning();
   }
 
   void AttachExceptionHandlerInfo(NodeBase* node);

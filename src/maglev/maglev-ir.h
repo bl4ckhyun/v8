@@ -1877,6 +1877,11 @@ class LazyDeoptInfo : public DeoptInfo {
 
   inline void Unwrap();
 
+  std::tuple<DeoptFrame*, interpreter::Register, int> GetFrameForCloning() {
+    return {&top_frame(), result_location_,
+            ResultSizeField::decode(bitfield_)};
+  }
+
  private:
 #ifdef DEBUG
   bool IsConsideredForResultLocation() const {
