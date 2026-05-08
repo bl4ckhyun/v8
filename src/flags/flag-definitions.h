@@ -2038,8 +2038,8 @@ DEFINE_BOOL(
     experimental_wasm_pgo_from_file, false,
     "experimental: read and use Wasm PGO data from a local file (for testing)")
 
-DEFINE_BOOL(validate_asm, true,
-            "validate asm.js modules and translate them to Wasm")
+DEFINE_BOOL(validate_asm, false,
+            "validate asm.js modules and translate them to Wasm (deprecated)")
 // Directly interpret asm.js code as regular JavaScript code.
 // asm.js validation is disabled since it triggers wasm code generation.
 DEFINE_NEG_IMPLICATION(jitless, validate_asm)

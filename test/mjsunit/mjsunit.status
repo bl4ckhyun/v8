@@ -1933,7 +1933,6 @@
 
   # These tests trigger profiling, which can trigger non-deterministic
   # allocations.
-  'asm/log-lazy-code': [SKIP],
   'regress/regress-1394663': [SKIP],
   'regress/wasm/regress-crbug-1502180': [SKIP],
   'wasm/log-wasm-to-js-wrapper-callref': [SKIP],
@@ -3144,7 +3143,6 @@
   'regress-332570754': [SKIP],
   'regress/regress-490446682': [SKIP],
   'asm/regress-1395401': [SKIP],
-  'asm/log-lazy-code': [SKIP],
   'regress/regress-1394663': [SKIP],
   'regress/wasm/regress-crbug-1502180': [SKIP],
   'regress/wasm/regress-392928805': [SKIP],
