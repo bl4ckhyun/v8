@@ -70,7 +70,11 @@ static CpuFeatureSet CpuFeaturesImpliedByCompiler() {
 bool CpuFeatures::SupportsSimd128() {
   // TODO(mips64): enable wasm simd after turboshaft isel supports simd
   // instructions.
+#if V8_ENABLE_SIMD128
   return false;
+#else
+  return false;
+#endif  // V8_ENABLE_SIMD128
 }
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {

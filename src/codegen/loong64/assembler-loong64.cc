@@ -17,7 +17,13 @@
 namespace v8 {
 namespace internal {
 
-bool CpuFeatures::SupportsSimd128() { return IsSupported(LSX); }
+bool CpuFeatures::SupportsSimd128() {
+#if V8_ENABLE_SIMD128
+  return IsSupported(LSX);
+#else
+  return false;
+#endif  // V8_ENABLE_SIMD128
+}
 
 void CpuFeatures::ProbeImpl(bool cross_compile) {
   supported_.Add(FPU);

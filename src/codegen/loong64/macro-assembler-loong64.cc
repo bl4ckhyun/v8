@@ -58,7 +58,7 @@ int MacroAssembler::RequiredStackSizeForCallerSaved(SaveFPRegsMode fp_mode,
   bytes += list.Count() * kSystemPointerSize;
 
   if (fp_mode == SaveFPRegsMode::kSave) {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     bool generating_builtins =
         isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
     if (generating_builtins || CpuFeatures::SupportsSimd128()) {
@@ -68,7 +68,7 @@ int MacroAssembler::RequiredStackSizeForCallerSaved(SaveFPRegsMode fp_mode,
     }
 #else
     bytes += kCallerSavedFPU.Count() * kDoubleSize;
-#endif
+#endif  // V8_ENABLE_SIMD128
   }
 
   return bytes;
@@ -85,7 +85,7 @@ int MacroAssembler::PushCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
   bytes += list.Count() * kSystemPointerSize;
 
   if (fp_mode == SaveFPRegsMode::kSave) {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     bool generating_builtins =
         isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
     if (generating_builtins) {
@@ -124,7 +124,7 @@ int MacroAssembler::PushCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
 #else
     MultiPushFPU(kCallerSavedFPU);
     bytes += kCallerSavedFPU.Count() * kDoubleSize;
-#endif
+#endif  // V8_ENABLE_SIMD128
   }
   return bytes;
 }
@@ -134,7 +134,7 @@ int MacroAssembler::PopCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
   ASM_CODE_COMMENT(this);
   int bytes = 0;
   if (fp_mode == SaveFPRegsMode::kSave) {
-#if V8_ENABLE_WEBASSEMBLY
+#if V8_ENABLE_SIMD128
     bool generating_builtins =
         isolate() && isolate()->IsGeneratingEmbeddedBuiltins();
     if (generating_builtins) {
@@ -175,7 +175,7 @@ int MacroAssembler::PopCallerSaved(SaveFPRegsMode fp_mode, Register exclusion1,
 #else
     MultiPopFPU(kCallerSavedFPU);
     bytes += kCallerSavedFPU.Count() * kDoubleSize;
-#endif
+#endif  // V8_ENABLE_SIMD128
   }
 
   RegList exclusions = {exclusion1, exclusion2, exclusion3};
