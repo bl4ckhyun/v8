@@ -4231,6 +4231,16 @@ void CheckNotHole::GenerateCode(MaglevAssembler* masm,
                                     DeoptimizeReason::kHole, this);
 }
 
+void CheckNotUndefined::SetValueLocationConstraints() {
+  UseRegister(ObjectInput());
+}
+void CheckNotUndefined::GenerateCode(MaglevAssembler* masm,
+                                     const ProcessingState& state) {
+  __ CompareRootAndEmitEagerDeoptIf(ToRegister(ObjectInput()),
+                                    RootIndex::kUndefinedValue, kEqual,
+                                    DeoptimizeReason::kHoleOrUndefined, this);
+}
+
 void CheckHoleyFloat64NotHoleOrUndefined::SetValueLocationConstraints() {
   UseRegister(Float64Input());
   set_temporaries_needed(1);

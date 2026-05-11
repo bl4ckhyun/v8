@@ -2990,6 +2990,14 @@ class GraphBuildingNodeProcessor {
                     node->eager_deopt_info()->feedback_to_update());
     return maglev::ProcessResult::kContinue;
   }
+  maglev::ProcessResult Process(maglev::CheckNotUndefined* node,
+                                const maglev::ProcessingState& state) {
+    GET_FRAME_STATE_MAYBE_ABORT(frame_state, node->eager_deopt_info());
+    __ DeoptimizeIf(RootEqual(node->ObjectInput(), RootIndex::kUndefinedValue),
+                    frame_state, DeoptimizeReason::kHoleOrUndefined,
+                    node->eager_deopt_info()->feedback_to_update());
+    return maglev::ProcessResult::kContinue;
+  }
   maglev::ProcessResult Process(
       maglev::CheckHoleyFloat64NotHoleOrUndefined* node,
       const maglev::ProcessingState& state) {

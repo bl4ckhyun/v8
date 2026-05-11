@@ -10694,24 +10694,35 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceSetPrototypeHas(
 
 MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     compiler::JSFunctionRef target, CallArguments& args) {
-  // Inline a small insertion-sort directly into the Maglev graph, avoiding the
-  // builtin→JS transition overhead on every comparefn call inside TimSort.
+  // Inline a small insertion-sort directly into the Maglev graph, avoiding
+  // the builtin -> JS transition overhead on every comparefn call inside
+  // TimSort.
   //
   // Preconditions (all checked before any graph commitment):
   //  1. CanSpeculateCall()
-  //  2. receiver has known PACKED maps (holey arrays are excluded — holes
-  //     require special treatment that the insertion sort does not implement)
+  //  2. receiver has known PACKED_SMI or PACKED maps (holey arrays excluded
+  //     because holes require special treatment the insertion sort does not
+  //     implement; PACKED_DOUBLE excluded so deopt continuations stay simple
+  //     -- see below)
   //  3. a comparefn is provided (args[0])
   //  4. comparefn is a statically-known interpreted JSFunction
   //  (HasBytecodeArray);
-  //     lazy deopts from the inlined call body are handled by
-  //     kArraySortNoopLazyDeoptContinuation which restarts the sort.
+  //     deopts from the inlined call body are handled by the
+  //     ArraySortContinueFromSnapshot{Eager,Lazy}DeoptContinuation builtins,
+  //     which feed the temp_array snapshot to the generic PowerSort tail.
   //
   // The sort operates on a temporary FixedArray copy of the receiver's
-  // elements.  Sorted results are written back to the receiver afterwards.
-  // This matches the spec's SortIndexedProperties snapshot semantics:
-  // comparefn side effects on the receiver do not affect the sort order and
-  // are overwritten by the copy-back (ECMA-262 §23.1.3.30).
+  // elements.  This temp_array is the "_items_" snapshot from
+  // ECMA-262 23.1.3.30: comparefn side effects on the receiver do not
+  // affect the sort result.  On deopt the snapshot is threaded through the
+  // deopt frame state so the restarted sort sees the original values, not
+  // whatever mid-sort state the receiver currently holds.
+  //
+  // PACKED_DOUBLE is not handled: the generic PowerSort work_array is a
+  // FixedArray of boxed HeapNumbers, so bridging the FixedDoubleArray temp
+  // into that format on the deopt path requires either pre-boxing in the
+  // inlined sort or a separate unboxing continuation builtin.  TF doesn't
+  // handle PACKED_DOUBLE either.
   //
   // For arrays with length > kMaxInlineSortSize the slow path calls the sort
   // builtin normally so that large arrays are unaffected.
@@ -10744,10 +10755,17 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
   }
 
   // Holey arrays require holes to be moved to the end of the sorted result
-  // (ECMA-262 §23.1.3.30 step 5, skip-holes mode).  The insertion sort does
+  // (ECMA-262 23.1.3.30 step 5, skip-holes mode).  The insertion sort does
   // not implement this, so bail out for any holey kind.
   if (IsHoleyElementsKind(elements_kind)) {
     FAIL(" to reduce Array.prototype.sort - holey elements not supported");
+  }
+
+  // See the comment at the top of this function for why PACKED_DOUBLE is
+  // not handled (FixedDoubleArray <-> FixedArray bridging on the deopt
+  // continuation path).
+  if (IsDoubleElementsKind(elements_kind)) {
+    FAIL(" to reduce Array.prototype.sort - PACKED_DOUBLE not supported");
   }
 
   if (!broker()->dependencies()->DependOnNoElementsProtector()) {
@@ -10757,8 +10775,9 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
   // Require comparefn to be a statically-known interpreted JSFunction.
   // HasBytecodeArray() is needed so that ReduceCall can attempt to inline the
   // body.  Lazy deopts from the inlined call are handled by
-  // kArraySortNoopLazyDeoptContinuation, which restarts the sort from
-  // scratch via the unoptimised builtin.
+  // kArraySortContinueFromSnapshotLazyDeoptContinuation, which continues
+  // the sort by handing the temp_array snapshot to the generic PowerSort
+  // tail.
   ValueNode* comparefn = args[0];
   compiler::OptionalSharedFunctionInfoRef comparefn_shared;
   if (auto maybe_fn = TryGetConstant<JSFunction>(comparefn)) {
@@ -10824,21 +10843,14 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     ValueNode* elements;
     GET_VALUE_OR_ABORT(elements, BuildLoadElements(receiver, elements_kind));
 
-    // Allocate a temporary working array of kMaxInlineSortSize elements and
+    // Allocate a temporary FixedArray of kMaxInlineSortSize elements and
     // copy the receiver's elements into it.  The sort operates entirely on
-    // this copy so that comparefn side effects on the receiver do not affect
-    // the sort result, matching the spec's SortIndexedProperties snapshot
-    // semantics (ECMA-262 §23.1.3.30).
+    // this copy: comparefn side effects on the receiver do not affect the
+    // sort result, matching ECMA-262 23.1.3.30 SortIndexedProperties
+    // semantics.  On deopt the temp_array is threaded through the deopt
+    // frame so the spec-correct snapshot is preserved.
     ValueNode* temp_array;
-    if (IsDoubleElementsKind(elements_kind)) {
-      base::SmallVector<ValueNode*, kMaxInlineSortSize> zeros;
-      for (int k = 0; k < kMaxInlineSortSize; k++) {
-        zeros.push_back(GetFloat64Constant(0.0));
-      }
-      VirtualObject* temp_vobj = CreateFixedDoubleArray(base::VectorOf(zeros));
-      GET_VALUE_OR_ABORT(temp_array, BuildInlinedAllocation(
-                                         temp_vobj, AllocationType::kYoung));
-    } else {
+    {
       base::SmallVector<ValueNode*, kMaxInlineSortSize> smis;
       for (int k = 0; k < kMaxInlineSortSize; k++) {
         smis.push_back(GetSmiConstant(0));
@@ -10848,8 +10860,15 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
                                          temp_vobj, AllocationType::kYoung));
     }
 
-    // Helper: copy all elements in [0, length) between two backing stores.
-    auto BuildCopyLoop = [&](ValueNode* src, ValueNode* dst) -> ReduceResult {
+    // Helper: copy all elements in [0, length) between two FixedArrays.
+    // When `check_undefined` is true the copy deopts on the first Undefined
+    // value, unwinding to the bytecode-level .sort call so the generic
+    // Array.prototype.sort builtin handles the Undefined-compaction step
+    // that the inlined insertion sort omits.  Only PACKED_ELEMENTS receivers
+    // can hold Undefined; PACKED_SMI_ELEMENTS guarantees every value is a
+    // Smi.
+    auto BuildCopyLoop = [&](ValueNode* src, ValueNode* dst,
+                             bool check_undefined) -> ReduceResult {
       sub_builder.set(var_copy, GetInt32Constant(0));
       MaglevSubGraphBuilder::Label copy_end(&sub_builder, 1);
       MaglevSubGraphBuilder::LoopLabel copy_loop =
@@ -10858,16 +10877,12 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
         ValueNode* k = sub_builder.get(var_copy);
         RETURN_IF_ABORT(sub_builder.GotoIfFalse<BranchIfInt32Compare>(
             &copy_end, {k, length}, Operation::kLessThan));
-        if (IsDoubleElementsKind(elements_kind)) {
-          ValueNode* val;
-          GET_VALUE_OR_ABORT(val, BuildLoadFixedDoubleArrayElement(src, k));
-          RETURN_IF_ABORT(BuildStoreFixedDoubleArrayElement(
-              PACKED_DOUBLE_ELEMENTS, dst, k, val));
-        } else {
-          ValueNode* val;
-          GET_VALUE_OR_ABORT(val, BuildLoadFixedArrayElement(src, k));
-          RETURN_IF_ABORT(BuildStoreFixedArrayElement(dst, k, val));
+        ValueNode* val;
+        GET_VALUE_OR_ABORT(val, BuildLoadFixedArrayElement(src, k));
+        if (check_undefined) {
+          RETURN_IF_ABORT(AddNewNode<CheckNotUndefined>({val}));
         }
+        RETURN_IF_ABORT(BuildStoreFixedArrayElement(dst, k, val));
         ValueNode* k_inc;
         GET_VALUE_OR_ABORT(k_inc,
                            AddNewNode<Int32Add>({k, GetInt32Constant(1)}));
@@ -10878,16 +10893,21 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     };
 
     // Copy-in: temp_array[k] = elements[k] for k in [0, length).
-    RETURN_IF_ABORT(BuildCopyLoop(elements, temp_array));
+    RETURN_IF_ABORT(
+        BuildCopyLoop(elements, temp_array, !IsSmiElementsKind(elements_kind)));
 
     // Outer loop: i = 1 .. length-1.
     sub_builder.set(var_i, GetInt32Constant(1));
 
-    // Eager deopts inside the sort restart the whole sort via this
-    // continuation, so the deopt frame does not depend on in-loop state.
+    // Eager deopts inside the sort continue from the temp_array snapshot via
+    // ArraySortContinueFromSnapshot.  The frame state carries (receiver,
+    // comparefn, temp_array, length) so the continuation reproduces the
+    // spec's _items_ snapshot and writes back originalLength elements,
+    // independent of any cmp side effects on the receiver.
     EagerDeoptFrameScope eager_deopt_scope(
-        this, Builtin::kArraySortNoopEagerDeoptContinuation, target,
-        base::VectorOf<ValueNode*>({receiver, comparefn}));
+        this, Builtin::kArraySortContinueFromSnapshotEagerDeoptContinuation,
+        target,
+        base::VectorOf<ValueNode*>({receiver, comparefn, temp_array, length}));
 
     MaglevSubGraphBuilder::Label outer_end(&sub_builder, 1);
     MaglevSubGraphBuilder::LoopLabel outer_loop =
@@ -10913,10 +10933,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
 
     // Load pivot = temp_array[i].
     ValueNode* pivot;
-    if (IsDoubleElementsKind(elements_kind)) {
-      GET_VALUE_OR_ABORT(pivot,
-                         BuildLoadFixedDoubleArrayElement(temp_array, i_int32));
-    } else {
+    {
       LoadType load_type = IsSmiElementsKind(elements_kind)
                                ? LoadType::kSmi
                                : LoadType::kUnknown;
@@ -10931,8 +10948,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     sub_builder.set(var_j, j_init);
 
     // Inner loop: j = i-1 down to 0 (or until insertion point found).
-    // inner_end tracks var_j so we can read the final j value after the loop.
-    MaglevSubGraphBuilder::Label inner_end(&sub_builder, 2, {&var_j});
+    MaglevSubGraphBuilder::Label inner_end(&sub_builder, 2);
     MaglevSubGraphBuilder::LoopLabel inner_loop =
         sub_builder.BeginLoop({&var_j});
 
@@ -10944,10 +10960,7 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
 
     // Load elem = temp_array[j].
     ValueNode* elem;
-    if (IsDoubleElementsKind(elements_kind)) {
-      GET_VALUE_OR_ABORT(elem,
-                         BuildLoadFixedDoubleArrayElement(temp_array, j_int32));
-    } else {
+    {
       LoadType load_type = IsSmiElementsKind(elements_kind)
                                ? LoadType::kSmi
                                : LoadType::kUnknown;
@@ -10961,11 +10974,16 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
       CallArguments cmp_args(ConvertReceiverMode::kNullOrUndefined,
                              {pivot, elem});
 
-      // If the comparefn call requires a lazy deopt, restart the sort.
-      // The sort operates on a temp copy so the receiver is unmodified.
+      // Lazy deopt at the cmp call boundary: temp_array is a valid
+      // permutation of the original receiver elements at this point (the
+      // pivot is restored to temp_array[j] after each successful shift in
+      // the inner-loop body below).  The continuation feeds temp_array and
+      // the original length to the generic PowerSort tail.
       LazyDeoptFrameScope restart_sort(
-          this, Builtin::kArraySortNoopLazyDeoptContinuation, target,
-          base::VectorOf<ValueNode*>({receiver, comparefn}));
+          this, Builtin::kArraySortContinueFromSnapshotLazyDeoptContinuation,
+          target,
+          base::VectorOf<ValueNode*>(
+              {receiver, comparefn, temp_array, length}));
 
       SaveCallSpeculationScope saved(this);
       cmp_maybe = ReduceCall(comparefn, cmp_args, saved.value());
@@ -11000,12 +11018,13 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
       ValueNode* j_plus1;
       GET_VALUE_OR_ABORT(j_plus1,
                          AddNewNode<Int32Add>({j_int32, GetInt32Constant(1)}));
-      if (IsDoubleElementsKind(elements_kind)) {
-        RETURN_IF_ABORT(BuildStoreFixedDoubleArrayElement(
-            PACKED_DOUBLE_ELEMENTS, temp_array, j_plus1, elem));
-      } else {
-        RETURN_IF_ABORT(BuildStoreFixedArrayElement(temp_array, j_plus1, elem));
-      }
+      RETURN_IF_ABORT(BuildStoreFixedArrayElement(temp_array, j_plus1, elem));
+
+      // Store pivot at temp_array[j] to keep temp_array a valid
+      // permutation of the original elements at every cmp call boundary.
+      // The next iteration reads temp_array[j-1], so overwriting [j] is
+      // benign; on inner-loop exit pivot is at temp_array[j_exit + 1].
+      RETURN_IF_ABORT(BuildStoreFixedArrayElement(temp_array, j_int32, pivot));
 
       // j--
       ValueNode* j_dec;
@@ -11024,19 +11043,6 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     // cmp-result path was never taken (due to abort); inner_end always has at
     // least one predecessor from the j < 0 check above.
     RETURN_IF_ABORT(sub_builder.TrimPredecessorsAndBind(&inner_end));
-
-    // Write the pivot at its final position: temp_array[j + 1] = pivot.
-    ValueNode* j_final = sub_builder.get(var_j);
-    ValueNode* j_final_p1;
-    GET_VALUE_OR_ABORT(j_final_p1,
-                       AddNewNode<Int32Add>({j_final, GetInt32Constant(1)}));
-    if (IsDoubleElementsKind(elements_kind)) {
-      RETURN_IF_ABORT(BuildStoreFixedDoubleArrayElement(
-          PACKED_DOUBLE_ELEMENTS, temp_array, j_final_p1, pivot));
-    } else {
-      RETURN_IF_ABORT(
-          BuildStoreFixedArrayElement(temp_array, j_final_p1, pivot));
-    }
 
     // i++
     ValueNode* i_inc;
@@ -11087,21 +11093,23 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceArrayPrototypeSort(
     // Ensure the elements backing store isn't COW before we write into it.
     // Array literals share a COW FixedArray; writing back without copying it
     // first would corrupt every other invocation of the literal site.
-    // FixedDoubleArray has no COW form, so PACKED_DOUBLE is exempt.
-    if (IsSmiOrObjectElementsKind(elements_kind)) {
-      GET_VALUE_OR_ABORT(writable_elements,
-                         AddNewNode<EnsureWritableFastElements>(
-                             {writable_elements, receiver}));
-    }
+    // elements_kind is always PACKED_SMI or PACKED_ELEMENTS here (PACKED_DOUBLE
+    // bailed out above).
+    DCHECK(IsSmiOrObjectElementsKind(elements_kind));
+    GET_VALUE_OR_ABORT(
+        writable_elements,
+        AddNewNode<EnsureWritableFastElements>({writable_elements, receiver}));
 
     // Copy-back: elements[k] = temp_array[k] for k in [0, length).
-    RETURN_IF_ABORT(BuildCopyLoop(temp_array, writable_elements));
+    // temp_array was already filtered on copy-in, so no undefined check.
+    RETURN_IF_ABORT(BuildCopyLoop(temp_array, writable_elements,
+                                  /*check_undefined=*/false));
 
     return ReduceResult::Done();
   }();
   // fast_path_result is either Done or DoneWithAbort.  An abort sets
   // current_block to null, which GotoOrTrim handles by trimming the join
-  // predecessor count — no explicit check needed.
+  // predecessor count -- no explicit check needed.
   USE(fast_path_result);
 
   // Jump to join (handles null current_block if fast path aborted).

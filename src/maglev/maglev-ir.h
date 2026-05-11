@@ -429,6 +429,7 @@ class ExceptionHandlerInfo;
   V(CheckDetectableCallable)                  \
   V(CheckJSReceiverOrNullOrUndefined)         \
   V(CheckNotHole)                             \
+  V(CheckNotUndefined)                        \
   V(CheckHoleyFloat64NotHoleOrUndefined)      \
   V(CheckNumber)                              \
   V(CheckSmi)                                 \
@@ -10731,6 +10732,18 @@ class CheckJSReceiverOrNullOrUndefined
 class CheckNotHole : public FixedInputNodeT<1, CheckNotHole> {
  public:
   explicit CheckNotHole(uint64_t bitfield) : Base(bitfield) {}
+
+  static constexpr OpProperties kProperties = OpProperties::EagerDeopt();
+  DECLARE_INPUTS(Object)
+  DECLARE_INPUT_TYPES(Tagged)
+
+  void SetValueLocationConstraints();
+  void GenerateCode(MaglevAssembler*, const ProcessingState&);
+};
+
+class CheckNotUndefined : public FixedInputNodeT<1, CheckNotUndefined> {
+ public:
+  explicit CheckNotUndefined(uint64_t bitfield) : Base(bitfield) {}
 
   static constexpr OpProperties kProperties = OpProperties::EagerDeopt();
   DECLARE_INPUTS(Object)

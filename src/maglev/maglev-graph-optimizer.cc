@@ -708,6 +708,12 @@ ProcessResult MaglevGraphOptimizer::VisitCheckNotHole(
   return ProcessResult::kContinue;
 }
 
+ProcessResult MaglevGraphOptimizer::VisitCheckNotUndefined(
+    CheckNotUndefined* node, const ProcessingState& state) {
+  // TODO(b/424157317): Optimize.
+  return ProcessResult::kContinue;
+}
+
 ProcessResult MaglevGraphOptimizer::VisitCheckHoleyFloat64NotHoleOrUndefined(
     CheckHoleyFloat64NotHoleOrUndefined* node, const ProcessingState& state) {
   // TODO(b/424157317): Optimize.
