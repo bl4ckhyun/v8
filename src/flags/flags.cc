@@ -1272,6 +1272,9 @@ void FlagList::ResolveContradictionsWhenFuzzing() {
       CONTRADICTION(predictable, stress_concurrent_inlining_attach_code),
       CONTRADICTION(predictable_gc_schedule, stress_compaction),
       CONTRADICTION(single_threaded, stress_concurrent_inlining_attach_code),
+#if V8_ENABLE_WEBASSEMBLY
+      CONTRADICTION(single_threaded, experimental_wasm_pgo_to_file),
+#endif  // V8_ENABLE_WEBASSEMBLY
       CONTRADICTION(stress_concurrent_inlining, turboshaft_assert_types),
       CONTRADICTION(stress_concurrent_inlining_attach_code,
                     turboshaft_assert_types),
