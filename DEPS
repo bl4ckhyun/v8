@@ -140,7 +140,7 @@ vars = {
 
 deps = {
   'build':
-    Var('chromium_url') + '/chromium/src/build.git' + '@' + '35e43627594a6d7a8ecc65ae5fbd07184ecc0128',
+    Var('chromium_url') + '/chromium/src/build.git' + '@' + '933b54f7b70357e4aca011d2fef4c258cd4e05d4',
   'buildtools':
     Var('chromium_url') + '/chromium/src/buildtools.git' + '@' + 'c389d23aa69eb752f185e40215649bcf9d2e6527',
   'buildtools/linux64': {
@@ -503,7 +503,7 @@ deps = {
     'condition': 'not build_with_chromium',
   },
   'third_party/perfetto':
-    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + '2ce111ce4650388541c8e4d4df3656faa3a3c9ab',
+    Var('chromium_url') + '/external/github.com/google/perfetto.git' + '@' + '99a4e9c6541ff9281920eb4427f219017a3398dc',
   'third_party/protobuf':
     Var('chromium_url') + '/chromium/src/third_party/protobuf.git' + '@' + '6d5b90bb820011da117f9a2fda89e8d862059351',
   'third_party/re2/src':
@@ -565,7 +565,7 @@ deps = {
   'third_party/zlib':
     Var('chromium_url') + '/chromium/src/third_party/zlib.git'+ '@' + '5c1dfd53066bf58d3d28197f715717dd88762443',
   'tools/clang':
-    Var('chromium_url') + '/chromium/src/tools/clang.git' + '@' + '3e520fe28bbeed4a87f5e575272933d359915989',
+    Var('chromium_url') + '/chromium/src/tools/clang.git' + '@' + '70de3992b339398e8f83e278ee1cafe22a767add',
   'tools/protoc_wrapper':
     Var('chromium_url') + '/chromium/src/tools/protoc_wrapper.git' + '@' + '3438d4183bfc7c0d6850e8b970204cc8189f0323',
   'third_party/abseil-cpp': {
