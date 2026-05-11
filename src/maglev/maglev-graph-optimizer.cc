@@ -1229,11 +1229,14 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
   bool is_small_function =
       bytecode_length <
       reducer_.graph()->compilation_info()->flags().max_eager_inlined_bytecode;
+  KnownNodeAspects* call_aspects = known_node_aspects().Clone(reducer_.zone());
+  call_aspects->virtual_objects() =
+      new_call_node->lazy_deopt_info()->top_frame().GetVirtualObjects();
   MaglevCallSiteInfo* call_site = reducer_.zone()->New<MaglevCallSiteInfo>(
       MaglevCallerDetails{
           base::VectorOf(arguments),
           &new_call_node->lazy_deopt_info()->top_frame(),
-          known_node_aspects().Clone(reducer_.zone()),
+          call_aspects,
           nullptr,  // loop_effects
           ZoneUnorderedMap<KnownNodeAspects::LoadedContextSlotsKey, Node*>(
               reducer_.zone()),  // unobserved_context_slot_stores
