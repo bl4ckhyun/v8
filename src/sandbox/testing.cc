@@ -526,38 +526,27 @@ void SandboxSetFunctionCodeToBuiltin(
   info.GetReturnValue().Set(true);
 }
 
-// Corrupt one field of an object without setting up a memory view first.
-//
-//   Sandbox.corruptObjectField(obj, offset, value);
-// is identical to
-//   (new DataView(new Sandbox.MemoryView(0, 0x100000000))).setUint32(
-//      Sandbox.getAddressOf(obj) + offset, value << kSmiTagSize, true);
-//
-// (note the Smi tagging and little endianness)
-//
-// Alternatively, a field name can be passed as the second argument; the effect
-// is identical to calling `Sandbox.getFieldOffset(getInstanceTypeIdOf(obj,
-// offset))` on that argument first.
-//
-// Sandbox.corruptObjectField(Object, Number, Number) -> undefined
-// Sandbox.corruptObjectField(Object, String, Number) -> undefined
-void SandboxCorruptObjectField(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-  DCHECK(ValidateCallbackInfo(info));
+namespace {
+struct ResolvedField {
+  Tagged<HeapObject> holder;
+  int offset = -1;
+  int bit_size = 32;
+};
+
+bool ResolveObjectField(const v8::FunctionCallbackInfo<v8::Value>& info,
+                        int bit_size_arg_index, ResolvedField* out) {
   v8::Isolate* isolate = info.GetIsolate();
   Local<v8::Context> context = isolate->GetCurrentContext();
 
   Tagged<HeapObject> obj;
-  if (!GetArgumentObjectPassedAsReference(info, &obj)) return;
+  if (!GetArgumentObjectPassedAsReference(info, &obj)) return false;
 
   int offset;
-  int value;
-
   if (!info[1]->IsInt32() || !info[1]->Int32Value(context).To(&offset)) {
     v8::String::Utf8Value field_name(isolate, info[1]);
     if (!*field_name) {
       isolate->ThrowError("Second argument must be an integer or a string");
-      return;
+      return false;
     }
 
     InstanceType instance_type = obj->map()->instance_type();
@@ -566,33 +555,171 @@ void SandboxCorruptObjectField(
       offset = offset_from_name.value();
     } else {
       DCHECK(isolate->HasPendingException());
-      return;
+      return false;
+    }
+  }
+
+  int bit_size = 32;
+  if (info.Length() > bit_size_arg_index) {
+    if (!info[bit_size_arg_index]->IsInt32() ||
+        !info[bit_size_arg_index]->Int32Value(context).To(&bit_size)) {
+      if (bit_size_arg_index == 2) {
+        isolate->ThrowError("Third argument (bit size) must be an integer");
+      } else {
+        isolate->ThrowError("Fourth argument (bit size) must be an integer");
+      }
+      return false;
+    }
+    if (bit_size != 8 && bit_size != 16 && bit_size != 32 && bit_size != 64) {
+      if (bit_size_arg_index == 2) {
+        isolate->ThrowError(
+            "Third argument (bit size) must be 8, 16, 32, or 64");
+      } else {
+        isolate->ThrowError(
+            "Fourth argument (bit size) must be 8, 16, 32, or 64");
+      }
+      return false;
     }
   }
 
   int object_size = obj->Size();
   DCHECK_EQ(0, object_size % kTaggedSize);
-  if (offset < 0 || offset >= object_size) {
+  int byte_size = bit_size / 8;
+  if (offset < 0 || offset > object_size - byte_size) {
     std::ostringstream error;
-    error << "Second argument (offset=" << offset << ") is "
-          << "out of bounds of the given object of size " << object_size;
+    error << "Second argument (offset=" << offset << ", size=" << byte_size
+          << ") is out of bounds of the given object of size " << object_size;
     ThrowTypeError(isolate, error.view());
-    return;
+    return false;
   }
-  if ((offset % kTaggedSize) != 0) {
+  // Enforce natural alignment up to kTaggedSize.
+  int required_alignment = std::min(byte_size, kTaggedSize);
+  if ((offset % required_alignment) != 0) {
     std::ostringstream error;
-    error << "Second argument (offset=" << offset << ") is "
-          << "not tagged-size-aligned";
+    error << "Second argument (offset=" << offset << ") is not "
+          << required_alignment << "-byte-aligned";
     ThrowTypeError(isolate, error.view());
-    return;
+    return false;
   }
 
-  if (!info[2]->IsInt32() || !info[2]->Int32Value(context).To(&value)) {
-    isolate->ThrowError("Third argument must be an integer");
-    return;
+  out->holder = obj;
+  out->offset = offset;
+  out->bit_size = bit_size;
+  return true;
+}
+}  // namespace
+
+// Read one field of an object without setting up a memory view first.
+//
+//   let value = Sandbox.readObjectField(obj, offset, bit_size);
+// emits a raw memory read, identical to
+//   (new DataView(new Sandbox.MemoryView(0, 0x100000000))).getUint32(
+//      Sandbox.getAddressOf(obj) + offset, true);
+// (adjusted for the requested bit size)
+//
+// Alternatively, a field name can be passed as the second argument; the effect
+// is identical to calling
+// `Sandbox.getFieldOffset(Sandbox.getInstanceTypeIdOf(obj), field_name)` to
+// resolve the offset first.
+//
+// Sandbox.readObjectField(Object, Number|String, [Number]) -> Number|BigInt
+void SandboxReadObjectField(const v8::FunctionCallbackInfo<v8::Value>& info) {
+  DCHECK(ValidateCallbackInfo(info));
+  v8::Isolate* isolate = info.GetIsolate();
+
+  ResolvedField field;
+  if (!ResolveObjectField(info, 2, &field)) return;
+
+  if (field.bit_size == 8) {
+    uint8_t value = field.holder->ReadField<uint8_t>(field.offset);
+    info.GetReturnValue().Set(value);
+  } else if (field.bit_size == 16) {
+    uint16_t value = field.holder->ReadField<uint16_t>(field.offset);
+    info.GetReturnValue().Set(value);
+  } else if (field.bit_size == 32) {
+    uint32_t value = field.holder->ReadField<uint32_t>(field.offset);
+    info.GetReturnValue().Set(v8::Integer::NewFromUnsigned(isolate, value));
+  } else if (field.bit_size == 64) {
+    uint64_t value = field.holder->ReadField<uint64_t>(field.offset);
+    info.GetReturnValue().Set(v8::BigInt::NewFromUnsigned(isolate, value));
+  }
+}
+
+// Corrupt one field of an object without setting up a memory view first.
+//
+//   Sandbox.corruptObjectField(obj, offset, value, bit_size);
+// emits a raw memory write, identical to
+//   (new DataView(new Sandbox.MemoryView(0, 0x100000000))).setUint32(
+//      Sandbox.getAddressOf(obj) + offset, value, true);
+// (adjusted for the requested bit size)
+//
+// Note that values are written directly as raw bytes without Smi tagging.
+// Alternatively, a field name can be passed as the second argument; the effect
+// is identical to calling
+// `Sandbox.getFieldOffset(Sandbox.getInstanceTypeIdOf(obj), field_name)` to
+// resolve the offset first.
+//
+// Sandbox.corruptObjectField(Object, Number|String, Number|BigInt, [Number]) ->
+// undefined
+void SandboxCorruptObjectField(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+  DCHECK(ValidateCallbackInfo(info));
+  v8::Isolate* isolate = info.GetIsolate();
+  Local<v8::Context> context = isolate->GetCurrentContext();
+
+  ResolvedField field;
+  if (!ResolveObjectField(info, 3, &field)) return;
+
+  uint64_t value = 0;
+  if (field.bit_size != 64) {
+    if (!info[2]->IsInt32() && !info[2]->IsUint32()) {
+      isolate->ThrowError("Third argument must be an integer");
+      return;
+    }
+    int64_t val64;
+    CHECK(info[2]->IntegerValue(context).To(&val64));
+    if (field.bit_size == 8) {
+      if (val64 < -128 || val64 > 255) {
+        isolate->ThrowError("Third argument must fit in 8-bit integer range");
+        return;
+      }
+    } else if (field.bit_size == 16) {
+      if (val64 < -32768 || val64 > 65535) {
+        isolate->ThrowError("Third argument must fit in 16-bit integer range");
+        return;
+      }
+    }
+    value = static_cast<uint64_t>(val64);
+  } else {
+    if (info[2]->IsBigInt()) {
+      value = info[2].As<v8::BigInt>()->Uint64Value();
+    } else if (info[2]->IsNumber()) {
+      int64_t val64;
+      if (info[2]->IntegerValue(context).To(&val64)) {
+        value = static_cast<uint64_t>(val64);
+      } else {
+        isolate->ThrowError(
+            "Third argument must be a 64-bit integer or BigInt");
+        return;
+      }
+    } else {
+      isolate->ThrowError("Third argument must be a 64-bit integer or BigInt");
+      return;
+    }
   }
 
-  obj->WriteField(offset, value);
+  if (field.bit_size == 8) {
+    field.holder->WriteField<uint8_t>(field.offset,
+                                      static_cast<uint8_t>(value));
+  } else if (field.bit_size == 16) {
+    field.holder->WriteField<uint16_t>(field.offset,
+                                       static_cast<uint16_t>(value));
+  } else if (field.bit_size == 32) {
+    field.holder->WriteField<uint32_t>(field.offset,
+                                       static_cast<uint32_t>(value));
+  } else if (field.bit_size == 64) {
+    field.holder->WriteField<uint64_t>(field.offset, value);
+  }
 }
 
 Handle<FunctionTemplateInfo> NewFunctionTemplate(
@@ -694,6 +821,8 @@ void SandboxTesting::InstallMemoryCorruptionApi(Isolate* isolate) {
   InstallFunction(isolate, sandbox, SandboxGetBuiltinCode, "getBuiltinCode", 1);
   InstallFunction(isolate, sandbox, SandboxSetFunctionCodeToBuiltin,
                   "setFunctionCodeToBuiltin", 2);
+  InstallFunction(isolate, sandbox, SandboxReadObjectField, "readObjectField",
+                  2);
   InstallFunction(isolate, sandbox, SandboxCorruptObjectField,
                   "corruptObjectField", 3);
 
@@ -1214,6 +1343,8 @@ SandboxTesting::InstanceTypeMap& SandboxTesting::GetInstanceTypeMap() {
     types["WASM_FUNC_REF_TYPE"] = WASM_FUNC_REF_TYPE;
     types["WASM_TABLE_OBJECT_TYPE"] = WASM_TABLE_OBJECT_TYPE;
     types["WASM_RESUME_DATA"] = WASM_RESUME_DATA_TYPE;
+    types["WASM_TAG_OBJECT_TYPE"] = WASM_TAG_OBJECT_TYPE;
+    types["WASM_GLOBAL_OBJECT_TYPE"] = WASM_GLOBAL_OBJECT_TYPE;
 #endif  // V8_ENABLE_WEBASSEMBLY
   }
   return types;
@@ -1294,6 +1425,9 @@ SandboxTesting::FieldOffsetMap& SandboxTesting::GetFieldOffsetMap() {
         offsetof(WasmTableObject, maximum_length_);
     fields[WASM_TABLE_OBJECT_TYPE]["raw_type"] =
         offsetof(WasmTableObject, raw_type_);
+    fields[WASM_TABLE_OBJECT_TYPE]["trusted_dispatch_table"] =
+        offsetof(WasmTableObject, trusted_dispatch_table_);
+    fields[WASM_TAG_OBJECT_TYPE]["tag"] = offsetof(WasmTagObject, tag_);
     fields[WASM_RESUME_DATA_TYPE]["trusted_suspender"] =
         offsetof(WasmResumeData, trusted_suspender_);
     fields[WASM_GLOBAL_OBJECT_TYPE]["raw_type"] =
