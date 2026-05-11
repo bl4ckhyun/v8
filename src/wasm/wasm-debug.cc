@@ -768,15 +768,22 @@ class DebugInfoImpl {
     DCHECK_EQ(frame->function_index(), new_code->index());
     DCHECK_EQ(frame->native_module(), new_code->native_module());
     DCHECK(frame->wasm_code()->is_liftoff());
+
+    // Only OSR-patch frames that are already running debugging code. The frame
+    // layout of non-debugging Liftoff code is *not* identical to debugging
+    // Liftoff code (debugging code spills register-held operand-stack slots in
+    // OOL stubs and reserves a strictly larger frame), so resuming a
+    // non-debugging frame in debugging code can write below SP and corrupt the
+    // tagged-slot map.
+    if (!frame->wasm_code()->for_debugging()) return;
+
     Address new_pc = FindNewPC(frame, new_code, frame->generated_code_offset(),
                                return_location);
 #ifdef DEBUG
     int old_position = frame->position();
 #endif
 #if V8_TARGET_ARCH_X64
-    if (frame->wasm_code()->for_debugging()) {
-      base::Memory<Address>(frame->fp() - kOSRTargetOffset) = new_pc;
-    }
+    base::Memory<Address>(frame->fp() - kOSRTargetOffset) = new_pc;
 #else
     PointerAuthentication::ReplacePC(frame->pc_address(), new_pc,
                                      kSystemPointerSize,
