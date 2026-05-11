@@ -287,11 +287,6 @@ bool Sandbox::Initialize(v8::Platform* platform, v8::VirtualAddressSpace* vas,
   address_space_->SetName(kSandboxAddressSpaceName);
   ExcludeReservationFromCoreDump(address_space_->base(),
                                  address_space_->size());
-#ifdef V8_ENABLE_MEMORY_CORRUPTION_API
-  SandboxTesting::RegisterSafeMemoryRegion(
-      address_space_->base(), address_space_->size(),
-      SandboxTesting::kReadAndWriteAccessIsSafe);
-#endif
 
   reservation_base_ = address_space_->base();
   base_ = reservation_base_ + (use_guard_regions ? kSandboxGuardRegionSize : 0);
@@ -410,6 +405,15 @@ bool Sandbox::InitializeAsPartiallyReservedSandbox(v8::Platform* platform,
 }
 
 void Sandbox::FinishInitialization() {
+#ifdef V8_ENABLE_MEMORY_CORRUPTION_API
+  // We do this even for the case of partially-reserved sandbox because, while
+  // being an unsafe setup, tests and fuzzers shouldn't report crashes in this
+  // region.
+  SandboxTesting::RegisterSafeMemoryRegion(
+      address_space_->base(), address_space_->size(),
+      SandboxTesting::kReadAndWriteAccessIsSafe);
+#endif
+
   // Reserve the last page in the sandbox. This way, we can place inaccessible
   // "objects" (e.g. the empty backing store buffer) there that are guaranteed
   // to cause a fault on any accidental access.
