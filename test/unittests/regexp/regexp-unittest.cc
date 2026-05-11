@@ -1936,8 +1936,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilChar) {
   const uint32_t length_expected =
       regexp::Bytecodes::Size(REB::kLoadCurrentCharacter) +
       regexp::Bytecodes::Size(REB::kCheckCharacter) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilChar) +
@@ -1997,8 +1996,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilBitInTable) {
   const uint32_t length_expected =
       regexp::Bytecodes::Size(REB::kLoadCurrentCharacter) +
       regexp::Bytecodes::Size(REB::kCheckBitInTable) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilBitInTable) +
@@ -2053,8 +2051,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilCharPosChecked) {
       regexp::Bytecodes::Size(REB::kCheckPosition) +
       regexp::Bytecodes::Size(REB::kLoadCurrentCharacterUnchecked) +
       regexp::Bytecodes::Size(REB::kCheckCharacter) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilCharPosChecked) +
@@ -2108,8 +2105,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilCharAnd) {
       regexp::Bytecodes::Size(REB::kCheckPosition) +
       regexp::Bytecodes::Size(REB::kLoadCurrentCharacterUnchecked) +
       regexp::Bytecodes::Size(REB::kCheckCharacterAfterAnd) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilCharAnd) +
@@ -2165,8 +2161,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilCharOrChar) {
       regexp::Bytecodes::Size(REB::kLoadCurrentCharacter) +
       regexp::Bytecodes::Size(REB::kCheckCharacter) +
       regexp::Bytecodes::Size(REB::kCheckCharacter) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilCharOrChar) +
@@ -2232,8 +2227,7 @@ TEST_F(RegExpTest, PeepholeSkipUntilGtOrNotBitInTable) {
       regexp::Bytecodes::Size(REB::kCheckCharacterGT) +
       regexp::Bytecodes::Size(REB::kCheckBitInTable) +
       regexp::Bytecodes::Size(REB::kGoTo) +
-      regexp::Bytecodes::Size(REB::kAdvanceCurrentPosition) +
-      regexp::Bytecodes::Size(REB::kGoTo) +
+      regexp::Bytecodes::Size(REB::kAdvanceCpAndGoto) +
       regexp::Bytecodes::Size(REB::kBacktrack);
   const uint32_t length_optimized_expected =
       regexp::Bytecodes::Size(REB::kSkipUntilGtOrNotBitInTable) +
@@ -2291,13 +2285,13 @@ TEST_F(RegExpTest, PeepholeLabelFixupsInside) {
 
   CHECK_EQ(0x00, dummy_before.pos());
   CHECK_EQ(0x28, dummy_inside.pos());
-  CHECK_EQ(0x3C, dummy_after.pos());
+  CHECK_EQ(0x38, dummy_after.pos());
 
   const Label* labels[] = {&dummy_before, &dummy_after, &dummy_inside};
   const int label_positions[4][3] = {
-      {0x04, 0x40},  // dummy_before
-      {0x0C, 0x48},  // dummy after
-      {0x14, 0x50}   // dummy inside
+      {0x04, 0x3C},  // dummy_before
+      {0x0C, 0x44},  // dummy after
+      {0x14, 0x4C}   // dummy inside
   };
 
   DirectHandle<String> source = factory->NewStringFromStaticChars("dummy");
@@ -2320,13 +2314,13 @@ TEST_F(RegExpTest, PeepholeLabelFixupsInside) {
 
   const int pos_fixups[] = {
       0,  // Position before optimization should be unchanged.
-      0,  // Position after first replacement should be 0 (optimized size (36) -
-          // original size (36)).
+      4,  // Position after first replacement should be 4 (optimized size (20) -
+          // original size (32) + preserve length (16)).
   };
   const int target_fixups[] = {
       0,  // dummy_before should be unchanged
-      0,  // dummy_after should be unchanged
-      4   // dummy_inside should be 4
+      4,  // dummy_inside should be 4
+      4   // dummy_after should be 4
   };
 
   for (int label_idx = 0; label_idx < 3; label_idx++) {
@@ -2397,17 +2391,17 @@ TEST_F(RegExpTest, PeepholeLabelFixupsComplex) {
                                            &dummy_after, &dummy_inside);
 
   CHECK_EQ(0x00, dummy_before.pos());
-  CHECK_EQ(0x44, dummy_between.pos());
-  CHECK_EQ(0x74, dummy_inside.pos());
-  CHECK_EQ(0x88, dummy_after.pos());
+  CHECK_EQ(0x40, dummy_between.pos());
+  CHECK_EQ(0x70, dummy_inside.pos());
+  CHECK_EQ(0x80, dummy_after.pos());
 
   const Label* labels[] = {&dummy_before, &dummy_between, &dummy_after,
                            &dummy_inside};
   const int label_positions[4][3] = {
-      {0x04, 0x48, 0x8C},  // dummy_before
-      {0x0C, 0x50, 0x94},  // dummy between
-      {0x14, 0x58, 0x9C},  // dummy after
-      {0x1C, 0x60, 0xA4}   // dummy inside
+      {0x04, 0x44, 0x84},  // dummy_before
+      {0x0C, 0x4C, 0x8C},  // dummy between
+      {0x14, 0x54, 0x94},  // dummy after
+      {0x1C, 0x5C, 0x9C}   // dummy inside
   };
 
   DirectHandle<String> source = factory->NewStringFromStaticChars("dummy");
@@ -2430,14 +2424,17 @@ TEST_F(RegExpTest, PeepholeLabelFixupsComplex) {
 
   const int pos_fixups[] = {
       0,    // Position before optimization should be unchanged.
-      -16,  // Position after first replacement.
-      -16   // Position after second replacement.
+      -12,  // Position after first replacement should be -12 (optimized size =
+            // 20 - 32 = original size).
+      -8    // Position after second replacement should be -8 (-12 from first
+            // optimization -12 from second optimization + 16 preserved
+            // bytecodes).
   };
   const int target_fixups[] = {
-      0,    // dummy_before
-      -16,  // dummy_between
-      -16,  // dummy_after
-      -12   // dummy_inside
+      0,    // dummy_before should be unchanged
+      -12,  // dummy_between should be -12
+      -8,   // dummy_inside should be -8
+      -8    // dummy_after should be -8
   };
 
   for (int label_idx = 0; label_idx < 4; label_idx++) {
