@@ -597,6 +597,7 @@ def build_config_content(cpu, icu):
         ("single_generation", "false"),
         ("slow_dchecks", "false"),
         ("target_cpu", cpu),
+        ("temporal", "false"),
         ("tsan", "false"),
         ("ubsan", "false"),
         ("use_sanitizer", "false"),
