@@ -225,7 +225,7 @@ declare_args() {
   # This build flag is used to enable block positioning in profile-guided
   # optimization of builtins based on raw execution counts (as opposed to
   # branch hints).
-  v8_enable_builtins_block_position = false
+  v8_enable_builtins_block_position = true
 
   # This build flag is used to control whether reorder builtins according to
   # the call graph with C3 algorithm based builtin PGO profiling.
