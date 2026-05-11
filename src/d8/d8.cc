@@ -3595,6 +3595,11 @@ bool Shell::FunctionAndArgumentsToString(Local<Function> function,
         ThrowError(isolate, "Failed to get argument");
         return false;
       }
+      if (!argument->IsObject() && !argument->IsPrimitive()) {
+        ThrowError(isolate,
+                   "Invalid argument, must be a JSON-serializable object");
+        return false;
+      }
       Local<String> argument_string;
       if (!JSON::Stringify(context, argument).ToLocal(&argument_string)) {
         ThrowError(isolate, "Failed to convert argument to string");
