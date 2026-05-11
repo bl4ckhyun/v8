@@ -3826,7 +3826,9 @@ DEFINE_BOOL(multi_mapped_mock_allocator, false,
 DEFINE_BOOL(gdbjit, false, "enable GDBJIT interface")
 DEFINE_BOOL(gdbjit_full, false, "enable GDBJIT interface for all code objects")
 DEFINE_BOOL(gdbjit_dump, false, "dump elf objects with debug info to disk")
-DEFINE_BOOL(maglev_gdbjit, true, "enable GDBJIT line info for Maglev graph")
+#ifdef ENABLE_GDB_JIT_INTERFACE
+DEFINE_BOOL(maglev_gdbjit, false, "enable GDBJIT line info for Maglev graph")
+#endif
 DEFINE_BOOL(torque_dwarf, false, "enable DWARF line info for Torque files")
 DEFINE_STRING(gdbjit_dump_filter, "",
               "dump only objects containing this substring")
@@ -3835,6 +3837,8 @@ DEFINE_STRING(gdbjit_dump_filter, "",
 DEFINE_IMPLICATION(gdbjit_full, gdbjit)
 DEFINE_IMPLICATION(gdbjit_dump, gdbjit)
 DEFINE_WEAK_IMPLICATION(gdbjit, gdbjit_full)
+DEFINE_IMPLICATION(maglev_gdbjit, gdbjit)
+DEFINE_WEAK_IMPLICATION(gdbjit, maglev_gdbjit)
 #endif
 DEFINE_NEG_IMPLICATION(gdbjit, compact_code_space)
 

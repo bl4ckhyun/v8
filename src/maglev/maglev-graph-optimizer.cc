@@ -1208,7 +1208,12 @@ ProcessResult MaglevGraphOptimizer::VisitCall(Call* node,
 
   // TODO(victorgomes): Should we propagate call frequency from feedback?
   float call_frequency = 1.0f;
-  if (!reducer_.CanInlineCall(shared, call_frequency)) {
+  const MaglevCompilationUnit* current_unit = nullptr;
+  if (new_call_node->properties().can_lazy_deopt()) {
+    current_unit =
+        &new_call_node->lazy_deopt_info()->top_frame().GetCompilationUnit();
+  }
+  if (!reducer_.CanInlineCall(current_unit, shared, call_frequency)) {
     return ReplaceWith(new_call_node);
   }
 

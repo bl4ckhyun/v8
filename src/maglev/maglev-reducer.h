@@ -901,7 +901,8 @@ class MaglevReducer {
   ReduceResult GetConvertReceiver(compiler::SharedFunctionInfoRef shared,
                                   ValueNode* receiver,
                                   ConvertReceiverMode mode);
-  bool CanInlineCall(compiler::SharedFunctionInfoRef shared,
+  bool CanInlineCall(const MaglevCompilationUnit* current_unit,
+                     compiler::SharedFunctionInfoRef shared,
                      float call_frequency);
 
   ReduceResult BuildCheckedSmiSizedInt32(ValueNode* input);

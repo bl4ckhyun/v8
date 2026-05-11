@@ -1279,8 +1279,9 @@ void MaglevReducer<BaseT>::FlushNodesToBlock() {
   TRACE_INLINING(TraceSkip(shared) << __VA_ARGS__)
 
 template <typename BaseT>
-bool MaglevReducer<BaseT>::CanInlineCall(compiler::SharedFunctionInfoRef shared,
-                                         float call_frequency) {
+bool MaglevReducer<BaseT>::CanInlineCall(
+    const MaglevCompilationUnit* current_unit,
+    compiler::SharedFunctionInfoRef shared, float call_frequency) {
   auto tracer_ = tracer();
   if (static_cast<int>(graph()->inlined_functions().size()) >=
       SourcePosition::MaxInliningId()) {
@@ -1289,7 +1290,7 @@ bool MaglevReducer<BaseT>::CanInlineCall(compiler::SharedFunctionInfoRef shared,
     return false;
   }
 
-  if (current_provenance().unit->shared_function_info().equals(shared)) {
+  if (current_unit && current_unit->shared_function_info().equals(shared)) {
     TRACE_CANNOT_INLINE("direct recursion");
     return false;
   }

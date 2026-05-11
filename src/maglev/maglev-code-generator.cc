@@ -827,6 +827,8 @@ class MaglevCodeGeneratingNodeProcessor {
          << PrintNode(node);
       __ RecordComment(ss.str());
     }
+    bool handled_gdbjit = false;
+#ifdef ENABLE_GDB_JIT_INTERFACE
     if (v8_flags.gdbjit_full && v8_flags.maglev_gdbjit) {
       int line_number = graph_labeller()->GetNodeLineNumber(node);
       if (line_number != -1) {
@@ -846,7 +848,10 @@ class MaglevCodeGeneratingNodeProcessor {
         code_gen_state()->source_position_table_builder()->AddPosition(
             masm_->pc_offset(), pos, true);
       }
-    } else if (collect_source_positions_) {
+      handled_gdbjit = true;
+    }
+#endif
+    if (!handled_gdbjit && collect_source_positions_) {
       // TODO(leszeks): Consider collecting source position in a more memory
       // friendly way, if we don't need the whole graph labeller.
       const auto& provenance = graph_labeller()->GetNodeProvenance(node);
@@ -933,6 +938,7 @@ class MaglevCodeGeneratingNodeProcessor {
         }
       }
 
+#ifdef ENABLE_GDB_JIT_INTERFACE
       if (v8_flags.maglev_gdbjit && is_spilled) {
         int node_id = graph_labeller()->NodeId(value_node);
         if (node_id != -1) {
@@ -941,6 +947,7 @@ class MaglevCodeGeneratingNodeProcessor {
               {node_id, node_info->spill_slot().index(), start_pc});
         }
       }
+#endif
     }
     return ProcessResult::kContinue;
   }

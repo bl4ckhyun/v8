@@ -8543,7 +8543,9 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildInlineCall(
   }
   float call_frequency = feedback_frequency * GetCurrentCallFrequency();
 
-  if (!reducer_.CanInlineCall(shared, call_frequency)) return {};
+  if (!reducer_.CanInlineCall(compilation_unit(), shared, call_frequency)) {
+    return {};
+  }
 
   compiler::BytecodeArrayRef bytecode = shared.GetBytecodeArray(broker());
   if (ShouldEagerInlineCall(shared, args)) {
