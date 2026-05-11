@@ -3834,15 +3834,18 @@ void WasmInterpreterEntryFrame::Iterate(RootVisitor* v) const {
   //   fp-p |- - - - - - - - -|                     | no GC scan
   //        |  frame marker   |                     |
   //  fp-2p |- - - - - - - - -|  -------------------|-------------
-  //        | WasmInstanceObj |                     | GC scan
-  //  fp-3p |- - - - - - - - -|  -------------------|-------------
+  //        | WasmInstanceObj |                     |
+  //  fp-3p |- - - - - - - - -|                     | GC scan
+  //        | ref_params_array|                     |
+  //  fp-4p |- - - - - - - - -|  -------------------|-------------
   //        | function_index  |                     |
-  //  fp-4p |- - - - - - - - -|  -------------------| no GC scan
+  //  fp-5p |- - - - - - - - -|  -------------------| no GC scan
   //        |   array_start   |                     |
-  //  fp-5p |- - - - - - - - -|  -------------------|
+  //  fp-6p |- - - - - - - - -|  -------------------|
 
   static constexpr int kWasmInstanceObjOffset = -2 * kSystemPointerSize;
-  FullObjectSlot slot_base(&Memory<Address>(fp() + kWasmInstanceObjOffset));
+  static constexpr int kRefParamsArrayOffset = -3 * kSystemPointerSize;
+  FullObjectSlot slot_base(&Memory<Address>(fp() + kRefParamsArrayOffset));
   FullObjectSlot slot_limit(
       &Memory<Address>(fp() + kWasmInstanceObjOffset + kSystemPointerSize));
   v->VisitRootPointers(Root::kStackRoots, nullptr, slot_base, slot_limit);

@@ -302,9 +302,6 @@ bool WasmBytecodeGenerator::DecodeSimdOp(WasmOpcode opcode,
   } else if ((opcode >= kExprI8x16ExtractLaneS) &&
              (opcode <= kExprF64x2ReplaceLane)) {
     SimdLaneImmediate imm(decoder, code->at(pc + *len), kNoValidate);
-    if (imm.lane >= kSimd128Size) {
-      return false;
-    }
     optional->simd_lane.set_lane(imm.lane);
     *len += 1;
   } else if ((opcode >= kExprS128Load8Lane) &&
@@ -318,10 +315,6 @@ bool WasmBytecodeGenerator::DecodeSimdOp(WasmOpcode opcode,
     *len += mem_imm.length;
 
     SimdLaneImmediate lane_imm(decoder, code->at(pc + *len), kNoValidate);
-    if (lane_imm.lane >= kSimd128Size) {
-      return false;
-    }
-
     optional->simd_loadstore_lane.set_offset(mem_imm.offset);
     optional->simd_loadstore_lane.set_memory_index(mem_imm.mem_index);
     optional->simd_loadstore_lane.set_lane(lane_imm.lane);

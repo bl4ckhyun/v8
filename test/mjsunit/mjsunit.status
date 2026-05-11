@@ -674,6 +674,10 @@
   'regress/wasm/regress-473272199': [SKIP],
   'regress/wasm/regress-488089242': [SKIP],
   'regress/wasm/regress-489349562': [SKIP],
+  'regress/wasm/regress-493314948': [SKIP],
+  'regress/wasm/regress-493430818': [SKIP],
+  'regress/wasm/regress-493529579': [SKIP],
+  'regress/wasm/regress-493521637': [SKIP],
   'wasm/cont-bind': [SKIP],
   'wasm/regress-496645739': [SKIP],
   'wasm/regress-497667917': [SKIP],
@@ -694,6 +698,7 @@
   'regress/wasm/regress-336007398': [SKIP],
   'regress/wasm/regress-390467420': [SKIP],
   'regress/wasm/regress-399497254': [SKIP],
+  'regress/wasm/regress-497330272': [SKIP],
   'regress/wasm/regress-crbug-1463232': [SKIP],
   'regress/wasm/regress-crbug-1466312': [SKIP],
   'regress/wasm/regress-v8-14710': [SKIP],
@@ -753,6 +758,7 @@
   'regress/wasm/regress-334687959': [SKIP],
   'regress/wasm/regress-366350766': [SKIP],
   'regress/wasm/regress-441221187': [SKIP],
+  'regress/wasm/regress-505124865': [SKIP],
 
   # Wasm imported strings (just text-decoder or text-encoder)
   'wasm/imported-strings-utf8': [SKIP],
@@ -765,6 +771,16 @@
   # --experimental-wasm-shared
   'regress/wasm/regress-454276076': [SKIP],
   'regress/wasm/regress-475896261': [SKIP],
+  'regress/wasm/regress-490877756': [SKIP],
+  'regress/wasm/regress-490877757': [SKIP],
+  'regress/wasm/regress-490877758': [SKIP],
+  'regress/wasm/regress-493088266': [SKIP],
+  'regress/wasm/regress-493171989': [SKIP],
+  'regress/wasm/regress-500181839': [SKIP],
+  'regress/wasm/regress-504716006': [SKIP],
+  'regress/wasm/regress-505117973': [SKIP],
+  'regress/wasm/regress-508336493': [SKIP],
+  'regress/wasm/regress-508691168': [SKIP],
   'wasm/shared-everything/*': [SKIP],
   'wasm/subtyping-invalid': [SKIP],
 
@@ -856,6 +872,8 @@
   'wasm/async-compile': [SKIP],
   'wasm/log-code-after-post-message': [SKIP],
   'wasm/multiple-code-spaces': [SKIP],
+  'wasm/regress-488803428': [SKIP],
+  'wasm/regress-510650967': [SKIP],
   'wasm/wasm-code-coverage': [SKIP],
   'wasm/wrapper-compilation': [SKIP],
 
@@ -892,8 +910,12 @@
   'regress/wasm/regress-368241691': [SKIP],
   'regress/wasm/regress-373702823': [SKIP],
   'regress/wasm/regress-383356864': [SKIP],
+  'regress/wasm/regress-391907159': [SKIP],
   'regress/wasm/regress-456319253': [SKIP],
   'regress/wasm/regress-484405356': [SKIP],
+  'regress/wasm/regress-490183533': [SKIP],
+  'regress/wasm/regress-493099941': [SKIP],
+  'regress/wasm/regress-509674461': [SKIP],
   'regress/wasm/regress-crbug-1507751': [SKIP],
   'wasm/bit-shift-right': [SKIP],
   'wasm/bounds-check-turbofan': [SKIP],
@@ -931,6 +953,11 @@
   'regress/wasm/regress-470127856': [SKIP],
   'regress/wasm/regress-471380636': [SKIP],
   'regress/wasm/regress-474491347': [SKIP],
+  'regress/wasm/regress-491696923': [SKIP],
+  'regress/wasm/regress-493521807': [SKIP],
+  'regress/wasm/regress-498814570': [SKIP],
+  'regress/wasm/regress-498818401': [SKIP],
+  'regress/wasm/regress-500113958': [SKIP],
 
   # The interpreter call stack contains an additional top frame if we throw a
   # type-mismatch exception before executing the Wasm function.

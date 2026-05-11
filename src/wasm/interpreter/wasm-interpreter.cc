@@ -845,8 +845,8 @@ static void PrintAndClearProfilingData() {
 #endif  // DRUMBRAKE_ENABLE_PROFILING
 
 int StructFieldOffset(const StructType* struct_type, int field_index) {
-  return WasmStruct::kHeaderSize + struct_type->field_offset(field_index) -
-         kHeapObjectTag;
+  return (WasmStruct::kHeaderSize + struct_type->field_offset(field_index) -
+          kHeapObjectTag);
 }
 
 InstructionHandler s_unwind_code = InstructionHandler::k_s2s_Unwind;
@@ -4745,7 +4745,7 @@ class Handlers : public HandlersBase {
       const uint8_t* code, uint32_t* sp, WasmInterpreterRuntime* wasm_runtime, \
       int64_t r0, double fp0) {                                                \
     uint16_t lane = Read<int16_t>(code);                                       \
-    DCHECK_LT(lane, 4);                                                        \
+    DCHECK_LT(lane, std::tuple_size_v<stype>);                                 \
     Simd128 v = pop<Simd128>(sp, code, wasm_runtime);                          \
     stype s = v.to_##name();                                                   \
     push(sp, code, wasm_runtime, s[LANE(lane, s)]);                            \
@@ -4767,7 +4767,7 @@ class Handlers : public HandlersBase {
       const uint8_t* code, uint32_t* sp, WasmInterpreterRuntime* wasm_runtime, \
       int64_t r0, double fp0) {                                                \
     uint16_t lane = Read<int16_t>(code);                                       \
-    DCHECK_LT(lane, 16);                                                       \
+    DCHECK_LT(lane, std::tuple_size_v<stype>);                                 \
     Simd128 s = pop<Simd128>(sp, code, wasm_runtime);                          \
     stype ss = s.to_##name();                                                  \
     auto res = ss[LANE(lane, ss)];                                             \
@@ -5017,7 +5017,7 @@ class Handlers : public HandlersBase {
       const uint8_t* code, uint32_t* sp, WasmInterpreterRuntime* wasm_runtime, \
       int64_t r0, double fp0) {                                                \
     uint16_t lane = Read<int16_t>(code);                                       \
-    DCHECK_LT(lane, 16);                                                       \
+    DCHECK_LT(lane, std::tuple_size_v<stype>);                                 \
     ctype new_val = pop<ctype>(sp, code, wasm_runtime);                        \
     Simd128 simd_val = pop<Simd128>(sp, code, wasm_runtime);                   \
     stype s = simd_val.to_##name();                                            \
@@ -5138,8 +5138,8 @@ class Handlers : public HandlersBase {
     for (size_t dst = 0; i < end; ++i, ++dst) {
       // Need static_cast for unsigned narrow types.
       res[LANE(dst, res)] =
-          MultiplyLong<wide>(static_cast<narrow>(s1[LANE(start, s1)]),
-                             static_cast<narrow>(s2[LANE(start, s2)]));
+          MultiplyLong<wide>(static_cast<narrow>(s1[LANE(i, s1)]),
+                             static_cast<narrow>(s2[LANE(i, s2)]));
     }
     push<Simd128>(sp, code, wasm_runtime, Simd128(res));
     NextOp();
@@ -5564,6 +5564,7 @@ class Handlers : public HandlersBase {
     memory_type loaded = base::ReadUnalignedValue<memory_type>(
         reinterpret_cast<Address>(address));
     uint16_t lane = Read<uint16_t>(code);
+    DCHECK_LT(lane, std::tuple_size_v<s_type>);
     value[LANE(lane, value)] = loaded;
     push<Simd128>(sp, code, wasm_runtime, Simd128(value));
 
@@ -5603,6 +5604,7 @@ class Handlers : public HandlersBase {
     uint8_t* address = memory_start + effective_index;
 
     uint16_t lane = Read<uint16_t>(code);
+    DCHECK_LT(lane, std::tuple_size_v<s_type>);
     memory_type res = value[LANE(lane, value)];
     base::WriteUnalignedValue<memory_type>(reinterpret_cast<Address>(address),
                                            res);
@@ -6532,7 +6534,10 @@ class Handlers : public HandlersBase {
     const uint32_t data_index = Read<int32_t>(code);
     // TODO(paolosev@microsoft.com): already validated?
     if (V8_UNLIKELY(!Smi::IsValid(data_index))) {
-      TRAP(MessageTemplate::kWasmTrapElementSegmentOutOfBounds)
+      MessageTemplate reason =
+          init_data ? MessageTemplate::kWasmTrapDataSegmentOutOfBounds
+                    : MessageTemplate::kWasmTrapElementSegmentOutOfBounds;
+      INLINED_TRAP(reason);
     }
 
     uint32_t size = pop<int32_t>(sp, code, wasm_runtime);
@@ -9939,17 +9944,28 @@ RegMode WasmBytecodeGenerator::DoEncodeInstruction(const WasmInstruction& instr,
       const ValueType obj_type = slots_[stack_.back()].value_type;
       DCHECK(obj_type.is_ref());
 
-      // This logic ensures that code generation can assume that functions can
-      // only be cast to function types, and data objects to data types.
+      // Drumbrake-specific optimization: the validator independently determines
+      // TypeCheckAlwaysSucceeds but doesn't communicate this to other compilers
+      // via the bytecode. Drumbrake re-analyzes locally during code generation.
+      // This optimization is safe because bytecode is pre-validated. When
+      // always- succeeds, we can skip the dynamic type check and only handle
+      // the nullable case: if null_succeeds=false, branch on non-null;
+      // otherwise branch always. This logic ensures that code generation can
+      // assume that functions can only be cast to function types, and data
+      // objects to data types.
       if (V8_UNLIKELY(
               TypeCheckAlwaysSucceeds(obj_type, target_type.heap_type()))) {
         StoreBlockParamsAndResultsIntoSlots(target_branch_index, kExprBrOnCast);
         // The branch will still not be taken on null if not {null_succeeds}.
         if (obj_type.is_nullable() && !null_succeeds) {
-          EMIT_INSTR_HANDLER(s2s_BranchOnNull);
+          EMIT_INSTR_HANDLER(s2s_BranchOnNonNull);
           RefPop();  // pop condition
           EmitRefValueType(obj_type.raw_bit_field());
-          RefPush(target_type);  // re-push condition value with a new HeapType.
+          // For the fallthrough path, null is possible, so push the original
+          // (nullable) object type instead of target_type. The target_type is
+          // non-null in this case, which would be incorrect for the fallthrough
+          // value.
+          RefPush(obj_type);
           EmitBranchOffset(br_on_cast_data.label_depth());
         } else {
           EMIT_INSTR_HANDLER(s2s_Branch);

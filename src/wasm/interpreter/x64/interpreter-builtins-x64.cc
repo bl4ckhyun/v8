@@ -29,16 +29,19 @@ void Builtins::Generate_WasmInterpreterEntry(MacroAssembler* masm) {
   Register function_index = r12;
   Register array_start = r15;
   Register result_start = rax;
+  Register ref_params_array = rbx;
 
   // Set up the stackframe.
   __ EnterFrame(StackFrame::WASM_INTERPRETER_ENTRY);
 
+  // Push tagged values first so they are contiguous for GC scanning.
   __ pushq(wasm_instance);
+  __ pushq(ref_params_array);
   __ pushq(function_index);
   __ pushq(array_start);
   __ pushq(result_start);
   __ Move(wasm_instance, 0);
-  __ CallRuntime(Runtime::kWasmRunInterpreter, 4);
+  __ CallRuntime(Runtime::kWasmRunInterpreter, 5);
 
   // Deconstruct the stack frame.
   __ LeaveFrame(StackFrame::WASM_INTERPRETER_ENTRY);
@@ -177,6 +180,14 @@ void Builtins::Generate_JSToWasmInterpreterWrapperAsm(MacroAssembler* masm) {
   __ Move(
       MemOperand(rbp, WasmInterpreterWrapperConstants::kGCScanSlotCountOffset),
       0);
+  // Load the FixedArray of converted reference parameters (or Undefined)
+  // from the wrapper buffer into rbx, which WasmInterpreterEntry will
+  // forward to Runtime_WasmRunInterpreter.
+  Register ref_params_array = rbx;
+  __ movq(ref_params_array,
+          MemOperand(
+              wrapper_buffer,
+              WasmInterpreterWrapperConstants::kWrapperBufferRefParamsArray));
   // -------------------------------------------
   // Call the Wasm function.
   // -------------------------------------------
@@ -939,7 +950,7 @@ void Builtins::Generate_GenericWasmToJSInterpreterWrapper(
   __ jmp(&finish_param_conversion);
 
   __ bind(&param_kWasmF32);
-  __ Movsd(xmm0,
+  __ Movss(xmm0,
            MemOperand(packed_args, current_param_slot_offset, times_1, 0));
   __ Call(BUILTIN_CODE(masm->isolate(), WasmFloat32ToNumber),
           RelocInfo::CODE_TARGET);

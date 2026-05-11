@@ -150,24 +150,31 @@ void Builtins::Generate_WasmInterpreterEntry(MacroAssembler* masm) {
   //  a6: array_start
   //  a5: function_index
   //  a4: result_start
+  //  a3: ref_params_array
   auto regs = RegisterAllocator::WithAllocatableGeneralRegisters();
 
   DEFINE_PINNED(wasm_instance, a7);
   DEFINE_PINNED(array_start, a6);
   DEFINE_PINNED(function_index, a5);
   DEFINE_PINNED(result_start, a4);
+  DEFINE_PINNED(ref_params_array, a3);
 
   // Set up the stackframe:
   //
-  // fp-0x10  Marker(StackFrame::WASM_INTERPRETER_ENTRY)
+  // fp-0x18  ref_params_array  (GC-scanned)
+  // fp-0x10  wasm_instance     (GC-scanned)
+  // fp-0x08  Marker(StackFrame::WASM_INTERPRETER_ENTRY)
   // fp       Old fp
-  // fp_0x08  ra
+  // fp+0x08  ra
   __ EnterFrame(StackFrame::WASM_INTERPRETER_ENTRY);
 
-  // Push args
-  __ Push(kWasmImplicitArgRegister, function_index, array_start, result_start);
+  // Push args. kWasmImplicitArgRegister at fp-16 and ref_params_array at
+  // fp-24 are GC-scanned by WasmInterpreterEntryFrame::Iterate.
+  __ Push(kWasmImplicitArgRegister, ref_params_array, function_index,
+          array_start);
+  __ Push(result_start);
   __ Move(kWasmImplicitArgRegister, zero_reg);
-  __ CallRuntime(Runtime::kWasmRunInterpreter, 4);
+  __ CallRuntime(Runtime::kWasmRunInterpreter, 5);
 
   // Deconstruct the stack frame.
   __ LeaveFrame(StackFrame::WASM_INTERPRETER_ENTRY);
@@ -212,7 +219,7 @@ void LoadFunctionDataAndWasmInstance(MacroAssembler* masm,
       function_data,
       FieldMemOperand(shared_function_info,
                       offsetof(SharedFunctionInfo, trusted_function_data_)),
-      kWasmFunctionDataIndirectPointerTag);
+      kWasmExportedFunctionDataIndirectPointerTag);
   shared_function_info = no_reg;
 
   LoadWasmInstanceFromFunctionData(masm, function_data, wasm_instance);
@@ -322,6 +329,7 @@ void Builtins::Generate_JSToWasmInterpreterWrapperAsm(MacroAssembler* masm) {
     // return values of the wasm function. If `result_size` is an odd number, we
     // have to add `1` to preserve stack pointer alignment.
     __ AddWord(result_size, result_size, 1);
+    __ And(result_size, result_size, Operand(-2));  // clear bit 0 to align
     __ SllWord(result_size, result_size, kSystemPointerSizeLog2);
     __ SubWord(sp, sp, Operand(result_size));
   }
@@ -333,9 +341,18 @@ void Builtins::Generate_JSToWasmInterpreterWrapperAsm(MacroAssembler* masm) {
           wrapper_buffer,
           JSToWasmWrapperFrameConstants::kWrapperBufferStackReturnBufferStart));
   __ Push(params_start, wrapper_buffer);
+  // Load the FixedArray of converted reference parameters (or Undefined)
+  // from the wrapper buffer into a3, which WasmInterpreterEntry will
+  // forward to Runtime_WasmRunInterpreter.
+  DEFINE_PINNED(ref_params_array, a3);
+  __ LoadWord(
+      ref_params_array,
+      MemOperand(
+          wrapper_buffer,
+          WasmInterpreterWrapperConstants::kWrapperBufferRefParamsArray));
   __ Call(BUILTIN_CODE(masm->isolate(), WasmInterpreterEntry),
           RelocInfo::CODE_TARGET);
-  __ Pop(wrapper_buffer, params_start);
+  __ Pop(params_start, wrapper_buffer);
   regs.ResetExcept(wasm_instance, wrapper_buffer);
   // The wrapper_buffer has to be in a2 as the correct parameter register.
   regs.Reserve(kReturnRegister0, kReturnRegister1, a2);
@@ -458,7 +475,7 @@ void Builtins::Generate_WasmInterpreterCWasmEntry(MacroAssembler* masm) {
   __ Push(handler);
 
   // Set this new handler as the current one.
-  __ StoreWord(sp, MemOperand(centry_fp_address));
+  __ StoreWord(sp, __ AsMemOperand(IsolateFieldId::kHandler));
 
   // Invoke the JS function through the GenericWasmToJSInterpreterWrapper.
   __ Call(BUILTIN_CODE(masm->isolate(), GenericWasmToJSInterpreterWrapper),
